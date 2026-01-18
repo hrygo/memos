@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote set-url:*)",
+      "Bash(./scripts/build.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(go run:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}
