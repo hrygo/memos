@@ -11,3 +11,6 @@ memos
 .dockerignore
 docs/
 .DS_Store
+.env
+.env.local
+.claude/

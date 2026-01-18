@@ -252,3 +252,94 @@ func (d *DB) DeleteMemo(ctx context.Context, delete *store.DeleteMemo) error {
 	}
 	return nil
 }
+
+// UpdateMemoEmbedding updates the embedding vector for a memo.
+func (d *DB) UpdateMemoEmbedding(ctx context.Context, id int32, embedding []float32) error {
+	// Convert []float32 to string representation for pgvector
+	// Format: "[0.1,0.2,0.3,...]"::vector
+	vecStr := vectorToString(embedding)
+	stmt := `UPDATE memo SET embedding = ` + vecStr + `::vector WHERE id = ` + placeholder(1)
+	if _, err := d.db.ExecContext(ctx, stmt, id); err != nil {
+		return errors.Wrap(err, "failed to update memo embedding")
+	}
+	return nil
+}
+
+// SearchMemosByVector performs semantic search using vector similarity.
+// Returns memos and their similarity scores (0-1, higher is more similar).
+func (d *DB) SearchMemosByVector(ctx context.Context, embedding []float32, limit int) ([]*store.Memo, []float32, error) {
+	vecStr := vectorToString(embedding)
+
+	query := `
+		SELECT id, uid, creator_id, created_ts, updated_ts, row_status,
+		       content, visibility, pinned, payload,
+		       1 - (embedding <=> ` + vecStr + `::vector) as similarity
+		FROM memo
+		WHERE embedding IS NOT NULL
+		ORDER BY embedding <=> ` + vecStr + `::vector
+		LIMIT ` + placeholder(1)
+
+	rows, err := d.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to search memos by vector")
+	}
+	defer rows.Close()
+
+	list := make([]*store.Memo, 0, limit)
+	similarities := make([]float32, 0, limit)
+
+	for rows.Next() {
+		var memo store.Memo
+		var payloadBytes []byte
+		var similarity float32
+
+		dests := []any{
+			&memo.ID,
+			&memo.UID,
+			&memo.CreatorID,
+			&memo.CreatedTs,
+			&memo.UpdatedTs,
+			&memo.RowStatus,
+			&memo.Content,
+			&memo.Visibility,
+			&memo.Pinned,
+			&payloadBytes,
+			&similarity,
+		}
+
+		if err := rows.Scan(dests...); err != nil {
+			return nil, nil, errors.Wrap(err, "failed to scan memo")
+		}
+
+		payload := &storepb.MemoPayload{}
+		if err := protojsonUnmarshaler.Unmarshal(payloadBytes, payload); err != nil {
+			return nil, nil, errors.Wrap(err, "failed to unmarshal payload")
+		}
+		memo.Payload = payload
+
+		list = append(list, &memo)
+		similarities = append(similarities, similarity)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return list, similarities, nil
+}
+
+// vectorToString converts []float32 to pgvector string representation.
+func vectorToString(v []float32) string {
+	if len(v) == 0 {
+		return "[]"
+	}
+	result := "["
+	for i, f := range v {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf("%f", f)
+	}
+	result += "]"
+	return result
+}

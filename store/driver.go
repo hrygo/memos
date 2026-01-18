@@ -29,6 +29,13 @@ type Driver interface {
 	UpdateMemo(ctx context.Context, update *UpdateMemo) error
 	DeleteMemo(ctx context.Context, delete *DeleteMemo) error
 
+	// UpdateMemoEmbedding updates the embedding vector for a memo.
+	UpdateMemoEmbedding(ctx context.Context, id int32, embedding []float32) error
+
+	// SearchMemosByVector performs semantic search using vector similarity.
+	// Returns memos and their similarity scores.
+	SearchMemosByVector(ctx context.Context, embedding []float32, limit int) ([]*Memo, []float32, error)
+
 	// MemoRelation model related methods.
 	UpsertMemoRelation(ctx context.Context, create *MemoRelation) (*MemoRelation, error)
 	ListMemoRelations(ctx context.Context, find *FindMemoRelation) ([]*MemoRelation, error)

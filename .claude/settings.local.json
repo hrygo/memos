@@ -5,7 +5,17 @@
       "Bash(./scripts/build.sh:*)",
       "Bash(chmod:*)",
       "Bash(go run:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker stats:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(docker logs:*)",
+      "Bash(go build:*)",
+      "Bash(go get:*)",
+      "Bash(make:*)"
     ]
   }
 }

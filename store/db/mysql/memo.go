@@ -267,3 +267,15 @@ func (d *DB) DeleteMemo(ctx context.Context, delete *store.DeleteMemo) error {
 	}
 	return nil
 }
+
+// UpdateMemoEmbedding is not supported for MySQL.
+// Vector search requires PostgreSQL with pgvector extension.
+func (d *DB) UpdateMemoEmbedding(ctx context.Context, id int32, embedding []float32) error {
+	return errors.New("vector embedding is not supported for MySQL driver, please use PostgreSQL")
+}
+
+// SearchMemosByVector is not supported for MySQL.
+// Vector search requires PostgreSQL with pgvector extension.
+func (d *DB) SearchMemosByVector(ctx context.Context, embedding []float32, limit int) ([]*store.Memo, []float32, error) {
+	return nil, nil, errors.New("vector search is not supported for MySQL driver, please use PostgreSQL")
+}

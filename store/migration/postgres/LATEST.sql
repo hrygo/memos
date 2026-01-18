@@ -39,8 +39,14 @@ CREATE TABLE memo (
   content TEXT NOT NULL,
   visibility TEXT NOT NULL DEFAULT 'PRIVATE',
   pinned BOOLEAN NOT NULL DEFAULT FALSE,
-  payload JSONB NOT NULL DEFAULT '{}'
+  payload JSONB NOT NULL DEFAULT '{}',
+  embedding vector(1024)
 );
+
+-- Create HNSW index for fast vector similarity search
+CREATE INDEX memo_embedding_idx
+ON memo USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
 
 -- memo_relation
 CREATE TABLE memo_relation (
@@ -105,3 +111,6 @@ CREATE TABLE reaction (
   reaction_type TEXT NOT NULL,
   UNIQUE(creator_id, content_id, reaction_type)
 );
+
+-- pgvector extension for semantic search
+CREATE EXTENSION IF NOT EXISTS vector;
