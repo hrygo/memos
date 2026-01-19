@@ -150,19 +150,23 @@ func toFloat32(v []float64) []float32 {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `plugin/ai/embedding.go` 文件存在
+- [x] `plugin/ai/embedding.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./plugin/ai/...` 无错误
+- [x] `go build ./plugin/ai/...` 无错误
 
 ### AC-3: SiliconFlow 集成测试
-- [ ] 能成功调用 SiliconFlow bge-m3 API
-- [ ] 返回 1024 维向量
-- [ ] 批量处理正常工作
+- [x] 能成功调用 SiliconFlow bge-m3 API
+- [x] 返回 1024 维向量
+- [x] 批量处理正常工作
 
 ### AC-4: 接口一致性
-- [ ] 切换到 OpenAI 后功能正常
-- [ ] 切换到 Ollama 后功能正常 (需本地运行)
+- [x] 切换到 OpenAI 后功能正常
+- [x] 切换到 Ollama 后功能正常 (需本地运行)
+
+## 实现状态
+
+✅ **已完成** - 实现于 [plugin/ai/embedding.go](../../plugin/ai/embedding.go)
 
 ## 测试命令
 

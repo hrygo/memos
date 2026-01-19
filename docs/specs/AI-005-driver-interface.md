@@ -44,15 +44,19 @@ type Driver interface {
 ## 验收标准
 
 ### AC-1: 接口更新
-- [ ] `Driver` 接口包含 4 个新方法
-- [ ] 方法签名正确
+- [x] `Driver` 接口包含 4 个新方法
+- [x] 方法签名正确
 
 ### AC-2: 编译检查
-- [ ] `go build ./store/...` 无错误 (会报 not implemented，符合预期)
+- [x] `go build ./store/...` 无错误 (会报 not implemented，符合预期)
 
 ### AC-3: SQLite/MySQL 占位实现
-- [ ] SQLite 驱动添加占位方法 (返回 not supported 错误)
-- [ ] MySQL 驱动添加占位方法 (返回 not supported 错误)
+- [x] SQLite 驱动添加占位方法 (返回 not supported 错误)
+- [x] MySQL 驱动添加占位方法 (返回 not supported 错误)
+
+## 实现状态
+
+✅ **已完成** - 实现于 [store/driver.go](../../store/driver.go)
 
 ## 测试命令
 

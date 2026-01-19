@@ -140,27 +140,31 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
 ## 验收标准
 
 ### AC-1: 编译通过
-- [ ] `go build ./server/...` 无错误
+- [x] `go build ./server/...` 无错误
 
 ### AC-2: 认证检查
-- [ ] 未登录时返回 Unauthenticated
+- [x] 未登录时返回 Unauthenticated
 
 ### AC-3: RAG 流程
-- [ ] 正确检索相关笔记
-- [ ] 笔记内容注入到 Prompt
+- [x] 正确检索相关笔记
+- [x] 笔记内容注入到 Prompt
 
 ### AC-4: 流式响应
-- [ ] 首先返回 sources
-- [ ] 内容分块流式返回
-- [ ] 最后发送 done=true
+- [x] 首先返回 sources
+- [x] 内容分块流式返回
+- [x] 最后发送 done=true
 
 ### AC-5: 对话历史
-- [ ] history 参数正确传递
-- [ ] 多轮对话上下文连贯
+- [x] history 参数正确传递
+- [x] 多轮对话上下文连贯
 
 ### AC-6: 错误处理
-- [ ] LLM 错误正确传递
-- [ ] 连接中断时正确处理
+- [x] LLM 错误正确传递
+- [x] 连接中断时正确处理
+
+## 实现状态
+
+✅ **已完成** - 实现于 [server/router/api/v1/ai_service.go:261-378](../../server/router/api/v1/ai_service.go#L261-L378)
 
 ## 测试命令
 

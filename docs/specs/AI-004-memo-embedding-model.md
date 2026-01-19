@@ -88,22 +88,26 @@ func (s *Store) DeleteMemoEmbedding(ctx context.Context, memoID int32) error {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `store/memo_embedding.go` 文件存在
-- [ ] 结构体定义符合规格
+- [x] `store/memo_embedding.go` 文件存在
+- [x] 结构体定义符合规格
 
 ### AC-2: 编译通过
-- [ ] `go build ./store/...` 无错误
+- [x] `go build ./store/...` 无错误
 
 ### AC-3: 结构体完整
-- [ ] `MemoEmbedding` 包含所有必需字段
-- [ ] `MemoWithScore` 包含 `Memo` 和 `Score`
-- [ ] `VectorSearchOptions` 包含 `UserID`, `Vector`, `Limit`
+- [x] `MemoEmbedding` 包含所有必需字段
+- [x] `MemoWithScore` 包含 `Memo` 和 `Score`
+- [x] `VectorSearchOptions` 包含 `UserID`, `Vector`, `Limit`
 
 ### AC-4: 方法签名正确
-- [ ] `UpsertMemoEmbedding` 方法存在
-- [ ] `GetMemoEmbedding` 方法存在
-- [ ] `ListMemoEmbeddings` 方法存在
-- [ ] `DeleteMemoEmbedding` 方法存在
+- [x] `UpsertMemoEmbedding` 方法存在
+- [x] `GetMemoEmbedding` 方法存在
+- [x] `ListMemoEmbeddings` 方法存在
+- [x] `DeleteMemoEmbedding` 方法存在
+
+## 实现状态
+
+✅ **已完成** - 实现于 [store/memo_embedding.go](../../store/memo_embedding.go)
 
 ## 测试命令
 

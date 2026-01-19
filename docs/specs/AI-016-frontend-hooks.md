@@ -55,20 +55,44 @@ export function useChatWithMemos() {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `web/src/hooks/useAIQueries.ts` 文件存在
+- [x] `web/src/hooks/useAIQueries.ts` 文件存在
 
 ### AC-2: 类型正确
-- [ ] TypeScript 编译无错误
-- [ ] 返回类型与 Proto 定义一致
+- [x] TypeScript 编译无错误
+- [x] 返回类型与 Proto 定义一致
 
 ### AC-3: Hook 功能
-- [ ] `useSemanticSearch` 正常工作
-- [ ] `useSuggestTags` 正常工作
-- [ ] `useRelatedMemos` 正常工作
+- [x] `useSemanticSearch` 正常工作
+- [x] `useSuggestTags` 正常工作
+- [x] `useRelatedMemos` 正常工作
 
 ### AC-4: 缓存策略
-- [ ] 搜索结果适当缓存
-- [ ] 相关笔记长时间缓存
+- [x] 搜索结果适当缓存 (1分钟)
+- [x] 相关笔记长时间缓存 (5分钟)
+
+## 实现状态
+
+✅ **已完成** - 实现于 [web/src/hooks/useAIQueries.ts](../../web/src/hooks/useAIQueries.ts)
+
+**实现细节**:
+- `useChatWithMemos` 使用 Connect RPC 异步迭代器实现流式接收
+- 支持 `onContent`, `onSources`, `onDone`, `onError` 回调
+- 返回完整内容 + 来源列表
+
+**使用示例**:
+```typescript
+const { stream } = useChatWithMemos();
+
+await stream(
+  { message: "我最近记录了什么?" },
+  {
+    onContent: (chunk) => console.log("收到:", chunk),
+    onSources: (sources) => console.log("来源:", sources),
+    onDone: () => console.log("完成"),
+    onError: (err) => console.error("错误:", err),
+  }
+);
+```
 
 ## 测试命令
 

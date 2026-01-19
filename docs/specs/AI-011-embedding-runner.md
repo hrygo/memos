@@ -172,22 +172,26 @@ if s.AIService != nil && s.AIService.IsEnabled() {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `server/runner/embedding/runner.go` 文件存在
+- [x] `server/runner/embedding/runner.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./server/...` 无错误
+- [x] `go build ./server/...` 无错误
 
 ### AC-3: 自动处理
-- [ ] 新 Memo 创建后在下一个周期自动生成向量
-- [ ] 批量处理正常工作
+- [x] 新 Memo 创建后在下一个周期自动生成向量
+- [x] 批量处理正常工作
 
 ### AC-4: 增量处理
-- [ ] 只处理没有向量的 Memo
-- [ ] 已有向量的 Memo 不会重复处理
+- [x] 只处理没有向量的 Memo
+- [x] 已有向量的 Memo 不会重复处理
 
 ### AC-5: 错误恢复
-- [ ] 单个 Memo 失败不影响其他 Memo
-- [ ] 错误日志正常输出
+- [x] 单个 Memo 失败不影响其他 Memo
+- [x] 错误日志正常输出
+
+## 实现状态
+
+✅ **已完成** - 实现于 [server/runner/embedding/runner.go](../../server/runner/embedding/runner.go)
 
 ## 测试命令
 

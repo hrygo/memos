@@ -142,23 +142,27 @@ func (s *rerankerService) Rerank(ctx context.Context, query string, documents []
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `plugin/ai/reranker.go` 文件存在
+- [x] `plugin/ai/reranker.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./plugin/ai/...` 无错误
+- [x] `go build ./plugin/ai/...` 无错误
 
 ### AC-3: 降级逻辑
-- [ ] `IsEnabled()=false` 时返回原始顺序
-- [ ] 不调用外部 API
+- [x] `IsEnabled()=false` 时返回原始顺序
+- [x] 不调用外部 API
 
 ### AC-4: SiliconFlow 集成测试
-- [ ] 能成功调用 SiliconFlow Rerank API
-- [ ] 返回按相关性排序的结果
-- [ ] topN 参数生效
+- [x] 能成功调用 SiliconFlow Rerank API
+- [x] 返回按相关性排序的结果
+- [x] topN 参数生效
 
 ### AC-5: 错误处理
-- [ ] API 错误时返回明确错误信息
-- [ ] 网络超时时正确处理
+- [x] API 错误时返回明确错误信息
+- [x] 网络超时时正确处理
+
+## 实现状态
+
+✅ **已完成** - 实现于 [plugin/ai/reranker.go](../../plugin/ai/reranker.go)
 
 ## 测试命令
 

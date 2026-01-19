@@ -15,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/usememos/memos/internal/profile"
+	"github.com/usememos/memos/plugin/ai"
+	"github.com/usememos/memos/server/runner/embedding"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	apiv1 "github.com/usememos/memos/server/router/api/v1"
 	"github.com/usememos/memos/server/router/fileserver"
@@ -153,6 +155,28 @@ func (s *Server) StartBackgroundRunners(ctx context.Context) {
 		s3presignRunner.Run(s3Context)
 		slog.Info("s3presign runner stopped")
 	}()
+
+	// Start embedding runner if AI is enabled
+	if s.Profile.IsAIEnabled() && s.Profile.Driver == "postgres" {
+		aiConfig := ai.NewConfigFromProfile(s.Profile)
+		if err := aiConfig.Validate(); err == nil {
+			embeddingService, err := ai.NewEmbeddingService(&aiConfig.Embedding)
+			if err == nil {
+				embeddingRunner := embedding.NewRunner(s.Store, embeddingService)
+				go func() {
+					embeddingCtx, embeddingCancel := context.WithCancel(ctx)
+					s.runnerCancelFuncs = append(s.runnerCancelFuncs, embeddingCancel)
+					embeddingRunner.Run(embeddingCtx)
+					slog.Info("embedding runner stopped")
+				}()
+				slog.Info("embedding runner started")
+			} else {
+				slog.Warn("failed to create embedding service", "error", err)
+			}
+		} else {
+			slog.Warn("AI config validation failed", "error", err)
+		}
+	}
 
 	// Log the number of goroutines running
 	slog.Info("background runners started", "goroutines", runtime.NumGoroutine())

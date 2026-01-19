@@ -110,17 +110,22 @@ message GetRelatedMemosResponse {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `proto/api/v1/ai_service.proto` 文件存在
-- [ ] 文件语法正确，无编译错误
+- [x] `proto/api/v1/ai_service.proto` 文件存在
+- [x] 文件语法正确，无编译错误
 
 ### AC-2: 代码生成
-- [ ] 执行 `cd proto && buf generate` 成功
-- [ ] `proto/gen/api/v1/ai_service.pb.go` 生成
-- [ ] `proto/gen/api/v1/ai_service_grpc.pb.go` 生成
-- [ ] `web/src/types/proto/api/v1/ai_service.ts` 生成
+- [x] 执行 `cd proto && buf generate` 成功
+- [x] `proto/gen/api/v1/ai_service.pb.go` 生成
+- [x] `proto/gen/api/v1/ai_service_grpc.pb.go` 生成
+- [x] `web/src/types/proto/api/v1/ai_service_pb.ts` 生成
+
 
 ### AC-3: Lint 检查
-- [ ] 执行 `cd proto && buf lint` 无错误
+- [x] 执行 `cd proto && buf lint` 无错误
+
+## 实现状态
+
+✅ **已完成** - 实现于 [proto/api/v1/ai_service.proto](../../proto/api/v1/ai_service.proto)
 
 ## 测试命令
 
@@ -129,7 +134,7 @@ cd proto
 buf lint
 buf generate
 ls -la gen/api/v1/ai_service*.go
-ls -la ../web/src/types/proto/api/v1/ai_service*
+ls -la ../web/src/types/proto/api/v1/ai_service_pb.ts
 ```
 
 ## 依赖

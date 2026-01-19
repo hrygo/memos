@@ -9,7 +9,13 @@
       "Bash(go build:*)",
       "Bash(DRIVER=sqlite go test:*)",
       "Bash(docker:*)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(go test:*)",
+      "Bash(go get:*)",
+      "Bash(go doc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ]
   }
 }

@@ -15,21 +15,27 @@
 ## 验收标准
 
 ### AC-1: 编译通过
-- [ ] `go build ./server/...` 无错误
+- [x] `go build ./server/...` 无错误
 
 ### AC-2: 认证检查
-- [ ] 未登录时返回 Unauthenticated
+- [x] 未登录时返回 Unauthenticated
 
 ### AC-3: 权限检查
-- [ ] 私有 Memo 只能所有者访问
+- [x] 私有 Memo 只能所有者访问
 
 ### AC-4: 相关推荐
-- [ ] 返回语义相似的 Memo
-- [ ] 不包含自己
-- [ ] 结果按相似度排序
+- [x] 返回语义相似的 Memo
+- [x] 不包含自己
+- [x] 结果按相似度排序
 
 ### AC-5: 向量缺失处理
-- [ ] Memo 没有向量时实时生成
+- [x] Memo 没有向量时实时生成
+
+## 实现状态
+
+✅ **已完成** - 实现于 [server/router/api/v1/ai_service.go:381-475](../../server/router/api/v1/ai_service.go#L381-L475)
+
+**优化**: 向量缺失时自动调用 EmbeddingService 实时生成并保存到数据库。
 
 ## 测试命令
 

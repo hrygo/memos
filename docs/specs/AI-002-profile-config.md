@@ -66,21 +66,25 @@ AILLMModel:           getEnvOrDefault("MEMOS_AI_LLM_MODEL", "deepseek-chat"),
 ## 验收标准
 
 ### AC-1: 编译通过
-- [ ] `go build ./...` 无错误
+- [x] `go build ./...` 无错误
 
 ### AC-2: 默认值正确
-- [ ] 未设置任何 AI 环境变量时，`AIEnabled = false`
-- [ ] `AIEmbeddingProvider` 默认值为 `siliconflow`
-- [ ] `AILLMProvider` 默认值为 `deepseek`
+- [x] 未设置任何 AI 环境变量时，`AIEnabled = false`
+- [x] `AIEmbeddingProvider` 默认值为 `siliconflow`
+- [x] `AILLMProvider` 默认值为 `deepseek`
 
 ### AC-3: 环境变量生效
-- [ ] 设置 `MEMOS_AI_ENABLED=true` 后，`profile.AIEnabled == true`
-- [ ] 设置 `MEMOS_AI_SILICONFLOW_API_KEY=xxx` 后，能正确读取
+- [x] 设置 `MEMOS_AI_ENABLED=true` 后，`profile.AIEnabled == true`
+- [x] 设置 `MEMOS_AI_SILICONFLOW_API_KEY=xxx` 后，能正确读取
 
 ### AC-4: IsAIEnabled 逻辑
-- [ ] `AIEnabled=true` 且有 API Key 时，`IsAIEnabled()` 返回 true
-- [ ] `AIEnabled=false` 时，`IsAIEnabled()` 返回 false
-- [ ] `AIEnabled=true` 但无任何 API Key 时，`IsAIEnabled()` 返回 false
+- [x] `AIEnabled=true` 且有 API Key 时，`IsAIEnabled()` 返回 true
+- [x] `AIEnabled=false` 时，`IsAIEnabled()` 返回 false
+- [x] `AIEnabled=true` 但无任何 API Key 时，`IsAIEnabled()` 返回 false
+
+## 实现状态
+
+✅ **已完成** - 实现于 [internal/profile/profile.go](../../internal/profile/profile.go)
 
 ## 测试命令
 

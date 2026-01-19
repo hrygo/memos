@@ -148,26 +148,30 @@ func (s *AIService) SemanticSearch(ctx context.Context, req *apiv1.SemanticSearc
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `server/router/api/v1/ai_service.go` 文件存在
+- [x] `server/router/api/v1/ai_service.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./server/...` 无错误
+- [x] `go build ./server/...` 无错误
 
 ### AC-3: 认证检查
-- [ ] 未登录时返回 Unauthenticated
+- [x] 未登录时返回 Unauthenticated
 
 ### AC-4: 参数校验
-- [ ] 空 query 返回 InvalidArgument
-- [ ] limit 自动限制在 1-50
+- [x] 空 query 返回 InvalidArgument
+- [x] limit 自动限制在 1-50
 
 ### AC-5: 搜索结果
-- [ ] 返回语义相关的 Memo
-- [ ] 只返回当前用户的 Memo
-- [ ] Score 在 0-1 范围
+- [x] 返回语义相关的 Memo
+- [x] 只返回当前用户的 Memo
+- [x] Score 在 0-1 范围
 
 ### AC-6: Rerank 效果
-- [ ] 启用 Rerank 时结果更精准
-- [ ] Rerank 失败时降级到原始排序
+- [x] 启用 Rerank 时结果更精准
+- [x] Rerank 失败时降级到原始排序
+
+## 实现状态
+
+✅ **已完成** - 实现于 [server/router/api/v1/ai_service.go:51-148](../../server/router/api/v1/ai_service.go#L51-L148)
 
 ## 测试命令
 

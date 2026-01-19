@@ -84,22 +84,26 @@ store/migration/postgres/
 ## 验收标准
 
 ### AC-1: 迁移文件存在
-- [ ] `store/migration/postgres/0.30/1__add_pgvector.sql` 文件存在
-- [ ] 文件内容符合规格
+- [x] `store/migration/postgres/0.30/1__add_pgvector.sql` 文件存在
+- [x] 文件内容符合规格
 
 ### AC-2: 迁移执行成功
-- [ ] 在干净的 PostgreSQL 数据库上执行迁移无错误
-- [ ] `memo_embedding` 表创建成功
-- [ ] `idx_memo_embedding_hnsw` 索引创建成功
-- [ ] 触发器创建成功
+- [x] 在干净的 PostgreSQL 数据库上执行迁移无错误
+- [x] `memo_embedding` 表创建成功
+- [x] `idx_memo_embedding_hnsw` 索引创建成功
+- [x] 触发器创建成功
 
 ### AC-3: 表结构正确
-- [ ] `embedding` 列类型为 `vector(1024)`
-- [ ] `memo_id` 外键指向 `memo(id)`
-- [ ] `ON DELETE CASCADE` 生效
+- [x] `embedding` 列类型为 `vector(1024)`
+- [x] `memo_id` 外键指向 `memo(id)`
+- [x] `ON DELETE CASCADE` 生效
 
 ### AC-4: 级联删除测试
-- [ ] 删除 memo 时，对应的 embedding 自动删除
+- [x] 删除 memo 时，对应的 embedding 自动删除
+
+## 实现状态
+
+✅ **已完成** - 实现于 [store/migration/postgres/0.30/1__add_pgvector.sql](../../store/migration/postgres/0.30/1__add_pgvector.sql)
 
 ## 测试命令
 

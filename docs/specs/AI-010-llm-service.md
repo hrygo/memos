@@ -173,23 +173,27 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `plugin/ai/llm.go` 文件存在
+- [x] `plugin/ai/llm.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./plugin/ai/...` 无错误
+- [x] `go build ./plugin/ai/...` 无错误
 
 ### AC-3: 同步对话
-- [ ] DeepSeek Chat 返回完整响应
-- [ ] 消息角色正确传递
+- [x] DeepSeek Chat 返回完整响应
+- [x] 消息角色正确传递
 
 ### AC-4: 流式对话
-- [ ] 流式返回内容块
-- [ ] 完成后 channel 正确关闭
-- [ ] 错误正确传递
+- [x] 流式返回内容块
+- [x] 完成后 channel 正确关闭
+- [x] 错误正确传递
 
 ### AC-5: 多供应商支持
-- [ ] OpenAI 模式正常工作
-- [ ] Ollama 模式正常工作 (本地)
+- [x] OpenAI 模式正常工作
+- [x] Ollama 模式正常工作 (本地)
+
+## 实现状态
+
+✅ **已完成** - 实现于 [plugin/ai/llm.go](../../plugin/ai/llm.go)
 
 ## 测试命令
 

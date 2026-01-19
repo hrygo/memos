@@ -126,26 +126,30 @@ func vectorToString(v []float32) string {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `store/db/postgres/memo_embedding.go` 文件存在
+- [x] `store/db/postgres/memo_embedding.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./store/db/postgres/...` 无错误
+- [x] `go build ./store/db/postgres/...` 无错误
 
 ### AC-3: CRUD 功能
-- [ ] `UpsertMemoEmbedding` 能插入新向量
-- [ ] `UpsertMemoEmbedding` 能更新已存在向量 (ON CONFLICT)
-- [ ] `ListMemoEmbeddings` 能按 memo_id 查询
-- [ ] `DeleteMemoEmbedding` 能删除指定 memo 的向量
+- [x] `UpsertMemoEmbedding` 能插入新向量
+- [x] `UpsertMemoEmbedding` 能更新已存在向量 (ON CONFLICT)
+- [x] `ListMemoEmbeddings` 能按 memo_id 查询
+- [x] `DeleteMemoEmbedding` 能删除指定 memo 的向量
 
 ### AC-4: 向量搜索功能
-- [ ] `SearchMemosByVector` 返回按相似度排序的结果
-- [ ] 只返回指定用户的 Memo
-- [ ] 只返回 row_status = NORMAL 的 Memo
-- [ ] Score 值在 0-1 范围内
+- [x] `SearchMemosByVector` 返回按相似度排序的结果
+- [x] 只返回指定用户的 Memo
+- [x] 只返回 row_status = NORMAL 的 Memo
+- [x] Score 值在 0-1 范围内
 
 ### AC-5: 单元测试
-- [ ] 测试文件 `store/test/memo_embedding_test.go` 存在
-- [ ] 所有测试通过
+- [x] 测试文件 `store/test/memo_embedding_test.go` 存在
+- [x] 所有测试通过
+
+## 实现状态
+
+✅ **已完成** - 实现于 [store/db/postgres/memo_embedding.go](../../store/db/postgres/memo_embedding.go)
 
 ## 测试命令
 

@@ -150,20 +150,24 @@ func (c *Config) Validate() error {
 ## 验收标准
 
 ### AC-1: 文件创建
-- [ ] `plugin/ai/config.go` 文件存在
+- [x] `plugin/ai/config.go` 文件存在
 
 ### AC-2: 编译通过
-- [ ] `go build ./plugin/ai/...` 无错误
+- [x] `go build ./plugin/ai/...` 无错误
 
 ### AC-3: 配置解析正确
-- [ ] SiliconFlow 配置正确解析
-- [ ] DeepSeek 配置正确解析
-- [ ] OpenAI 配置正确解析
-- [ ] Ollama 配置正确解析
+- [x] SiliconFlow 配置正确解析
+- [x] DeepSeek 配置正确解析
+- [x] OpenAI 配置正确解析
+- [x] Ollama 配置正确解析
 
 ### AC-4: 验证逻辑正确
-- [ ] `Enabled=false` 时跳过验证
-- [ ] 缺少 API Key 时返回错误 (Ollama 除外)
+- [x] `Enabled=false` 时跳过验证
+- [x] 缺少 API Key 时返回错误 (Ollama 除外)
+
+## 实现状态
+
+✅ **已完成** - 实现于 [plugin/ai/config.go](../../plugin/ai/config.go)
 
 ## 测试命令
 

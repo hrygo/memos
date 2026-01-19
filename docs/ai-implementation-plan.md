@@ -1,6 +1,19 @@
 # Memos AI 能力实现方案
 
 > 为 Memos 知识管理平台增加 AI 智能能力
+> 
+> ## 项目现状
+> 
+> 截至当前，后端核心功能已全部完成，正处于前端集成阶段。
+> 
+> - **已完成 Backend**: 
+>   - 基础设施 (Proto, Config, DB Migration)
+>   - 模型层 (Embedding, Reranker, LLM)
+>   - 存储层 (PostgreSQL Vector Search)
+>   - 服务层 (Background Runner, gRPC APIs)
+> - **待开发 Frontend**:
+>   - React Hooks封装
+>   - UI 组件集成 (Search, Chat, Tags)
 
 ## 技术架构
 
@@ -130,16 +143,16 @@ MEMOS_AI_LLM_PROVIDER=deepseek           # deepseek | openai | ollama
 
 ### 参数配置
 
-| 参数            | 值     | 说明                     |
-| --------------- | ------ | ------------------------ |
-| 向量维度        | 1024   | bge-m3 原生维度          |
-| 索引类型        | HNSW   | m=8, ef_construction=32 (2C2G优化) |
-| 向量召回        | Top 10 | 初始召回量 (2C2G优化)    |
-| Rerank 返回     | Top 10 | 最终返回量               |
-| RAG 上下文      | 5 条   | 送入 LLM 的笔记数        |
-| LLM temperature | 0.7    | 平衡创造性和准确性       |
-| Embedding 批处理 | 8      | 后台任务批次大小 (2C2G)  |
-| 后台任务间隔    | 2 分钟 | 向量生成轮询间隔 (2C2G)  |
+| 参数             | 值     | 说明                               |
+| ---------------- | ------ | ---------------------------------- |
+| 向量维度         | 1024   | bge-m3 原生维度                    |
+| 索引类型         | HNSW   | m=8, ef_construction=32 (2C2G优化) |
+| 向量召回         | Top 10 | 初始召回量 (2C2G优化)              |
+| Rerank 返回      | Top 10 | 最终返回量                         |
+| RAG 上下文       | 5 条   | 送入 LLM 的笔记数                  |
+| LLM temperature  | 0.7    | 平衡创造性和准确性                 |
+| Embedding 批处理 | 8      | 后台任务批次大小 (2C2G)            |
+| 后台任务间隔     | 2 分钟 | 向量生成轮询间隔 (2C2G)            |
 
 ---
 
@@ -193,13 +206,13 @@ MEMOS_AI_LLM_PROVIDER=deepseek           # deepseek | openai | ollama
 
 ## 里程碑
 
-| 阶段 | 工作内容                   | 时间 |
-| ---- | -------------------------- | ---- |
-| M1   | Proto + 配置 + Migration   | 2 天 |
-| M2   | AI 插件 (langchaingo 集成) | 3 天 |
-| M3   | Store 层向量搜索           | 2 天 |
-| M4   | gRPC 服务实现              | 2 天 |
-| M5   | 前端集成                   | 2 天 |
-| M6   | 测试 + 文档                | 1 天 |
+| 阶段 | 工作内容                   | 时间 | 状态     |
+| ---- | -------------------------- | ---- | -------- |
+| M1   | Proto + 配置 + Migration   | 2 天 | ✅ 已完成 |
+| M2   | AI 插件 (langchaingo 集成) | 3 天 | ✅ 已完成 |
+| M3   | Store 层向量搜索           | 2 天 | ✅ 已完成 |
+| M4   | gRPC 服务实现              | 2 天 | ✅ 已完成 |
+| M5   | 前端集成                   | 2 天 | ✅ 已完成 |
+| M6   | 测试 + 文档                | 1 天 | 🔄 进行中 |
 
 **总计：12 工作日**

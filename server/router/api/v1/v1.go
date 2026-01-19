@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"github.com/usememos/memos/internal/profile"
+	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/plugin/markdown"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
@@ -26,11 +27,13 @@ type APIV1Service struct {
 	v1pb.UnimplementedShortcutServiceServer
 	v1pb.UnimplementedActivityServiceServer
 	v1pb.UnimplementedIdentityProviderServiceServer
+	v1pb.UnimplementedAIServiceServer
 
 	Secret          string
 	Profile         *profile.Profile
 	Store           *store.Store
 	MarkdownService markdown.Service
+	AIService       *AIService
 
 	// thumbnailSemaphore limits concurrent thumbnail generation to prevent memory exhaustion
 	thumbnailSemaphore *semaphore.Weighted
@@ -40,13 +43,36 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 	markdownService := markdown.NewService(
 		markdown.WithTagExtension(),
 	)
-	return &APIV1Service{
+	service := &APIV1Service{
 		Secret:             secret,
 		Profile:            profile,
 		Store:              store,
 		MarkdownService:    markdownService,
 		thumbnailSemaphore: semaphore.NewWeighted(3), // Limit to 3 concurrent thumbnail generations
 	}
+
+	// Initialize AI service if enabled
+	if profile.IsAIEnabled() && profile.Driver == "postgres" {
+		aiConfig := ai.NewConfigFromProfile(profile)
+		if err := aiConfig.Validate(); err == nil {
+			embeddingService, err := ai.NewEmbeddingService(&aiConfig.Embedding)
+			if err == nil {
+				rerankerService := ai.NewRerankerService(&aiConfig.Reranker)
+				var llmService ai.LLMService
+				if aiConfig.LLM.Provider != "" {
+					llmService, _ = ai.NewLLMService(&aiConfig.LLM)
+				}
+				service.AIService = &AIService{
+					Store:            store,
+					EmbeddingService: embeddingService,
+					RerankerService:  rerankerService,
+					LLMService:       llmService,
+				}
+			}
+		}
+	}
+
+	return service
 }
 
 // RegisterGateway registers the gRPC-Gateway and Connect handlers with the given Echo instance.
@@ -117,6 +143,12 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	}
 	if err := v1pb.RegisterIdentityProviderServiceHandlerServer(ctx, gwMux, s); err != nil {
 		return err
+	}
+	// Register AI service if available
+	if s.AIService != nil {
+		if err := v1pb.RegisterAIServiceHandlerServer(ctx, gwMux, s.AIService); err != nil {
+			return err
+		}
 	}
 	gwGroup := echoServer.Group("")
 	gwGroup.Use(middleware.CORS())

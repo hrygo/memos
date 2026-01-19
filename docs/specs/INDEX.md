@@ -10,22 +10,22 @@
 
 | ID     | 名称                                                      | 状态     | 依赖                           |
 | ------ | --------------------------------------------------------- | -------- | ------------------------------ |
-| AI-001 | [Proto 定义](./AI-001-proto-definition.md)                | 🔲 待开发 | -                              |
-| AI-002 | [Profile 配置扩展](./AI-002-profile-config.md)            | 🔲 待开发 | -                              |
-| AI-003 | [数据库迁移 pgvector](./AI-003-db-migration.md)           | 🔲 待开发 | -                              |
-| AI-004 | [MemoEmbedding 模型](./AI-004-memo-embedding-model.md)    | 🔲 待开发 | AI-003                         |
-| AI-005 | [Driver 接口扩展](./AI-005-driver-interface.md)           | 🔲 待开发 | AI-004                         |
-| AI-006 | [PostgreSQL 向量搜索](./AI-006-postgres-vector-search.md) | 🔲 待开发 | AI-005                         |
-| AI-007 | [AI 插件配置](./AI-007-ai-plugin-config.md)               | 🔲 待开发 | AI-002                         |
-| AI-008 | [Embedding 服务](./AI-008-embedding-service.md)           | 🔲 待开发 | AI-007                         |
-| AI-009 | [Reranker 服务](./AI-009-reranker-service.md)             | 🔲 待开发 | AI-007                         |
-| AI-010 | [LLM 服务](./AI-010-llm-service.md)                       | 🔲 待开发 | AI-007                         |
-| AI-011 | [向量生成后台任务](./AI-011-embedding-runner.md)          | 🔲 待开发 | AI-008, AI-006                 |
-| AI-012 | [SemanticSearch API](./AI-012-semantic-search-api.md)     | 🔲 待开发 | AI-001, AI-006, AI-008, AI-009 |
-| AI-013 | [ChatWithMemos API](./AI-013-chat-api.md)                 | 🔲 待开发 | AI-012, AI-010                 |
-| AI-014 | [SuggestTags API](./AI-014-suggest-tags-api.md)           | 🔲 待开发 | AI-010                         |
-| AI-015 | [GetRelatedMemos API](./AI-015-related-memos-api.md)      | 🔲 待开发 | AI-006, AI-008                 |
-| AI-016 | [前端 AI Hooks](./AI-016-frontend-hooks.md)               | 🔲 待开发 | AI-012, AI-013, AI-014, AI-015 |
+| AI-001 | [Proto 定义](./AI-001-proto-definition.md)                | ✅ 已完成 | -                              |
+| AI-002 | [Profile 配置扩展](./AI-002-profile-config.md)            | ✅ 已完成 | -                              |
+| AI-003 | [数据库迁移 pgvector](./AI-003-db-migration.md)           | ✅ 已完成 | -                              |
+| AI-004 | [MemoEmbedding 模型](./AI-004-memo-embedding-model.md)    | ✅ 已完成 | AI-003                         |
+| AI-005 | [Driver 接口扩展](./AI-005-driver-interface.md)           | ✅ 已完成 | AI-004                         |
+| AI-006 | [PostgreSQL 向量搜索](./AI-006-postgres-vector-search.md) | ✅ 已完成 | AI-005                         |
+| AI-007 | [AI 插件配置](./AI-007-ai-plugin-config.md)               | ✅ 已完成 | AI-002                         |
+| AI-008 | [Embedding 服务](./AI-008-embedding-service.md)           | ✅ 已完成 | AI-007                         |
+| AI-009 | [Reranker 服务](./AI-009-reranker-service.md)             | ✅ 已完成 | AI-007                         |
+| AI-010 | [LLM 服务](./AI-010-llm-service.md)                       | ✅ 已完成 | AI-007                         |
+| AI-011 | [向量生成后台任务](./AI-011-embedding-runner.md)          | ✅ 已完成 | AI-008, AI-006                 |
+| AI-012 | [SemanticSearch API](./AI-012-semantic-search-api.md)     | ✅ 已完成 | AI-001, AI-006, AI-008, AI-009 |
+| AI-013 | [ChatWithMemos API](./AI-013-chat-api.md)                 | ✅ 已完成 | AI-012, AI-010                 |
+| AI-014 | [SuggestTags API](./AI-014-suggest-tags-api.md)           | ✅ 已完成 | AI-010                         |
+| AI-015 | [GetRelatedMemos API](./AI-015-related-memos-api.md)      | ✅ 已完成 | AI-006, AI-008                 |
+| AI-016 | [前端 AI Hooks](./AI-016-frontend-hooks.md)               | ✅ 已完成 | AI-012, AI-013, AI-014, AI-015 |
 
 ## 状态图例
 
