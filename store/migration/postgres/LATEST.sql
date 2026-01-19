@@ -105,3 +105,41 @@ CREATE TABLE reaction (
   reaction_type TEXT NOT NULL,
   UNIQUE(creator_id, content_id, reaction_type)
 );
+
+-- memo_embedding
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE memo_embedding (
+  id SERIAL PRIMARY KEY,
+  memo_id INTEGER NOT NULL,
+  embedding vector(1024) NOT NULL,
+  model VARCHAR(100) NOT NULL DEFAULT 'BAAI/bge-m3',
+  created_ts BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
+  updated_ts BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
+  CONSTRAINT fk_memo_embedding_memo
+    FOREIGN KEY (memo_id)
+    REFERENCES memo(id)
+    ON DELETE CASCADE,
+  CONSTRAINT uq_memo_embedding_memo_model
+    UNIQUE (memo_id, model)
+);
+
+CREATE INDEX idx_memo_embedding_hnsw
+ON memo_embedding USING hnsw (embedding vector_cosine_ops)
+WITH (m = 8, ef_construction = 32);
+
+CREATE INDEX idx_memo_embedding_memo_id
+ON memo_embedding (memo_id);
+
+CREATE OR REPLACE FUNCTION update_memo_embedding_updated_ts()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_ts = EXTRACT(EPOCH FROM NOW())::BIGINT;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_memo_embedding_updated_ts
+  BEFORE UPDATE ON memo_embedding
+  FOR EACH ROW
+  EXECUTE FUNCTION update_memo_embedding_updated_ts();

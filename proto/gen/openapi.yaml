@@ -69,6 +69,81 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/chat:
+        post:
+            tags:
+                - AIService
+            description: ChatWithMemos streams a chat response using memos as context.
+            operationId: AIService_ChatWithMemos
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatWithMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatWithMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/search:
+        post:
+            tags:
+                - AIService
+            description: SemanticSearch performs semantic search on memos.
+            operationId: AIService_SemanticSearch
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SemanticSearchRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SemanticSearchResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/suggest-tags:
+        post:
+            tags:
+                - AIService
+            description: SuggestTags suggests tags for memo content.
+            operationId: AIService_SuggestTags
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SuggestTagsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SuggestTagsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/attachments:
         get:
             tags:
@@ -983,6 +1058,37 @@ paths:
                 "200":
                     description: OK
                     content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/memos/{memo}/related:
+        get:
+            tags:
+                - AIService
+            description: GetRelatedMemos finds memos related to a specific memo.
+            operationId: AIService_GetRelatedMemos
+            parameters:
+                - name: memo
+                  in: path
+                  description: The memo id.
+                  required: true
+                  schema:
+                    type: string
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetRelatedMemosResponse'
                 default:
                     description: Default error response
                     content:
@@ -2030,6 +2136,30 @@ components:
                     description: |-
                         Optional. The related memo. Refer to `Memo.name`.
                          Format: memos/{memo}
+        ChatWithMemosRequest:
+            required:
+                - message
+            type: object
+            properties:
+                message:
+                    type: string
+                history:
+                    type: array
+                    items:
+                        type: string
+            description: ChatWithMemosRequest is the request for ChatWithMemos.
+        ChatWithMemosResponse:
+            type: object
+            properties:
+                content:
+                    type: string
+                sources:
+                    type: array
+                    items:
+                        type: string
+                done:
+                    type: boolean
+            description: ChatWithMemosResponse is the response for ChatWithMemos.
         CreatePersonalAccessTokenRequest:
             required:
                 - parent
@@ -2087,6 +2217,14 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/User'
                     description: The authenticated user's information.
+        GetRelatedMemosResponse:
+            type: object
+            properties:
+                memos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SearchResult'
+            description: GetRelatedMemosResponse is the response for GetRelatedMemos.
         GoogleProtobufAny:
             type: object
             properties:
@@ -2682,6 +2820,36 @@ components:
                     type: string
                     description: When the access token expires.
                     format: date-time
+        SearchResult:
+            type: object
+            properties:
+                name:
+                    type: string
+                snippet:
+                    type: string
+                score:
+                    type: number
+                    format: float
+            description: SearchResult represents a single search result.
+        SemanticSearchRequest:
+            required:
+                - query
+            type: object
+            properties:
+                query:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: SemanticSearchRequest is the request for SemanticSearch.
+        SemanticSearchResponse:
+            type: object
+            properties:
+                results:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SearchResult'
+            description: SemanticSearchResponse is the response for SemanticSearch.
         SetMemoAttachmentsRequest:
             required:
                 - name
@@ -2829,6 +2997,25 @@ components:
             description: |-
                 S3 configuration for cloud storage backend.
                  Reference: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-go/
+        SuggestTagsRequest:
+            required:
+                - content
+            type: object
+            properties:
+                content:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: SuggestTagsRequest is the request for SuggestTags.
+        SuggestTagsResponse:
+            type: object
+            properties:
+                tags:
+                    type: array
+                    items:
+                        type: string
+            description: SuggestTagsResponse is the response for SuggestTags.
         UpsertMemoReactionRequest:
             required:
                 - name
@@ -3057,6 +3244,8 @@ components:
                     format: date-time
             description: UserWebhook represents a webhook owned by a user.
 tags:
+    - name: AIService
+      description: AIService provides AI-powered features for memo management.
     - name: ActivityService
     - name: AttachmentService
     - name: AuthService

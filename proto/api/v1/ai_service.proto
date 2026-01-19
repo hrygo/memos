@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "gen/api/v1";
+
+// AIService provides AI-powered features for memo management.
+service AIService {
+  // SemanticSearch performs semantic search on memos.
+  rpc SemanticSearch(SemanticSearchRequest) returns (SemanticSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/search"
+      body: "*"
+    };
+  }
+
+  // SuggestTags suggests tags for memo content.
+  rpc SuggestTags(SuggestTagsRequest) returns (SuggestTagsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/suggest-tags"
+      body: "*"
+    };
+  }
+
+  // ChatWithMemos streams a chat response using memos as context.
+  rpc ChatWithMemos(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/chat"
+      body: "*"
+    };
+  }
+
+  // GetRelatedMemos finds memos related to a specific memo.
+  rpc GetRelatedMemos(GetRelatedMemosRequest) returns (GetRelatedMemosResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/{name=memos/*}/related"
+    };
+  }
+}
+
+// SemanticSearchRequest is the request for SemanticSearch.
+message SemanticSearchRequest {
+  string query = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 limit = 2;  // default: 10, max: 50
+}
+
+// SemanticSearchResponse is the response for SemanticSearch.
+message SemanticSearchResponse {
+  repeated SearchResult results = 1;
+}
+
+// SearchResult represents a single search result.
+message SearchResult {
+  string name = 1;      // memos/{id}
+  string snippet = 2;   // content snippet
+  float score = 3;      // relevance score
+}
+
+// SuggestTagsRequest is the request for SuggestTags.
+message SuggestTagsRequest {
+  string content = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 limit = 2;  // default: 5
+}
+
+// SuggestTagsResponse is the response for SuggestTags.
+message SuggestTagsResponse {
+  repeated string tags = 1;
+}
+
+// ChatWithMemosRequest is the request for ChatWithMemos.
+message ChatWithMemosRequest {
+  string message = 1 [(google.api.field_behavior) = REQUIRED];
+  repeated string history = 2;  // conversation history
+}
+
+// ChatWithMemosResponse is the response for ChatWithMemos.
+message ChatWithMemosResponse {
+  string content = 1;           // streaming content chunk
+  repeated string sources = 2;  // citation sources memos/{id}
+  bool done = 3;                // stream end marker
+}
+
+// GetRelatedMemosRequest is the request for GetRelatedMemos.
+message GetRelatedMemosRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];  // memos/{id}
+  int32 limit = 2;  // default: 5
+}
+
+// GetRelatedMemosResponse is the response for GetRelatedMemos.
+message GetRelatedMemosResponse {
+  repeated SearchResult memos = 1;
+}
