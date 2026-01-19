@@ -8,9 +8,6 @@ endif
 
 .PHONY: help run dev web test deps clean
 .PHONY: docker-up docker-down docker-logs docker-reset
-.PHONY: docker-prod-up docker-prod-down docker-prod-logs
-.PHONY: docker-full-up docker-full-down docker-full-logs docker-full-rebuild
-.PHONY: docker-full-ps docker-full-exec-backend docker-full-exec-frontend
 .PHONY: db-connect db-reset db-vector
 .PHONY: start stop restart status logs
 
@@ -127,51 +124,6 @@ docker-prod-logs: ## 查看生产环境日志
 	@docker compose -f docker/compose/prod.yml logs -f
 
 # ===================================================================
-# 全 Docker 开发环境 (PostgreSQL + 后端 + 前端)
-# ===================================================================
-
-##@ 全 Docker 开发
-
-docker-full-up: ## 启动全 Docker 开发环境 (所有服务)
-	@echo "Starting full Docker development environment..."
-	@docker compose -f docker/compose/full-dev.yml up -d --build
-	@echo ""
-	@echo "等待服务启动..."
-	@sleep 5
-	@echo ""
-	@echo "服务已启动!"
-	@echo "  - 前端: http://localhost:5173"
-	@echo "  - 后端: http://localhost:8081"
-	@echo "  - 数据库: localhost:5432"
-	@echo ""
-	@echo "查看日志: make docker-full-logs"
-	@echo "查看状态: make docker-full-ps"
-
-docker-full-down: ## 停止全 Docker 开发环境
-	@echo "Stopping full Docker development environment..."
-	@docker compose -f docker/compose/full-dev.yml down
-	@echo "服务已停止"
-
-docker-full-logs: ## 查看全 Docker 日志 (指定服务: make docker-full-logs backend)
-	@docker compose -f docker/compose/full-dev.yml logs -f $(filter-out $@,$(MAKECMDGOALS))
-
-docker-full-rebuild: ## 重新构建并启动全 Docker 环境
-	@echo "Rebuilding full Docker development environment..."
-	@docker compose -f docker/compose/full-dev.yml up -d --build --force-recreate
-
-docker-full-ps: ## 查看全 Docker 容器状态
-	@docker compose -f docker/compose/full-dev.yml ps
-
-docker-full-exec-backend: ## 进入后端容器 shell
-	@docker exec -it memos-backend-dev sh
-
-docker-full-exec-frontend: ## 进入前端容器 shell
-	@docker exec -it memos-frontend-dev sh
-
-docker-full-exec-postgres: ## 连接 PostgreSQL shell
-	@docker exec -it memos-postgres-dev psql -U memos -d memos
-
-# ===================================================================
 # 数据库
 # ===================================================================
 
@@ -268,17 +220,8 @@ help: ## 显示此帮助信息
 	@printf "  docker-down          停止开发环境 PostgreSQL\n"
 	@printf "  docker-logs          查看 PostgreSQL 日志\n"
 	@printf "  docker-reset         重置 PostgreSQL 数据 (危险!)\n"
-	@printf "  docker-prod-up       启动生产环境\n"
+	@printf "  docker-prod-up       启动生产环境 (PostgreSQL)\n"
 	@printf "  docker-prod-down     停止生产环境\n"
-	@printf "\n\033[1m全 Docker 开发 (推荐):\033[0m\n"
-	@printf "  docker-full-up       启动全 Docker 开发环境 (PG + 后端 + 前端)\n"
-	@printf "  docker-full-down     停止全 Docker 开发环境\n"
-	@printf "  docker-full-logs     查看所有日志 (可指定服务名)\n"
-	@printf "  docker-full-rebuild  重新构建并启动\n"
-	@printf "  docker-full-ps       查看容器状态\n"
-	@printf "  docker-full-exec-backend   进入后端容器\n"
-	@printf "  docker-full-exec-frontend  进入前端容器\n"
-	@printf "  docker-full-exec-postgres  连接 PostgreSQL\n"
 	@printf "\n\033[1m数据库:\033[0m\n"
 	@printf "  db-connect           连接 PostgreSQL shell\n"
 	@printf "  db-reset             重置数据库 schema\n"
@@ -296,13 +239,7 @@ help: ## 显示此帮助信息
 	@printf "  clean                清理构建文件\n"
 	@printf "  clean-all            清理所有\n"
 	@printf "\n\033[1mQuick Start:\033[0m\n"
-	@printf "\n\033[1m方式一: 全 Docker 方案 (推荐，无需本地安装 Go/Node)\033[0m\n"
-	@printf "  1. make docker-full-up         # 一键启动所有服务\n"
-	@printf "  2. make docker-full-logs       # 查看日志\n"
-	@printf "  3. make docker-full-down       # 停止服务\n"
-	@printf "\n\033[1m方式二: 本地开发 (需要安装 Go 1.25+ 和 pnpm)\033[0m\n"
-	@printf "  1. cp .env.example .env        # 复制环境变量模板\n"
-	@printf "  2. 编辑 .env 填入 API Keys\n"
-	@printf "  3. make start                   # 一键启动所有服务\n"
-	@printf "  4. make status                  # 查看服务状态\n"
+	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
+	@printf "  2. make start                   # 启动后端 + 前端\n"
+	@printf "  3. 访问 http://localhost:5173   # 打开前端\n"
 	@printf ""
