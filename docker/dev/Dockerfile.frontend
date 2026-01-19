@@ -1,0 +1,20 @@
+# 开发环境前端 Dockerfile
+# 支持 Vite 热更新 (HMR)
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 复制 package.json
+COPY web/package.json web/pnpm-lock.yaml ./
+
+# 安装依赖 (利用 Docker 缓存)
+RUN pnpm install --frozen-lockfile
+
+# 开发服务器配置
+EXPOSE 5173
+
+CMD ["pnpm", "--dir", "web", "dev", "--host", "0.0.0.0"]

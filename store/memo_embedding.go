@@ -18,6 +18,12 @@ type FindMemoEmbedding struct {
 	Model  *string
 }
 
+// FindMemosWithoutEmbedding is the find condition for memos without embeddings.
+type FindMemosWithoutEmbedding struct {
+	Model string // Embedding model to check
+	Limit int    // Maximum number of memos to return
+}
+
 // MemoWithScore represents a vector search result with similarity score.
 type MemoWithScore struct {
 	Memo  *Memo
@@ -59,6 +65,11 @@ func (s *Store) ListMemoEmbeddings(ctx context.Context, find *FindMemoEmbedding)
 // DeleteMemoEmbedding deletes a memo embedding.
 func (s *Store) DeleteMemoEmbedding(ctx context.Context, memoID int32) error {
 	return s.driver.DeleteMemoEmbedding(ctx, memoID)
+}
+
+// FindMemosWithoutEmbedding finds memos that don't have embeddings for the specified model.
+func (s *Store) FindMemosWithoutEmbedding(ctx context.Context, find *FindMemosWithoutEmbedding) ([]*Memo, error) {
+	return s.driver.FindMemosWithoutEmbedding(ctx, find)
 }
 
 // VectorSearch performs vector similarity search.

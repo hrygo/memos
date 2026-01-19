@@ -20,6 +20,13 @@ docs/plans/
 # Docker Compose Environment File
 .env
 
+# direnv
+.envrc
+
+# Dev script runtime files
+.pids/
+.logs/
+
 dist
 
 # VSCode settings

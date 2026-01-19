@@ -1,0 +1,112 @@
+# Memos 全 Docker 开发环境
+# 包含: PostgreSQL + 后端 + 前端
+# 所有服务都在 Docker 中运行，无需本地安装 Go/Node/pnpm
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: memos-postgres-dev
+    environment:
+      POSTGRES_DB: memos
+      POSTGRES_USER: memos
+      POSTGRES_PASSWORD: memos
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 384MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 32MB
+      POSTGRES_WORK_MEM: 4MB
+      POSTGRES_MAX_CONNECTIONS: 50
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memos"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - memos_dev
+    command: [
+      "-c", "shared_buffers=128MB",
+      "-c", "effective_cache_size=384MB",
+      "-c", "maintenance_work_mem=32MB",
+      "-c", "work_mem=4MB",
+      "-c", "max_connections=50",
+      "-c", "shared_preload_libraries=vector"
+    ]
+
+  # 后端服务 (Go + Air 热重载)
+  backend:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.backend
+    container_name: memos-backend-dev
+    environment:
+      # 数据库
+      MEMOS_DRIVER: postgres
+      MEMOS_DSN: postgres://memos:memos@postgres:5432/memos?sslmode=disable
+      MEMOS_MODE: dev
+      MEMOS_PORT: 8081
+
+      # AI 功能 (可选，从 .env 加载)
+      MEMOS_AI_ENABLED: ${MEMOS_AI_ENABLED:-false}
+      MEMOS_AI_EMBEDDING_PROVIDER: ${MEMOS_AI_EMBEDDING_PROVIDER:-siliconflow}
+      MEMOS_AI_LLM_PROVIDER: ${MEMOS_AI_LLM_PROVIDER:-deepseek}
+      MEMOS_AI_SILICONFLOW_API_KEY: ${MEMOS_AI_SILICONFLOW_API_KEY}
+      MEMOS_AI_DEEPSEEK_API_KEY: ${MEMOS_AI_DEEPSEEK_API_KEY}
+      MEMOS_AI_OPENAI_API_KEY: ${MEMOS_AI_OPENAI_API_KEY}
+      MEMOS_AI_OPENAI_BASE_URL: ${MEMOS_AI_OPENAI_BASE_URL:-https://api.siliconflow.cn/v1}
+      MEMOS_AI_EMBEDDING_MODEL: ${MEMOS_AI_EMBEDDING_MODEL:-BAAI/bge-m3}
+      MEMOS_AI_RERANK_MODEL: ${MEMOS_AI_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+      MEMOS_AI_LLM_MODEL: ${MEMOS_AI_LLM_MODEL:-deepseek-chat}
+    ports:
+      - "8081:8081"
+    volumes:
+      - ../../:/app:cached
+      - go_cache:/go/pkg/mod
+      - go_build:/root/.cache/go-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - memos_dev
+    # 使用 air 实现热重载
+    command: air -c .air.toml
+
+  # 前端服务 (Vite 开发服务器)
+  frontend:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.frontend
+    container_name: memos-frontend-dev
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8081
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../:/app:cached
+      - node_modules:/app/web/node_modules
+      - vite_cache:/app/web/node_modules/.vite
+    depends_on:
+      - backend
+    networks:
+      - memos_dev
+    command: pnpm --dir web dev --host 0.0.0.0
+
+networks:
+  memos_dev:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  go_cache:
+    driver: local
+  go_build:
+    driver: local
+  node_modules:
+    driver: local
+  vite_cache:
+    driver: local

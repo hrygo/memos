@@ -1,0 +1,46 @@
+# Air 热重载配置
+# 用于开发环境中自动重新编译 Go 代码
+
+root = "."
+testdata_dir = "testdata"
+tmp_dir = "tmp"
+
+[build]
+  # 要监视的命令
+  cmd = "go build -o ./tmp/main ./cmd/memos"
+  # 构建的二进制文件路径
+  bin = "tmp/main --mode dev --driver postgres --dsn 'postgres://memos:memos@postgres:5432/memos?sslmode=disable' --port 8081"
+  # 要监视的文件扩展名
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  # 要忽略的文件扩展名
+  exclude_ext = ["_test.go"]
+  # 要监视的目录
+  include_dir = []
+  # 要忽略的目录
+  exclude_dir = ["tmp", "vendor", "web", "node_modules", "testdata", ".git"]
+  # 要忽略的文件
+  exclude_file = []
+  # 要忽略的正则
+  exclude_regex = ["_test\\.go"]
+  # 文件变化后延迟时间
+  delay = 1000
+  # 停止旧进程后再启动新进程
+  stop_on_root = false
+  # 发送中断信号前等待时间
+  delay_send_interrupt = 500
+  # 发送中断信号后等待时间
+  kill_timeout = "0s"
+
+[log]
+  # 显示日志时间
+  time = true
+  # 只显示主要日志
+  main_only = false
+
+[misc]
+  # 删除每次构建的中间文件
+  clean_on_exit = false
+
+[screen]
+  clear_on_rebuild = false
+  keep_scroll = true

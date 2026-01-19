@@ -42,6 +42,7 @@ type Profile struct {
 	AIDeepSeekAPIKey     string // MEMOS_AI_DEEPSEEK_API_KEY
 	AIDeepSeekBaseURL    string // MEMOS_AI_DEEPSEEK_BASE_URL (default: https://api.deepseek.com)
 	AIOpenAIAPIKey       string // MEMOS_AI_OPENAI_API_KEY
+	AIOpenAIBaseURL      string // MEMOS_AI_OPENAI_BASE_URL (default: https://api.openai.com/v1)
 	AIOllamaBaseURL      string // MEMOS_AI_OLLAMA_BASE_URL (default: http://localhost:11434)
 	AIEmbeddingModel     string // MEMOS_AI_EMBEDDING_MODEL (default: BAAI/bge-m3)
 	AIRerankModel        string // MEMOS_AI_RERANK_MODEL (default: BAAI/bge-reranker-v2-m3)
@@ -75,6 +76,7 @@ func (p *Profile) FromEnv() {
 	p.AIDeepSeekAPIKey = os.Getenv("MEMOS_AI_DEEPSEEK_API_KEY")
 	p.AIDeepSeekBaseURL = getEnvOrDefault("MEMOS_AI_DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 	p.AIOpenAIAPIKey = os.Getenv("MEMOS_AI_OPENAI_API_KEY")
+	p.AIOpenAIBaseURL = getEnvOrDefault("MEMOS_AI_OPENAI_BASE_URL", "https://api.openai.com/v1")
 	p.AIOllamaBaseURL = getEnvOrDefault("MEMOS_AI_OLLAMA_BASE_URL", "http://localhost:11434")
 	p.AIEmbeddingModel = getEnvOrDefault("MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3")
 	p.AIRerankModel = getEnvOrDefault("MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")

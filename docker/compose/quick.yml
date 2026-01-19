@@ -1,0 +1,17 @@
+# 快速运行官方 Memos 镜像
+#
+# 用途: 仅用于快速体验/测试官方稳定版本
+# 使用: docker compose -f scripts/compose.quick.yaml up -d
+#
+# 注意: 不包含 pgvector/AI 功能，不使用本地代码
+# 开发请使用: make start
+# 生产部署请使用: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  memos:
+    image: neosmemo/memos:stable
+    container_name: memos-quick
+    volumes:
+      - ~/.memos/:/var/opt/memos
+    ports:
+      - "5230:5230"

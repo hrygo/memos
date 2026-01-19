@@ -66,7 +66,7 @@ func NewConfigFromProfile(p *profile.Profile) *Config {
 		cfg.Embedding.BaseURL = p.AISiliconFlowBaseURL
 	case "openai":
 		cfg.Embedding.APIKey = p.AIOpenAIAPIKey
-		cfg.Embedding.BaseURL = "https://api.openai.com/v1"
+		cfg.Embedding.BaseURL = p.AIOpenAIBaseURL
 	case "ollama":
 		cfg.Embedding.BaseURL = p.AIOllamaBaseURL
 	}
@@ -94,7 +94,7 @@ func NewConfigFromProfile(p *profile.Profile) *Config {
 		cfg.LLM.BaseURL = p.AIDeepSeekBaseURL
 	case "openai":
 		cfg.LLM.APIKey = p.AIOpenAIAPIKey
-		cfg.LLM.BaseURL = "https://api.openai.com/v1"
+		cfg.LLM.BaseURL = p.AIOpenAIBaseURL
 	case "ollama":
 		cfg.LLM.BaseURL = p.AIOllamaBaseURL
 	}

@@ -15,7 +15,11 @@
       "Bash(go doc:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pkill:*)",
+      "Bash(chmod:*)",
+      "Bash(./scripts/dev.sh:*)"
     ]
   }
 }
