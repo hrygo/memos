@@ -1,0 +1,106 @@
+# Memos Production Environment
+# Optimized for 2C2G (2 vCPU, 2GB RAM) server
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: memos-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-memos}
+      POSTGRES_USER: ${POSTGRES_USER:-memos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Memory settings for 2GB RAM
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 384MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 32MB
+      POSTGRES_WORK_MEM: 4MB
+      POSTGRES_MAX_CONNECTIONS: 50
+    ports:
+      - "127.0.0.1:5432:5432"  # Only listen on localhost
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memos}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Resource limits for 2C2G (leave 1 core for Memos app)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    command: [
+      "-c", "shared_buffers=128MB",
+      "-c", "effective_cache_size=384MB",
+      "-c", "maintenance_work_mem=32MB",
+      "-c", "work_mem=4MB",
+      "-c", "max_connections=50",
+      "-c", "shared_preload_libraries=vector"
+    ]
+    networks:
+      - memos_network
+
+  memos:
+    image: ghcr.io/usememos/memos:latest
+    container_name: memos-app
+    restart: always
+    ports:
+      - "127.0.0.1:8081:8081"  # Reverse proxy should be in front
+    environment:
+      # Database
+      DRIVER: postgres
+      DSN: postgres://memos:${POSTGRES_PASSWORD}@postgres:5432/memos?sslmode=disable
+      # AI Features
+      MEMOS_AI_ENABLED: ${MEMOS_AI_ENABLED:-true}
+      MEMOS_AI_EMBEDDING_PROVIDER: ${MEMOS_AI_EMBEDDING_PROVIDER:-siliconflow}
+      MEMOS_AI_LLM_PROVIDER: ${MEMOS_AI_LLM_PROVIDER:-deepseek}
+      MEMOS_AI_SILICONFLOW_API_KEY: ${MEMOS_AI_SILICONFLOW_API_KEY}
+      MEMOS_AI_DEEPSEEK_API_KEY: ${MEMOS_AI_DEEPSEEK_API_KEY}
+      # Performance tuning for 2C2G
+      GOMAXPROCS: 1  # Leave 1 core for PostgreSQL
+    volumes:
+      - memos_data:/var/opt/memos
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    networks:
+      - memos_network
+
+  # Optional: Nginx reverse proxy for HTTPS
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: memos-nginx
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - memos
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 128M
+
+networks:
+  memos_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  memos_data:

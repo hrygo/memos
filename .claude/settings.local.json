@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go version:*)",
+      "Bash(node:*)",
+      "Bash(pnpm --version)",
+      "Bash(buf:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(DRIVER=sqlite go test:*)",
+      "Bash(docker:*)",
+      "Bash(make:*)"
+    ]
+  }
+}
