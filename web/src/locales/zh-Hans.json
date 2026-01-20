@@ -61,6 +61,7 @@
     "layout": "布局",
     "learn-more": "了解更多",
     "link": "链接",
+    "location": "地点",
     "map": "地图",
     "mark": "引用",
     "memo": "备忘录",
@@ -526,6 +527,11 @@
     "adjust": "调整",
     "ignore": "忽略并创建",
     "overwrite-confirm-title": "确认覆盖",
-    "overwrite-confirm-desc": "将删除所有冲突的日程，此操作无法撤销。是否继续？"
+    "overwrite-confirm-desc": "将删除所有冲突的日程，此操作无法撤销。是否继续？",
+    "conflict-suggestion-hint": "该时间段与其他日程冲突，建议调整",
+    "conflicting-schedules": "冲突的日程",
+    "more-conflicts": "更多冲突",
+    "adjust-time": "调整时间",
+    "create-anyway": "仍要创建"
   }
 }

@@ -161,7 +161,7 @@ Rules:
 		endTs = startTs + 3600
 	}
 
-	result := &ParseResult{
+	return &ParseResult{
 		Title:       llmResp.Title,
 		Description: llmResp.Description,
 		Location:    llmResp.Location,
@@ -170,14 +170,8 @@ Rules:
 		AllDay:      llmResp.AllDay,
 		Timezone:    p.location.String(),
 		Reminders:   llmResp.Reminders,
-	}
+	}, nil
 
-	// Log Result
-	if resultBytes, err := json.MarshalIndent(result, "", "  "); err == nil {
-		fmt.Printf("[Schedule Parser] Final ParseResult:\n%s\n", string(resultBytes))
-	}
-
-	return result, nil
 }
 
 // ToSchedule converts ParseResult to v1pb.Schedule.

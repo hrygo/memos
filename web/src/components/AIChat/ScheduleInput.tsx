@@ -5,6 +5,7 @@ import { Calendar, Clock, Loader2, MapPin, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -135,7 +136,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
 
   const handleAdjust = () => {
     setShowConflictAlert(false);
-    setParsedSchedule(null);
+    // Keep parsedSchedule to allow editing
   };
 
   const handleOverwrite = () => {
@@ -167,15 +168,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
     onOpenChange(false);
   };
 
-  const formatDateTime = (ts: bigint) => {
-    // Manually construct Timestamp message to avoid object literal type errors
-    // or cast to any if necessary, but ideally use create(TimestampSchema)
-    // However, timestampDate accepts Timestamp | PlainMessage<Timestamp> in newer versions
-    // but strict type checking flags missing $typeName.
-    // Safe approach: create(TimestampSchema, { ... })
-    const date = timestampDate(create(TimestampSchema, { seconds: ts, nanos: 0 }));
-    return dayjs(date).format("YYYY-MM-DD HH:mm");
-  };
+
 
   return (
     <>
@@ -229,33 +222,69 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
                     </Button>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">{parsedSchedule.title}</div>
-                        {parsedSchedule.description && <div className="text-xs text-muted-foreground">{parsedSchedule.description}</div>}
-                      </div>
-                    </div>
-
+                  <div className="space-y-3 text-sm">
+                    {/* Title */}
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        {formatDateTime(parsedSchedule.startTs)}
-                        {parsedSchedule.endTs > 0 && ` - ${formatDateTime(parsedSchedule.endTs)}`}
-                        {parsedSchedule.allDay && ` (${t("schedule.all-day")})`}
+                      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Input
+                        value={parsedSchedule.title}
+                        onChange={(e) => setParsedSchedule({ ...parsedSchedule, title: e.target.value })}
+                        className="h-8 font-medium"
+                        placeholder={t("common.title")}
+                      />
+                    </div>
+
+                    {/* Time */}
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex items-center gap-2 w-full">
+                        <Input
+                          type="datetime-local"
+                          value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format("YYYY-MM-DDTHH:mm")}
+                          onChange={(e) => {
+                            const ts = BigInt(dayjs(e.target.value).unix());
+                            setParsedSchedule({ ...parsedSchedule, startTs: ts });
+                          }}
+                          className="h-8 w-full"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="datetime-local"
+                          value={parsedSchedule.endTs > 0 ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format("YYYY-MM-DDTHH:mm") : ""}
+                          onChange={(e) => {
+                            const ts = BigInt(dayjs(e.target.value).unix());
+                            setParsedSchedule({ ...parsedSchedule, endTs: ts });
+                          }}
+                          className="h-8 w-full"
+                        />
                       </div>
                     </div>
 
-                    {parsedSchedule.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <div>{parsedSchedule.location}</div>
+                    {/* Location */}
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Input
+                        value={parsedSchedule.location || ""}
+                        onChange={(e) => setParsedSchedule({ ...parsedSchedule, location: e.target.value })}
+                        className="h-8"
+                        placeholder={t("common.location") || "Location"}
+                      />
+                    </div>
+
+                    {/* Description */}
+                    {parsedSchedule.description && (
+                      <div className="pl-6">
+                        <Textarea
+                          value={parsedSchedule.description}
+                          onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
+                          className="min-h-[60px] text-xs resize-none"
+                          placeholder={t("schedule.description")}
+                        />
                       </div>
                     )}
 
                     {parsedSchedule.reminders.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2">
+                      <div className="flex flex-wrap gap-1 pt-2 pl-6">
                         {parsedSchedule.reminders.map((reminder, idx) => (
                           <span key={idx} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
                             {reminder.type === "before" && "提醒"}: {reminder.value} {reminder.unit}

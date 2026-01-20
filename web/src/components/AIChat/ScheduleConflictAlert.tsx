@@ -70,7 +70,7 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm
           <Button variant="ghost" onClick={onDiscard} className="text-muted-foreground hover:text-destructive">
             {t("schedule.discard")}
           </Button>
-          <Button variant="outline" onClick={onAdjust}>
+          <Button variant="default" onClick={onAdjust}>
             {t("schedule.adjust")}
           </Button>
           <Button variant="secondary" onClick={onIgnore}>

@@ -34,7 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { useParseAndCreateSchedule, useSchedules } from "@/hooks/useScheduleQueries";
+import { useParseAndCreateSchedule, useSchedules, useCheckConflict } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 
@@ -80,7 +80,9 @@ const AIChat = () => {
   const [showScheduleSuggestion, setShowScheduleSuggestion] = useState(false);
   const [lastScheduleMessage, setLastScheduleMessage] = useState("");
   const [isParsingSchedule, setIsParsingSchedule] = useState(false);
+  const [scheduleConflicts, setScheduleConflicts] = useState<Schedule[]>([]);
   const parseAndCreateSchedule = useParseAndCreateSchedule();
+  const checkConflict = useCheckConflict();
 
   // Intent detection for schedule creation (improved to reduce false positives)
   const detectScheduleIntent = (text: string): boolean => {
@@ -287,6 +289,22 @@ const AIChat = () => {
       if (result.parsedSchedule) {
         setSuggestedSchedule(result.parsedSchedule);
         setLastScheduleMessage(userMessage);
+
+        // Check for conflicts
+        const endTs = result.parsedSchedule.endTs > 0 ? result.parsedSchedule.endTs : result.parsedSchedule.startTs + BigInt(3600);
+
+        try {
+          const conflictResult = await checkConflict.mutateAsync({
+            startTs: result.parsedSchedule.startTs,
+            endTs: endTs,
+          });
+
+          setScheduleConflicts(conflictResult.conflicts || []);
+        } catch (error) {
+          console.error("[ScheduleSuggestion] Failed to check conflicts:", error);
+          setScheduleConflicts([]);
+        }
+
         setShowScheduleSuggestion(true);
       }
     } catch (error) {
@@ -316,6 +334,17 @@ const AIChat = () => {
     setShowScheduleSuggestion(false);
     setSuggestedSchedule(null);
     setLastScheduleMessage("");
+    setScheduleConflicts([]);
+  };
+
+  const handleAdjustTime = () => {
+    if (suggestedSchedule) {
+      // Open schedule input for editing with conflict context
+      setScheduleInputText(lastScheduleMessage);
+      setScheduleInputOpen(true);
+      setShowScheduleSuggestion(false);
+      setScheduleConflicts([]);
+    }
   };
 
   const handleEditScheduleSuggestion = () => {
@@ -499,9 +528,11 @@ const AIChat = () => {
           <div className="px-4 py-2">
             <ScheduleSuggestionCard
               parsedSchedule={suggestedSchedule}
+              conflicts={scheduleConflicts}
               onConfirm={handleConfirmScheduleSuggestion}
               onDismiss={handleDismissScheduleSuggestion}
               onEdit={handleEditScheduleSuggestion}
+              onAdjustTime={handleAdjustTime}
             />
           </div>
         )}
