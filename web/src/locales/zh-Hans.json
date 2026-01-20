@@ -520,6 +520,12 @@
     "input-too-long": "输入过长（最多 500 字符）",
     "parsing": "正在识别日程...",
     "untitled": "无标题日程",
-    "delete-confirm": "确定要删除该日程吗？"
+    "delete-confirm": "确定要删除该日程吗？",
+    "overwrite": "覆盖",
+    "discard": "放弃",
+    "adjust": "调整",
+    "ignore": "忽略并创建",
+    "overwrite-confirm-title": "确认覆盖",
+    "overwrite-confirm-desc": "将删除所有冲突的日程，此操作无法撤销。是否继续？"
   }
 }

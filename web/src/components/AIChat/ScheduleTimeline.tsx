@@ -2,9 +2,13 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-cn";
-import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useDeleteSchedule } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -21,8 +25,10 @@ interface ScheduleTimelineProps {
 
 export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, className = "" }: ScheduleTimelineProps) => {
   const t = useTranslate();
+  const deleteSchedule = useDeleteSchedule();
   // Initialize with selectedDate or today
   const [currentDate, setCurrentDate] = useState(selectedDate ? dayjs(selectedDate) : dayjs());
+  const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
 
   // Sync internal state if prop changes
   useEffect(() => {
@@ -58,6 +64,22 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
     const today = dayjs();
     setCurrentDate(today);
     onDateClick?.(today.format("YYYY-MM-DD"));
+  };
+
+  const handleDelete = (name: string) => {
+    setScheduleToDelete(name);
+  };
+
+  const confirmDelete = async () => {
+    if (!scheduleToDelete) return;
+    try {
+      await deleteSchedule.mutateAsync(scheduleToDelete);
+      toast.success(t("schedule.schedule-deleted"));
+    } catch (_error) {
+      toast.error("Failed to delete schedule");
+    } finally {
+      setScheduleToDelete(null);
+    }
   };
 
   // Filter and Sort Schedules for selected date
@@ -173,8 +195,31 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
 
                   {/* Card */}
                   <div className="flex-1 min-w-0">
-                    <div className="bg-card hover:bg-accent/50 transition-colors border border-border/50 rounded-xl p-3 shadow-sm group-hover:shadow-md">
-                      <h4 className="font-semibold text-sm text-foreground mb-1 truncate leading-tight">
+                    <div className="bg-card hover:bg-accent/50 transition-colors border border-border/50 rounded-xl p-3 shadow-sm group-hover:shadow-md relative">
+                      {/* Action Menu (Visible on Hover) */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-background/80">
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(schedule.name);
+                              }}
+                              className="text-destructive focus:text-destructive cursor-pointer"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t("common.delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <h4 className="font-semibold text-sm text-foreground mb-1 truncate leading-tight pr-6">
                         {schedule.title || "Untitled Event"}
                       </h4>
                       <div className="flex items-center h-4 text-xs text-muted-foreground gap-3">
@@ -202,6 +247,23 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
           </div>
         )}
       </div>
+
+      <Dialog open={!!scheduleToDelete} onOpenChange={(open) => !open && setScheduleToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("schedule.delete-schedule")}</DialogTitle>
+            <DialogDescription>{t("schedule.delete-confirm")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setScheduleToDelete(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              {t("common.delete")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

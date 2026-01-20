@@ -520,6 +520,12 @@
     "input-too-long": "Input too long (max 500 characters)",
     "parsing": "Recognizing schedule...",
     "untitled": "Untitled Schedule",
-    "delete-confirm": "Are you sure you want to delete this schedule?"
+    "delete-confirm": "Are you sure you want to delete this schedule?",
+    "overwrite": "Overwrite",
+    "discard": "Discard",
+    "adjust": "Adjust",
+    "ignore": "Ignore Conflict",
+    "overwrite-confirm-title": "Confirm Overwrite",
+    "overwrite-confirm-desc": "This will delete the conflicting schedules. This action cannot be undone."
   }
 }

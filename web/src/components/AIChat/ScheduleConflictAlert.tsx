@@ -1,9 +1,9 @@
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { create } from "@bufbuild/protobuf";
+import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
@@ -12,18 +12,21 @@ interface ScheduleConflictAlertProps {
   onOpenChange: (open: boolean) => void;
   conflicts: Schedule[];
   onConfirm: () => void;
+  onIgnore: () => void;
+  onAdjust: () => void;
+  onDiscard: () => void;
 }
 
-export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm }: ScheduleConflictAlertProps) => {
+export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm, onIgnore, onAdjust, onDiscard }: ScheduleConflictAlertProps) => {
   const t = useTranslate();
 
   const formatTime = (ts: bigint) => {
-    const date = timestampDate({ seconds: ts, nanos: 0 });
+    const date = timestampDate(create(TimestampSchema, { seconds: ts, nanos: 0 }));
     return dayjs(date).format("HH:mm");
   };
 
   const formatDate = (ts: bigint) => {
-    const date = timestampDate({ seconds: ts, nanos: 0 });
+    const date = timestampDate(create(TimestampSchema, { seconds: ts, nanos: 0 }));
     return dayjs(date).format("YYYY-MM-DD");
   };
 
@@ -40,7 +43,7 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm
           </div>
         </div>
 
-        <ScrollArea className="mt-4 max-h-60">
+        <div className="mt-4 max-h-60 overflow-y-auto">
           <div className="space-y-2 p-1">
             {conflicts.map((conflict) => (
               <div key={conflict.name} className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
@@ -61,14 +64,20 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel")}
+        <div className="mt-4 flex justify-end gap-2 flex-wrap">
+          <Button variant="ghost" onClick={onDiscard} className="text-muted-foreground hover:text-destructive">
+            {t("schedule.discard")}
+          </Button>
+          <Button variant="outline" onClick={onAdjust}>
+            {t("schedule.adjust")}
+          </Button>
+          <Button variant="secondary" onClick={onIgnore}>
+            {t("schedule.ignore")}
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            {t("schedule.create-anyway")}
+            {t("schedule.overwrite")}
           </Button>
         </div>
       </DialogContent>

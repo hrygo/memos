@@ -5,10 +5,10 @@ import { Calendar, Clock, Loader2, MapPin, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCheckConflict, useCreateSchedule, useParseAndCreateSchedule } from "@/hooks/useScheduleQueries";
+import { useCheckConflict, useCreateSchedule, useDeleteSchedule, useParseAndCreateSchedule } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
@@ -26,6 +26,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
   const parseAndCreate = useParseAndCreateSchedule();
   const createSchedule = useCreateSchedule();
   const checkConflict = useCheckConflict();
+  const deleteSchedule = useDeleteSchedule();
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
 
   const [input, setInput] = useState(initialText);
   const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(null);
@@ -75,7 +77,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
     }
   };
 
-  const handleCreate = async () => {
+  const executeCreate = async () => {
     if (!parsedSchedule) return;
 
     try {
@@ -98,6 +100,63 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
       toast.error("Failed to create schedule");
       console.error("Create error:", error);
     }
+  };
+
+  const handleCreate = async () => {
+    if (!parsedSchedule) return;
+
+    try {
+      // Check conflict
+      const conflict = await checkConflict.mutateAsync({
+        startTs: parsedSchedule.startTs,
+        endTs: parsedSchedule.endTs,
+        excludeNames: [],
+      });
+
+      if (conflict.conflicts.length > 0) {
+        setConflicts(conflict.conflicts);
+        setShowConflictAlert(true);
+        return;
+      }
+
+      await executeCreate();
+    } catch (error) {
+      console.error("Conflict check error:", error);
+      // If conflict check fails, try to create anyway? Or just show error?
+      // For now, proceed to create which might fail if backend enforces strictly, but usually it doesn't.
+      await executeCreate();
+    }
+  };
+
+  const handleIgnore = async () => {
+    setShowConflictAlert(false);
+    await executeCreate();
+  };
+
+  const handleAdjust = () => {
+    setShowConflictAlert(false);
+    setParsedSchedule(null);
+  };
+
+  const handleOverwrite = () => {
+    setShowConflictAlert(false);
+    setShowOverwriteConfirm(true);
+  };
+
+  const executeOverwrite = async () => {
+    setShowOverwriteConfirm(false);
+    try {
+      for (const conflict of conflicts) {
+        await deleteSchedule.mutateAsync(conflict.name);
+      }
+      await executeCreate();
+    } catch (error) {
+      toast.error("Failed to overwrite schedule");
+    }
+  };
+
+  const handleDiscard = () => {
+    handleClose();
   };
 
   const handleClose = () => {
@@ -225,11 +284,28 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
         open={showConflictAlert}
         onOpenChange={setShowConflictAlert}
         conflicts={conflicts}
-        onConfirm={() => {
-          setShowConflictAlert(false);
-          handleCreate();
-        }}
+        onConfirm={handleOverwrite}
+        onIgnore={handleIgnore}
+        onAdjust={handleAdjust}
+        onDiscard={handleDiscard}
       />
+
+      <Dialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("schedule.overwrite-confirm-title")}</DialogTitle>
+            <DialogDescription>{t("schedule.overwrite-confirm-desc")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOverwriteConfirm(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={executeOverwrite}>
+              {t("schedule.overwrite")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
