@@ -92,6 +92,9 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 				rule.Interval = interval
 			}
 		}
+		if err := rule.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid recurrence rule: %w", err)
+		}
 		return rule, nil
 	}
 
@@ -118,6 +121,9 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 			}
 		}
 
+		if err := rule.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid recurrence rule: %w", err)
+		}
 		return rule, nil
 	}
 
@@ -131,6 +137,9 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 		}
 		if rule.MonthDay == 0 {
 			return nil, fmt.Errorf("invalid day of month: %s", text)
+		}
+		if err := rule.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid recurrence rule: %w", err)
 		}
 		return rule, nil
 	}
