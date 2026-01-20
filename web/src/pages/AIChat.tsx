@@ -30,17 +30,6 @@ import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
 import { ScheduleQueryResult } from "@/components/AIChat/ScheduleQueryResult";
 import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
 
-// Type definitions for schedule query results
-interface ScheduleSummary {
-  uid: string;
-  title: string;
-  startTs: bigint;
-  endTs: bigint;
-  allDay: boolean;
-  location: string;
-  recurrenceRule: string;
-  status: string;
-}
 import TypingCursor from "@/components/AIChat/TypingCursor";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { CodeBlock } from "@/components/MemoContent/CodeBlock";
@@ -53,6 +42,7 @@ import useMediaQuery from "@/hooks/useMediaQuery";
 import { useParseAndCreateSchedule, useSchedulesOptimized, useCheckConflict } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
+import type { ScheduleSummary } from "@/types/schedule";
 
 const STREAM_TIMEOUT = 60000; // 60 seconds timeout
 
@@ -285,6 +275,12 @@ const AIChat = () => {
           },
           onScheduleQueryResult: (result) => {
             // AI 检测到日程查询意图，显示查询结果
+            // 使用 messageIdRef.current 避免竞态条件
+            if (messageId !== messageIdRef.current) {
+              console.warn(`[ScheduleQuery] Ignoring stale result for message ${messageId}, current is ${messageIdRef.current}`);
+              return;
+            }
+
             console.log(`[ScheduleQuery] Detected with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
 
             if (result.detected && result.schedules.length > 0) {

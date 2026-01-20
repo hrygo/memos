@@ -2,18 +2,7 @@ import dayjs from "dayjs";
 import { Calendar, Clock, MapPin, X, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-// Simplified schedule type for query results
-interface ScheduleSummary {
-  uid: string;
-  title: string;
-  startTs: bigint;
-  endTs: bigint;
-  allDay: boolean;
-  location: string;
-  recurrenceRule: string;
-  status: string;
-}
+import type { ScheduleSummary } from "@/types/schedule";
 
 interface ScheduleQueryResultProps {
   title: string;

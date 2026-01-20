@@ -22,6 +22,115 @@ import (
 // Global AI rate limiter
 var globalAILimiter = middleware.NewRateLimiter()
 
+// Pre-compiled regex patterns for schedule query intent detection
+var scheduleQueryPatterns = []struct {
+	patterns   []*regexp.Regexp
+	intentType string
+	timeRange  string
+	calcTimeRange func() (*time.Time, *time.Time)
+}{
+	{
+		// Upcoming schedules (next 7 days)
+		patterns: []*regexp.Regexp{
+			regexp.MustCompile("近期日程"),
+			regexp.MustCompile("近期的日程"),
+			regexp.MustCompile("未来.*日程"),
+			regexp.MustCompile("接下来.*日程"),
+			regexp.MustCompile("有什么安排"),
+			regexp.MustCompile("日程查询"),
+		},
+		intentType: "upcoming",
+		timeRange:  "未来7天",
+		calcTimeRange: func() (*time.Time, *time.Time) {
+			now := time.Now()
+			startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+			endOfPeriod := startOfDay.Add(7 * 24 * time.Hour)
+			return &startOfDay, &endOfPeriod
+		},
+	},
+	{
+		// Today's schedules
+		patterns: []*regexp.Regexp{
+			regexp.MustCompile("今天.*日程"),
+			regexp.MustCompile("今天.*安排"),
+			regexp.MustCompile("今天.*事"),
+			regexp.MustCompile("今天有什么"),
+		},
+		intentType: "range",
+		timeRange:  "今天",
+		calcTimeRange: func() (*time.Time, *time.Time) {
+			now := time.Now()
+			startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+			endOfDay := startOfDay.Add(24 * time.Hour)
+			return &startOfDay, &endOfDay
+		},
+	},
+	{
+		// Tomorrow's schedules
+		patterns: []*regexp.Regexp{
+			regexp.MustCompile("明天.*日程"),
+			regexp.MustCompile("明天.*安排"),
+			regexp.MustCompile("明天.*事"),
+			regexp.MustCompile("明天有什么"),
+		},
+		intentType: "range",
+		timeRange:  "明天",
+		calcTimeRange: func() (*time.Time, *time.Time) {
+			now := time.Now()
+			startOfDay := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+			endOfDay := startOfDay.Add(24 * time.Hour)
+			return &startOfDay, &endOfDay
+		},
+	},
+	{
+		// This week's schedules
+		patterns: []*regexp.Regexp{
+			regexp.MustCompile("本周.*日程"),
+			regexp.MustCompile("这周.*安排"),
+			regexp.MustCompile("这周.*事"),
+			regexp.MustCompile("本周有什么"),
+		},
+		intentType: "range",
+		timeRange:  "本周",
+		calcTimeRange: func() (*time.Time, *time.Time) {
+			now := time.Now()
+			// Start of week (Monday)
+			weekday := now.Weekday()
+			if weekday == time.Sunday {
+				weekday = 7
+			}
+			startOfWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1, 0, 0, 0, 0, now.Location())
+			// End of week (Sunday)
+			endOfWeek := startOfWeek.Add(7 * 24 * time.Hour)
+			return &startOfWeek, &endOfWeek
+		},
+	},
+	{
+		// Next week's schedules
+		patterns: []*regexp.Regexp{
+			regexp.MustCompile("下周.*日程"),
+			regexp.MustCompile("下周.*安排"),
+			regexp.MustCompile("下周.*事"),
+			regexp.MustCompile("下周有什么"),
+		},
+		intentType: "range",
+		timeRange:  "下周",
+		calcTimeRange: func() (*time.Time, *time.Time) {
+			now := time.Now()
+			// Start of next week (Monday)
+			weekday := now.Weekday()
+			if weekday == time.Sunday {
+				weekday = 7
+			}
+			startOfNextWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1+7, 0, 0, 0, 0, now.Location())
+			// End of next week (Sunday)
+			endOfNextWeek := startOfNextWeek.Add(7 * 24 * time.Hour)
+			return &startOfNextWeek, &endOfNextWeek
+		},
+	},
+}
+
+
 // AIService provides AI-powered features for memo management.
 type AIService struct {
 	v1pb.UnimplementedAIServiceServer
@@ -366,8 +475,9 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 		// 查询日程
 		result, err := s.querySchedules(ctx, user.ID, scheduleQueryIntent)
 		if err != nil {
-			// 日程查询失败，记录日志但不影响聊天
+			// 日程查询失败，记录错误并在上下文中告知 AI
 			fmt.Printf("[ScheduleQuery] Failed to query schedules: %v\n", err)
+			scheduleContext = fmt.Sprintf("[日程查询失败: %v]", err)
 		} else {
 			scheduleQueryResult = result
 			// 格式化日程信息用于 AI 上下文
@@ -435,6 +545,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 ## 回答要求
 - 使用中文，简洁准确
 - 如果用户询问日程，基于下方"用户日程"部分回答
+- 如果"用户日程"部分显示"日程查询失败"，请告知用户查询失败并建议稍后重试
 - 如果没有日程或笔记，友好告知用户`
 	} else {
 		systemPrompt = `你是一个基于用户个人笔记和日程的AI助手。
@@ -453,6 +564,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 ## 回答要求
 - 优先基于笔记和日程回答
 - 如果用户询问日程，基于下方"用户日程"部分回答
+- 如果"用户日程"部分显示"日程查询失败"，请告知用户查询失败并建议稍后重试
 - 使用中文，简洁准确
 - 不要编造信息`
 	}
@@ -731,94 +843,15 @@ type ScheduleQueryIntent struct {
 }
 
 // detectScheduleQueryIntent detects whether user wants to query schedules.
-// Uses rule-based matching for performance and reliability.
+// Uses pre-compiled regex patterns for performance and reliability.
 func (s *AIService) detectScheduleQueryIntent(message string) *ScheduleQueryIntent {
 	// Normalize message for matching
 	normalizedMessage := strings.ToLower(strings.TrimSpace(message))
 
-	// Define query patterns with corresponding time ranges
-	queryPatterns := []struct {
-		patterns   []string
-		intentType string
-		timeRange  string
-		calcTimeRange func() (*time.Time, *time.Time)
-	}{
-		{
-			// Upcoming schedules (next 7 days)
-			patterns:   []string{"近期日程", "近期的日程", "未来.*日程", "接下来.*日程", "有什么安排", "日程查询"},
-			intentType: "upcoming",
-			timeRange:  "未来7天",
-			calcTimeRange: func() (*time.Time, *time.Time) {
-				now := time.Now()
-				return &now, &now
-			},
-		},
-		{
-			// Today's schedules
-			patterns:   []string{"今天.*日程", "今天.*安排", "今天.*事", "今天有什么"},
-			intentType: "range",
-			timeRange:  "今天",
-			calcTimeRange: func() (*time.Time, *time.Time) {
-				now := time.Now()
-				startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-				endOfDay := startOfDay.Add(24 * time.Hour)
-				return &startOfDay, &endOfDay
-			},
-		},
-		{
-			// Tomorrow's schedules
-			patterns:   []string{"明天.*日程", "明天.*安排", "明天.*事", "明天有什么"},
-			intentType: "range",
-			timeRange:  "明天",
-			calcTimeRange: func() (*time.Time, *time.Time) {
-				now := time.Now()
-				startOfDay := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-				endOfDay := startOfDay.Add(24 * time.Hour)
-				return &startOfDay, &endOfDay
-			},
-		},
-		{
-			// This week's schedules
-			patterns:   []string{"本周.*日程", "这周.*安排", "这周.*事", "本周有什么"},
-			intentType: "range",
-			timeRange:  "本周",
-			calcTimeRange: func() (*time.Time, *time.Time) {
-				now := time.Now()
-				// Start of week (Monday)
-				weekday := now.Weekday()
-				if weekday == time.Sunday {
-					weekday = 7
-				}
-				startOfWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1, 0, 0, 0, 0, now.Location())
-				// End of week (Sunday)
-				endOfWeek := startOfWeek.Add(7 * 24 * time.Hour)
-				return &startOfWeek, &endOfWeek
-			},
-		},
-		{
-			// Next week's schedules
-			patterns:   []string{"下周.*日程", "下周.*安排", "下周.*事", "下周有什么"},
-			intentType: "range",
-			timeRange:  "下周",
-			calcTimeRange: func() (*time.Time, *time.Time) {
-				now := time.Now()
-				// Start of next week (Monday)
-				weekday := now.Weekday()
-				if weekday == time.Sunday {
-					weekday = 7
-				}
-				startOfNextWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1+7, 0, 0, 0, 0, now.Location())
-				// End of next week (Sunday)
-				endOfNextWeek := startOfNextWeek.Add(7 * 24 * time.Hour)
-				return &startOfNextWeek, &endOfNextWeek
-			},
-		},
-	}
-
-	// Try to match patterns
-	for _, qp := range queryPatterns {
+	// Try to match patterns using pre-compiled regex
+	for _, qp := range scheduleQueryPatterns {
 		for _, pattern := range qp.patterns {
-			if matched, _ := regexp.MatchString(pattern, normalizedMessage); matched {
+			if pattern.MatchString(normalizedMessage) {
 				startTime, endTime := qp.calcTimeRange()
 				return &ScheduleQueryIntent{
 					Detected:  true,
@@ -837,9 +870,10 @@ func (s *AIService) detectScheduleQueryIntent(message string) *ScheduleQueryInte
 
 // querySchedules queries schedules based on the detected intent.
 func (s *AIService) querySchedules(ctx context.Context, userID int32, intent *ScheduleQueryIntent) (*v1pb.ScheduleQueryResult, error) {
-	// Default to 7 days if no time range specified
-	startTime := time.Now()
-	endTime := time.Now().Add(7 * 24 * time.Hour)
+	// Default to 7 days starting from today 00:00:00 if no time range specified
+	now := time.Now()
+	startTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	endTime := startTime.Add(7 * 24 * time.Hour)
 
 	if intent.StartTime != nil {
 		startTime = *intent.StartTime
@@ -898,7 +932,7 @@ func (s *AIService) querySchedules(ctx context.Context, userID int32, intent *Sc
 		}
 
 		result.Schedules = append(result.Schedules, &v1pb.ScheduleSummary{
-			Uid:            "schedules/" + sched.UID,
+			Uid:            sched.UID,
 			Title:          sched.Title,
 			StartTs:        sched.StartTs,
 			EndTs:          endTsValue,
