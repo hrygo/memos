@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTranslate } from "@/utils/i18n";
 import { useParseAndCreateSchedule, useCheckConflict } from "@/hooks/useScheduleQueries";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
+import { ScheduleErrorBoundary } from "./ScheduleErrorBoundary";
 import { useState } from "react";
 import dayjs from "dayjs";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
@@ -116,7 +117,8 @@ export const ScheduleInput = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <ScheduleErrorBoundary>
+          <DialogContent className="max-w-md">
           <DialogTitle>{t("schedule.create-schedule")}</DialogTitle>
           <DialogDescription>
             {t("schedule.natural-language-hint")}
@@ -218,6 +220,7 @@ export const ScheduleInput = ({
             )}
           </div>
         </DialogContent>
+        </ScheduleErrorBoundary>
       </Dialog>
 
       {/* Conflict Alert */}

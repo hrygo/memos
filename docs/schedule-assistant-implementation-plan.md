@@ -335,6 +335,124 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 - `state` - 状态 (NORMAL/ARCHIVED)
 - `reminders` - 提醒设置
 
+### API 使用示例
+
+#### 1. 创建日程
+
+**请求**:
+```json
+POST /api/v1/schedules
+{
+  "schedule": {
+    "name": "schedules/custom-uid",
+    "title": "团队周会",
+    "description": "讨论本周进度和下周计划",
+    "location": "会议室 A",
+    "start_ts": 1737363600,
+    "end_ts": 1737367200,
+    "all_day": false,
+    "timezone": "Asia/Shanghai",
+    "reminders": [
+      {
+        "type": "before",
+        "value": 15,
+        "unit": "minutes"
+      }
+    ]
+  }
+}
+```
+
+**响应**:
+```json
+{
+  "name": "schedules/custom-uid",
+  "title": "团队周会",
+  "start_ts": 1737363600,
+  "created_ts": 1737270000,
+  "state": "NORMAL"
+}
+```
+
+#### 2. 自然语言创建日程
+
+**请求**:
+```json
+POST /api/v1/schedules:parseAndCreate
+{
+  "text": "明天下午3点开会，地点在会议室A，提前15分钟提醒",
+  "auto_confirm": true
+}
+```
+
+**响应**:
+```json
+{
+  "parsed_schedule": {
+    "title": "开会",
+    "location": "会议室A",
+    "start_ts": 1737363600,
+    "end_ts": 1737367200,
+    "reminders": [
+      {
+        "type": "before",
+        "value": 15,
+        "unit": "minutes"
+      }
+    ]
+  },
+  "created_schedule": {
+    "name": "schedules/generated-uid",
+    "title": "开会",
+    "state": "NORMAL"
+  }
+}
+```
+
+#### 3. 检查冲突
+
+**请求**:
+```json
+POST /api/v1/schedules:checkConflict
+{
+  "start_ts": 1737363600,
+  "end_ts": 1737367200,
+  "exclude_names": ["schedules/current-schedule"]
+}
+```
+
+**响应**:
+```json
+{
+  "conflicts": [
+    {
+      "name": "schedules/existing-1",
+      "title": "客户会议",
+      "start_ts": 1737360000,
+      "end_ts": 1737365400
+    }
+  ]
+}
+```
+
+### 错误码说明
+
+| 错误码 | HTTP 状态 | 说明 |
+|--------|----------|------|
+| `InvalidArgument` | 400 | 请求参数无效（如 title 为空、start_ts <= 0） |
+| `Unauthenticated` | 401 | 未登录或 token 无效 |
+| `NotFound` | 404 | 日程不存在 |
+| `AlreadyExists` | 409 | UID 已存在 |
+| `Internal` | 500 | 服务器内部错误 |
+| `ResourceExhausted` | 429 | 超过限制（如 reminders 超过 10 个） |
+
+### 限制和约束
+
+1. **输入长度限制**: 自然语言输入最多 500 字符
+2. **提醒数量限制**: 每个日程最多 10 个提醒
+3. **时间范围**: start_ts 必须是正数（Unix 时间戳），end_ts >= start_ts
+4. **时区**: 默认使用 Asia/Shanghai，可自定义
+
 ## 验证计划
 
 ### 测试场景

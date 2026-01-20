@@ -47,7 +47,7 @@ export function useSchedule(name: string, options?: { enabled?: boolean }) {
       return schedule;
     },
     enabled: options?.enabled ?? true,
-    staleTime: 1000 * 10, // 10 seconds
+    staleTime: 1000 * 30, // 30 seconds (should be >= list cache time for consistency)
   });
 }
 

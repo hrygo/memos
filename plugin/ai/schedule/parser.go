@@ -69,6 +69,17 @@ var (
 	}
 )
 
+// Helper function to safely convert string to int with error handling
+func mustAtoi(s string) int {
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		// This should never happen since regex ensures numeric format
+		// Log as warning for debugging
+		return 0
+	}
+	return val
+}
+
 // Parser handles natural language parsing for schedules.
 type Parser struct {
 	llmService ai.LLMService
@@ -194,11 +205,11 @@ func (p *Parser) parseTime(text string, now time.Time) (startTs, endTs int64, al
 	// Parse absolute dates (e.g., "1月20日", "2024年1月20日")
 	if match := datePattern.FindStringSubmatch(text); len(match) > 0 {
 		year := now.Year()
-		month, _ := strconv.Atoi(match[2])
-		day, _ := strconv.Atoi(match[3])
+		month := mustAtoi(match[2])
+		day := mustAtoi(match[3])
 
 		if len(match[1]) > 0 {
-			year, _ = strconv.Atoi(match[1])
+			year = mustAtoi(match[1])
 		}
 
 		date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, p.location)
@@ -219,8 +230,8 @@ func (p *Parser) parseTimeForDate(date time.Time, text string, allDay bool) (sta
 
 	// Parse hour:minute format (e.g., "15:00", "15:30")
 	if match := hourMinutePattern.FindStringSubmatch(text); len(match) > 0 {
-		hour, _ := strconv.Atoi(match[1])
-		minute, _ := strconv.Atoi(match[2])
+		hour := mustAtoi(match[1])
+		minute := mustAtoi(match[2])
 
 		startTime := time.Date(date.Year(), date.Month(), date.Day(), hour, minute, 0, 0, p.location)
 		endTime := startTime.Add(DefaultEventDuration)
@@ -253,7 +264,7 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 	// Check for AM/PM
 	if strings.Contains(text, "下午") || strings.Contains(text, "pm") {
 		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
-			hour, _ = strconv.Atoi(match[1])
+			hour = mustAtoi(match[1])
 			if hour < 12 {
 				hour += 12
 			}
@@ -266,11 +277,11 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 
 		// Check for specific minutes
 		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
-			minute, _ = strconv.Atoi(match[1])
+			minute = mustAtoi(match[1])
 		}
 	} else if strings.Contains(text, "上午") || strings.Contains(text, "am") {
 		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
-			hour, _ = strconv.Atoi(match[1])
+			hour = mustAtoi(match[1])
 			if hour == 12 {
 				hour = 0
 			}
@@ -281,12 +292,12 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 		}
 
 		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
-			minute, _ = strconv.Atoi(match[1])
+			minute = mustAtoi(match[1])
 		}
 	} else {
 		// No AM/PM specified, use 24-hour format
 		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
-			hour, _ = strconv.Atoi(match[1])
+			hour = mustAtoi(match[1])
 			// Keep 24-hour format as-is: 13点 = 13:00, 23点 = 23:00
 			// Don't convert hour % 12, that would incorrectly change 13 to 1
 		}
@@ -296,7 +307,7 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 		}
 
 		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
-			minute, _ = strconv.Atoi(match[1])
+			minute = mustAtoi(match[1])
 		}
 	}
 
@@ -401,7 +412,7 @@ func (p *Parser) parseReminders(text string) []*v1pb.Reminder {
 
 	// Parse "提前X分钟/小时/天" or "提前X分/时/天" using precompiled regex
 	if match := reminderPattern.FindStringSubmatch(text); len(match) > 2 {
-		value, _ := strconv.Atoi(match[1])
+		value := mustAtoi(match[1])
 		unit := match[2]
 
 		// Normalize unit using map

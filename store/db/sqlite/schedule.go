@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/usememos/memos/store"
 )
@@ -70,7 +71,13 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		// A schedule overlaps if: (schedule.start_ts <= window_end) AND
 		// (schedule.end_ts IS NULL OR schedule.end_ts >= window_start)
 		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
-		// Note: The window start time filter is already applied above by find.StartTs
+
+		// If no StartTs specified, ensure end_ts is within reasonable range (e.g., not in ancient history)
+		// This prevents returning all historical schedules when only EndTs is specified
+		if find.StartTs == nil {
+			oneMonthAgo := time.Now().Add(-30 * 24 * time.Hour).Unix()
+			where, args = append(where, "(schedule.end_ts IS NULL OR schedule.end_ts >= "+placeholder(len(args)+1)+")"), append(args, oneMonthAgo)
+		}
 	}
 
 	// Ordering (always by start_ts ascending)
