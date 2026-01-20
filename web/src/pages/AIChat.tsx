@@ -28,6 +28,8 @@ import TypingCursor from "@/components/AIChat/TypingCursor";
 import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleList } from "@/components/AIChat/ScheduleList";
 import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
+import { ScheduleSuggestionCard } from "@/components/AIChat/ScheduleSuggestionCard";
+import { useParseAndCreateSchedule } from "@/hooks/useScheduleQueries";
 import dayjs from "dayjs";
 
 const STREAM_TIMEOUT = 60000; // 60 seconds timeout
@@ -67,6 +69,11 @@ const AIChat = () => {
 
   const schedules = schedulesData?.schedules || [];
 
+  // Schedule suggestion state
+  const [suggestedSchedule, setSuggestedSchedule] = useState<Schedule | null>(null);
+  const [showScheduleSuggestion, setShowScheduleSuggestion] = useState(false);
+  const parseAndCreateSchedule = useParseAndCreateSchedule();
+
   // Intent detection for schedule creation
   const detectScheduleIntent = (text: string): boolean => {
     const keywords = [
@@ -75,10 +82,6 @@ const AIChat = () => {
       "明天", "后天", "下周", "今天",
     ];
     return keywords.some((keyword) => text.toLowerCase().includes(keyword.toLowerCase()));
-  };
-
-  const showScheduleSuggestion = (text: string) => {
-    return detectScheduleIntent(text) && !schedulePanelOpen;
   };
 
   // Get actual messages (excluding separators) for API calls
@@ -187,6 +190,11 @@ const AIChat = () => {
       resetTypingState();
       setErrorMessage(t("ai.error-title"));
     }
+
+    // Check for schedule creation intent after AI responds
+    if (detectScheduleIntent(userMessage) && !scheduleInputOpen) {
+      handleScheduleSuggestion(userMessage);
+    }
   };
 
   const handleRetry = () => {
@@ -232,6 +240,47 @@ const AIChat = () => {
   const handleSuggestedPrompt = (query: string) => {
     setInput(query);
     setTimeout(() => handleSend(query), 100);
+  };
+
+  const handleScheduleSuggestion = async (userMessage: string) => {
+    try {
+      // Parse the user message to extract schedule info
+      const result = await parseAndCreateSchedule.mutateAsync({
+        text: userMessage,
+        autoConfirm: false,
+      });
+
+      if (result.parsedSchedule) {
+        setSuggestedSchedule(result.parsedSchedule);
+        setShowScheduleSuggestion(true);
+      }
+    } catch (error) {
+      console.error("Failed to parse schedule suggestion:", error);
+    }
+  };
+
+  const handleConfirmScheduleSuggestion = () => {
+    if (suggestedSchedule) {
+      // Open the schedule input dialog with the suggested schedule pre-filled
+      setScheduleInputText("");
+      setScheduleInputOpen(true);
+      // The ScheduleInput will handle the actual creation
+      setShowScheduleSuggestion(false);
+    }
+  };
+
+  const handleDismissScheduleSuggestion = () => {
+    setShowScheduleSuggestion(false);
+    setSuggestedSchedule(null);
+  };
+
+  const handleEditScheduleSuggestion = () => {
+    // Open schedule input with the suggested text for editing
+    if (suggestedSchedule) {
+      setScheduleInputText(suggestedSchedule.title || "");
+      setScheduleInputOpen(true);
+      setShowScheduleSuggestion(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -396,6 +445,18 @@ const AIChat = () => {
           </div>
         )}
       </div>
+
+      {/* Schedule Suggestion Card */}
+      {showScheduleSuggestion && suggestedSchedule && (
+        <div className="px-4 py-2">
+          <ScheduleSuggestionCard
+            parsedSchedule={suggestedSchedule}
+            onConfirm={handleConfirmScheduleSuggestion}
+            onDismiss={handleDismissScheduleSuggestion}
+            onEdit={handleEditScheduleSuggestion}
+          />
+        </div>
+      )}
 
       {/* Schedule Panel Toggle Button */}
       <div className="shrink-0 border-t bg-background/95 backdrop-blur-md">

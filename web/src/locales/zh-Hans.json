@@ -510,6 +510,10 @@
     "repeat": "重复",
     "parse-error": "无法解析日程，请重试或手动输入",
     "schedule-created": "日程创建成功",
-    "schedule-deleted": "日程已删除"
+    "schedule-deleted": "日程已删除",
+    "suggested-schedule": "建议创建日程",
+    "suggested-schedule-hint": "根据您的对话内容，我建议创建以下日程",
+    "create": "创建",
+    "input-too-long": "输入过长（最多 500 字符）"
   }
 }
