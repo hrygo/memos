@@ -285,6 +285,22 @@ stop_backend() {
             log_info "后端未运行"
             ;;
     esac
+
+    # 额外检查：确保端口没有被占用（解决 go run 孤儿进程问题）
+    if check_port $BACKEND_PORT; then
+        log_warn "端口 $BACKEND_PORT 仍被占用，尝试强制终止..."
+        local port_pid=$(lsof -ti ":$BACKEND_PORT" 2>/dev/null | head -1)
+        if [ -n "$port_pid" ]; then
+            log_info "终止占用端口的进程 (PID: $port_pid)..."
+            kill "$port_pid" 2>/dev/null || true
+            sleep 1
+            # 如果还没终止，强制杀死
+            if ps -p "$port_pid" &>/dev/null; then
+                kill -9 "$port_pid" 2>/dev/null || true
+            fi
+            log_success "已清理端口 $BACKEND_PORT"
+        fi
+    fi
 }
 
 stop_frontend() {
@@ -306,6 +322,21 @@ stop_frontend() {
             log_info "前端未运行"
             ;;
     esac
+
+    # 额外检查：确保端口没有被占用
+    if check_port $FRONTEND_PORT; then
+        log_warn "端口 $FRONTEND_PORT 仍被占用，尝试强制终止..."
+        local port_pid=$(lsof -ti ":$FRONTEND_PORT" 2>/dev/null | head -1)
+        if [ -n "$port_pid" ]; then
+            log_info "终止占用端口的进程 (PID: $port_pid)..."
+            kill "$port_pid" 2>/dev/null || true
+            sleep 1
+            if ps -p "$port_pid" &>/dev/null; then
+                kill -9 "$port_pid" 2>/dev/null || true
+            fi
+            log_success "已清理端口 $FRONTEND_PORT"
+        fi
+    fi
 }
 
 # ============================================================================
@@ -467,9 +498,48 @@ cmd_stop() {
 }
 
 cmd_restart() {
-    cmd_stop
+    echo ""
+    log_info "重启 Memos 应用 (保持 PostgreSQL 运行)..."
+    echo ""
+
+    # 只停止应用服务 (后端 + 前端)
+    stop_frontend
+    stop_backend
+
     sleep 2
-    cmd_start
+
+    # 确保 PostgreSQL 正在运行
+    check_docker
+    local pg_status=$(postgres_status)
+    if [ "$pg_status" != "running" ]; then
+        log_info "PostgreSQL 未运行，正在启动..."
+        start_postgres || exit 1
+        sleep 2
+    else
+        log_info "PostgreSQL 已在运行"
+    fi
+
+    # 重启应用服务
+    start_backend || exit 1
+    sleep 1
+    start_frontend || exit 1
+
+    echo ""
+    log_success "应用已重启！"
+    echo ""
+    echo "服务地址:"
+    echo "  - 后端: http://localhost:$BACKEND_PORT"
+    echo "  - 前端: http://localhost:$FRONTEND_PORT"
+    echo ""
+    echo "查看日志: ./scripts/dev.sh logs [postgres|backend|frontend]"
+    echo "查看状态: ./scripts/dev.sh status"
+    echo "停止服务: ./scripts/dev.sh stop"
+    echo ""
+
+    # 显示实时日志
+    log_info "显示实时日志 (Ctrl+C 退出日志查看，服务继续运行)..."
+    echo ""
+    show_logs backend true
 }
 
 cmd_status() {
