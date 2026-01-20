@@ -334,12 +334,14 @@ func (x *ChatWithMemosRequest) GetHistory() []string {
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
 type ChatWithMemosResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"` // streaming content chunk
-	Sources       []string               `protobuf:"bytes,2,rep,name=sources,proto3" json:"sources,omitempty"` // citation sources memos/{id}
-	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`      // stream end marker
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState  `protogen:"open.v1"`
+	Content                string                  `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`                                                               // streaming content chunk
+	Sources                []string                `protobuf:"bytes,2,rep,name=sources,proto3" json:"sources,omitempty"`                                                               // citation sources memos/{id}
+	Done                   bool                    `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`                                                                    // stream end marker
+	ScheduleCreationIntent *ScheduleCreationIntent `protobuf:"bytes,4,opt,name=schedule_creation_intent,json=scheduleCreationIntent,proto3" json:"schedule_creation_intent,omitempty"` // AI-detected schedule creation intent (sent in final chunk)
+	ScheduleQueryResult    *ScheduleQueryResult    `protobuf:"bytes,5,opt,name=schedule_query_result,json=scheduleQueryResult,proto3" json:"schedule_query_result,omitempty"`          // AI-detected schedule query result (sent in final chunk)
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ChatWithMemosResponse) Reset() {
@@ -393,6 +395,252 @@ func (x *ChatWithMemosResponse) GetDone() bool {
 	return false
 }
 
+func (x *ChatWithMemosResponse) GetScheduleCreationIntent() *ScheduleCreationIntent {
+	if x != nil {
+		return x.ScheduleCreationIntent
+	}
+	return nil
+}
+
+func (x *ChatWithMemosResponse) GetScheduleQueryResult() *ScheduleQueryResult {
+	if x != nil {
+		return x.ScheduleQueryResult
+	}
+	return nil
+}
+
+// ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+type ScheduleCreationIntent struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Detected            bool                   `protobuf:"varint,1,opt,name=detected,proto3" json:"detected,omitempty"`                                                 // Whether user wants to create a schedule
+	ScheduleDescription string                 `protobuf:"bytes,2,opt,name=schedule_description,json=scheduleDescription,proto3" json:"schedule_description,omitempty"` // Natural language description of the schedule (e.g., "明天下午2点开会")
+	Reasoning           string                 `protobuf:"bytes,3,opt,name=reasoning,proto3" json:"reasoning,omitempty"`                                                // AI's reasoning for intent detection (optional, for debugging)
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ScheduleCreationIntent) Reset() {
+	*x = ScheduleCreationIntent{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleCreationIntent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleCreationIntent) ProtoMessage() {}
+
+func (x *ScheduleCreationIntent) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleCreationIntent.ProtoReflect.Descriptor instead.
+func (*ScheduleCreationIntent) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ScheduleCreationIntent) GetDetected() bool {
+	if x != nil {
+		return x.Detected
+	}
+	return false
+}
+
+func (x *ScheduleCreationIntent) GetScheduleDescription() string {
+	if x != nil {
+		return x.ScheduleDescription
+	}
+	return ""
+}
+
+func (x *ScheduleCreationIntent) GetReasoning() string {
+	if x != nil {
+		return x.Reasoning
+	}
+	return ""
+}
+
+// ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+type ScheduleQueryResult struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Detected             bool                   `protobuf:"varint,1,opt,name=detected,proto3" json:"detected,omitempty"`                                                      // Whether the user's intent is to query schedules
+	Schedules            []*ScheduleSummary     `protobuf:"bytes,2,rep,name=schedules,proto3" json:"schedules,omitempty"`                                                     // Queried schedules matching the user's intent
+	TimeRangeDescription string                 `protobuf:"bytes,3,opt,name=time_range_description,json=timeRangeDescription,proto3" json:"time_range_description,omitempty"` // Human-readable time range description (e.g., "未来7天", "本周")
+	QueryType            string                 `protobuf:"bytes,4,opt,name=query_type,json=queryType,proto3" json:"query_type,omitempty"`                                    // Type of query (e.g., "upcoming", "range", "filter")
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ScheduleQueryResult) Reset() {
+	*x = ScheduleQueryResult{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleQueryResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleQueryResult) ProtoMessage() {}
+
+func (x *ScheduleQueryResult) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleQueryResult.ProtoReflect.Descriptor instead.
+func (*ScheduleQueryResult) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ScheduleQueryResult) GetDetected() bool {
+	if x != nil {
+		return x.Detected
+	}
+	return false
+}
+
+func (x *ScheduleQueryResult) GetSchedules() []*ScheduleSummary {
+	if x != nil {
+		return x.Schedules
+	}
+	return nil
+}
+
+func (x *ScheduleQueryResult) GetTimeRangeDescription() string {
+	if x != nil {
+		return x.TimeRangeDescription
+	}
+	return ""
+}
+
+func (x *ScheduleQueryResult) GetQueryType() string {
+	if x != nil {
+		return x.QueryType
+	}
+	return ""
+}
+
+// ScheduleSummary represents a simplified schedule for query results.
+// This avoids circular dependencies with the full Schedule message in schedule_service.proto.
+type ScheduleSummary struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Uid            string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`                                             // Schedule unique identifier in format "schedules/{uid}"
+	Title          string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`                                         // Schedule title
+	StartTs        int64                  `protobuf:"varint,3,opt,name=start_ts,json=startTs,proto3" json:"start_ts,omitempty"`                     // Start timestamp (Unix timestamp in seconds)
+	EndTs          int64                  `protobuf:"varint,4,opt,name=end_ts,json=endTs,proto3" json:"end_ts,omitempty"`                           // End timestamp (Unix timestamp in seconds, 0 if not set)
+	AllDay         bool                   `protobuf:"varint,5,opt,name=all_day,json=allDay,proto3" json:"all_day,omitempty"`                        // Whether this is an all-day event
+	Location       string                 `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`                                   // Event location (optional)
+	RecurrenceRule string                 `protobuf:"bytes,7,opt,name=recurrence_rule,json=recurrenceRule,proto3" json:"recurrence_rule,omitempty"` // Recurrence rule in JSON format (empty if not recurring)
+	Status         string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`                                       // Schedule status (e.g., "ACTIVE", "CANCELLED")
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ScheduleSummary) Reset() {
+	*x = ScheduleSummary{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleSummary) ProtoMessage() {}
+
+func (x *ScheduleSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleSummary.ProtoReflect.Descriptor instead.
+func (*ScheduleSummary) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ScheduleSummary) GetUid() string {
+	if x != nil {
+		return x.Uid
+	}
+	return ""
+}
+
+func (x *ScheduleSummary) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ScheduleSummary) GetStartTs() int64 {
+	if x != nil {
+		return x.StartTs
+	}
+	return 0
+}
+
+func (x *ScheduleSummary) GetEndTs() int64 {
+	if x != nil {
+		return x.EndTs
+	}
+	return 0
+}
+
+func (x *ScheduleSummary) GetAllDay() bool {
+	if x != nil {
+		return x.AllDay
+	}
+	return false
+}
+
+func (x *ScheduleSummary) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *ScheduleSummary) GetRecurrenceRule() string {
+	if x != nil {
+		return x.RecurrenceRule
+	}
+	return ""
+}
+
+func (x *ScheduleSummary) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 // GetRelatedMemosRequest is the request for GetRelatedMemos.
 type GetRelatedMemosRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -404,7 +652,7 @@ type GetRelatedMemosRequest struct {
 
 func (x *GetRelatedMemosRequest) Reset() {
 	*x = GetRelatedMemosRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	mi := &file_api_v1_ai_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +664,7 @@ func (x *GetRelatedMemosRequest) String() string {
 func (*GetRelatedMemosRequest) ProtoMessage() {}
 
 func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	mi := &file_api_v1_ai_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +677,7 @@ func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosRequest.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{7}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetRelatedMemosRequest) GetName() string {
@@ -456,7 +704,7 @@ type GetRelatedMemosResponse struct {
 
 func (x *GetRelatedMemosResponse) Reset() {
 	*x = GetRelatedMemosResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	mi := &file_api_v1_ai_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -468,7 +716,7 @@ func (x *GetRelatedMemosResponse) String() string {
 func (*GetRelatedMemosResponse) ProtoMessage() {}
 
 func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	mi := &file_api_v1_ai_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,7 +729,7 @@ func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosResponse.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{8}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetRelatedMemosResponse) GetMemos() []*SearchResult {
@@ -512,11 +760,32 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04tags\x18\x01 \x03(\tR\x04tags\"O\n" +
 	"\x14ChatWithMemosRequest\x12\x1d\n" +
 	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12\x18\n" +
-	"\ahistory\x18\x02 \x03(\tR\ahistory\"_\n" +
+	"\ahistory\x18\x02 \x03(\tR\ahistory\"\x96\x02\n" +
 	"\x15ChatWithMemosResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\x12\x12\n" +
-	"\x04done\x18\x03 \x01(\bR\x04done\"G\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\x12^\n" +
+	"\x18schedule_creation_intent\x18\x04 \x01(\v2$.memos.api.v1.ScheduleCreationIntentR\x16scheduleCreationIntent\x12U\n" +
+	"\x15schedule_query_result\x18\x05 \x01(\v2!.memos.api.v1.ScheduleQueryResultR\x13scheduleQueryResult\"\x85\x01\n" +
+	"\x16ScheduleCreationIntent\x12\x1a\n" +
+	"\bdetected\x18\x01 \x01(\bR\bdetected\x121\n" +
+	"\x14schedule_description\x18\x02 \x01(\tR\x13scheduleDescription\x12\x1c\n" +
+	"\treasoning\x18\x03 \x01(\tR\treasoning\"\xc3\x01\n" +
+	"\x13ScheduleQueryResult\x12\x1a\n" +
+	"\bdetected\x18\x01 \x01(\bR\bdetected\x12;\n" +
+	"\tschedules\x18\x02 \x03(\v2\x1d.memos.api.v1.ScheduleSummaryR\tschedules\x124\n" +
+	"\x16time_range_description\x18\x03 \x01(\tR\x14timeRangeDescription\x12\x1d\n" +
+	"\n" +
+	"query_type\x18\x04 \x01(\tR\tqueryType\"\xe1\x01\n" +
+	"\x0fScheduleSummary\x12\x10\n" +
+	"\x03uid\x18\x01 \x01(\tR\x03uid\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
+	"\bstart_ts\x18\x03 \x01(\x03R\astartTs\x12\x15\n" +
+	"\x06end_ts\x18\x04 \x01(\x03R\x05endTs\x12\x17\n" +
+	"\aall_day\x18\x05 \x01(\bR\x06allDay\x12\x1a\n" +
+	"\blocation\x18\x06 \x01(\tR\blocation\x12'\n" +
+	"\x0frecurrence_rule\x18\a \x01(\tR\x0erecurrenceRule\x12\x16\n" +
+	"\x06status\x18\b \x01(\tR\x06status\"G\n" +
 	"\x16GetRelatedMemosRequest\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"K\n" +
@@ -541,7 +810,7 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_ai_service_proto_rawDescData
 }
 
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_api_v1_ai_service_proto_goTypes = []any{
 	(*SemanticSearchRequest)(nil),   // 0: memos.api.v1.SemanticSearchRequest
 	(*SemanticSearchResponse)(nil),  // 1: memos.api.v1.SemanticSearchResponse
@@ -550,25 +819,31 @@ var file_api_v1_ai_service_proto_goTypes = []any{
 	(*SuggestTagsResponse)(nil),     // 4: memos.api.v1.SuggestTagsResponse
 	(*ChatWithMemosRequest)(nil),    // 5: memos.api.v1.ChatWithMemosRequest
 	(*ChatWithMemosResponse)(nil),   // 6: memos.api.v1.ChatWithMemosResponse
-	(*GetRelatedMemosRequest)(nil),  // 7: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil), // 8: memos.api.v1.GetRelatedMemosResponse
+	(*ScheduleCreationIntent)(nil),  // 7: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),     // 8: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),         // 9: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),  // 10: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil), // 11: memos.api.v1.GetRelatedMemosResponse
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
-	2, // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
-	2, // 1: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
-	0, // 2: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	3, // 3: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	5, // 4: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
-	7, // 5: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	1, // 6: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	4, // 7: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	6, // 8: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
-	8, // 9: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
+	7,  // 1: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	8,  // 2: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	9,  // 3: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	2,  // 4: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
+	0,  // 5: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	3,  // 6: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	5,  // 7: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	10, // 8: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	1,  // 9: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	4,  // 10: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	6,  // 11: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	11, // 12: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -582,7 +857,7 @@ func file_api_v1_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -2358,6 +2358,10 @@ components:
                         type: string
                 done:
                     type: boolean
+                scheduleCreationIntent:
+                    $ref: '#/components/schemas/ScheduleCreationIntent'
+                scheduleQueryResult:
+                    $ref: '#/components/schemas/ScheduleQueryResult'
             description: ChatWithMemosResponse is the response for ChatWithMemos.
         CheckConflictRequest:
             required:
@@ -3143,6 +3147,52 @@ components:
                 state:
                     type: string
             description: Schedule represents a schedule event.
+        ScheduleCreationIntent:
+            type: object
+            properties:
+                detected:
+                    type: boolean
+                scheduleDescription:
+                    type: string
+                reasoning:
+                    type: string
+            description: ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+        ScheduleQueryResult:
+            type: object
+            properties:
+                detected:
+                    type: boolean
+                schedules:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ScheduleSummary'
+                timeRangeDescription:
+                    type: string
+                queryType:
+                    type: string
+            description: ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+        ScheduleSummary:
+            type: object
+            properties:
+                uid:
+                    type: string
+                title:
+                    type: string
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                allDay:
+                    type: boolean
+                location:
+                    type: string
+                recurrenceRule:
+                    type: string
+                status:
+                    type: string
+            description: |-
+                ScheduleSummary represents a simplified schedule for query results.
+                 This avoids circular dependencies with the full Schedule message in schedule_service.proto.
         SearchResult:
             type: object
             properties:

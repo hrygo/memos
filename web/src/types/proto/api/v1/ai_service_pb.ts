@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIjoKFVNlbWFudGljU2VhcmNoUmVxdWVzdBISCgVxdWVyeRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkUKFlNlbWFudGljU2VhcmNoUmVzcG9uc2USKwoHcmVzdWx0cxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQiPAoMU2VhcmNoUmVzdWx0EgwKBG5hbWUYASABKAkSDwoHc25pcHBldBgCIAEoCRINCgVzY29yZRgDIAEoAiI5ChJTdWdnZXN0VGFnc1JlcXVlc3QSFAoHY29udGVudBgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIiMKE1N1Z2dlc3RUYWdzUmVzcG9uc2USDAoEdGFncxgBIAMoCSI9ChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCSJHChVDaGF0V2l0aE1lbW9zUmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIPCgdzb3VyY2VzGAIgAygJEgwKBGRvbmUYAyABKAgiOgoWR2V0UmVsYXRlZE1lbW9zUmVxdWVzdBIRCgRuYW1lGAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRAoXR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2USKQoFbWVtb3MYASADKAsyGi5tZW1vcy5hcGkudjEuU2VhcmNoUmVzdWx0Mv8DCglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSdgoNQ2hhdFdpdGhNZW1vcxIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZEKmAQoQY29tLm1lbW9zLmFwaS52MUIOQWlTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIjoKFVNlbWFudGljU2VhcmNoUmVxdWVzdBISCgVxdWVyeRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkUKFlNlbWFudGljU2VhcmNoUmVzcG9uc2USKwoHcmVzdWx0cxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQiPAoMU2VhcmNoUmVzdWx0EgwKBG5hbWUYASABKAkSDwoHc25pcHBldBgCIAEoCRINCgVzY29yZRgDIAEoAiI5ChJTdWdnZXN0VGFnc1JlcXVlc3QSFAoHY29udGVudBgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIiMKE1N1Z2dlc3RUYWdzUmVzcG9uc2USDAoEdGFncxgBIAMoCSI9ChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCSLRAQoVQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSDwoHc291cmNlcxgCIAMoCRIMCgRkb25lGAMgASgIEkYKGHNjaGVkdWxlX2NyZWF0aW9uX2ludGVudBgEIAEoCzIkLm1lbW9zLmFwaS52MS5TY2hlZHVsZUNyZWF0aW9uSW50ZW50EkAKFXNjaGVkdWxlX3F1ZXJ5X3Jlc3VsdBgFIAEoCzIhLm1lbW9zLmFwaS52MS5TY2hlZHVsZVF1ZXJ5UmVzdWx0IlsKFlNjaGVkdWxlQ3JlYXRpb25JbnRlbnQSEAoIZGV0ZWN0ZWQYASABKAgSHAoUc2NoZWR1bGVfZGVzY3JpcHRpb24YAiABKAkSEQoJcmVhc29uaW5nGAMgASgJIo0BChNTY2hlZHVsZVF1ZXJ5UmVzdWx0EhAKCGRldGVjdGVkGAEgASgIEjAKCXNjaGVkdWxlcxgCIAMoCzIdLm1lbW9zLmFwaS52MS5TY2hlZHVsZVN1bW1hcnkSHgoWdGltZV9yYW5nZV9kZXNjcmlwdGlvbhgDIAEoCRISCgpxdWVyeV90eXBlGAQgASgJIpsBCg9TY2hlZHVsZVN1bW1hcnkSCwoDdWlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhAKCHN0YXJ0X3RzGAMgASgDEg4KBmVuZF90cxgEIAEoAxIPCgdhbGxfZGF5GAUgASgIEhAKCGxvY2F0aW9uGAYgASgJEhcKD3JlY3VycmVuY2VfcnVsZRgHIAEoCRIOCgZzdGF0dXMYCCABKAkiOgoWR2V0UmVsYXRlZE1lbW9zUmVxdWVzdBIRCgRuYW1lGAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRAoXR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2USKQoFbWVtb3MYASADKAsyGi5tZW1vcy5hcGkudjEuU2VhcmNoUmVzdWx0Mv8DCglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSdgoNQ2hhdFdpdGhNZW1vcxIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZEKmAQoQY29tLm1lbW9zLmFwaS52MUIOQWlTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior]);
 
 /**
  * SemanticSearchRequest is the request for SemanticSearch.
@@ -191,6 +191,20 @@ export type ChatWithMemosResponse = Message<"memos.api.v1.ChatWithMemosResponse"
    * @generated from field: bool done = 3;
    */
   done: boolean;
+
+  /**
+   * AI-detected schedule creation intent (sent in final chunk)
+   *
+   * @generated from field: memos.api.v1.ScheduleCreationIntent schedule_creation_intent = 4;
+   */
+  scheduleCreationIntent?: ScheduleCreationIntent;
+
+  /**
+   * AI-detected schedule query result (sent in final chunk)
+   *
+   * @generated from field: memos.api.v1.ScheduleQueryResult schedule_query_result = 5;
+   */
+  scheduleQueryResult?: ScheduleQueryResult;
 };
 
 /**
@@ -199,6 +213,154 @@ export type ChatWithMemosResponse = Message<"memos.api.v1.ChatWithMemosResponse"
  */
 export const ChatWithMemosResponseSchema: GenMessage<ChatWithMemosResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_ai_service, 6);
+
+/**
+ * ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+ *
+ * @generated from message memos.api.v1.ScheduleCreationIntent
+ */
+export type ScheduleCreationIntent = Message<"memos.api.v1.ScheduleCreationIntent"> & {
+  /**
+   * Whether user wants to create a schedule
+   *
+   * @generated from field: bool detected = 1;
+   */
+  detected: boolean;
+
+  /**
+   * Natural language description of the schedule (e.g., "明天下午2点开会")
+   *
+   * @generated from field: string schedule_description = 2;
+   */
+  scheduleDescription: string;
+
+  /**
+   * AI's reasoning for intent detection (optional, for debugging)
+   *
+   * @generated from field: string reasoning = 3;
+   */
+  reasoning: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleCreationIntent.
+ * Use `create(ScheduleCreationIntentSchema)` to create a new message.
+ */
+export const ScheduleCreationIntentSchema: GenMessage<ScheduleCreationIntent> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 7);
+
+/**
+ * ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+ *
+ * @generated from message memos.api.v1.ScheduleQueryResult
+ */
+export type ScheduleQueryResult = Message<"memos.api.v1.ScheduleQueryResult"> & {
+  /**
+   * Whether the user's intent is to query schedules
+   *
+   * @generated from field: bool detected = 1;
+   */
+  detected: boolean;
+
+  /**
+   * Queried schedules matching the user's intent
+   *
+   * @generated from field: repeated memos.api.v1.ScheduleSummary schedules = 2;
+   */
+  schedules: ScheduleSummary[];
+
+  /**
+   * Human-readable time range description (e.g., "未来7天", "本周")
+   *
+   * @generated from field: string time_range_description = 3;
+   */
+  timeRangeDescription: string;
+
+  /**
+   * Type of query (e.g., "upcoming", "range", "filter")
+   *
+   * @generated from field: string query_type = 4;
+   */
+  queryType: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleQueryResult.
+ * Use `create(ScheduleQueryResultSchema)` to create a new message.
+ */
+export const ScheduleQueryResultSchema: GenMessage<ScheduleQueryResult> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 8);
+
+/**
+ * ScheduleSummary represents a simplified schedule for query results.
+ * This avoids circular dependencies with the full Schedule message in schedule_service.proto.
+ *
+ * @generated from message memos.api.v1.ScheduleSummary
+ */
+export type ScheduleSummary = Message<"memos.api.v1.ScheduleSummary"> & {
+  /**
+   * Schedule unique identifier in format "schedules/{uid}"
+   *
+   * @generated from field: string uid = 1;
+   */
+  uid: string;
+
+  /**
+   * Schedule title
+   *
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * Start timestamp (Unix timestamp in seconds)
+   *
+   * @generated from field: int64 start_ts = 3;
+   */
+  startTs: bigint;
+
+  /**
+   * End timestamp (Unix timestamp in seconds, 0 if not set)
+   *
+   * @generated from field: int64 end_ts = 4;
+   */
+  endTs: bigint;
+
+  /**
+   * Whether this is an all-day event
+   *
+   * @generated from field: bool all_day = 5;
+   */
+  allDay: boolean;
+
+  /**
+   * Event location (optional)
+   *
+   * @generated from field: string location = 6;
+   */
+  location: string;
+
+  /**
+   * Recurrence rule in JSON format (empty if not recurring)
+   *
+   * @generated from field: string recurrence_rule = 7;
+   */
+  recurrenceRule: string;
+
+  /**
+   * Schedule status (e.g., "ACTIVE", "CANCELLED")
+   *
+   * @generated from field: string status = 8;
+   */
+  status: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleSummary.
+ * Use `create(ScheduleSummarySchema)` to create a new message.
+ */
+export const ScheduleSummarySchema: GenMessage<ScheduleSummary> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 9);
 
 /**
  * GetRelatedMemosRequest is the request for GetRelatedMemos.
@@ -226,7 +388,7 @@ export type GetRelatedMemosRequest = Message<"memos.api.v1.GetRelatedMemosReques
  * Use `create(GetRelatedMemosRequestSchema)` to create a new message.
  */
 export const GetRelatedMemosRequestSchema: GenMessage<GetRelatedMemosRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 7);
+  messageDesc(file_api_v1_ai_service, 10);
 
 /**
  * GetRelatedMemosResponse is the response for GetRelatedMemos.
@@ -245,7 +407,7 @@ export type GetRelatedMemosResponse = Message<"memos.api.v1.GetRelatedMemosRespo
  * Use `create(GetRelatedMemosResponseSchema)` to create a new message.
  */
 export const GetRelatedMemosResponseSchema: GenMessage<GetRelatedMemosResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 8);
+  messageDesc(file_api_v1_ai_service, 11);
 
 /**
  * AIService provides AI-powered features for memo management.

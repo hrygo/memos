@@ -2,9 +2,12 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -354,6 +357,26 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 		}
 	}
 
+	// 4.5 检测日程查询意图并查询日程
+	scheduleQueryIntent := s.detectScheduleQueryIntent(req.Message)
+	var scheduleQueryResult *v1pb.ScheduleQueryResult
+	var scheduleContext string
+
+	if scheduleQueryIntent.Detected {
+		// 查询日程
+		result, err := s.querySchedules(ctx, user.ID, scheduleQueryIntent)
+		if err != nil {
+			// 日程查询失败，记录日志但不影响聊天
+			fmt.Printf("[ScheduleQuery] Failed to query schedules: %v\n", err)
+		} else {
+			scheduleQueryResult = result
+			// 格式化日程信息用于 AI 上下文
+			scheduleContext = s.formatSchedulesForContext(result.Schedules)
+			fmt.Printf("[ScheduleQuery] Detected '%s' query, found %d schedules\n",
+				scheduleQueryIntent.TimeRange, len(result.Schedules))
+		}
+	}
+
 	// 5. 构建上下文 (最大字符数: 3000)
 	var contextBuilder strings.Builder
 	var sources []string
@@ -396,9 +419,42 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	var systemPrompt string
 	if len(sources) == 0 {
 		// 没有任何笔记时，明确告知
-		systemPrompt = "你是一个基于用户个人笔记的AI助手。当前用户没有任何备忘录，请友好地告知用户这一情况，并建议他们先创建一些备忘录。"
+		systemPrompt = `你是一个基于用户个人笔记和日程的AI助手。
+
+## 功能
+1. 笔记查询：基于用户笔记回答问题
+2. 日程查询：查询用户近期日程安排
+3. 日程创建：帮助用户创建新日程
+
+## 日程意图检测（重要）
+如果检测到用户想创建日程/提醒（用户说"帮我创建"、"提醒我"、"安排"等），在回复的最后独立成行添加：
+<<<SCHEDULE_INTENT:{"detected":true,"description":"简短描述，如：明天下午2点开会"}>>>
+
+如果用户只是询问日程但没有创建意图，不要添加此标记。
+
+## 回答要求
+- 使用中文，简洁准确
+- 如果用户询问日程，基于下方"用户日程"部分回答
+- 如果没有日程或笔记，友好告知用户`
 	} else {
-		systemPrompt = "你是一个基于用户个人笔记的AI助手。请根据以下笔记内容回答问题。你必须严格基于提供的笔记内容回答，不要编造或假设任何笔记中没有的信息。如果笔记中没有相关信息，请明确告知用户。回答时使用中文，保持简洁准确。"
+		systemPrompt = `你是一个基于用户个人笔记和日程的AI助手。
+
+## 功能
+1. 笔记查询：基于用户笔记回答问题
+2. 日程查询：查询用户近期日程安排
+3. 日程创建：帮助用户创建新日程
+
+## 日程意图检测（重要）
+如果检测到用户想创建日程/提醒（用户说"帮我创建"、"提醒我"、"安排"等），在回复的最后独立成行添加：
+<<<SCHEDULE_INTENT:{"detected":true,"description":"简短描述，如：明天下午2点开会"}>>>
+
+如果用户只是询问日程但没有创建意图，不要添加此标记。
+
+## 回答要求
+- 优先基于笔记和日程回答
+- 如果用户询问日程，基于下方"用户日程"部分回答
+- 使用中文，简洁准确
+- 不要编造信息`
 	}
 	messages := []ai.Message{
 		{
@@ -416,7 +472,22 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	}
 
 	// 添加当前问题
-	userMessage := fmt.Sprintf("## 相关笔记\n%s\n## 用户问题\n%s", contextBuilder.String(), req.Message)
+	userMessageBuilder := &strings.Builder{}
+	userMessageBuilder.WriteString("## 相关笔记\n")
+	userMessageBuilder.WriteString(contextBuilder.String())
+	userMessageBuilder.WriteString("\n")
+
+	// 添加日程上下文（如果有）
+	if scheduleContext != "" {
+		userMessageBuilder.WriteString("## 用户日程\n")
+		userMessageBuilder.WriteString(scheduleContext)
+		userMessageBuilder.WriteString("\n")
+	}
+
+	userMessageBuilder.WriteString("## 用户问题\n")
+	userMessageBuilder.WriteString(req.Message)
+
+	userMessage := userMessageBuilder.String()
 	messages = append(messages, ai.Message{Role: "user", Content: userMessage})
 
 	// 6. 流式调用 LLM
@@ -429,6 +500,9 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 		return err
 	}
 
+	// 收集完整回复内容（用于意图分析）
+	var fullContent strings.Builder
+
 	// 流式发送内容
 	for {
 		select {
@@ -436,10 +510,11 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 			if !ok {
 				contentChan = nil // 标记为已关闭
 				if errChan == nil {
-					return stream.Send(&v1pb.ChatWithMemosResponse{Done: true})
+					return s.finalizeChatStream(stream, fullContent.String(), scheduleQueryResult)
 				}
 				continue
 			}
+			fullContent.WriteString(content)
 			if err := stream.Send(&v1pb.ChatWithMemosResponse{
 				Content: content,
 			}); err != nil {
@@ -450,7 +525,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 			if !ok {
 				errChan = nil // 标记为已关闭
 				if contentChan == nil {
-					return stream.Send(&v1pb.ChatWithMemosResponse{Done: true})
+					return s.finalizeChatStream(stream, fullContent.String(), scheduleQueryResult)
 				}
 				continue
 			}
@@ -461,6 +536,91 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 		case <-ctx.Done():
 			return ctx.Err()
 		}
+	}
+}
+
+// finalizeChatStream sends the final response with schedule intent detection
+func (s *AIService) finalizeChatStream(stream v1pb.AIService_ChatWithMemosServer, aiResponse string, scheduleQueryResult *v1pb.ScheduleQueryResult) error {
+	// 从 AI 回复中解析意图标记
+	scheduleIntent := s.parseScheduleIntentFromAIResponse(aiResponse)
+
+	// 构建最终响应
+	response := &v1pb.ChatWithMemosResponse{
+		Done: true,
+	}
+
+	// 添加日程创建意图
+	if scheduleIntent != nil {
+		response.ScheduleCreationIntent = scheduleIntent
+	}
+
+	// 添加日程查询结果
+	if scheduleQueryResult != nil {
+		response.ScheduleQueryResult = scheduleQueryResult
+	}
+
+	return stream.Send(response)
+}
+
+// parseScheduleIntentFromAIResponse parses schedule intent from AI's response text
+// This replaces the additional LLM call approach for better performance
+// Marker format: <<<SCHEDULE_INTENT:{"detected":true,"description":"..."}>>>
+func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.ScheduleCreationIntent {
+	// 查找意图标记：使用更独特的 <<<SCHEDULE_INTENT: 格式避免误判
+	const intentMarker = "<<<SCHEDULE_INTENT:"
+
+	startIdx := strings.Index(aiResponse, intentMarker)
+	if startIdx == -1 {
+		// 没有意图标记，用户没有创建日程的意图
+		return nil
+	}
+
+	// 提取 JSON 部分
+	startIdx += len(intentMarker)
+
+	// 查找结束标记 >>>（使用 LastIndex 避免描述中的 >>> 截断）
+	endIdx := strings.LastIndex(aiResponse[startIdx:], ">>>")
+	if endIdx == -1 {
+		fmt.Printf("[ScheduleIntent] Found marker but missing closing '>>>'\n")
+		return nil
+	}
+
+	jsonStr := strings.TrimSpace(aiResponse[startIdx : startIdx+endIdx])
+
+	// 清理 JSON 字符串：移除换行符和制表符
+	cleanJSON := strings.ReplaceAll(jsonStr, "\n", " ")
+	cleanJSON = strings.ReplaceAll(cleanJSON, "\t", " ")
+	cleanJSON = strings.TrimSpace(cleanJSON)
+
+	// 解析 JSON
+	type IntentJSON struct {
+		Detected   bool   `json:"detected"`
+		Description string `json:"description"`
+	}
+
+	var intentJSON IntentJSON
+	if err := json.Unmarshal([]byte(cleanJSON), &intentJSON); err != nil {
+		fmt.Printf("[ScheduleIntent] Failed to parse intent JSON: %v, original: %s, cleaned: %s\n", err, jsonStr, cleanJSON)
+		return nil
+	}
+
+	// 检查是否检测到意图
+	if !intentJSON.Detected {
+		return nil
+	}
+
+	// 验证描述不为空
+	if strings.TrimSpace(intentJSON.Description) == "" {
+		fmt.Printf("[ScheduleIntent] Intent detected but description is empty\n")
+		return nil
+	}
+
+	fmt.Printf("[ScheduleIntent] Detected from AI response: %s\n", intentJSON.Description)
+
+	return &v1pb.ScheduleCreationIntent{
+		Detected:            true,
+		ScheduleDescription: intentJSON.Description,
+		Reasoning:           "Detected from AI response marker",
 	}
 }
 
@@ -559,4 +719,225 @@ func (s *AIService) GetRelatedMemos(ctx context.Context, req *v1pb.GetRelatedMem
 	}
 
 	return response, nil
+}
+
+// ScheduleQueryIntent represents the detected intent for schedule query.
+type ScheduleQueryIntent struct {
+	Detected  bool
+	QueryType string   // "upcoming", "range", "filter"
+	TimeRange string   // "7d", "today", "tomorrow", "week"
+	StartTime *time.Time
+	EndTime   *time.Time
+}
+
+// detectScheduleQueryIntent detects whether user wants to query schedules.
+// Uses rule-based matching for performance and reliability.
+func (s *AIService) detectScheduleQueryIntent(message string) *ScheduleQueryIntent {
+	// Normalize message for matching
+	normalizedMessage := strings.ToLower(strings.TrimSpace(message))
+
+	// Define query patterns with corresponding time ranges
+	queryPatterns := []struct {
+		patterns   []string
+		intentType string
+		timeRange  string
+		calcTimeRange func() (*time.Time, *time.Time)
+	}{
+		{
+			// Upcoming schedules (next 7 days)
+			patterns:   []string{"近期日程", "近期的日程", "未来.*日程", "接下来.*日程", "有什么安排", "日程查询"},
+			intentType: "upcoming",
+			timeRange:  "未来7天",
+			calcTimeRange: func() (*time.Time, *time.Time) {
+				now := time.Now()
+				return &now, &now
+			},
+		},
+		{
+			// Today's schedules
+			patterns:   []string{"今天.*日程", "今天.*安排", "今天.*事", "今天有什么"},
+			intentType: "range",
+			timeRange:  "今天",
+			calcTimeRange: func() (*time.Time, *time.Time) {
+				now := time.Now()
+				startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+				endOfDay := startOfDay.Add(24 * time.Hour)
+				return &startOfDay, &endOfDay
+			},
+		},
+		{
+			// Tomorrow's schedules
+			patterns:   []string{"明天.*日程", "明天.*安排", "明天.*事", "明天有什么"},
+			intentType: "range",
+			timeRange:  "明天",
+			calcTimeRange: func() (*time.Time, *time.Time) {
+				now := time.Now()
+				startOfDay := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+				endOfDay := startOfDay.Add(24 * time.Hour)
+				return &startOfDay, &endOfDay
+			},
+		},
+		{
+			// This week's schedules
+			patterns:   []string{"本周.*日程", "这周.*安排", "这周.*事", "本周有什么"},
+			intentType: "range",
+			timeRange:  "本周",
+			calcTimeRange: func() (*time.Time, *time.Time) {
+				now := time.Now()
+				// Start of week (Monday)
+				weekday := now.Weekday()
+				if weekday == time.Sunday {
+					weekday = 7
+				}
+				startOfWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1, 0, 0, 0, 0, now.Location())
+				// End of week (Sunday)
+				endOfWeek := startOfWeek.Add(7 * 24 * time.Hour)
+				return &startOfWeek, &endOfWeek
+			},
+		},
+		{
+			// Next week's schedules
+			patterns:   []string{"下周.*日程", "下周.*安排", "下周.*事", "下周有什么"},
+			intentType: "range",
+			timeRange:  "下周",
+			calcTimeRange: func() (*time.Time, *time.Time) {
+				now := time.Now()
+				// Start of next week (Monday)
+				weekday := now.Weekday()
+				if weekday == time.Sunday {
+					weekday = 7
+				}
+				startOfNextWeek := time.Date(now.Year(), now.Month(), now.Day()-int(weekday)+1+7, 0, 0, 0, 0, now.Location())
+				// End of next week (Sunday)
+				endOfNextWeek := startOfNextWeek.Add(7 * 24 * time.Hour)
+				return &startOfNextWeek, &endOfNextWeek
+			},
+		},
+	}
+
+	// Try to match patterns
+	for _, qp := range queryPatterns {
+		for _, pattern := range qp.patterns {
+			if matched, _ := regexp.MatchString(pattern, normalizedMessage); matched {
+				startTime, endTime := qp.calcTimeRange()
+				return &ScheduleQueryIntent{
+					Detected:  true,
+					QueryType: qp.intentType,
+					TimeRange: qp.timeRange,
+					StartTime: startTime,
+					EndTime:   endTime,
+				}
+			}
+		}
+	}
+
+	// No schedule query intent detected
+	return &ScheduleQueryIntent{Detected: false}
+}
+
+// querySchedules queries schedules based on the detected intent.
+func (s *AIService) querySchedules(ctx context.Context, userID int32, intent *ScheduleQueryIntent) (*v1pb.ScheduleQueryResult, error) {
+	// Default to 7 days if no time range specified
+	startTime := time.Now()
+	endTime := time.Now().Add(7 * 24 * time.Hour)
+
+	if intent.StartTime != nil {
+		startTime = *intent.StartTime
+	}
+	if intent.EndTime != nil {
+		endTime = *intent.EndTime
+	}
+
+	// Convert time to timestamps for query
+	startTs := startTime.Unix()
+	endTs := endTime.Unix()
+
+	// Query schedules from store
+	find := &store.FindSchedule{
+		CreatorID: &userID,
+		StartTs:   &startTs,
+		EndTs:     &endTs,
+	}
+
+	schedules, err := s.Store.ListSchedules(ctx, find)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list schedules: %w", err)
+	}
+
+	// Convert to proto format
+	result := &v1pb.ScheduleQueryResult{
+		Detected:             true,
+		Schedules:            make([]*v1pb.ScheduleSummary, 0, len(schedules)),
+		TimeRangeDescription: intent.TimeRange,
+		QueryType:            intent.QueryType,
+	}
+
+	// Limit results to avoid overwhelming the user
+	maxResults := 10
+	if len(schedules) > maxResults {
+		schedules = schedules[:maxResults]
+	}
+
+	for _, sched := range schedules {
+		// Convert end_ts (can be nil for all-day events)
+		var endTsValue int64
+		if sched.EndTs != nil {
+			endTsValue = *sched.EndTs
+		}
+
+		// Map RowStatus to status string
+		status := "ACTIVE"
+		if sched.RowStatus == store.Archived {
+			status = "CANCELLED"
+		}
+
+		// Handle RecurrenceRule (can be nil)
+		var recurrenceRule string
+		if sched.RecurrenceRule != nil {
+			recurrenceRule = *sched.RecurrenceRule
+		}
+
+		result.Schedules = append(result.Schedules, &v1pb.ScheduleSummary{
+			Uid:            "schedules/" + sched.UID,
+			Title:          sched.Title,
+			StartTs:        sched.StartTs,
+			EndTs:          endTsValue,
+			AllDay:         sched.AllDay,
+			Location:       sched.Location,
+			RecurrenceRule:  recurrenceRule,
+			Status:         status,
+		})
+	}
+
+	return result, nil
+}
+
+// formatSchedulesForContext formats schedules for AI context.
+func (s *AIService) formatSchedulesForContext(schedules []*v1pb.ScheduleSummary) string {
+	if len(schedules) == 0 {
+		return "无"
+	}
+
+	var builder strings.Builder
+	for i, sched := range schedules {
+		startTime := time.Unix(sched.StartTs, 0)
+		timeStr := startTime.Format("2006-01-02 15:04")
+		if sched.AllDay {
+			timeStr = startTime.Format("2006-01-02") + " (全天)"
+		}
+
+		location := ""
+		if sched.Location != "" {
+			location = fmt.Sprintf(" @ %s", sched.Location)
+		}
+
+		recurrence := ""
+		if sched.RecurrenceRule != "" {
+			recurrence = " [重复]"
+		}
+
+		builder.WriteString(fmt.Sprintf("%d. %s: %s%s%s\n", i+1, timeStr, sched.Title, location, recurrence))
+	}
+
+	return builder.String()
 }

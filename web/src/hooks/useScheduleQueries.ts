@@ -38,6 +38,30 @@ export function useSchedules(request: Partial<ListSchedulesRequest> = {}) {
 }
 
 /**
+ * Hook to fetch schedules with time range optimization (today ± 15 days)
+ */
+export function useSchedulesOptimized(anchorDate?: Date) {
+  // Calculate time range: anchorDate ± 15 days
+  const now = anchorDate || new Date();
+  const startOfRange = new Date(now);
+  startOfRange.setDate(now.getDate() - 15);
+  startOfRange.setHours(0, 0, 0, 0);
+
+  const endOfRange = new Date(now);
+  endOfRange.setDate(now.getDate() + 15);
+  endOfRange.setHours(23, 59, 59, 999);
+
+  // Convert to Unix timestamps (seconds)
+  const startTs = BigInt(Math.floor(startOfRange.getTime() / 1000));
+  const endTs = BigInt(Math.floor(endOfRange.getTime() / 1000));
+
+  return useSchedules({
+    startTs,
+    endTs,
+  });
+}
+
+/**
  * Hook to fetch a single schedule by name
  */
 export function useSchedule(name: string, options?: { enabled?: boolean }) {

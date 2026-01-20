@@ -78,9 +78,39 @@ message ChatWithMemosRequest {
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
 message ChatWithMemosResponse {
-  string content = 1;           // streaming content chunk
-  repeated string sources = 2;  // citation sources memos/{id}
-  bool done = 3;                // stream end marker
+  string content = 1;                       // streaming content chunk
+  repeated string sources = 2;              // citation sources memos/{id}
+  bool done = 3;                            // stream end marker
+  ScheduleCreationIntent schedule_creation_intent = 4;  // AI-detected schedule creation intent (sent in final chunk)
+  ScheduleQueryResult schedule_query_result = 5;        // AI-detected schedule query result (sent in final chunk)
+}
+
+// ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+message ScheduleCreationIntent {
+  bool detected = 1;                    // Whether user wants to create a schedule
+  string schedule_description = 2;      // Natural language description of the schedule (e.g., "明天下午2点开会")
+  string reasoning = 3;                 // AI's reasoning for intent detection (optional, for debugging)
+}
+
+// ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+message ScheduleQueryResult {
+  bool detected = 1;                    // Whether the user's intent is to query schedules
+  repeated ScheduleSummary schedules = 2; // Queried schedules matching the user's intent
+  string time_range_description = 3;     // Human-readable time range description (e.g., "未来7天", "本周")
+  string query_type = 4;                 // Type of query (e.g., "upcoming", "range", "filter")
+}
+
+// ScheduleSummary represents a simplified schedule for query results.
+// This avoids circular dependencies with the full Schedule message in schedule_service.proto.
+message ScheduleSummary {
+  string uid = 1;                   // Schedule unique identifier in format "schedules/{uid}"
+  string title = 2;                 // Schedule title
+  int64 start_ts = 3;               // Start timestamp (Unix timestamp in seconds)
+  int64 end_ts = 4;                 // End timestamp (Unix timestamp in seconds, 0 if not set)
+  bool all_day = 5;                 // Whether this is an all-day event
+  string location = 6;              // Event location (optional)
+  string recurrence_rule = 7;       // Recurrence rule in JSON format (empty if not recurring)
+  string status = 8;                // Schedule status (e.g., "ACTIVE", "CANCELLED")
 }
 
 // GetRelatedMemosRequest is the request for GetRelatedMemos.

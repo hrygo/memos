@@ -96,6 +96,22 @@ export function useChatWithMemos() {
         onSources?: (sources: string[]) => void;
         onDone?: () => void;
         onError?: (error: Error) => void;
+        onScheduleIntent?: (intent: { detected: boolean; scheduleDescription: string }) => void;
+        onScheduleQueryResult?: (result: {
+          detected: boolean;
+          schedules: Array<{
+            uid: string;
+            title: string;
+            startTs: bigint;
+            endTs: bigint;
+            allDay: boolean;
+            location: string;
+            recurrenceRule: string;
+            status: string;
+          }>;
+          timeRangeDescription: string;
+          queryType: string;
+        }) => void;
       },
     ) => {
       const request = create(ChatWithMemosRequestSchema, {
@@ -122,6 +138,35 @@ export function useChatWithMemos() {
           if (response.content) {
             fullContent += response.content;
             callbacks?.onContent?.(response.content);
+          }
+
+          // Handle schedule creation intent (sent in final chunk)
+          if (response.scheduleCreationIntent?.detected) {
+            callbacks?.onScheduleIntent?.({
+              detected: response.scheduleCreationIntent.detected,
+              scheduleDescription: response.scheduleCreationIntent.scheduleDescription || "",
+            });
+          }
+
+          // Handle schedule query result (sent in final chunk)
+          if (response.scheduleQueryResult?.detected) {
+            const schedules = (response.scheduleQueryResult.schedules || []).map((sched) => ({
+              uid: sched.uid || "",
+              title: sched.title || "",
+              startTs: sched.startTs || BigInt(0),
+              endTs: sched.endTs || BigInt(0),
+              allDay: sched.allDay || false,
+              location: sched.location || "",
+              recurrenceRule: sched.recurrenceRule || "",
+              status: sched.status || "ACTIVE",
+            }));
+
+            callbacks?.onScheduleQueryResult?.({
+              detected: response.scheduleQueryResult.detected,
+              schedules,
+              timeRangeDescription: response.scheduleQueryResult.timeRangeDescription || "",
+              queryType: response.scheduleQueryResult.queryType || "",
+            });
           }
 
           // Handle completion

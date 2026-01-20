@@ -27,7 +27,20 @@ import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
 import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleSuggestionCard } from "@/components/AIChat/ScheduleSuggestionCard";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
+import { ScheduleQueryResult } from "@/components/AIChat/ScheduleQueryResult";
 import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
+
+// Type definitions for schedule query results
+interface ScheduleSummary {
+  uid: string;
+  title: string;
+  startTs: bigint;
+  endTs: bigint;
+  allDay: boolean;
+  location: string;
+  recurrenceRule: string;
+  status: string;
+}
 import TypingCursor from "@/components/AIChat/TypingCursor";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { CodeBlock } from "@/components/MemoContent/CodeBlock";
@@ -37,7 +50,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { useParseAndCreateSchedule, useSchedules, useCheckConflict } from "@/hooks/useScheduleQueries";
+import { useParseAndCreateSchedule, useSchedulesOptimized, useCheckConflict } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 
@@ -76,7 +89,13 @@ const AIChat = () => {
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [scheduleViewMode, setScheduleViewMode] = useState<"timeline" | "calendar">("timeline");
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
-  const { data: schedulesData } = useSchedules({});
+
+  // 使用 useRef 存储消息 ID，避免 React state 异步更新导致的竞态条件
+  const messageIdRef = useRef(0);
+  // Use optimized schedule hook with 30-day window (±15 days from selected date)
+  // Calculate anchor date from selectedDate or use today
+  const anchorDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+  const { data: schedulesData } = useSchedulesOptimized(anchorDate);
 
   const schedules = schedulesData?.schedules || [];
 
@@ -86,6 +105,9 @@ const AIChat = () => {
   const [lastScheduleMessage, setLastScheduleMessage] = useState("");
   const [isParsingSchedule, setIsParsingSchedule] = useState(false);
   const [scheduleConflicts, setScheduleConflicts] = useState<Schedule[]>([]);
+  const [showScheduleQueryResult, setShowScheduleQueryResult] = useState(false);
+  const [queryResultSchedules, setQueryResultSchedules] = useState<ScheduleSummary[]>([]);
+  const [queryTitle, setQueryTitle] = useState("");
   const parseAndCreateSchedule = useParseAndCreateSchedule();
   const checkConflict = useCheckConflict();
 
@@ -110,6 +132,32 @@ const AIChat = () => {
     }
 
     return false;
+  };
+
+  // Intent detection for schedule query
+  const detectScheduleQueryIntent = (text: string): boolean => {
+    const queryKeywords = [
+      "查询", "有什么", "安排", "看看", "show", "what", "list", "query", "查看",
+      "多少", "几个", "search", "find", "list",
+      "今天", "明天", "后天", "本周", "下周",
+      "tomorrow", "today", "week", "schedule", "日程", "计划"
+    ];
+
+    const hasQueryKeyword = queryKeywords.some((keyword) =>
+      text.toLowerCase().includes(keyword.toLowerCase())
+    );
+
+    // Query patterns: "今天有什么日程", "查询明天安排", "show me my schedule"
+    const queryPatterns = [
+      /今天.*什么|明天.*什么|后天.*什么|本周.*什么|下周.*什么/,
+      /有什么日程|有哪些安排|有多少个/,
+      /show.*schedule|list.*schedule|what.*schedule|my.*schedule/i,
+      /查询.*日程|查看.*日程|我的.*日程/,
+    ];
+
+    const matchesPattern = queryPatterns.some((pattern) => pattern.test(text));
+
+    return hasQueryKeyword && matchesPattern;
   };
 
   const shouldShowQuickSuggestion = (text: string) => {
@@ -156,6 +204,9 @@ const AIChat = () => {
     if (isTyping) {
       resetTypingState();
     }
+
+    // 原子操作递增消息 ID，避免竞态条件
+    const messageId = ++messageIdRef.current;
 
     setInput("");
     setLastUserMessage(userMessage);
@@ -213,6 +264,53 @@ const AIChat = () => {
               return newItems;
             });
           },
+          onScheduleIntent: (intent) => {
+            // AI 检测到日程创建意图，触发建议卡片
+            // 使用 messageIdRef.current 避免竞态条件
+            if (messageId !== messageIdRef.current) {
+              console.warn(`[ScheduleIntent] Ignoring stale intent for message ${messageId}, current is ${messageIdRef.current}`);
+              return;
+            }
+
+            if (intent.detected && !scheduleInputOpen) {
+              // 验证 scheduleDescription 不为空
+              if (!intent.scheduleDescription || intent.scheduleDescription.trim().length === 0) {
+                console.warn("[ScheduleIntent] Intent detected but description is empty");
+                return;
+              }
+
+              console.log(`[ScheduleIntent] Detected with description: "${intent.scheduleDescription}"`);
+              handleScheduleSuggestion(intent.scheduleDescription);
+            }
+          },
+          onScheduleQueryResult: (result) => {
+            // AI 检测到日程查询意图，显示查询结果
+            console.log(`[ScheduleQuery] Detected with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
+
+            if (result.detected && result.schedules.length > 0) {
+              // 转换为 ScheduleSummary 格式
+              const schedules: ScheduleSummary[] = result.schedules.map((sched) => ({
+                uid: sched.uid,
+                title: sched.title,
+                startTs: sched.startTs,
+                endTs: sched.endTs,
+                allDay: sched.allDay,
+                location: sched.location,
+                recurrenceRule: sched.recurrenceRule,
+                status: sched.status,
+              }));
+
+              setQueryResultSchedules(schedules);
+              setQueryTitle(result.timeRangeDescription || "近期日程");
+              setShowScheduleQueryResult(true);
+            } else if (result.detected && result.schedules.length === 0) {
+              // 检测到查询意图但没有日程
+              toast("该时间段暂无日程安排", {
+                icon: "📅",
+                duration: 3000,
+              });
+            }
+          },
         },
       );
     } catch (_error) {
@@ -221,10 +319,11 @@ const AIChat = () => {
       setErrorMessage(t("ai.error-title"));
     }
 
-    // Check for schedule creation intent after AI responds
-    if (detectScheduleIntent(userMessage) && !scheduleInputOpen) {
-      handleScheduleSuggestion(userMessage);
+    // Check for schedule query intent after AI responds
+    if (detectScheduleQueryIntent(userMessage)) {
+      handleScheduleQuery(userMessage);
     }
+    // 注意：日程创建意图现在由 AI 在后端检测，不再需要前端检测
   };
 
   const handleRetry = () => {
@@ -274,6 +373,86 @@ const AIChat = () => {
   const handleSuggestedPrompt = (query: string) => {
     setInput(query);
     setTimeout(() => handleSend(query), 100);
+  };
+
+  const handleScheduleQuery = (userMessage: string) => {
+    import("dayjs").then((dayjsMod) => {
+      const dayjs = dayjsMod.default;
+
+      // Determine time range title from query
+      let title = "";
+      const now = dayjs();
+
+      if (userMessage.includes("今天") || userMessage.toLowerCase().includes("today")) {
+        title = "今天的日程";
+      } else if (userMessage.includes("明天") || userMessage.toLowerCase().includes("tomorrow")) {
+        title = "明天的日程";
+      } else if (userMessage.includes("后天")) {
+        title = "后天的日程";
+      } else if (userMessage.includes("本周") || userMessage.toLowerCase().includes("this week")) {
+        title = "本周的日程";
+      } else if (userMessage.includes("下周") || userMessage.toLowerCase().includes("next week")) {
+        title = "下周的日程";
+      } else {
+        title = "日程查询结果";
+      }
+
+      // Filter schedules based on query (schedules already contains ±15 days data)
+      const filteredSchedules = schedules.filter((schedule) => {
+        const scheduleStart = dayjs.unix(Number(schedule.startTs));
+        const scheduleEnd = schedule.endTs > 0 ? dayjs.unix(Number(schedule.endTs)) : scheduleStart.add(1, "hour");
+
+        // Additional filtering based on query
+        if (userMessage.includes("今天") || userMessage.toLowerCase().includes("today")) {
+          const todayStart = now.startOf("day");
+          const todayEnd = now.endOf("day");
+          return scheduleStart.isBefore(todayEnd) && scheduleEnd.isAfter(todayStart);
+        } else if (userMessage.includes("明天") || userMessage.toLowerCase().includes("tomorrow")) {
+          const tomorrowStart = now.add(1, "day").startOf("day");
+          const tomorrowEnd = now.add(1, "day").endOf("day");
+          return scheduleStart.isBefore(tomorrowEnd) && scheduleEnd.isAfter(tomorrowStart);
+        } else if (userMessage.includes("后天")) {
+          const dayAfterTomorrowStart = now.add(2, "day").startOf("day");
+          const dayAfterTomorrowEnd = now.add(2, "day").endOf("day");
+          return scheduleStart.isBefore(dayAfterTomorrowEnd) && scheduleEnd.isAfter(dayAfterTomorrowStart);
+        } else if (userMessage.includes("本周") || userMessage.toLowerCase().includes("this week")) {
+          const weekStart = now.startOf("week");
+          const weekEnd = now.endOf("week");
+          return scheduleStart.isBefore(weekEnd) && scheduleEnd.isAfter(weekStart);
+        } else if (userMessage.includes("下周") || userMessage.toLowerCase().includes("next week")) {
+          const nextWeekStart = now.add(1, "week").startOf("week");
+          const nextWeekEnd = now.add(1, "week").endOf("week");
+          return scheduleStart.isBefore(nextWeekEnd) && scheduleEnd.isAfter(nextWeekStart);
+        }
+        // Default: show all schedules (already filtered by ±15 days window)
+        return true;
+      });
+
+      // Sort by start time
+      const sortedSchedules = filteredSchedules.sort((a, b) =>
+        Number(a.startTs) - Number(b.startTs)
+      );
+
+      // Map Schedule to ScheduleSummary
+      const mappedSchedules: ScheduleSummary[] = sortedSchedules.map((s) => {
+        // Extract uid from name (format: "schedules/{uid}")
+        const uid = s.name.replace("schedules/", "");
+        return {
+          uid,
+          title: s.title,
+          startTs: s.startTs,
+          endTs: s.endTs,
+          allDay: s.allDay,
+          location: s.location,
+          recurrenceRule: s.recurrenceRule || "",
+          status: s.state === "NORMAL" ? "ACTIVE" : "CANCELLED",
+        };
+      });
+
+      setQueryResultSchedules(mappedSchedules);
+      setQueryTitle(title);
+      setShowScheduleQueryResult(true);
+    });
   };
 
   const handleScheduleSuggestion = async (userMessage: string) => {
@@ -539,6 +718,19 @@ const AIChat = () => {
               onAdjustTime={handleAdjustTime}
             />
           </div>
+        )}
+
+        {showScheduleQueryResult && queryResultSchedules.length > 0 && (
+          <ScheduleQueryResult
+            title={queryTitle}
+            schedules={queryResultSchedules}
+            onClose={() => {
+              setShowScheduleQueryResult(false);
+              setQueryResultSchedules([]);
+              setQueryTitle("");
+            }}
+            onScheduleClick={undefined}
+          />
         )}
 
         {/* Schedule Panel Toggle Button */}
