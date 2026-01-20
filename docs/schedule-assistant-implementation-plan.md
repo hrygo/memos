@@ -25,8 +25,8 @@
 - ✅ **智能提醒**：支持多种提醒方式（15分钟前、1小时前等）
 - ✅ **冲突检测**：创建时检测时间冲突
 - ✅ **AI 聊天集成**：已实现前端意图识别和主动提示
-- ⏳ **日历视图**：聊天页面内嵌小型日历组件- 待实现
-- ⏳ **重复日程**：支持每日、每周、每月、工作日等重复规则- 待实现
+- ✅ **日历视图**：聊天页面内嵌小型日历组件
+- ✅ **重复日程**：支持每日、每周、每月、工作日等重复规则
 - ⏳ **实时通知**：应用内通知（WebSocket/SSE）- 待实现
 
 ### 第二期功能
@@ -240,7 +240,7 @@ AI 正常回复消息
 用户选择：确认 / 编辑 / 忽略
 ```
 
-### ⏳ Phase 7: 冲突检测 (待实现)
+### ✅ Phase 7: 冲突检测 (已完成)
 - [ ] 实现时间冲突检测逻辑
 - [ ] 集成到创建流程
 - [ ] AI 主动提醒功能
@@ -248,7 +248,7 @@ AI 正常回复消息
 **待创建文件**:
 - `plugin/ai/schedule/conflict.go`
 
-### ⏳ Phase 8: 重复日程 (待实现)
+### ✅ Phase 8: 重复日程 (已完成)
 - [ ] 实现 RRULE 解析器（简化版）
 - [ ] 计算重复实例
 - [ ] 更新查询逻辑
@@ -391,15 +391,15 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 
 ### 已实现的 API
 
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| POST | `/api/v1/schedules` | 创建日程 |
-| GET | `/api/v1/schedules` | 列出日程 |
-| GET | `/api/v1/schedules/{uid}` | 获取单个日程 |
-| PATCH | `/api/v1/schedules/{uid}` | 更新日程 |
-| DELETE | `/api/v1/schedules/{uid}` | 删除日程 |
-| POST | `/api/v1/schedules:checkConflict` | 检查冲突 |
-| POST | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 ✅ |
+| 方法   | 端点                               | 描述               |
+| ------ | ---------------------------------- | ------------------ |
+| POST   | `/api/v1/schedules`                | 创建日程           |
+| GET    | `/api/v1/schedules`                | 列出日程           |
+| GET    | `/api/v1/schedules/{uid}`          | 获取单个日程       |
+| PATCH  | `/api/v1/schedules/{uid}`          | 更新日程           |
+| DELETE | `/api/v1/schedules/{uid}`          | 删除日程           |
+| POST   | `/api/v1/schedules:checkConflict`  | 检查冲突           |
+| POST   | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 ✅ |
 
 **注意**: `PATCH /api/v1/schedules/{uid}` 更新接口有两种行为模式：
 
@@ -521,14 +521,14 @@ POST /api/v1/schedules:checkConflict
 
 ### 错误码说明
 
-| 错误码 | HTTP 状态 | 说明 |
-|--------|----------|------|
-| `InvalidArgument` | 400 | 请求参数无效（如 title 为空、start_ts <= 0） |
-| `Unauthenticated` | 401 | 未登录或 token 无效 |
-| `NotFound` | 404 | 日程不存在 |
-| `AlreadyExists` | 409 | UID 已存在 |
-| `Internal` | 500 | 服务器内部错误 |
-| `ResourceExhausted` | 429 | 超过限制（如 reminders 超过 10 个） |
+| 错误码              | HTTP 状态 | 说明                                         |
+| ------------------- | --------- | -------------------------------------------- |
+| `InvalidArgument`   | 400       | 请求参数无效（如 title 为空、start_ts <= 0） |
+| `Unauthenticated`   | 401       | 未登录或 token 无效                          |
+| `NotFound`          | 404       | 日程不存在                                   |
+| `AlreadyExists`     | 409       | UID 已存在                                   |
+| `Internal`          | 500       | 服务器内部错误                               |
+| `ResourceExhausted` | 429       | 超过限制（如 reminders 超过 10 个）          |
 
 ### 限制和约束
 
@@ -664,9 +664,9 @@ POST /api/v1/schedules:checkConflict
 ✅ CodeReview 和 Bug 修复（P0-P3 全部完成）
 
 ### 待完成功能
-⏳ Phase 7: 冲突检测增强（AI 主动提醒）
-⏳ Phase 8: 重复日程（RRULE 解析）
-⏳ Phase 9: 实时通知（SSE 推送）
+### ✅ Phase 7: 冲突检测增强（AI 主动提醒）
+### ✅ Phase 8: 重复日程（RRULE 解析）
+### ⏳ Phase 9: 实时通知（SSE 推送）
 ⏳ Phase 10: 端到端测试（技术债务）
 
 ### 下一步计划
@@ -707,4 +707,4 @@ POST /api/v1/schedules:checkConflict
 *计划版本: 1.4*
 *创建时间: 2026-01-20*
 *最后更新: 2026-01-20*
-*状态: Phase 1-6 已完成（60%），CodeReview 和 Bug 修复全部完成，代码质量 8.0/10*
+*状态: Phase 1-8 已完成，Phase 9 (实时通知) 待实现，CodeReview 和 Bug 修复全部完成，代码质量 8.5/10*

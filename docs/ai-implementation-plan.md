@@ -224,6 +224,6 @@ MEMOS_AI_LLM_PROVIDER=deepseek           # deepseek | openai | ollama
 | M3   | Store 层向量搜索           | 2 天 | ✅ 已完成 |
 | M4   | gRPC 服务实现              | 2 天 | ✅ 已完成 |
 | M5   | 前端集成                   | 2 天 | ✅ 已完成 |
-| M6   | 测试 + 文档                | 1 天 | 🔄 进行中 |
+| M6   | 测试 + 文档                | 1 天 | ✅ 已完成 |
 
 **总计：12 工作日**
