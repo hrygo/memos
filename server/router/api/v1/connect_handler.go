@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/grpc/codes"
@@ -14,6 +15,8 @@ import (
 	"github.com/usememos/memos/plugin/ai"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/proto/gen/api/v1/apiv1connect"
+	"github.com/usememos/memos/server/queryengine"
+	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/store"
 )
 
@@ -133,7 +136,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 
-	// 1. Get current user
+	// 1. 获取当前用户
 	user, err := s.fetchCurrentUser(ctx)
 	if err != nil {
 		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthorized"))
@@ -142,139 +145,151 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthorized"))
 	}
 
-	// 2. Validate parameters
+	// 2. 参数校验
 	if req.Msg.Message == "" {
 		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("message is required"))
 	}
 
-	// 3. 两阶段检索：初步回捞 + Reranker 重排序
-	// Stage 1: 向量搜索初步回捞 (阈值 0.6，Top 20)
-	queryVector, err := s.AIService.EmbeddingService.Embed(ctx, req.Msg.Message)
-	if err != nil {
-		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to embed query: %v", err))
-	}
-
-	results, err := s.AIService.Store.VectorSearch(ctx, &store.VectorSearchOptions{
-		UserID: user.ID,
-		Vector: queryVector,
-		Limit:  20, // 初步回捞更多候选
-	})
-	if err != nil {
-		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to search: %v", err))
-	}
-
-	// 4. 过滤低相关性结果 (阈值 0.6)
-	var filteredResults []*store.MemoWithScore
-	minScoreThreshold := float32(0.6)
-	for _, r := range results {
-		if r.Score >= minScoreThreshold {
-			filteredResults = append(filteredResults, r)
+	// ============================================================
+	// Phase 1: 智能 Query Routing（⭐ 新增）
+	// ============================================================
+	var routeDecision *queryengine.RouteDecision
+	if s.AIService.QueryRouter != nil {
+		routeDecision = s.AIService.QueryRouter.Route(ctx, req.Msg.Message)
+		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f\n",
+			routeDecision.Strategy, routeDecision.Confidence)
+	} else {
+		// 降级：默认策略
+		routeDecision = &queryengine.RouteDecision{
+			Strategy:      "hybrid_standard",
+			Confidence:    0.80,
+			SemanticQuery: req.Msg.Message,
+			NeedsReranker: false,
 		}
 	}
 
-	// Stage 2: Reranker 重排序提升精度
-	if len(filteredResults) > 1 && s.AIService.RerankerService != nil && s.AIService.RerankerService.IsEnabled() {
-		documents := make([]string, len(filteredResults))
-		for i, r := range filteredResults {
-			documents[i] = r.Memo.Content
-		}
-
-		rerankResults, err := s.AIService.RerankerService.Rerank(ctx, req.Msg.Message, documents, 5)
-		if err == nil && len(rerankResults) > 0 {
-			// 按重排序结果重新排列
-			reordered := make([]*store.MemoWithScore, 0, len(rerankResults))
-			for _, rr := range rerankResults {
-				if rr.Index < len(filteredResults) {
-					// 更新分数为 reranker 分数
-					filteredResults[rr.Index].Score = rr.Score
-					reordered = append(reordered, filteredResults[rr.Index])
-				}
+	// ============================================================
+	// Phase 2: Adaptive Retrieval（⭐ 新增）
+	// ============================================================
+	var searchResults []*retrieval.SearchResult
+	if s.AIService.AdaptiveRetriever != nil {
+		// 使用新的自适应检索器
+		searchResults, err = s.AIService.AdaptiveRetriever.Retrieve(ctx, &retrieval.RetrievalOptions{
+			Query:     req.Msg.Message,
+			UserID:    user.ID,
+			Strategy:  routeDecision.Strategy,
+			TimeRange: routeDecision.TimeRange,
+			MinScore:  0.5,
+			Limit:     10,
+		})
+		if err != nil {
+			fmt.Printf("[AdaptiveRetriever] Error: %v, using fallback\n", err)
+			// 降级到旧逻辑
+			searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Msg.Message)
+			if err != nil {
+				return connect.NewError(connect.CodeInternal, fmt.Errorf("retrieval failed: %v", err))
 			}
-			filteredResults = reordered
+		}
+	} else {
+		// 降级到旧逻辑
+		searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Msg.Message)
+		if err != nil {
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("retrieval failed: %v", err))
 		}
 	}
 
-	// 5. 构建上下文 (最大字符数: 3000)
+	fmt.Printf("[Retrieval] Found %d results\n", len(searchResults))
+
+	// 分类结果：笔记和日程
+	var memoResults []*retrieval.SearchResult
+	var scheduleResults []*retrieval.SearchResult
+	for _, result := range searchResults {
+		switch result.Type {
+		case "memo":
+			memoResults = append(memoResults, result)
+		case "schedule":
+			scheduleResults = append(scheduleResults, result)
+		}
+	}
+
+	// ============================================================
+	// Phase 3: 构建上下文（⭐ 支持日程）
+	// ============================================================
 	var contextBuilder strings.Builder
 	var sources []string
 	totalChars := 0
 	maxChars := 3000
 
-	for i, r := range filteredResults {
-		content := r.Memo.Content
+	// 添加笔记到上下文
+	for i, r := range memoResults {
+		content := r.Content
 		if totalChars+len(content) > maxChars {
 			break
 		}
 
 		contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d (相关度: %.0f%%)\n%s\n\n", i+1, r.Score*100, content))
-		sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
+		if r.Memo != nil {
+			sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
+		}
 		totalChars += len(content)
 
 		if len(sources) >= 5 {
-			break // 最多使用 5 条笔记
+			break
 		}
 	}
 
-	// 5.1 回退逻辑：如果没有匹配的笔记，使用所有搜索结果
-	if len(sources) == 0 && len(results) > 0 {
-		// 使用所有搜索结果（即使相关度低），因为用户可能在问通用问题
-		for i, r := range results {
-			content := r.Memo.Content
-			if totalChars+len(content) > maxChars {
-				break
+	// ⭐ 新增：添加日程到上下文
+	if len(scheduleResults) > 0 {
+		contextBuilder.WriteString("### 📅 日程安排\n")
+		for i, r := range scheduleResults {
+			if r.Schedule != nil {
+				scheduleTime := time.Unix(r.Schedule.StartTs, 0)
+				timeStr := scheduleTime.Format("15:04")
+				contextBuilder.WriteString(fmt.Sprintf("%d. %s - %s", i+1, timeStr, r.Schedule.Title))
+				if r.Schedule.Location != "" {
+					contextBuilder.WriteString(fmt.Sprintf(" @ %s", r.Schedule.Location))
+				}
+				contextBuilder.WriteString("\n")
+				// ⭐ 添加日程到 sources
+				sources = append(sources, fmt.Sprintf("schedules/%d", r.Schedule.ID))
 			}
-			contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d\n%s\n\n", i+1, content))
-			sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
-			totalChars += len(content)
-			if len(sources) >= 5 {
-				break
-			}
 		}
+		contextBuilder.WriteString("\n")
 	}
 
-	// 5. Build Prompt
-	var systemPrompt string
-	if len(sources) == 0 {
-		// 没有任何笔记时，明确告知
-		systemPrompt = "你是一个基于用户个人笔记的AI助手。当前用户没有任何备忘录，请友好地告知用户这一情况，并建议他们先创建一些备忘录。"
-	} else {
-		systemPrompt = "你是一个基于用户个人笔记的AI助手。请根据以下笔记内容回答问题。你必须严格基于提供的笔记内容回答，不要编造或假设任何笔记中没有的信息。如果笔记中没有相关信息，请明确告知用户。回答时使用中文，保持简洁准确。"
-	}
-	messages := []ai.Message{
-		{
-			Role:    "system",
-			Content: systemPrompt,
-		},
-	}
+	// ============================================================
+	// Phase 4: 构建提示词（⭐ 优化）
+	// ============================================================
+	var hasNotes = len(memoResults) > 0
+	var hasSchedules = len(scheduleResults) > 0
 
-	// Add history
-	for i := 0; i < len(req.Msg.History)-1; i += 2 {
-		if i+1 < len(req.Msg.History) {
-			messages = append(messages, ai.Message{Role: "user", Content: req.Msg.History[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: req.Msg.History[i+1]})
-		}
-	}
+	messages := s.buildOptimizedMessagesForConnect(
+		req.Msg.Message,
+		req.Msg.History,
+		contextBuilder.String(),
+		scheduleResults,
+		hasNotes,
+		hasSchedules,
+	)
 
-	// Add current message
-	userMessage := fmt.Sprintf("## 相关笔记\n%s\n## 用户问题\n%s", contextBuilder.String(), req.Msg.Message)
-	messages = append(messages, ai.Message{Role: "user", Content: userMessage})
-
-	// 6. Stream LLM Response
+	// ============================================================
+	// Phase 5: 流式调用 LLM
+	// ============================================================
 	contentChan, errChan := s.AIService.LLMService.ChatStream(ctx, messages)
 
-	// Send sources first
+	// 先发送来源信息
 	if err := stream.Send(&v1pb.ChatWithMemosResponse{
 		Sources: sources,
 	}); err != nil {
 		return err
 	}
 
-	// Stream content
+	// 流式发送内容
 	for {
 		select {
 		case content, ok := <-contentChan:
 			if !ok {
-				contentChan = nil // Closed
+				contentChan = nil
 				if errChan == nil {
 					return nil // Done
 				}
@@ -288,7 +303,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 
 		case err, ok := <-errChan:
 			if !ok {
-				errChan = nil // Closed
+				errChan = nil
 				if contentChan == nil {
 					return nil // Done
 				}
@@ -302,6 +317,125 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 			return ctx.Err()
 		}
 	}
+}
+
+// fallbackRetrieval 降级检索逻辑（兼容旧版本）
+func (s *ConnectServiceHandler) fallbackRetrieval(ctx context.Context, userID int32, query string) ([]*retrieval.SearchResult, error) {
+	// 简化的向量检索
+	queryVector, err := s.AIService.EmbeddingService.Embed(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to embed query: %w", err)
+	}
+
+	vectorResults, err := s.AIService.Store.VectorSearch(ctx, &store.VectorSearchOptions{
+		UserID: userID,
+		Vector: queryVector,
+		Limit:  20,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to search: %w", err)
+	}
+
+	// 转换为 SearchResult
+	results := make([]*retrieval.SearchResult, len(vectorResults))
+	for i, r := range vectorResults {
+		results[i] = &retrieval.SearchResult{
+			ID:      int64(r.Memo.ID),
+			Type:    "memo",
+			Score:   r.Score,
+			Content: r.Memo.Content,
+			Memo:    r.Memo,
+		}
+	}
+
+	return results, nil
+}
+
+// buildOptimizedMessagesForConnect 构建优化后的消息（支持日程）
+func (s *ConnectServiceHandler) buildOptimizedMessagesForConnect(
+	userMessage string,
+	history []string,
+	memoContext string,
+	scheduleResults []*retrieval.SearchResult,
+	hasNotes, hasSchedules bool,
+) []ai.Message {
+	// ============================================================
+	// System Prompt - 简化版（⭐ 优化）
+	// ============================================================
+	systemPrompt := `你是 Memos AI 助手，帮助用户管理笔记和日程。
+
+## 回复原则
+1. **简洁准确**：基于提供的上下文回答，不编造信息
+2. **结构清晰**：使用列表、分段组织内容
+3. **完整回复**：
+   - 如果有日程，优先列出日程
+   - 如果有笔记，补充相关笔记
+   - 如果都没有，明确告知
+
+## 日程查询
+当用户查询时间范围的日程时（如"今天"、"本周"）：
+1. **优先回复日程信息**
+2. 格式：时间 - 标题 (@地点)
+3. 如果没有日程，明确告知"暂无日程"
+
+## 日程创建检测
+当用户想创建日程时（关键词："创建"、"提醒"、"安排"、"添加"），在回复最后一行添加：
+<<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>`
+
+	// 构建消息
+	messages := []ai.Message{
+		{Role: "system", Content: systemPrompt},
+	}
+
+	// 添加历史对话
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// ============================================================
+	// User Message - 构建上下文
+	// ============================================================
+	var userMsgBuilder strings.Builder
+
+	// 添加上下文标题
+	if hasNotes || hasSchedules {
+		userMsgBuilder.WriteString("## 上下文信息\n\n")
+	}
+
+	// 添加笔记上下文
+	if hasNotes {
+		userMsgBuilder.WriteString("### 📝 相关笔记\n")
+		userMsgBuilder.WriteString(memoContext)
+		userMsgBuilder.WriteString("\n")
+	}
+
+	// ⭐ 添加日程上下文
+	if hasSchedules {
+		userMsgBuilder.WriteString("### 📅 日程安排\n")
+		for i, r := range scheduleResults {
+			if r.Schedule != nil {
+				scheduleTime := time.Unix(r.Schedule.StartTs, 0)
+				timeStr := scheduleTime.Format("15:04")
+				userMsgBuilder.WriteString(fmt.Sprintf("%d. %s - %s", i+1, timeStr, r.Schedule.Title))
+				if r.Schedule.Location != "" {
+					userMsgBuilder.WriteString(fmt.Sprintf(" @ %s", r.Schedule.Location))
+				}
+				userMsgBuilder.WriteString("\n")
+			}
+		}
+		userMsgBuilder.WriteString("\n")
+	}
+
+	// 用户问题
+	userMsgBuilder.WriteString("## 问题\n")
+	userMsgBuilder.WriteString(userMessage)
+
+	messages = append(messages, ai.Message{Role: "user", Content: userMsgBuilder.String()})
+
+	return messages
 }
 
 // ScheduleService wrappers for Connect
