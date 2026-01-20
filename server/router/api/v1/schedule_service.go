@@ -140,8 +140,8 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 	// Convert reminders to JSON
 	var remindersStr string
 	if len(pb.Reminders) > 0 {
-		reminders := make([]map[string]interface{}, len(pb.Reminders))
-		for i, r := range pb.Reminders {
+		reminders := make([]*v1pb.Reminder, 0, len(pb.Reminders))
+		for _, r := range pb.Reminders {
 			// Validate reminder fields
 			if r.Type == "" {
 				return nil, status.Errorf(codes.InvalidArgument, "reminder type is required")
@@ -149,19 +149,21 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 			if r.Unit == "" {
 				return nil, status.Errorf(codes.InvalidArgument, "reminder unit is required")
 			}
-			reminders[i] = map[string]interface{}{
-				"type":  r.Type,
-				"value": r.Value,
-				"unit":  r.Unit,
-			}
+			reminders = append(reminders, &v1pb.Reminder{
+				Type:  r.Type,
+				Value: r.Value,
+				Unit:  r.Unit,
+			})
 		}
-		remindersJSON, err := json.Marshal(reminders)
+
+		// Use helper function to marshal reminders
+		var err error
+		remindersStr, err = aischedule.MarshalReminders(reminders)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal reminders: %v", err)
 		}
-		remindersStr = string(remindersJSON)
 	} else {
-		remindersStr = "[]"
+		remindersStr = ""
 	}
 	s.Reminders = &remindersStr
 
@@ -361,7 +363,8 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 	}
 
 	return &v1pb.ListSchedulesResponse{
-		Schedules: expandedSchedules,
+		Schedules:  expandedSchedules,
+		Truncated:  truncated,
 	}, nil
 }
 
@@ -454,19 +457,18 @@ func (s *ScheduleService) UpdateSchedule(ctx context.Context, req *v1pb.UpdateSc
 			case "reminders":
 				// Convert reminders to JSON
 				if len(req.Schedule.Reminders) > 0 {
-					reminders := make([]map[string]interface{}, len(req.Schedule.Reminders))
-					for i, r := range req.Schedule.Reminders {
-						reminders[i] = map[string]interface{}{
-							"type":  r.Type,
-							"value": r.Value,
-							"unit":  r.Unit,
-						}
+					reminders := make([]*v1pb.Reminder, 0, len(req.Schedule.Reminders))
+					for _, r := range req.Schedule.Reminders {
+						reminders = append(reminders, &v1pb.Reminder{
+							Type:  r.Type,
+							Value: r.Value,
+							Unit:  r.Unit,
+						})
 					}
-					remindersJSON, err := json.Marshal(reminders)
+					remindersStr, err := aischedule.MarshalReminders(reminders)
 					if err != nil {
 						return nil, status.Errorf(codes.Internal, "failed to marshal reminders: %v", err)
 					}
-					remindersStr := string(remindersJSON)
 					update.Reminders = &remindersStr
 				}
 			}
@@ -505,21 +507,43 @@ func (s *ScheduleService) UpdateSchedule(ctx context.Context, req *v1pb.UpdateSc
 		}
 		// Convert reminders to JSON if provided
 		if len(req.Schedule.Reminders) > 0 {
-			reminders := make([]map[string]interface{}, len(req.Schedule.Reminders))
-			for i, r := range req.Schedule.Reminders {
-				reminders[i] = map[string]interface{}{
-					"type":  r.Type,
-					"value": r.Value,
-					"unit":  r.Unit,
-				}
+			reminders := make([]*v1pb.Reminder, 0, len(req.Schedule.Reminders))
+			for _, r := range req.Schedule.Reminders {
+				reminders = append(reminders, &v1pb.Reminder{
+					Type:  r.Type,
+					Value: r.Value,
+					Unit:  r.Unit,
+				})
 			}
-			remindersJSON, err := json.Marshal(reminders)
+			remindersStr, err := aischedule.MarshalReminders(reminders)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to marshal reminders: %v", err)
 			}
-			remindersStr := string(remindersJSON)
 			update.Reminders = &remindersStr
 		}
+	}
+
+	// Check for conflicts if time fields are being updated
+	// Determine the new time values (use existing if not being updated)
+	newStartTs := existing.StartTs
+	newEndTs := existing.EndTs
+
+	if update.StartTs != nil {
+		newStartTs = *update.StartTs
+	}
+	if update.EndTs != nil {
+		newEndTs = update.EndTs
+	}
+
+	// Check for conflicts (excluding the current schedule itself)
+	conflicts, err := s.checkScheduleConflicts(ctx, userID, newStartTs, newEndTs, []string{req.Schedule.Name})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check conflicts: %v", err)
+	}
+	if len(conflicts) > 0 {
+		// Build conflict details
+		conflictDetails := buildConflictError(conflicts)
+		return nil, status.Errorf(codes.AlreadyExists, "schedule conflicts detected: %s", conflictDetails)
 	}
 
 	if err := s.Store.UpdateSchedule(ctx, update); err != nil {

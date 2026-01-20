@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	// Import the PostgreSQL driver.
 	_ "github.com/lib/pq"
@@ -29,6 +30,13 @@ func NewDB(profile *profile.Profile) (store.Driver, error) {
 		log.Printf("Failed to open database: %s", err)
 		return nil, errors.Wrapf(err, "failed to open database: %s", profile.DSN)
 	}
+
+	// Configure connection pool for 2C2G environment
+	// These settings are optimized for low-resource environments
+	db.SetMaxOpenConns(10)  // Limit total connections (default is unlimited)
+	db.SetMaxIdleConns(5)   // Keep idle connections ready (default is 2)
+	db.SetConnMaxLifetime(1 * time.Hour)       // Recycle connections after 1 hour
+	db.SetConnMaxIdleTime(10 * time.Minute)     // Don't keep idle connections too long
 
 	var driver store.Driver = &DB{
 		db:      db,
