@@ -160,13 +160,14 @@ func TestGenerateInstances_Weekly(t *testing.T) {
 func TestGenerateInstances_Monthly_EdgeCase(t *testing.T) {
 	// Start: Jan 31 2024
 	start := time.Date(2024, 1, 31, 0, 0, 0, 0, time.UTC)
+	startTs := start.Unix()
 	rule := &RecurrenceRule{Type: "monthly", MonthDay: 31, Interval: 1}
 
-	// End: May 1 2024 (exclusive, so we get Jan, Feb, Mar, Apr)
-	// Using April 30 as end to avoid including May 1
+	// End: April 30 2024 (exclusive, so we get Jan, Feb, Mar, Apr)
+	// Using April 30 at end of day to avoid including May 1
 	end := time.Date(2024, 4, 30, 23, 59, 59, 0, time.UTC).Unix()
 
-	instances := rule.GenerateInstances(start.Unix(), end)
+	instances := rule.GenerateInstances(startTs, end)
 
 	// Expected: Jan 31, Feb 29 (Leap), Mar 31, Apr 30.
 	require.Len(t, instances, 4)

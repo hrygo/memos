@@ -263,6 +263,11 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 	const maxTotalInstances = 500
 
 	for _, schedule := range list {
+		// Check total instance limit before processing each schedule
+		if len(expandedSchedules) >= maxTotalInstances {
+			break
+		}
+
 		pbSchedule := scheduleFromStore(schedule)
 
 		// If this is a recurring schedule, expand it

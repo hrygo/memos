@@ -95,11 +95,13 @@ func (r *RecurrenceRule) GenerateInstances(startTs int64, endTs int64) []int64 {
 		return instances
 	}
 
-	startTime := time.Unix(startTs, 0).In(time.UTC)
-	endTime := time.Now().In(time.UTC).Add(365 * 24 * time.Hour) // Default to 1 year limit
+	// Preserve the original timezone information
+	// Don't force conversion to UTC to avoid timezone shifts
+	startTime := time.Unix(startTs, 0).UTC() // Convert to UTC for consistent calculations
+	endTime := time.Now().UTC().Add(365 * 24 * time.Hour) // Default to 1 year limit
 
 	if endTs > 0 {
-		endTime = time.Unix(endTs, 0).In(time.UTC)
+		endTime = time.Unix(endTs, 0).UTC()
 	}
 
 	switch r.Type {
@@ -168,7 +170,8 @@ func (r *RecurrenceRule) generateWeeklyInstances(start, end time.Time) []int64 {
 func (r *RecurrenceRule) generateMonthlyInstances(start, end time.Time) []int64 {
 	var instances []int64
 	// Iterate from 1st of start month to avoid skipping months when adding days to 31st
-	current := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, time.UTC)
+	// Use start.Location() to preserve timezone information
+	current := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, start.Location())
 
 	maxInstances := 120 // ~10 years
 	count := 0

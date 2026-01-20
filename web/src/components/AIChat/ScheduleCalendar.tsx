@@ -91,7 +91,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
   };
 
   // Weekday labels
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekdays = [t("days.sun"), t("days.mon"), t("days.tue"), t("days.wed"), t("days.thu"), t("days.fri"), t("days.sat")];
 
   // Days to display
   const days = getDaysInMonth(currentMonth);
@@ -103,7 +103,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">{currentMonth.format("MMMM YYYY")}</h3>
           <Button variant="ghost" size="sm" onClick={goToToday}>
-            {t("schedule.calendar") || "Today"}
+            {t("common.today") || "Today"}
           </Button>
         </div>
         <div className="flex items-center gap-1">
@@ -120,8 +120,8 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
       <div className="flex flex-col gap-1">
         {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1">
-          {weekdays.map((day) => (
-            <div key={day} className="p-2 text-center text-xs font-medium text-muted-foreground">
+          {weekdays.map((day, index) => (
+            <div key={index} className="p-2 text-center text-xs font-medium text-muted-foreground">
               {day}
             </div>
           ))}
@@ -140,10 +140,15 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                 key={idx}
                 onClick={() => handleDateClick(date)}
                 className={cn(
-                  "relative aspect-square rounded-lg p-1 text-sm transition-colors hover:bg-accent",
+                  "relative aspect-square rounded-lg p-1 text-sm transition-colors cursor-pointer",
                   !inCurrentMonth && "text-muted-foreground/30",
-                  isTodayDate && "bg-primary/10 font-semibold",
-                  isSelectedDate && "bg-primary text-primary-foreground hover:bg-primary/90",
+                  // Selected state (overrides everything)
+                  isSelectedDate && !isTodayDate && "bg-primary text-primary-foreground shadow-md font-semibold",
+                  isSelectedDate && isTodayDate && "bg-blue-600 text-white shadow-md font-semibold",
+                  // Today state (when not selected)
+                  !isSelectedDate && isTodayDate && "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold",
+                  // Hover state (when not selected and not today)
+                  !isSelectedDate && !isTodayDate && "hover:bg-accent text-foreground",
                 )}
               >
                 <span className="block text-center">{date.format("D")}</span>
@@ -166,11 +171,11 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <div className="h-2 w-2 rounded-full bg-primary" />
-          <span>Has schedules</span>
+          <span>{t("schedule.has-schedules") || "Has schedules"}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-primary/10" />
-          <span>Today</span>
+          <div className="h-2 w-2 rounded-full bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800" />
+          <span>{t("common.today") || "Today"}</span>
         </div>
       </div>
     </div>

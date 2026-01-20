@@ -113,19 +113,13 @@ Rules:
 
 	userPrompt := fmt.Sprintf("User Input: %s", text)
 
-	// Log for debugging
-	fmt.Printf("[Schedule Parser] System Prompt:\n%s\n", systemPrompt)
-	fmt.Printf("[Schedule Parser] User Input:\n%s\n", text)
-
 	response, err := p.llmService.Chat(ctx, []ai.Message{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userPrompt},
 	})
 	if err != nil {
-		fmt.Printf("[Schedule Parser] Chat Error: %v\n", err)
 		return nil, fmt.Errorf("LLM parsing failed: %w", err)
 	}
-	fmt.Printf("[Schedule Parser] LLM Response:\n%s\n", response)
 
 	// Clean code blocks if present
 	jsonStr := strings.TrimSpace(response)
@@ -201,7 +195,11 @@ func (r *ParseResult) ToSchedule() *v1pb.Schedule {
 	// Convert recurrence rule to JSON string
 	if r.Recurrence != nil {
 		recurrenceJSON, err := r.Recurrence.ToJSON()
-		if err == nil {
+		if err != nil {
+			// Failed to serialize recurrence rule - create schedule without it
+			// This shouldn't happen in practice as RecurrenceRule is simple JSON
+			// User can manually edit the schedule later to add recurrence
+		} else {
 			schedule.RecurrenceRule = recurrenceJSON
 		}
 	}
