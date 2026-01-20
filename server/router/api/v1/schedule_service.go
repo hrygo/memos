@@ -163,7 +163,8 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 			return nil, status.Errorf(codes.Internal, "failed to marshal reminders: %v", err)
 		}
 	} else {
-		remindersStr = ""
+		// Use empty JSON array instead of empty string to satisfy NOT NULL constraint
+		remindersStr = "[]"
 	}
 	s.Reminders = &remindersStr
 
