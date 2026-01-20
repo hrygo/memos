@@ -21,11 +21,13 @@
 ### 核心功能
 - ✅ **独立数据模型**：创建独立的 Schedule 表
 - ✅ **完整 CRUD**：创建、查询、编辑、删除日程
-- ⏳ **智能提醒**：应用内通知（WebSocket/SSE）- 待实现
+- ✅ **自然语言解析**：支持中文时间表达，自动提取日程信息
+- ✅ **智能提醒**：支持多种提醒方式（15分钟前、1小时前等）
+- ✅ **冲突检测**：创建时检测时间冲突
+- ⏳ **AI 聊天集成**：待前端实现
 - ⏳ **日历视图**：聊天页面内嵌小型日历组件- 待实现
 - ⏳ **重复日程**：支持每日、每周、每月、工作日等重复规则- 待实现
-- ⏳ **冲突检测**：创建时检测 + AI 主动提醒- 待实现
-- ⏳ **AI 聊天集成**：自动意图识别，在 `/chat` 页面中无缝集成- 待实现
+- ⏳ **实时通知**：应用内通知（WebSocket/SSE）- 待实现
 
 ### 第二期功能
 - 钉钉机器人集成（双向同步）
@@ -100,6 +102,7 @@ web/src/
 - [x] 定义 Protobuf API
 - [x] 生成代码（通过 `buf generate`）
 - [x] 实现 ScheduleService
+- [x] 实现 ParseAndCreateSchedule API（Phase 5 前置）
 - [x] 在 v1.go 中注册服务
 - [x] 在 connect_handler.go 中添加 Connect 包装方法
 
@@ -109,6 +112,11 @@ web/src/
 - `server/router/api/v1/schedule_service.go` - 服务实现
 - `server/router/api/v1/v1.go` - 服务注册（已修改）
 - `server/router/api/v1/connect_handler.go` - Connect 包装（已修改）
+
+**实现说明**:
+- ✅ 所有基础 CRUD API 已实现
+- ✅ CheckConflict API 已实现（基础重叠检测）
+- ✅ ParseAndCreateSchedule API 已实现（集成 LLM 自然语言解析）
 
 ### ⏳ Phase 4: 前端基础 (待实现)
 - [ ] 生成 TypeScript 类型 (已完成，通过 protobuf)
@@ -122,13 +130,20 @@ web/src/
 - `web/src/components/AIChat/ScheduleInput.tsx`
 - `web/src/components/AIChat/ScheduleConflictAlert.tsx`
 
-### ⏳ Phase 5: 自然语言解析 (待实现)
-- [ ] 实现时间解析器（支持中文）
-- [ ] 实现事件提取器
-- [ ] 集成 LLM 进行意图识别
+### ✅ Phase 5: 自然语言解析
+- [x] 实现时间解析器（支持中文）
+- [x] 实现事件提取器
+- [x] 集成 LLM 进行意图识别
+- [x] 实现 ParseAndCreateSchedule API
 
-**待创建文件**:
-- `plugin/ai/schedule/parser.go`
+**文件**:
+- `plugin/ai/schedule/parser.go` - 时间解析器和事件提取器 ✅
+
+**实现说明**:
+- 使用 LLM (DeepSeek) 进行自然语言理解
+- 支持中文时间表达（"明天下午3点"、"下周三"等）
+- 自动提取标题、时间、地点、提醒等信息
+- 支持 auto_confirm 模式直接创建日程
 
 ### ⏳ Phase 6: AI 聊天集成 (待实现)
 - [ ] 扩展 AI 服务支持日程意图识别
@@ -171,6 +186,74 @@ web/src/
 - [ ] 完整流程测试
 - [ ] 性能优化
 - [ ] 错误处理完善
+
+**技术债务清单**:
+
+#### 1. 单元测试 ⚠️ 高优先级
+**状态**: 未实现
+**影响**: 代码质量、重构安全性
+**工作量**: 2-3 天
+
+**需要测试的模块**:
+- `store/schedule.go` - 数据模型和辅助方法
+- `store/db/postgres/schedule.go` - PostgreSQL CRUD 操作
+- `store/db/sqlite/schedule.go` - SQLite CRUD 操作
+- `server/router/api/v1/schedule_service.go` - API 服务层
+- `plugin/ai/schedule/parser.go` - 自然语言解析器
+
+**测试覆盖目标**:
+- 代码覆盖率 > 80%
+- 关键路径（CRUD、冲突检测）100% 覆盖
+- 边界条件和错误处理场景
+
+#### 2. 性能测试 ⚠️ 中优先级
+**状态**: 未实现
+**影响**: 生产环境稳定性
+**工作量**: 1-2 天
+
+**性能指标**:
+- 单次 CRUD 操作延迟 < 100ms (P95)
+- ListSchedules 查询性能（1000 条记录）< 200ms (P95)
+- CheckConflict 冲突检测 < 100ms (P95)
+- ParseAndCreateSchedule (LLM 调用) < 3s (P95)
+
+**压力测试场景**:
+- 100 个并发用户创建日程
+- 10000 条日程的查询性能
+- 长时间运行的 LLM 调用稳定性
+
+#### 3. 集成测试 ⚠️ 中优先级
+**状态**: 未实现
+**工作量**: 1-2 天
+
+**测试场景**:
+- 端到端日程创建流程
+- 自然语言解析准确性测试
+- 多用户数据隔离验证
+- 跨时区日程处理
+
+**测试数据**:
+- 各种中文时间表达
+- 边界时间（跨天、跨月、跨年）
+- 特殊字符和长文本
+
+#### 4. 错误处理完善 ⚠️ 低优先级
+**状态**: 部分完成
+**工作量**: 0.5-1 天
+
+**待处理项**:
+- LLM 调用失败降级策略
+- 数据库连接池耗尽处理
+- 并发写入冲突处理
+- 更详细的错误信息返回
+
+**建议优先级**:
+1. **立即执行**: 单元测试（Phase 10.1）- 保障代码质量
+2. **短期执行**: 集成测试（Phase 10.3）- 功能验证
+3. **中期规划**: 性能测试（Phase 10.2）- 生产准备
+4. **持续优化**: 错误处理（Phase 10.4）- 渐进式改进
+
+---
 
 ## 数据库设计
 
@@ -232,7 +315,7 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 | PATCH | `/api/v1/schedules/{uid}` | 更新日程 |
 | DELETE | `/api/v1/schedules/{uid}` | 删除日程 |
 | POST | `/api/v1/schedules:checkConflict` | 检查冲突 |
-| POST | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 (待实现) |
+| POST | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 ✅ |
 
 **注意**: `PATCH /api/v1/schedules/{uid}` 更新接口的 `update_mask` 字段是**必需的**。
 只有指定了 `update_mask` 的字段才会被更新。支持的字段包括：
@@ -287,20 +370,58 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 ## 开发记录
 
 ### 2026-01-20
-- 完成数据库迁移文件创建
-- 完成 Store 层实现
+
+#### 上午 (Phase 1-3)
+- 完成数据库迁移文件创建（PostgreSQL/SQLite/MySQL）
+- 完成 Store 层实现（数据模型 + 接口）
 - 完成 Protobuf 定义和代码生成
-- 完成 ScheduleService API 实现
+- 完成 ScheduleService 基础 API 实现（CRUD + CheckConflict）
 - 完成服务注册和 Connect 集成
 - 后端基础 CRUD 已可用
 
-### 下一步
-- 实现 Phase 4: 前端基础（React Query hooks、日历组件）
-- 实现 Phase 5: 自然语言解析（中文时间解析）
+#### 下午 - Bug 修复分支
+- 创建 `fix/schedule-assistant` 分支
+- 修复文档版本号错误（0.31 → 0.26）
+- 修复时间范围查询逻辑错误
+- 修复 parseInt32 错误处理
+- 移除 OrderByTimeAsc 冗余字段
+- 添加输入验证（title、start_ts、end_ts、reminders）
+- 完善冲突检测逻辑（添加参数验证、改进重叠检测）
+- 更新 update_mask 文档说明
+- 合并修复分支到主分支
+
+#### 下午 - Phase 5 实现
+- 实现 `plugin/ai/schedule/parser.go` 自然语言解析器
+- 集成 LLM (DeepSeek) 进行中文时间理解
+- 完成 ParseAndCreateSchedule API 实现
+- 支持自动创建模式（auto_confirm）
+- 后端 API 已完整可用
+
+### 已完成功能
+✅ Phase 1: 数据库迁移
+✅ Phase 2: Store 层实现
+✅ Phase 3: Protobuf 和 API 服务
+✅ Phase 5: 自然语言解析
+
+### 待完成功能
+⏳ Phase 4: 前端基础（React Query hooks、日历组件）
+⏳ Phase 6: AI 聊天集成（前端意图识别）
+⏳ Phase 7: 冲突检测增强（AI 主动提醒）
+⏳ Phase 8: 重复日程（RRULE 解析）
+⏳ Phase 9: 实时通知（SSE 推送）
+⏳ Phase 10: 端到端测试（技术债务）
+
+### 下一步计划
+1. **前端开发**: 实现 Phase 4 前端基础功能
+2. **AI 集成**: 在 AIChat 页面集成日程意图识别
+3. **测试完善**: 补充单元测试和集成测试（技术债务）
+
+### 技术债务
+详见 [Phase 10 技术债务清单](#-phase-10-端到端测试-待实现)
 
 ---
 
-*计划版本: 1.1*
+*计划版本: 1.2*
 *创建时间: 2026-01-20*
 *最后更新: 2026-01-20*
-*状态: Phase 1-3 已完成，后端 API 可用*
+*状态: Phase 1-3, 5 已完成，后端 API 完整可用，待前端集成*
