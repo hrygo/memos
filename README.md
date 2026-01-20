@@ -66,6 +66,8 @@ Memos is a privacy-first, self-hosted knowledge base that works seamlessly for p
   - One-line Docker installation
   - Supports SQLite, MySQL, and PostgreSQL
 
+  > **Note**: New features (AI, Schedule Assistant, etc.) require **PostgreSQL** or **SQLite**. MySQL support is limited to legacy features only.
+
 - **🔗 Developer-Friendly**
 
   - Full REST and gRPC APIs

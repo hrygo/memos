@@ -19,7 +19,21 @@
       "Bash(git commit:*)",
       "Bash(pkill:*)",
       "Bash(chmod:*)",
-      "Bash(./scripts/dev.sh:*)"
+      "Bash(./scripts/dev.sh:*)",
+      "mcp__zai-mcp-server__analyze_image",
+      "Bash(npx:*)",
+      "Bash(/Users/huangzhonghui/memos/web/node_modules/.bin/buf generate:*)",
+      "Bash(/Users/huangzhonghui/go/bin/buf generate:*)",
+      "Bash(go list:*)",
+      "Bash(MEMOS_DRIVER=postgres MEMOS_DSN=\"postgres://memos:memos@localhost:25432/memos?sslmode=disable\" go run:*)",
+      "Bash(nohup sh:*)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsImtpZCI6InYxIiwidHlwIjoiSldUIn0.eyJ0eXBlIjoiYWNjZXNzIiwicm9sZSI6IlVTRVIiLCJzdGF0dXMiOiJOT1JNQUwiLCJ1c2VybmFtZSI6InRlc3R1c2VyIiwiaXNzIjoibWVtb3MiLCJzdWIiOiI2IiwiYXVkIjpbInVzZXIuYWNjZXNzLXRva2VuIl0sImV4cCI6MTc2ODg5NzA3MSwiaWF0IjoxNzY4ODk2MTcxfQ.Uv3r4CoHWhNOvDxyAGwJmxBlkd4zrWz1hZLb6AFdLok\")",
+      "Bash(__NEW_LINE_17f40c18066634e3__ echo \"=== Test ListSchedules ===\")",
+      "Bash(__NEW_LINE_17f40c18066634e3__ echo \"\")",
+      "Bash(__NEW_LINE_f46d34660dda0744__ echo \"=== Test ListSchedules ===\")",
+      "Bash(__NEW_LINE_f46d34660dda0744__ echo \"\")",
+      "Bash(find:*)"
     ]
   }
 }

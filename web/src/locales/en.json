@@ -468,5 +468,26 @@
     "select-visibility": "Visibility",
     "tags": "Tags",
     "upload-attachment": "Upload Attachment(s)"
+  },
+  "ai": {
+    "thinking": "Thinking...",
+    "regenerate": "Regenerate",
+    "clear": "Clear",
+    "clear-chat": "Clear chat",
+    "clear-chat-confirm": "Are you sure you want to clear all conversation history?",
+    "clear-chat-desc": "Delete all conversation content",
+    "clear-context": "Clear context",
+    "clear-context-desc": "Subsequent conversations won't include above content",
+    "context-cleared": "Context cleared",
+    "welcome-title": "Welcome to AI Assistant",
+    "welcome-description": "I can help you search, summarize and discuss your memos",
+    "send-shortcut": "Send",
+    "newline-shortcut": "New line",
+    "prompt-summarize": "Summarize recent memos",
+    "prompt-ideas": "Generate creative ideas",
+    "prompt-explain": "Explain a concept",
+    "prompt-discuss": "Start a discussion",
+    "error-title": "Something went wrong",
+    "retry": "Retry"
   }
 }

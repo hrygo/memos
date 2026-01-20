@@ -109,6 +109,7 @@ export function useChatWithMemos() {
 
         const sources: string[] = [];
         let fullContent = "";
+        let doneCalled = false;
 
         for await (const response of stream) {
           // Handle sources (sent in first response)
@@ -125,9 +126,15 @@ export function useChatWithMemos() {
 
           // Handle completion
           if (response.done === true) {
+            doneCalled = true;
             callbacks?.onDone?.();
             break;
           }
+        }
+
+        // Fallback: if stream ended without done signal, call onDone
+        if (!doneCalled) {
+          callbacks?.onDone?.();
         }
 
         return { content: fullContent, sources };
