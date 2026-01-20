@@ -13,11 +13,11 @@ interface ScheduleQueryResultProps {
 
 export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick }: ScheduleQueryResultProps) => {
   const formatTime = (schedule: ScheduleSummary) => {
-    const startDate = dayjs(new Date(Number(schedule.startTs) * 1000));
+    const startDate = dayjs.unix(schedule.startTs);
     const startTime = startDate.format("HH:mm");
 
     if (schedule.endTs > 0) {
-      const endDate = dayjs(new Date(Number(schedule.endTs) * 1000));
+      const endDate = dayjs.unix(schedule.endTs);
       return `${startTime} - ${endDate.format("HH:mm")}`;
     }
 
@@ -25,7 +25,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
   };
 
   const formatDate = (schedule: ScheduleSummary) => {
-    const date = dayjs(new Date(Number(schedule.startTs) * 1000));
+    const date = dayjs.unix(schedule.startTs);
     const now = dayjs().startOf("day");
 
     // Today

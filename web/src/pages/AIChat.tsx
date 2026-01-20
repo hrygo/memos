@@ -284,12 +284,12 @@ const AIChat = () => {
             console.log(`[ScheduleQuery] Detected with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
 
             if (result.detected && result.schedules.length > 0) {
-              // 转换为 ScheduleSummary 格式
+              // 转换为 ScheduleSummary 格式，将 bigint 转换为 number
               const schedules: ScheduleSummary[] = result.schedules.map((sched) => ({
                 uid: sched.uid,
                 title: sched.title,
-                startTs: sched.startTs,
-                endTs: sched.endTs,
+                startTs: Number(sched.startTs),
+                endTs: Number(sched.endTs),
                 allDay: sched.allDay,
                 location: sched.location,
                 recurrenceRule: sched.recurrenceRule,
@@ -429,15 +429,15 @@ const AIChat = () => {
         Number(a.startTs) - Number(b.startTs)
       );
 
-      // Map Schedule to ScheduleSummary
+      // Map Schedule to ScheduleSummary, converting bigint to number
       const mappedSchedules: ScheduleSummary[] = sortedSchedules.map((s) => {
         // Extract uid from name (format: "schedules/{uid}")
         const uid = s.name.replace("schedules/", "");
         return {
           uid,
           title: s.title,
-          startTs: s.startTs,
-          endTs: s.endTs,
+          startTs: Number(s.startTs),
+          endTs: Number(s.endTs),
           allDay: s.allDay,
           location: s.location,
           recurrenceRule: s.recurrenceRule || "",
