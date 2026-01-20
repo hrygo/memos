@@ -153,8 +153,8 @@ export function useChatWithMemos() {
             const schedules = (response.scheduleQueryResult.schedules || []).map((sched) => ({
               uid: sched.uid || "",
               title: sched.title || "",
-              startTs: sched.startTs || BigInt(0),
-              endTs: sched.endTs || BigInt(0),
+              startTs: sched.startTs ? Number(sched.startTs) : 0,
+              endTs: sched.endTs ? Number(sched.endTs) : 0,
               allDay: sched.allDay || false,
               location: sched.location || "",
               recurrenceRule: sched.recurrenceRule || "",
