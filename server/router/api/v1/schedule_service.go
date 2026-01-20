@@ -13,6 +13,8 @@ import (
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/internal/util"
+	"github.com/usememos/memos/plugin/ai"
+	aischedule "github.com/usememos/memos/plugin/ai/schedule"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/store"
 )
@@ -21,7 +23,8 @@ import (
 type ScheduleService struct {
 	v1pb.UnimplementedScheduleServiceServer
 
-	Store *store.Store
+	Store      *store.Store
+	LLMService ai.LLMService
 }
 
 // scheduleFromStore converts a store.Schedule to v1pb.Schedule.
@@ -521,9 +524,51 @@ func (s *ScheduleService) ParseAndCreateSchedule(ctx context.Context, req *v1pb.
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
 
-	// TODO: Implement natural language parsing
-	// For now, return Unimplemented
-	return nil, status.Errorf(codes.Unimplemented, "natural language parsing not yet implemented")
+	// Validate input
+	if strings.TrimSpace(req.Text) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "text is required")
+	}
+
+	// Use default timezone for now (can be enhanced to get from user settings later)
+	timezone := "Asia/Shanghai"
+
+	// Create parser
+	parser, err := aischedule.NewParser(s.LLMService, timezone)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create parser: %v", err)
+	}
+
+	// Parse natural language
+	parsed, err := parser.Parse(ctx, req.Text)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse text: %v", err)
+	}
+
+	response := &v1pb.ParseAndCreateScheduleResponse{
+		ParsedSchedule: parsed.ToSchedule(),
+	}
+
+	// If autoConfirm is true, create the schedule
+	if req.AutoConfirm {
+
+		// Create schedule
+		schedule, err := scheduleToStore(parsed.ToSchedule(), userID)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid schedule: %v", err)
+		}
+
+		// Generate UID
+		schedule.UID = util.GenUUID()
+
+		created, err := s.Store.CreateSchedule(ctx, schedule)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create schedule: %v", err)
+		}
+
+		response.CreatedSchedule = scheduleFromStore(created)
+	}
+
+	return response, nil
 }
 
 // Helper functions

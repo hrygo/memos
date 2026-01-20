@@ -1,4 +1,4 @@
-import { BotIcon, EraserIcon, SendIcon, SparklesIcon, UserIcon, MoreHorizontalIcon } from "lucide-react";
+import { BotIcon, Calendar, EraserIcon, SendIcon, SparklesIcon, UserIcon, MoreHorizontalIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
+import { useSchedules } from "@/hooks/useScheduleQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import EmptyState from "@/components/AIChat/EmptyState";
@@ -24,6 +25,10 @@ import ErrorMessage from "@/components/AIChat/ErrorMessage";
 import MessageActions from "@/components/AIChat/MessageActions";
 import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
 import TypingCursor from "@/components/AIChat/TypingCursor";
+import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
+import { ScheduleList } from "@/components/AIChat/ScheduleList";
+import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
+import dayjs from "dayjs";
 
 const STREAM_TIMEOUT = 60000; // 60 seconds timeout
 
@@ -52,6 +57,29 @@ const AIChat = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatHook = useChatWithMemos();
+
+  // Schedule-related state
+  const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
+  const [scheduleInputOpen, setScheduleInputOpen] = useState(false);
+  const [scheduleInputText, setScheduleInputText] = useState("");
+  const [selectedDate, setSelectedDate] = useState<string | undefined>();
+  const { data: schedulesData } = useSchedules({});
+
+  const schedules = schedulesData?.schedules || [];
+
+  // Intent detection for schedule creation
+  const detectScheduleIntent = (text: string): boolean => {
+    const keywords = [
+      "schedule", "meeting", "remind", "calendar",
+      "日程", "会议", "提醒", "安排", "计划",
+      "明天", "后天", "下周", "今天",
+    ];
+    return keywords.some((keyword) => text.toLowerCase().includes(keyword.toLowerCase()));
+  };
+
+  const showScheduleSuggestion = (text: string) => {
+    return detectScheduleIntent(text) && !schedulePanelOpen;
+  };
 
   // Get actual messages (excluding separators) for API calls
   const getMessagesForContext = useCallback(() => {
@@ -215,7 +243,9 @@ const AIChat = () => {
 
   return (
     <section className="w-full h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col relative">
-      {!md && (
+      {/* Schedule Panel Toggle */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {!md && (
         <MobileHeader>
           <div className="flex flex-row items-center w-full">
             {/* Centered title - absolute positioned to visual center */}
@@ -367,6 +397,76 @@ const AIChat = () => {
         )}
       </div>
 
+      {/* Schedule Panel Toggle Button */}
+      <div className="shrink-0 border-t bg-background/95 backdrop-blur-md">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSchedulePanelOpen(!schedulePanelOpen)}
+          className="w-full h-8 rounded-none border-b hover:bg-muted/50"
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          {t("schedule.title") || "Schedule"}
+          {schedulePanelOpen ? (
+            <ChevronDown className="w-4 h-4 ml-auto" />
+          ) : (
+            <ChevronUp className="w-4 h-4 ml-auto" />
+          )}
+        </Button>
+
+        {/* Schedule Panel Content */}
+        {schedulePanelOpen && (
+          <div className="border-t bg-muted/30 animate-in slide-in-from-top-2 duration-300">
+            <div className="max-w-6xl mx-auto p-4">
+              <div className="grid md:grid-cols-2 gap-4 h-[50vh] md:h-[40vh]">
+                {/* Calendar Column */}
+                <div className="flex flex-col overflow-hidden rounded-lg border bg-card">
+                  <div className="p-4 border-b flex items-center justify-between">
+                    <h3 className="font-semibold">{t("schedule.calendar") || "Calendar"}</h3>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setScheduleInputText(input);
+                        setScheduleInputOpen(true);
+                      }}
+                    >
+                      + {t("schedule.add-schedule") || "Add Schedule"}
+                    </Button>
+                  </div>
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <ScheduleCalendar
+                      schedules={schedules}
+                      selectedDate={selectedDate}
+                      onDateClick={setSelectedDate}
+                    />
+                  </div>
+                </div>
+
+                {/* Schedule List Column */}
+                <div className="flex flex-col overflow-hidden rounded-lg border bg-card">
+                  <div className="p-4 border-b">
+                    <h3 className="font-semibold">
+                      {selectedDate
+                        ? dayjs(selectedDate).format("MMMM D, YYYY")
+                        : t("schedule.todays-schedules") || "Today's Schedules"}
+                    </h3>
+                  </div>
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <ScheduleList
+                      schedules={schedules}
+                      selectedDate={selectedDate}
+                      onScheduleClick={(schedule) => {
+                        console.log("Clicked schedule:", schedule);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Input Area */}
       <div className="shrink-0 p-4 border-t bg-background/80 backdrop-blur-md sticky bottom-0 z-10">
         <div className="max-w-3xl mx-auto relative">
@@ -405,7 +505,9 @@ const AIChat = () => {
           <div className="flex items-end gap-2 p-2 bg-muted/50 rounded-xl border focus-within:ring-1 focus-within:ring-ring focus-within:bg-background transition-all">
             <Textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+              }}
               onKeyDown={handleKeyDown}
               placeholder={t("common.ai-placeholder")}
               className="min-h-[44px] max-h-[150px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 px-3 py-2.5 shadow-none"
@@ -426,6 +528,41 @@ const AIChat = () => {
               <SendIcon className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Schedule intent suggestion */}
+          {showScheduleSuggestion(input) && input.trim() && (
+            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-blue-700 dark:text-blue-300">
+                    创建日程? "{input.length > 30 ? input.slice(0, 30) + "..." : input}"
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setScheduleInputOpen(true)}
+                    className="h-7 text-xs"
+                  >
+                    创建日程
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setScheduleInputText(input);
+                      setScheduleInputOpen(true);
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    解析
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -440,6 +577,19 @@ const AIChat = () => {
         onConfirm={handleClearChat}
         confirmVariant="destructive"
       />
+
+      {/* Schedule Input Dialog */}
+      <ScheduleInput
+        open={scheduleInputOpen}
+        onOpenChange={setScheduleInputOpen}
+        initialText={scheduleInputText}
+        onSuccess={(schedule) => {
+          console.log("Schedule created:", schedule);
+          // Refresh schedules by invalidating cache
+          // The query will automatically refetch
+        }}
+      />
+    </div>
     </section>
   );
 };

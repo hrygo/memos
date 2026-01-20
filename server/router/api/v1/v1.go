@@ -71,6 +71,11 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 					RerankerService:  rerankerService,
 					LLMService:       llmService,
 				}
+				// Initialize ScheduleService with LLM service for natural language parsing
+				service.ScheduleService = &ScheduleService{
+					Store:      store,
+					LLMService: llmService,
+				}
 			}
 		}
 	}

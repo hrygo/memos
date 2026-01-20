@@ -317,8 +317,12 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 | POST | `/api/v1/schedules:checkConflict` | 检查冲突 |
 | POST | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 ✅ |
 
-**注意**: `PATCH /api/v1/schedules/{uid}` 更新接口的 `update_mask` 字段是**必需的**。
-只有指定了 `update_mask` 的字段才会被更新。支持的字段包括：
+**注意**: `PATCH /api/v1/schedules/{uid}` 更新接口有两种行为模式：
+
+1. **提供 `update_mask`**（推荐）：只更新 `update_mask` 中指定的字段，其他字段保持不变。这是**推荐模式**，可以避免意外覆盖字段。
+2. **不提供 `update_mask`**：更新所有非零/非空字段。这种模式可能会导致意外覆盖，**不推荐使用**。
+
+`update_mask` 支持的字段包括：
 - `title` - 标题
 - `description` - 描述
 - `location` - 地点

@@ -489,5 +489,27 @@
     "prompt-discuss": "Start a discussion",
     "error-title": "Something went wrong",
     "retry": "Retry"
+  },
+  "schedule": {
+    "title": "Schedule",
+    "calendar": "Calendar",
+    "add-schedule": "Add Schedule",
+    "create-schedule": "Create Schedule",
+    "edit-schedule": "Edit Schedule",
+    "delete-schedule": "Delete Schedule",
+    "conflict-detected": "Schedule Conflict Detected",
+    "conflict-warning": "This time conflicts with existing schedules",
+    "create-anyway": "Create Anyway",
+    "natural-language-hint": "Try: \"Meeting tomorrow at 3pm\"",
+    "todays-schedules": "Today's Schedules",
+    "no-schedules": "No schedules",
+    "reminders": "Reminders",
+    "all-day": "All day",
+    "location": "Location",
+    "description": "Description",
+    "repeat": "Repeat",
+    "parse-error": "Unable to parse schedule. Please try again or use manual input.",
+    "schedule-created": "Schedule created successfully",
+    "schedule-deleted": "Schedule deleted"
   }
 }
