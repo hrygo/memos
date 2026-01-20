@@ -81,9 +81,9 @@ web/src/
 - [x] 更新 LATEST.sql
 
 **文件**:
-- `store/migration/postgres/0.31/1__add_schedule.sql`
-- `store/migration/sqlite/0.31/1__add_schedule.sql`
-- `store/migration/mysql/0.31/1__add_schedule.sql`
+- `store/migration/postgres/0.26/1__add_schedule.sql`
+- `store/migration/sqlite/0.26/1__add_schedule.sql`
+- `store/migration/mysql/0.26/1__add_schedule.sql` (已废弃，不推荐使用)
 
 ### ✅ Phase 2: Store 层实现
 - [x] 定义 `Schedule` 结构体
@@ -233,6 +233,20 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 | DELETE | `/api/v1/schedules/{uid}` | 删除日程 |
 | POST | `/api/v1/schedules:checkConflict` | 检查冲突 |
 | POST | `/api/v1/schedules:parseAndCreate` | 自然语言创建日程 (待实现) |
+
+**注意**: `PATCH /api/v1/schedules/{uid}` 更新接口的 `update_mask` 字段是**必需的**。
+只有指定了 `update_mask` 的字段才会被更新。支持的字段包括：
+- `title` - 标题
+- `description` - 描述
+- `location` - 地点
+- `start_ts` - 开始时间
+- `end_ts` - 结束时间
+- `all_day` - 是否全天
+- `timezone` - 时区
+- `recurrence_rule` - 重复规则
+- `recurrence_end_ts` - 重复结束时间
+- `state` - 状态 (NORMAL/ARCHIVED)
+- `reminders` - 提醒设置
 
 ## 验证计划
 

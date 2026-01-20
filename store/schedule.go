@@ -42,9 +42,6 @@ type FindSchedule struct {
 	// Pagination
 	Limit  *int
 	Offset *int
-
-	// Ordering
-	OrderByTimeAsc bool
 }
 
 // UpdateSchedule is the update request for schedule.

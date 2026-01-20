@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -86,13 +87,30 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule name format")
 	}
 
+	// Validate required fields
+	if strings.TrimSpace(pb.Title) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "title is required")
+	}
+	if pb.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts must be a positive timestamp")
+	}
+	if pb.EndTs != 0 && pb.EndTs < pb.StartTs {
+		return nil, status.Errorf(codes.InvalidArgument, "end_ts must be greater than or equal to start_ts")
+	}
+
+	// Set default timezone if not provided
+	timezone := pb.Timezone
+	if timezone == "" {
+		timezone = "Asia/Shanghai"
+	}
+
 	s := &store.Schedule{
 		UID:         uid,
 		CreatorID:   creatorID,
 		Title:       pb.Title,
 		StartTs:     pb.StartTs,
 		AllDay:      pb.AllDay,
-		Timezone:    pb.Timezone,
+		Timezone:    timezone,
 		RowStatus:   store.RowStatus(pb.State),
 		Description: pb.Description,
 		Location:    pb.Location,
@@ -113,6 +131,13 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 	if len(pb.Reminders) > 0 {
 		reminders := make([]map[string]interface{}, len(pb.Reminders))
 		for i, r := range pb.Reminders {
+			// Validate reminder fields
+			if r.Type == "" {
+				return nil, status.Errorf(codes.InvalidArgument, "reminder type is required")
+			}
+			if r.Unit == "" {
+				return nil, status.Errorf(codes.InvalidArgument, "reminder unit is required")
+			}
 			reminders[i] = map[string]interface{}{
 				"type":  r.Type,
 				"value": r.Value,
@@ -178,7 +203,10 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		if creatorID == "" {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid creator format")
 		}
-		id := parseInt32(creatorID)
+		id, err := parseInt32(creatorID)
+		if err != nil {
+			return nil, err
+		}
 		find.CreatorID = &id
 	} else {
 		// Default to current user
@@ -424,41 +452,54 @@ func (s *ScheduleService) CheckConflict(ctx context.Context, req *v1pb.CheckConf
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
 
-	// Find schedules that might conflict
-	find := &store.FindSchedule{
-		CreatorID: &userID,
-		StartTs:   &req.StartTs,
+	// Validate time range
+	if req.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts must be positive")
 	}
 
 	endTs := req.EndTs
 	if endTs == 0 {
-		// Default to 1 hour from start
+		// Default to 1 hour from start if not specified
 		endTs = req.StartTs + 3600
 	}
-	find.EndTs = &endTs
+	if endTs < req.StartTs {
+		return nil, status.Errorf(codes.InvalidArgument, "end_ts must be >= start_ts")
+	}
+
+	// Find schedules that might conflict within the time window
+	find := &store.FindSchedule{
+		CreatorID: &userID,
+		StartTs:   &req.StartTs,
+		EndTs:     &endTs,
+	}
 
 	list, err := s.Store.ListSchedules(ctx, find)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check conflicts: %v", err)
 	}
 
-	// Filter out excluded schedules
+	// Filter out excluded schedules and check for actual conflicts
 	var conflicts []*store.Schedule
 	excludeSet := make(map[string]bool)
 	for _, name := range req.ExcludeNames {
 		excludeSet[name] = true
 	}
 
-	for _, s := range list {
-		name := fmt.Sprintf("schedules/%s", s.UID)
+	for _, schedule := range list {
+		name := fmt.Sprintf("schedules/%s", schedule.UID)
 		if !excludeSet[name] {
-			// Check if time ranges overlap
-			sEnd := s.EndTs
-			if sEnd == nil {
-				sEnd = &s.StartTs
+			// Check if time ranges actually overlap
+			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
+			scheduleEnd := schedule.EndTs
+			if scheduleEnd == nil {
+				// For schedules without end time, treat as a point event at start_ts
+				// It conflicts if it falls within the query window
+				scheduleEnd = &schedule.StartTs
 			}
-			if req.StartTs <= *sEnd && endTs >= s.StartTs {
-				conflicts = append(conflicts, s)
+
+			// Check overlap: query window [req.StartTs, endTs] vs schedule [schedule.StartTs, *scheduleEnd]
+			if req.StartTs <= *scheduleEnd && endTs >= schedule.StartTs {
+				conflicts = append(conflicts, schedule)
 			}
 		}
 	}
@@ -491,8 +532,10 @@ func pointerOf[T any](v T) *T {
 	return &v
 }
 
-func parseInt32(s string) int32 {
-	var i int32
-	fmt.Sscanf(s, "%d", &i)
-	return i
+func parseInt32(s string) (int32, error) {
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return 0, status.Errorf(codes.InvalidArgument, "invalid ID format: %s", s)
+	}
+	return int32(i), nil
 }
