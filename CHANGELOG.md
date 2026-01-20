@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.26.1-ai.2] - 2026-01-21
+
+### 🚀 Phase 1 Completion: Advanced AI Architecture
+
+- **Adaptive Retrieval Engine**: Implemented a smart hybrid search system that dynamically switches between BM25 (keyword), Semantic (vector), and Hybrid strategies based on query intent.
+- **Intelligent Query Routing**: Added `QueryRouter` to automatically classify user queries (Schedule vs. Memo vs. General QA) and route them to the most effective retrieval pipeline.
+- **FinOps Cost Monitoring**: Integrated `CostMonitor` to track token usage and estimate costs for Embedding and LLM calls.
+- **Service Modularization**: Refactored `AIService` into focused components (`ai_service_chat.go`, `ai_service_semantic.go`, `ai_service_intent.go`) for better maintainability.
+- **Performance Optimization**: optimized Vector Search with parallelism and memory-efficient data structures.
+
 ## [v0.26.1-ai.1] - 2026-01-20
 
 ### ✨ New Features

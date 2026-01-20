@@ -58,7 +58,8 @@
       "mcp__zai-mcp-server__extract_text_from_screenshot",
       "Bash(ps:*)",
       "Bash(ROOT_DIR=\"/Users/huangzhonghui/memos\")",
-      "mcp__web-search-prime__webSearchPrime"
+      "mcp__web-search-prime__webSearchPrime",
+      "Bash(wc:*)"
     ]
   }
 }

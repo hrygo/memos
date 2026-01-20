@@ -15,6 +15,9 @@ import (
 	"github.com/usememos/memos/plugin/markdown"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
+	"github.com/usememos/memos/server/finops"
+	"github.com/usememos/memos/server/queryengine"
+	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/store"
 )
 
@@ -65,11 +68,20 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				if aiConfig.LLM.Provider != "" {
 					llmService, _ = ai.NewLLMService(&aiConfig.LLM)
 				}
+
+				// 创建优化组件
+				queryRouter := queryengine.NewQueryRouter()
+				adaptiveRetriever := retrieval.NewAdaptiveRetriever(store, embeddingService, rerankerService)
+				costMonitor := finops.NewCostMonitor(store.GetDriver().GetDB())
+
 				service.AIService = &AIService{
-					Store:            store,
-					EmbeddingService: embeddingService,
-					RerankerService:  rerankerService,
-					LLMService:       llmService,
+					Store:             store,
+					EmbeddingService:  embeddingService,
+					RerankerService:   rerankerService,
+					LLMService:        llmService,
+					QueryRouter:       queryRouter,
+					AdaptiveRetriever: adaptiveRetriever,
+					CostMonitor:       costMonitor,
 				}
 				// Initialize ScheduleService with LLM service for natural language parsing
 				service.ScheduleService = &ScheduleService{
