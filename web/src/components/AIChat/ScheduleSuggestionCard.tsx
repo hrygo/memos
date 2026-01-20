@@ -1,6 +1,6 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
-import { AlertCircle, AlertTriangle, Calendar, Clock, Globe, MapPin } from "lucide-react";
+import { AlertCircle, AlertTriangle, Calendar, Clock, Globe, MapPin, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
@@ -37,6 +37,50 @@ export const ScheduleSuggestionCard = ({
       return targetDate.format("YYYY-MM-DD HH:mm");
     }
     return targetDate.format("MM-DD HH:mm");
+  };
+
+  // Parse recurrence rule for display
+  const formatRecurrence = (recurrenceRule: string): string => {
+    try {
+      const rule = JSON.parse(recurrenceRule);
+      if (!rule.type) return "";
+
+      const typeMap: Record<string, string> = {
+        daily: t("schedule.recurrence.daily") || "每天",
+        weekly: t("schedule.recurrence.weekly") || "每周",
+        monthly: t("schedule.recurrence.monthly") || "每月",
+      };
+
+      let text = typeMap[rule.type] || rule.type;
+
+      if (rule.type === "weekly" && rule.weekdays && rule.weekdays.length > 0) {
+        const weekdayNames = [
+          "", // Monday=1
+          t("schedule.recurrence.mon") || "周一",
+          t("schedule.recurrence.tue") || "周二",
+          t("schedule.recurrence.wed") || "周三",
+          t("schedule.recurrence.thu") || "周四",
+          t("schedule.recurrence.fri") || "周五",
+          t("schedule.recurrence.sat") || "周六",
+          t("schedule.recurrence.sun") || "周日",
+        ];
+        const days = rule.weekdays.map((d: number) => weekdayNames[d] || "").filter(Boolean);
+        if (days.length > 0) {
+          text = days.join("、");
+        }
+      } else if (rule.type === "monthly" && rule.month_day) {
+        text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) ||
+               `每月${rule.month_day}号`;
+      } else if (rule.interval && rule.interval > 1) {
+        const intervalText = t("schedule.recurrence.every-n", { n: rule.interval }) ||
+                            `每${rule.interval}个`;
+        text = intervalText + " " + text;
+      }
+
+      return text;
+    } catch {
+      return "";
+    }
   };
 
   return (
@@ -90,6 +134,13 @@ export const ScheduleSuggestionCard = ({
           <div className="flex items-center gap-2 text-muted-foreground">
             <Globe className="h-3.5 w-3.5" />
             <span className="text-xs">{parsedSchedule.timezone}</span>
+          </div>
+        )}
+
+        {parsedSchedule.recurrenceRule && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Repeat className="h-3.5 w-3.5" />
+            <span className="text-xs">{formatRecurrence(parsedSchedule.recurrenceRule)}</span>
           </div>
         )}
 

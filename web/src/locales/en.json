@@ -531,6 +531,21 @@
     "conflict-suggestion-hint": "This time conflicts with existing schedules. Consider adjusting.",
     "conflicting-schedules": "Conflicting Schedules",
     "more-conflicts": "more conflicts",
-    "adjust-time": "Adjust Time"
+    "adjust-time": "Adjust Time",
+    "create-anyway": "Create Anyway",
+    "recurrence": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun",
+      "monthly-on": "Monthly on day {{day}}",
+      "every-n": "Every {{n}}"
+    }
   }
 }

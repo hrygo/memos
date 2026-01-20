@@ -46,6 +46,7 @@ type ParseResult struct {
 	AllDay      bool
 	Timezone    string
 	Reminders   []*v1pb.Reminder
+	Recurrence  *RecurrenceRule
 }
 
 // Parse parses natural language text and returns schedule information.
@@ -73,6 +74,7 @@ type llmScheduleResponse struct {
 	EndTime     string           `json:"end_time"`   // Format: YYYY-MM-DD HH:mm:ss
 	AllDay      bool             `json:"all_day"`
 	Reminders   []*v1pb.Reminder `json:"reminders"`
+	Recurrence  *RecurrenceRule  `json:"recurrence"`
 }
 
 // parseWithLLM uses LLM to parse complex natural language.
@@ -91,7 +93,8 @@ Output Schema (JSON Only):
   "start_time": "YYYY-MM-DD HH:mm:ss",
   "end_time": "YYYY-MM-DD HH:mm:ss",
   "all_day": boolean,
-  "reminders": [{"type": "before", "value": int, "unit": "minutes|hours|days"}]
+  "reminders": [{"type": "before", "value": int, "unit": "minutes|hours|days"}],
+  "recurrence": {"type": "daily|weekly|monthly", "interval": int, "weekdays": [int], "month_day": int} or null
 }
 
 Rules:
@@ -100,6 +103,12 @@ Rules:
 3. If only date is mentioned (no specific time), set 'all_day': true, and use 00:00:00 for times.
 4. Extract reminders if mentioned (e.g., "10 mins before").
 5. Remove time, date, and location words from the 'title'.
+6. Extract recurrence patterns:
+   - "每天"/"daily" → {"type": "daily", "interval": 1}
+   - "每周"/"weekly" → {"type": "weekly", "interval": 1}
+   - "每周一"/"每周三" → {"type": "weekly", "weekdays": [1]/[3]}
+   - "每月15号" → {"type": "monthly", "month_day": 15}
+   - Weekdays: Monday=1, Tuesday=2, ..., Sunday=7
 `, now.Format("2006-01-02 15:04:05"), p.location.String())
 
 	userPrompt := fmt.Sprintf("User Input: %s", text)
@@ -170,13 +179,14 @@ Rules:
 		AllDay:      llmResp.AllDay,
 		Timezone:    p.location.String(),
 		Reminders:   llmResp.Reminders,
+		Recurrence:  llmResp.Recurrence,
 	}, nil
 
 }
 
 // ToSchedule converts ParseResult to v1pb.Schedule.
 func (r *ParseResult) ToSchedule() *v1pb.Schedule {
-	return &v1pb.Schedule{
+	schedule := &v1pb.Schedule{
 		Title:       r.Title,
 		Description: r.Description,
 		Location:    r.Location,
@@ -187,4 +197,14 @@ func (r *ParseResult) ToSchedule() *v1pb.Schedule {
 		Reminders:   r.Reminders,
 		State:       "NORMAL",
 	}
+
+	// Convert recurrence rule to JSON string
+	if r.Recurrence != nil {
+		recurrenceJSON, err := r.Recurrence.ToJSON()
+		if err == nil {
+			schedule.RecurrenceRule = recurrenceJSON
+		}
+	}
+
+	return schedule
 }

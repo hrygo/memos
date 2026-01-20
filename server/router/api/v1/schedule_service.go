@@ -222,6 +222,8 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		find.CreatorID = &userID
 	}
 
+	// NOTE: For recurring schedules, we need to query without time constraints first
+	// to get the schedule templates, then expand instances
 	if req.StartTs != 0 {
 		find.StartTs = &req.StartTs
 	}
@@ -242,14 +244,74 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		return nil, status.Errorf(codes.Internal, "failed to list schedules: %v", err)
 	}
 
-	response := &v1pb.ListSchedulesResponse{
-		Schedules: make([]*v1pb.Schedule, len(list)),
+	// Expand recurring schedules
+	var expandedSchedules []*v1pb.Schedule
+	queryStartTs := req.StartTs
+	queryEndTs := req.EndTs
+
+	// Default query window: from now to 1 year later
+	if queryStartTs == 0 {
+		// Use current time if not specified
+		// Note: In production, this should be server time
+		queryStartTs = 0 // We'll let each recurrence rule use its own default
 	}
-	for i, s := range list {
-		response.Schedules[i] = scheduleFromStore(s)
+	if queryEndTs == 0 {
+		// Default to 1 year from now
+		queryEndTs = 0 // Will use recurrence rule's default (1 year)
 	}
 
-	return response, nil
+	for _, schedule := range list {
+		pbSchedule := scheduleFromStore(schedule)
+
+		// If this is a recurring schedule, expand it
+		if schedule.RecurrenceRule != nil && *schedule.RecurrenceRule != "" {
+			// Parse recurrence rule
+			rule, err := aischedule.ParseRecurrenceRuleFromJSON(*schedule.RecurrenceRule)
+			if err != nil {
+				// If parsing fails, just return the base schedule
+				expandedSchedules = append(expandedSchedules, pbSchedule)
+				continue
+			}
+
+			// Generate instances within query window
+			instances := rule.GenerateInstances(queryStartTs, queryEndTs)
+
+			// For each instance, create a schedule with adjusted time
+			for idx, instanceTs := range instances {
+				instance := &v1pb.Schedule{
+					Name:        fmt.Sprintf("%s/instances/%d", pbSchedule.Name, idx),
+					Title:       pbSchedule.Title,
+					Description: pbSchedule.Description,
+					Location:    pbSchedule.Location,
+					StartTs:     instanceTs,
+					AllDay:      pbSchedule.AllDay,
+					Timezone:    pbSchedule.Timezone,
+					Reminders:   pbSchedule.Reminders,
+					Creator:     pbSchedule.Creator,
+					State:       pbSchedule.State,
+				}
+
+				// Calculate end time for this instance
+				if pbSchedule.EndTs > 0 && pbSchedule.StartTs > 0 {
+					duration := pbSchedule.EndTs - pbSchedule.StartTs
+					instance.EndTs = instanceTs + duration
+				}
+
+				// Only add if it falls within query window
+				if (queryStartTs == 0 || instance.StartTs >= queryStartTs) &&
+					(queryEndTs == 0 || instance.StartTs <= queryEndTs) {
+					expandedSchedules = append(expandedSchedules, instance)
+				}
+			}
+		} else {
+			// Non-recurring schedule, add as-is
+			expandedSchedules = append(expandedSchedules, pbSchedule)
+		}
+	}
+
+	return &v1pb.ListSchedulesResponse{
+		Schedules: expandedSchedules,
+	}, nil
 }
 
 // GetSchedule gets a schedule by name.

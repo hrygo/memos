@@ -532,6 +532,20 @@
     "conflicting-schedules": "冲突的日程",
     "more-conflicts": "更多冲突",
     "adjust-time": "调整时间",
-    "create-anyway": "仍要创建"
+    "create-anyway": "仍要创建",
+    "recurrence": {
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月",
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日",
+      "monthly-on": "每月{{day}}号",
+      "every-n": "每{{n}}个"
+    }
   }
 }
