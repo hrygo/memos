@@ -35,6 +35,7 @@ var (
 				InstanceURL: viper.GetString("instance-url"),
 				Version:     version.GetCurrentVersion(viper.GetString("mode")),
 			}
+			instanceProfile.FromEnv()
 			if err := instanceProfile.Validate(); err != nil {
 				panic(err)
 			}

@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { MemoDetailSidebar, MemoDetailSidebarDrawer } from "@/components/MemoDetailSidebar";
 import MemoEditor from "@/components/MemoEditor";
+import MemoRelatedList from "@/components/MemoRelatedList";
 import MemoView from "@/components/MemoView";
 import MobileHeader from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,7 @@ const MemoDetail = () => {
             showPinned
             showNsfwContent
           />
+          <MemoRelatedList memoName={memoName} />
           <div className="pt-8 pb-16 w-full">
             <h2 id="comments" className="sr-only">
               {t("memo.comment.self")}

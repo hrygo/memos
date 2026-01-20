@@ -245,6 +245,30 @@ func (*AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) co
 	return next
 }
 
-func (*AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
-	return next
+func (in *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		header := conn.RequestHeader()
+		authHeader := header.Get("Authorization")
+
+		result := in.authenticator.Authenticate(ctx, authHeader)
+
+		// Enforce authentication for non-public methods
+		if result == nil && !IsPublicMethod(conn.Spec().Procedure) {
+			return connect.NewError(connect.CodeUnauthenticated, errors.New("authentication required"))
+		}
+
+		// Set context based on auth result
+		if result != nil {
+			if result.Claims != nil {
+				// Access Token V2 - stateless, use claims
+				ctx = auth.SetUserClaimsInContext(ctx, result.Claims)
+				ctx = context.WithValue(ctx, auth.UserIDContextKey, result.Claims.UserID)
+			} else if result.User != nil {
+				// PAT - have full user
+				ctx = auth.SetUserInContext(ctx, result.User, result.AccessToken)
+			}
+		}
+
+		return next(ctx, conn)
+	}
 }

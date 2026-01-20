@@ -23,7 +23,7 @@ const Home = () => {
   });
 
   return (
-    <div className="w-full min-h-full bg-background text-foreground">
+    <div className="w-full min-h-full bg-background text-foreground relative">
       <PagedMemoList
         renderer={(memo: Memo, context?: MemoRenderContext) => (
           <MemoView key={`${memo.name}-${memo.displayTime}`} memo={memo} showVisibility showPinned compact={context?.compact} />
