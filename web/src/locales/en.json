@@ -44,6 +44,7 @@
     "days": "Days",
     "delete": "Delete",
     "description": "Description",
+    "dismiss": "Dismiss",
     "edit": "Edit",
     "email": "Email",
     "expand": "Expand",
@@ -492,6 +493,8 @@
   },
   "schedule": {
     "title": "Schedule",
+    "your-timeline": "Your Timeline",
+    "add": "Add",
     "calendar": "Calendar",
     "add-schedule": "Add Schedule",
     "create-schedule": "Create Schedule",
@@ -510,6 +513,12 @@
     "repeat": "Repeat",
     "parse-error": "Unable to parse schedule. Please try again or use manual input.",
     "schedule-created": "Schedule created successfully",
-    "schedule-deleted": "Schedule deleted"
+    "schedule-deleted": "Schedule deleted",
+    "suggested-schedule": "Suggested Schedule",
+    "suggested-schedule-hint": "Based on your message, I suggest creating the following schedule",
+    "create": "Create",
+    "input-too-long": "Input too long (max 500 characters)",
+    "parsing": "Recognizing schedule...",
+    "untitled": "Untitled Schedule"
   }
 }

@@ -44,6 +44,7 @@
     "days": "天",
     "delete": "删除",
     "description": "说明",
+    "dismiss": "忽略",
     "edit": "编辑",
     "email": "邮箱",
     "expand": "展开",
@@ -492,6 +493,8 @@
   },
   "schedule": {
     "title": "日程",
+    "your-timeline": "您的时间轴",
+    "add": "新建",
     "calendar": "日历",
     "add-schedule": "添加日程",
     "create-schedule": "创建日程",
@@ -514,6 +517,8 @@
     "suggested-schedule": "建议创建日程",
     "suggested-schedule-hint": "根据您的对话内容，我建议创建以下日程",
     "create": "创建",
-    "input-too-long": "输入过长（最多 500 字符）"
+    "input-too-long": "输入过长（最多 500 字符）",
+    "parsing": "正在识别日程...",
+    "untitled": "无标题日程"
   }
 }
