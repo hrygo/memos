@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/usememos/memos/store"
 )
@@ -64,20 +63,13 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		where, args = append(where, "schedule.row_status = "+placeholder(len(args)+1)), append(args, *v)
 	}
 	if v := find.StartTs; v != nil {
-		where, args = append(where, "schedule.start_ts >= "+placeholder(len(args)+1)), append(args, *v)
+		// Find schedules that overlap with the query range
+		// A schedule overlaps if: (schedule.start < query_end) AND
+		// (schedule.end > query_start OR schedule.end IS NULL)
+		where, args = append(where, "schedule.start_ts < "+placeholder(len(args)+1)), append(args, *v)
 	}
 	if v := find.EndTs; v != nil {
-		// Find schedules that overlap with the query time window.
-		// A schedule overlaps if: (schedule.start_ts <= window_end) AND
-		// (schedule.end_ts IS NULL OR schedule.end_ts >= window_start)
-		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
-
-		// If no StartTs specified, ensure end_ts is within reasonable range (e.g., not in ancient history)
-		// This prevents returning all historical schedules when only EndTs is specified
-		if find.StartTs == nil {
-			oneMonthAgo := time.Now().Add(-30 * 24 * time.Hour).Unix()
-			where, args = append(where, "(schedule.end_ts IS NULL OR schedule.end_ts >= "+placeholder(len(args)+1)+")"), append(args, oneMonthAgo)
-		}
+		where, args = append(where, "(schedule.end_ts > "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
 	}
 
 	// Ordering (always by start_ts ascending)
