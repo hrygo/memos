@@ -51,9 +51,9 @@ export function useSchedulesOptimized(anchorDate?: Date) {
   endOfRange.setDate(now.getDate() + 15);
   endOfRange.setHours(23, 59, 59, 999);
 
-  // Convert to Unix timestamps (seconds)
-  const startTs = BigInt(Math.floor(startOfRange.getTime() / 1000));
-  const endTs = BigInt(Math.floor(endOfRange.getTime() / 1000));
+  // Convert to Unix timestamps (seconds) as numbers for React Query serialization
+  const startTs = Math.floor(startOfRange.getTime() / 1000);
+  const endTs = Math.floor(endOfRange.getTime() / 1000);
 
   return useSchedules({
     startTs,
