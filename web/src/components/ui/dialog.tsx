@@ -52,9 +52,9 @@ const dialogContentVariants = cva(
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> &
-    VariantProps<typeof dialogContentVariants> & {
-      showCloseButton?: boolean;
-    }
+  VariantProps<typeof dialogContentVariants> & {
+    showCloseButton?: boolean;
+  }
 >(({ className, children, showCloseButton = true, size, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
@@ -68,6 +68,7 @@ const DialogContent = React.forwardRef<
         e.preventDefault();
         document.body.style.pointerEvents = "auto";
       }}
+      aria-describedby={undefined}
       {...props}
     >
       <div className="overflow-y-auto overflow-x-hidden flex-1 flex flex-col gap-4">{children}</div>

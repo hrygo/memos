@@ -1,12 +1,12 @@
 import { ArchiveIcon, CheckIcon, GlobeIcon, LogOutIcon, PaletteIcon, SettingsIcon, SquareUserIcon, User2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useNavigateTo from "@/hooks/useNavigateTo";
 import { useUpdateUserGeneralSetting } from "@/hooks/useUserQueries";
-import { locales } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Routes } from "@/router";
-import { getLocaleDisplayName, getLocaleWithFallback, loadLocale, useTranslate } from "@/utils/i18n";
+import { loadLocale } from "@/utils/i18n";
 import { getThemeWithFallback, loadTheme, THEME_OPTIONS } from "@/utils/theme";
 import UserAvatar from "./UserAvatar";
 import {
@@ -25,21 +25,22 @@ interface Props {
 
 const UserMenu = (props: Props) => {
   const { collapsed } = props;
-  const t = useTranslate();
+  const { t, i18n } = useTranslation();
   const navigateTo = useNavigateTo();
   const currentUser = useCurrentUser();
   const { userGeneralSetting, refetchSettings, logout } = useAuth();
   const { mutate: updateUserGeneralSetting } = useUpdateUserGeneralSetting(currentUser?.name);
-  const currentLocale = getLocaleWithFallback(userGeneralSetting?.locale);
+  const currentLocale = i18n.language;
   const currentTheme = getThemeWithFallback(userGeneralSetting?.theme);
 
-  const handleLocaleChange = async (locale: Locale) => {
+  const handleLocaleChange = async () => {
+    const nextLocale = currentLocale === "en" ? "zh-Hans" : "en";
     if (!currentUser) return;
     // Apply locale immediately for instant UI feedback and persist to localStorage
-    loadLocale(locale);
+    loadLocale(nextLocale);
     // Persist to user settings
     updateUserGeneralSetting(
-      { generalSetting: { locale }, updateMask: ["locale"] },
+      { generalSetting: { locale: nextLocale }, updateMask: ["locale"] },
       {
         onSuccess: () => {
           refetchSettings();
@@ -114,21 +115,10 @@ const UserMenu = (props: Props) => {
           <ArchiveIcon className="size-4 text-muted-foreground" />
           {t("common.archived")}
         </DropdownMenuItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <GlobeIcon className="size-4 text-muted-foreground" />
-            {t("common.language")}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="max-h-[90vh] overflow-y-auto">
-            {locales.map((locale) => (
-              <DropdownMenuItem key={locale} onClick={() => handleLocaleChange(locale)}>
-                {currentLocale === locale && <CheckIcon className="w-4 h-auto" />}
-                {currentLocale !== locale && <span className="w-4" />}
-                {getLocaleDisplayName(locale)}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuItem onClick={handleLocaleChange}>
+          <GlobeIcon className="size-4 text-muted-foreground bg-transparent" />
+          {currentLocale === "en" ? "中文(简体)" : "English"}
+        </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <PaletteIcon className="size-4 text-muted-foreground" />

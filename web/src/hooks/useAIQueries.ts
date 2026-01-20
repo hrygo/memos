@@ -2,11 +2,10 @@ import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiServiceClient } from "@/connect";
 import {
-  type ChatWithMemosResponse,
+  ChatWithMemosRequestSchema,
   GetRelatedMemosRequestSchema,
   SemanticSearchRequestSchema,
   SuggestTagsRequestSchema,
-  ChatWithMemosRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
 
 // Query keys factory for consistent cache management
@@ -59,10 +58,7 @@ export function useSuggestTags() {
  * @param options.enabled - Whether the query is enabled
  * @param options.limit - Maximum number of related memos to return
  */
-export function useRelatedMemos(
-  name: string,
-  options: { enabled?: boolean; limit?: number } = {}
-) {
+export function useRelatedMemos(name: string, options: { enabled?: boolean; limit?: number } = {}) {
   return useQuery({
     queryKey: aiKeys.related(name),
     queryFn: async () => {
@@ -100,7 +96,7 @@ export function useChatWithMemos() {
         onSources?: (sources: string[]) => void;
         onDone?: () => void;
         onError?: (error: Error) => void;
-      }
+      },
     ) => {
       const request = create(ChatWithMemosRequestSchema, {
         message: params.message,
