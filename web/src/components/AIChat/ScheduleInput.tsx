@@ -134,10 +134,35 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         : false;
 
       if (isConflictError) {
-        toast.error(t("schedule.conflict-error") || "Schedule conflicts detected. Please check your schedule.", {
-          duration: 5000,
-          id: "schedule-conflict-error",
-        });
+        // Extract conflict details from error message if available
+        const errorMessage = (error as { message?: string }).message || "";
+
+        // Try to fetch conflicts again to show them in the alert dialog
+        try {
+          const conflictResult = await checkConflict.mutateAsync({
+            startTs: parsedSchedule.startTs,
+            endTs: parsedSchedule.endTs,
+            excludeNames: isEditMode && parsedSchedule.name ? [parsedSchedule.name] : [],
+          });
+
+          if (conflictResult.conflicts.length > 0) {
+            // Show conflicts in the alert dialog instead of toast
+            setConflicts(conflictResult.conflicts);
+            setShowConflictAlert(true);
+          } else {
+            // Fallback to toast if we can't fetch conflicts
+            toast.error(errorMessage, {
+              duration: 6000,
+              id: "schedule-conflict-error",
+            });
+          }
+        } catch (conflictCheckError) {
+          // If conflict check fails, show the original error message
+          toast.error(errorMessage, {
+            duration: 6000,
+            id: "schedule-conflict-error",
+          });
+        }
       } else {
         toast.error(isEditMode ? "Failed to update schedule" : "Failed to create schedule");
       }

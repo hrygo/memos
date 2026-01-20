@@ -14,7 +14,7 @@ import {
   SparklesIcon,
   UserIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
@@ -79,15 +79,35 @@ const AIChat = () => {
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [scheduleViewMode, setScheduleViewMode] = useState<"timeline" | "calendar">("timeline");
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
+  const [hasScheduleQueryResult, setHasScheduleQueryResult] = useState(false);
+  const [aiHandledScheduleQuery, setAiHandledScheduleQuery] = useState(false); // 标记AI是否已处理日程查询
 
   // 使用 useRef 存储消息 ID，避免 React state 异步更新导致的竞态条件
   const messageIdRef = useRef(0);
   // Use optimized schedule hook with 30-day window (±15 days from selected date)
   // Calculate anchor date from selectedDate or use today
-  const anchorDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+  // 使用 useMemo 避免 anchorDate 每次渲染都创建新对象导致重复查询
+  const anchorDate = useMemo(() => {
+    return selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+  }, [selectedDate]);
   const { data: schedulesData } = useSchedulesOptimized(anchorDate);
 
   const schedules = schedulesData?.schedules || [];
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[AIChat Debug] Schedule Query Info:');
+    console.log('  selectedDate:', selectedDate);
+    console.log('  anchorDate:', anchorDate.toISOString());
+    console.log('  schedulesData:', schedulesData);
+    console.log('  schedules.length:', schedules.length);
+    if (schedules.length > 0) {
+      console.log('  First 3 schedules:');
+      schedules.slice(0, 3).forEach((s, i) => {
+        console.log(`    [${i}] ${s.title}: startTs=${s.startTs}, endTs=${s.endTs}`);
+      });
+    }
+  }, [schedulesData, selectedDate, anchorDate, schedules]);
 
   // Schedule suggestion state
   const [suggestedSchedule, setSuggestedSchedule] = useState<Schedule | null>(null);
@@ -195,6 +215,10 @@ const AIChat = () => {
       resetTypingState();
     }
 
+    // 重置日程查询结果标记（新对话）
+    setHasScheduleQueryResult(false);
+    setAiHandledScheduleQuery(false);
+
     // 原子操作递增消息 ID，避免竞态条件
     const messageId = ++messageIdRef.current;
 
@@ -281,9 +305,15 @@ const AIChat = () => {
               return;
             }
 
-            console.log(`[ScheduleQuery] Detected with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
+            console.log(`[ScheduleQuery] AI backend handled query with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
+
+            // 标记 AI 已处理日程查询
+            setAiHandledScheduleQuery(true);
 
             if (result.detected && result.schedules.length > 0) {
+              // 标记有日程查询结果，用于前端智能处理 AI 回复
+              setHasScheduleQueryResult(true);
+
               // 转换为 ScheduleSummary 格式，将 bigint 转换为 number
               const schedules: ScheduleSummary[] = result.schedules.map((sched) => ({
                 uid: sched.uid,
@@ -301,6 +331,9 @@ const AIChat = () => {
               setShowScheduleQueryResult(true);
             } else if (result.detected && result.schedules.length === 0) {
               // 检测到查询意图但没有日程
+              setHasScheduleQueryResult(true);
+              // AI 后端返回空结果，不显示前端查询的日程卡片
+              setShowScheduleQueryResult(false);
               toast("该时间段暂无日程安排", {
                 icon: "📅",
                 duration: 3000,
@@ -316,7 +349,9 @@ const AIChat = () => {
     }
 
     // Check for schedule query intent after AI responds
-    if (detectScheduleQueryIntent(userMessage)) {
+    // 只有在 AI 没有处理日程查询时，才使用前端自动查询
+    if (detectScheduleQueryIntent(userMessage) && !aiHandledScheduleQuery) {
+      console.log("[ScheduleQuery] AI did not handle query, using frontend fallback");
       handleScheduleQuery(userMessage);
     }
     // 注意：日程创建意图现在由 AI 在后端检测，不再需要前端检测
@@ -357,6 +392,8 @@ const AIChat = () => {
     setShowScheduleSuggestion(false);
     setSuggestedSchedule(null);
     setLastScheduleMessage("");
+    setAiHandledScheduleQuery(false);
+    setHasScheduleQueryResult(false);
   };
 
   const handleClearContext = () => {
@@ -543,6 +580,21 @@ const AIChat = () => {
     }
   };
 
+  // 检测 AI 回复是否与日程查询结果矛盾
+  const isScheduleResponseContradictory = (content: string): boolean => {
+    if (!hasScheduleQueryResult) return false;
+
+    const contradictoryPatterns = [
+      /没有.*日程|无.*日程|没找到.*日程|未找到.*日程|找不到.*日程/i,
+      /暂时.*没有.*安排|没有.*安排/i,
+      /没有.*相关.*信息|未找到.*相关.*信息/i,
+      /笔记.*没有.*日程|笔记中.*没有/i,
+      /sorry.*no.*schedule|no.*schedules.*found/i,
+    ];
+
+    return contradictoryPatterns.some((pattern) => pattern.test(content));
+  };
+
   return (
     <section className="w-full h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col relative">
       {/* Schedule Panel Toggle */}
@@ -597,6 +649,12 @@ const AIChat = () => {
 
             // Render regular message
             const msg = item as Message;
+
+            // 如果 AI 回复与日程查询结果矛盾，则不显示（前端智能处理）
+            if (msg.role === "assistant" && isScheduleResponseContradictory(msg.content)) {
+              console.log("[AIChat] Hiding contradictory AI response:", msg.content);
+              return null;
+            }
 
             return (
               <div
@@ -726,6 +784,9 @@ const AIChat = () => {
               setQueryTitle("");
             }}
             onScheduleClick={undefined}
+            onOpenSchedulePanel={() => {
+              setSchedulePanelOpen(true);
+            }}
           />
         )}
 
@@ -738,8 +799,8 @@ const AIChat = () => {
             className="w-full h-8 rounded-none border-b hover:bg-muted/50"
           >
             <Calendar className="w-4 h-4 mr-2" />
-            {t("schedule.title") || "Schedule"}
-            {schedulePanelOpen ? <ChevronDown className="w-4 h-4 ml-auto" /> : <ChevronUp className="w-4 h-4 ml-auto" />}
+            <span className="flex-1 text-left">{t("schedule.title") || "Schedule"}</span>
+            {schedulePanelOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </Button>
 
           {/* Schedule Panel Content - NEW TIMELINE LAYOUT */}
@@ -851,7 +912,7 @@ const AIChat = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <div className="flex items-end gap-2 p-2 bg-muted/50 rounded-xl border focus-within:ring-1 focus-within:ring-ring focus-within:bg-background transition-all">
+          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl border focus-within:ring-1 focus-within:ring-ring focus-within:bg-background transition-all">
             <Textarea
               value={input}
               onChange={(e) => {
@@ -870,7 +931,7 @@ const AIChat = () => {
             />
             <Button
               size="icon"
-              className="shrink-0 h-9 w-9 mb-0.5 rounded-lg transition-all"
+              className="shrink-0 h-9 w-9 rounded-lg transition-all"
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
             >
@@ -888,22 +949,17 @@ const AIChat = () => {
                     创建日程? "{input.length > 30 ? input.slice(0, 30) + "..." : input}"
                   </span>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setScheduleInputOpen(true)} className="h-7 text-xs">
-                    创建日程
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setScheduleInputText(input);
-                      setScheduleInputOpen(true);
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    解析
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setScheduleInputText(input);
+                    setScheduleInputOpen(true);
+                  }}
+                  className="h-7 text-xs"
+                >
+                  解析并创建日程
+                </Button>
               </div>
             </div>
           )}

@@ -34,7 +34,30 @@
       "Bash(__NEW_LINE_f46d34660dda0744__ echo \"=== Test ListSchedules ===\")",
       "Bash(__NEW_LINE_f46d34660dda0744__ echo \"\")",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run)",
+      "Bash(pnpm tsc:*)",
+      "Bash(protoc:*)",
+      "Bash(go vet:*)",
+      "Bash(command:*)",
+      "Bash(goimports:*)",
+      "Bash(pnpm build)",
+      "Bash(/Users/huangzhonghui/go/bin/buf build:*)",
+      "Bash(npm run check:*)",
+      "Bash(git reset:*)",
+      "Bash(go run:*)",
+      "Bash(cat:*)",
+      "Bash(psql:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)",
+      "Bash(kill:*)",
+      "Bash(TZ='Asia/Shanghai' date:*)",
+      "Bash(pgrep:*)",
+      "Bash(bash scripts/dev.sh:*)",
+      "mcp__zai-mcp-server__extract_text_from_screenshot",
+      "Bash(ps:*)",
+      "Bash(ROOT_DIR=\"/Users/huangzhonghui/memos\")"
     ]
   }
 }

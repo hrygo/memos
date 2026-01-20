@@ -260,6 +260,17 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		return nil, status.Errorf(codes.Internal, "failed to list schedules: %v", err)
 	}
 
+	// Debug logging
+	fmt.Printf("[DEBUG] ListSchedules API: returning %d schedules\n", len(list))
+	for i, sched := range list {
+		endTs := "null"
+		if sched.EndTs != nil {
+			endTs = fmt.Sprintf("%d", *sched.EndTs)
+		}
+		fmt.Printf("[DEBUG]   [%d] %s: start_ts=%d, end_ts=%s\n",
+			i, sched.Title, sched.StartTs, endTs)
+	}
+
 	// Expand recurring schedules
 	var expandedSchedules []*v1pb.Schedule
 	queryStartTs := req.StartTs
@@ -777,6 +788,8 @@ func (s *ScheduleService) checkScheduleConflicts(ctx context.Context, userID int
 		excludeSet[name] = true
 	}
 
+	fmt.Printf("[DEBUG] Checking conflicts for new schedule [%d, %d]\n", startTs, checkEndTs)
+
 	for _, schedule := range list {
 		name := fmt.Sprintf("schedules/%s", schedule.UID)
 		if !excludeSet[name] {
@@ -789,7 +802,12 @@ func (s *ScheduleService) checkScheduleConflicts(ctx context.Context, userID int
 			}
 
 			// Check overlap: query window [startTs, checkEndTs] vs schedule [schedule.StartTs, *scheduleEnd]
-			if startTs <= *scheduleEnd && checkEndTs >= schedule.StartTs {
+			overlaps := startTs <= *scheduleEnd && checkEndTs >= schedule.StartTs
+
+			fmt.Printf("[DEBUG]   Existing schedule [%d, %d] overlaps=%v\n",
+				schedule.StartTs, *scheduleEnd, overlaps)
+
+			if overlaps {
 				conflicts = append(conflicts, schedule)
 			}
 		}

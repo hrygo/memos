@@ -266,6 +266,36 @@ stop_postgres() {
     esac
 }
 
+# 验证进程是否是 memos 后端进程
+verify_backend_process() {
+    local pid=$1
+    if [ -z "$pid" ]; then
+        return 1
+    fi
+
+    # 检查进程是否存在
+    if ! ps -p "$pid" &>/dev/null; then
+        return 1
+    fi
+
+    # 获取进程的完整命令行和工作目录
+    local cmdline=$(ps -p "$pid" -o command= 2>/dev/null)
+    # macOS 不支持 ps -o cwd，使用 lsof 代替
+    local cwd=$(lsof -p "$pid" 2>/dev/null | grep cwd | awk '{print $NF}' | tr -d ' ')
+
+    # 安全验证：必须同时满足以下条件
+    # 1. 命令行包含 memos 特征（精确匹配）
+    # 2. 进程的工作目录是当前项目目录
+    if [ -n "$cmdline" ] && [ "$cwd" = "$ROOT_DIR" ]; then
+        # 精确匹配：确保是我们启动的后端进程
+        if echo "$cmdline" | grep -qE "(go run.*cmd/memos|memos.*--mode dev|memos.*--port $BACKEND_PORT)"; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 stop_backend() {
     local status=$(backend_status)
 
@@ -288,19 +318,61 @@ stop_backend() {
 
     # 额外检查：确保端口没有被占用（解决 go run 孤儿进程问题）
     if check_port $BACKEND_PORT; then
-        log_warn "端口 $BACKEND_PORT 仍被占用，尝试强制终止..."
-        local port_pid=$(lsof -ti ":$BACKEND_PORT" 2>/dev/null | head -1)
-        if [ -n "$port_pid" ]; then
-            log_info "终止占用端口的进程 (PID: $port_pid)..."
-            kill "$port_pid" 2>/dev/null || true
-            sleep 1
-            # 如果还没终止，强制杀死
-            if ps -p "$port_pid" &>/dev/null; then
-                kill -9 "$port_pid" 2>/dev/null || true
-            fi
-            log_success "已清理端口 $BACKEND_PORT"
+        log_warn "端口 $BACKEND_PORT 仍被占用，检查进程..."
+
+        # 获取占用端口的进程列表
+        local port_pids=$(lsof -ti ":$BACKEND_PORT" 2>/dev/null)
+
+        if [ -n "$port_pids" ]; then
+            for port_pid in $port_pids; do
+                # 验证进程是否是我们启动的 memos 后端
+                if verify_backend_process "$port_pid"; then
+                    log_info "终止 memos 后端进程 (PID: $port_pid)..."
+                    kill "$port_pid" 2>/dev/null || true
+                    sleep 1
+                    # 如果还没终止，强制杀死
+                    if ps -p "$port_pid" &>/dev/null; then
+                        kill -9 "$port_pid" 2>/dev/null || true
+                    fi
+                    log_success "已清理端口 $BACKEND_PORT 的 memos 进程"
+                else
+                    log_warn "端口 $BACKEND_PORT 被其他进程占用 (PID: $port_pid)，跳过终止"
+                    log_warn "如需终止该进程，请手动执行: kill $port_pid"
+                fi
+            done
         fi
     fi
+}
+
+# 验证进程是否是 memos 前端进程 (pnpm dev / vite)
+verify_frontend_process() {
+    local pid=$1
+    if [ -z "$pid" ]; then
+        return 1
+    fi
+
+    # 检查进程是否存在
+    if ! ps -p "$pid" &>/dev/null; then
+        return 1
+    fi
+
+    # 获取进程的完整命令行和工作目录
+    local cmdline=$(ps -p "$pid" -o command= 2>/dev/null)
+    # macOS 不支持 ps -o cwd，使用 lsof 代替
+    local cwd=$(lsof -p "$pid" 2>/dev/null | grep cwd | awk '{print $NF}' | tr -d ' ')
+
+    # 安全验证：必须同时满足以下条件
+    # 1. 命令行包含前端开发服务器特征
+    # 2. 进程的工作目录是项目 web 目录
+    local web_dir="$ROOT_DIR/web"
+    if [ -n "$cmdline" ] && [ "$cwd" = "$web_dir" ]; then
+        # 精确匹配：确保是我们启动的前端开发服务器
+        if echo "$cmdline" | grep -qE "(pnpm dev|vite|node.*vite.*dev)"; then
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
 stop_frontend() {
@@ -325,16 +397,27 @@ stop_frontend() {
 
     # 额外检查：确保端口没有被占用
     if check_port $FRONTEND_PORT; then
-        log_warn "端口 $FRONTEND_PORT 仍被占用，尝试强制终止..."
-        local port_pid=$(lsof -ti ":$FRONTEND_PORT" 2>/dev/null | head -1)
-        if [ -n "$port_pid" ]; then
-            log_info "终止占用端口的进程 (PID: $port_pid)..."
-            kill "$port_pid" 2>/dev/null || true
-            sleep 1
-            if ps -p "$port_pid" &>/dev/null; then
-                kill -9 "$port_pid" 2>/dev/null || true
-            fi
-            log_success "已清理端口 $FRONTEND_PORT"
+        log_warn "端口 $FRONTEND_PORT 仍被占用，检查进程..."
+
+        # 获取占用端口的进程列表
+        local port_pids=$(lsof -ti ":$FRONTEND_PORT" 2>/dev/null)
+
+        if [ -n "$port_pids" ]; then
+            for port_pid in $port_pids; do
+                # 验证进程是否是我们启动的前端开发服务器
+                if verify_frontend_process "$port_pid"; then
+                    log_info "终止前端开发服务器进程 (PID: $port_pid)..."
+                    kill "$port_pid" 2>/dev/null || true
+                    sleep 1
+                    if ps -p "$port_pid" &>/dev/null; then
+                        kill -9 "$port_pid" 2>/dev/null || true
+                    fi
+                    log_success "已清理端口 $FRONTEND_PORT 的前端进程"
+                else
+                    log_warn "端口 $FRONTEND_PORT 被其他进程占用 (PID: $port_pid)，跳过终止"
+                    log_warn "如需终止该进程，请手动执行: kill $port_pid"
+                fi
+            done
         fi
     fi
 }
@@ -499,25 +582,21 @@ cmd_stop() {
 
 cmd_restart() {
     echo ""
-    log_info "重启 Memos 应用 (保持 PostgreSQL 运行)..."
+    log_info "重启所有服务（PostgreSQL + 后端 + 前端）..."
     echo ""
 
-    # 只停止应用服务 (后端 + 前端)
+    # 停止所有服务（包括PostgreSQL）
     stop_frontend
     stop_backend
+    stop_postgres
 
     sleep 2
 
-    # 确保 PostgreSQL 正在运行
+    # 启动 PostgreSQL
     check_docker
-    local pg_status=$(postgres_status)
-    if [ "$pg_status" != "running" ]; then
-        log_info "PostgreSQL 未运行，正在启动..."
-        start_postgres || exit 1
-        sleep 2
-    else
-        log_info "PostgreSQL 已在运行"
-    fi
+    log_info "启动 PostgreSQL..."
+    start_postgres || exit 1
+    sleep 2
 
     # 重启应用服务
     start_backend || exit 1

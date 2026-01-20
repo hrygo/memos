@@ -9,9 +9,10 @@ interface ScheduleQueryResultProps {
   schedules: ScheduleSummary[];
   onClose: () => void;
   onScheduleClick?: (schedule: ScheduleSummary) => void;
+  onOpenSchedulePanel?: () => void;
 }
 
-export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick }: ScheduleQueryResultProps) => {
+export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick, onOpenSchedulePanel }: ScheduleQueryResultProps) => {
   const formatTime = (schedule: ScheduleSummary) => {
     const startDate = dayjs.unix(schedule.startTs);
     const startTime = startDate.format("HH:mm");
@@ -138,6 +139,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
           onClick={() => {
             // Open schedule panel
             onClose();
+            onOpenSchedulePanel?.();
           }}
           className="text-xs"
         >

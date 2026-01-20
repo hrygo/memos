@@ -55,7 +55,7 @@ func (p *Profile) IsDev() bool {
 
 // IsAIEnabled returns true if AI is enabled and at least one API key or base URL is configured.
 func (p *Profile) IsAIEnabled() bool {
-	return p.AIEnabled && (p.AISiliconFlowAPIKey != "" || p.AIOpenAIAPIKey != "" || p.AIOllamaBaseURL != "")
+	return p.AIEnabled && (p.AISiliconFlowAPIKey != "" || p.AIOpenAIAPIKey != "" || p.AIOllamaBaseURL != "" || p.AIDeepSeekAPIKey != "")
 }
 
 // getEnvOrDefault returns the environment variable value or the default value.

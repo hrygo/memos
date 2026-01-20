@@ -69,7 +69,7 @@ const MainLayout = () => {
 
   return (
     <section className="@container w-full min-h-full flex flex-col justify-start items-center">
-      {!md && (
+      {!md && location.pathname !== Routes.ROOT && (
         <MobileHeader>
           <MemoExplorerDrawer context={context} statisticsData={statistics} tagCount={tags} />
         </MobileHeader>

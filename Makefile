@@ -31,13 +31,7 @@ AI_OPENAI_BASE_URL ?= https://api.siliconflow.cn/v1
 
 ##@ 开发
 
-run: ## 启动后端 (PostgreSQL)
-	@echo "Starting Memos backend..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go run ./cmd/memos --mode dev --port 28081
-
-dev: run ## Alias for run
-
-run-ai: ## 启动后端 + AI 支持
+run: ## 启动后端 (PostgreSQL + AI)
 	@echo "Starting Memos with AI support..."
 	@MEMOS_DRIVER=$(MEMOS_DRIVER) \
 		MEMOS_DSN=$(MEMOS_DSN) \
@@ -52,6 +46,8 @@ run-ai: ## 启动后端 + AI 支持
 		MEMOS_AI_RERANK_MODEL=$(AI_RERANK_MODEL) \
 		MEMOS_AI_LLM_MODEL=$(AI_LLM_MODEL) \
 		go run ./cmd/memos --mode dev --port 28081
+
+dev: run ## Alias for run
 
 web: ## 启动前端开发服务器
 	@cd web && pnpm dev
@@ -206,9 +202,8 @@ help: ## 显示此帮助信息
 	@printf "  logs                 查看所有服务日志\n"
 	@printf "  logs backend         查看后端日志 (支持: postgres/backend/frontend)\n"
 	@printf "\n\033[1m开发:\033[0m\n"
-	@printf "  run                  启动后端 (PostgreSQL)\n"
+	@printf "  run                  启动后端 (PostgreSQL + AI)\n"
 	@printf "  dev                  Alias for run\n"
-	@printf "  run-ai               启动后端 + AI 支持\n"
 	@printf "  web                  启动前端开发服务器\n"
 	@printf "\n\033[1m依赖:\033[0m\n"
 	@printf "  deps                 安装后端依赖\n"

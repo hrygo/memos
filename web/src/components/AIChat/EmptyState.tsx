@@ -10,7 +10,7 @@ const EmptyState = ({ onSuggestedPrompt }: EmptyStateProps) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full py-12 animate-in fade-in-0 duration-500">
+    <div className="flex flex-col items-center justify-center h-full py-12 px-4 animate-in fade-in-0 duration-500">
       <div className="relative mb-6">
         <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
         <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg">
@@ -18,7 +18,7 @@ const EmptyState = ({ onSuggestedPrompt }: EmptyStateProps) => {
         </div>
       </div>
 
-      <h2 className="text-xl font-semibold mb-2">{t("ai.welcome-title")}</h2>
+      <h2 className="text-xl font-semibold mb-2 text-center">{t("ai.welcome-title")}</h2>
       <p className="text-muted-foreground text-center max-w-md mb-8">{t("ai.welcome-description")}</p>
 
       <SuggestedPrompts onSelect={onSuggestedPrompt} />

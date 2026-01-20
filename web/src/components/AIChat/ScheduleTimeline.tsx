@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-cn";
-import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,33 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       // Sort by time
       return Number(a.startTs) - Number(b.startTs);
     });
+
+  // Check if a schedule conflicts with any other schedule
+  const hasConflict = (schedule: Schedule): boolean => {
+    const scheduleEnd = schedule.endTs > 0 ? schedule.endTs : schedule.startTs + BigInt(3600); // Default 1 hour
+
+    return daySchedules.some((other) => {
+      if (other.name === schedule.name) return false; // Skip self
+
+      const otherEnd = other.endTs > 0 ? other.endTs : other.startTs + BigInt(3600);
+
+      // Check for time overlap: two intervals [s1, e1] and [s2, e2] overlap if: s1 < e2 AND s2 < e1
+      return schedule.startTs < otherEnd && other.startTs < scheduleEnd;
+    });
+  };
+
+  // Get conflicting schedule names for a schedule
+  const getConflictingSchedules = (schedule: Schedule): Schedule[] => {
+    const scheduleEnd = schedule.endTs > 0 ? schedule.endTs : schedule.startTs + BigInt(3600);
+
+    return daySchedules.filter((other) => {
+      if (other.name === schedule.name) return false;
+
+      const otherEnd = other.endTs > 0 ? other.endTs : other.startTs + BigInt(3600);
+
+      return schedule.startTs < otherEnd && other.startTs < scheduleEnd;
+    });
+  };
 
   return (
     <div className={cn("flex flex-col h-full bg-background/50 rounded-xl overflow-hidden", className)}>
@@ -203,17 +230,20 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
               const startTime = dayjs(timestampDate(create(TimestampSchema, { seconds: schedule.startTs, nanos: 0 })));
               const endTime = dayjs(timestampDate(create(TimestampSchema, { seconds: schedule.endTs, nanos: 0 })));
 
+              // Check for conflicts
+              const conflict = hasConflict(schedule);
+              const conflictingSchedules = getConflictingSchedules(schedule);
+
               // Color coding based on some hash or simple index cycler
-              // In a real app, this might come from the schedule category
+              // Use red for conflicts, otherwise use the normal color cycle
               const colors = ["bg-blue-500", "bg-purple-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
-              const accentColor = colors[idx % colors.length];
+              const accentColor = conflict ? "bg-red-500" : colors[idx % colors.length];
 
               return (
                 <div key={idx} className="group relative flex gap-4 mb-6 last:mb-0">
                   {/* Time Column */}
                   <div className="w-12 flex-none flex flex-col items-end pt-0.5">
-                    <span className="text-xs font-bold text-foreground/80">{startTime.format("h:mm")}</span>
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase">{startTime.format("A")}</span>
+                    <span className="text-xs font-bold text-foreground/80">{startTime.format("HH:mm")}</span>
                   </div>
 
                   {/* Timeline Dot */}
@@ -223,7 +253,13 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
 
                   {/* Card */}
                   <div className="flex-1 min-w-0">
-                    <div className="bg-card hover:bg-accent/50 transition-colors border border-border/50 rounded-xl p-3 shadow-sm group-hover:shadow-md relative">
+                    <div
+                      className={cn(
+                        "bg-card hover:bg-accent/50 transition-colors rounded-xl p-3 shadow-sm group-hover:shadow-md relative",
+                        // Add red border and background for conflicts
+                        conflict && "border-2 border-red-500/50 bg-red-50/50 dark:bg-red-950/20 dark:border-red-500/70"
+                      )}
+                    >
                       {/* Action Menu (Visible on Hover) */}
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                         <DropdownMenu>
@@ -257,13 +293,16 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                         </DropdownMenu>
                       </div>
 
-                      <h4 className="font-semibold text-sm text-foreground mb-1 truncate leading-tight pr-6">
+                      <h4 className={cn(
+                        "font-semibold text-sm mb-1 truncate leading-tight pr-6",
+                        conflict && "text-red-900 dark:text-red-100"
+                      )}>
                         {schedule.title || "Untitled Event"}
                       </h4>
                       <div className="flex items-center h-4 text-xs text-muted-foreground gap-3">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {startTime.format("h:mm")} - {endTime.format("h:mm A")}
+                          {startTime.format("HH:mm")} - {endTime.format("HH:mm")}
                         </span>
                         {schedule.location && (
                           <span className="flex items-center gap-1">
@@ -276,6 +315,15 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                         <p className="mt-2 text-xs text-foreground/70 line-clamp-2 leading-relaxed border-t border-border/50 pt-2">
                           {schedule.description}
                         </p>
+                      )}
+
+                      {/* Conflict Details */}
+                      {conflict && conflictingSchedules.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
+                          <p className="text-[10px] text-red-600 dark:text-red-400">
+                            {t("schedule.conflict-warning") || "Conflicts with"}: {conflictingSchedules.map(s => s.title).join(", ")}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

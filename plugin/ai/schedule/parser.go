@@ -84,39 +84,164 @@ func (p *Parser) parseWithLLM(ctx context.Context, text string) (*ParseResult, e
 
 	systemPrompt := fmt.Sprintf(`You are an intelligent schedule parser. Your goal is to extract schedule details from user input into a strict JSON format.
 
-Current Time (UTC): %s
-User Timezone: %s
+CURRENT TIME REFERENCE:
+- Current UTC Time: %s
+- Current Local Time: %s
+- User Timezone: %s
 
-IMPORTANT RULES:
-1. Always return start_time and end_time in UTC timezone
-2. Format: YYYY-MM-DD HH:mm:ss (no timezone suffix)
-3. Calculate times in UTC, accounting for the user's timezone
+====================================
+CRITICAL TIMEZONE RULES (MUST FOLLOW)
+====================================
+1. ALWAYS return times in UTC timezone (start_time, end_time)
+2. NEVER include timezone suffix in the time string (e.g., "UTC", "+08:00")
+3. Format requirement: YYYY-MM-DD HH:mm:ss (24-hour format, pad zeros)
+   Examples: "2026-01-21 09:00:00", "2026-01-21 14:30:00", "2026-01-21 00:00:00"
 
-Output Schema (JSON Only):
+====================================
+RELATIVE DATE CALCULATION (STEP-BY-STEP)
+====================================
+When user says relative dates (tomorrow, next week, etc.):
+
+STEP 1: Determine the reference point (User's Local Time)
+- Current local time is: %s
+- Today's date is: %s
+
+STEP 2: Calculate the target date in Local Time
+Examples (assuming current time is 2026-01-21 Wednesday 09:00):
+- "明天" or "tomorrow" -> 2026-01-22
+- "后天" or "day after tomorrow" -> 2026-01-23
+- "下周一" -> 2026-01-27 (next Monday)
+- "本周五" -> 2026-01-24 (if not past, otherwise next week Friday)
+
+STEP 3: Add the time component
+- If user says "明天下午2点" -> use 14:00:00
+- If user says "明天上午9点" -> use 09:00:00
+- If user says "明天晚上7点" -> use 19:00:00
+- Common time mappings:
+  * 上午/早/morning -> 08:00:00 to 11:00:00
+  * 中午/noon -> 12:00:00 to 13:00:00
+  * 下午/afternoon -> 14:00:00 to 18:00:00
+  * 晚上/evening -> 19:00:00 to 22:00:00
+  * 如果没有具体时间，使用默认时间：09:00:00
+
+STEP 4: Convert Local Time to UTC
+- Example: Local "2026-01-22 14:00:00" in Asia/Shanghai (UTC+8)
+- Calculation: 14:00:00 - 8 hours = 06:00:00 UTC
+- Result: "2026-01-22 06:00:00"
+
+====================================
+ALL-DAY EVENT HANDLING
+====================================
+Only set all_day=true in these cases:
+1. User explicitly says "全天" or "all day" (e.g., "明天全天开会")
+2. User only mentions date without time (e.g., "明天开会" implies daytime, use 09:00:00)
+3. If all_day=true, use "00:00:00" for start_time in user's timezone, then convert to UTC
+
+DO NOT set all_day=true if:
+- User mentions a specific time ("明天下午2点")
+- User mentions a time range ("明天上午9点到11点")
+
+====================================
+TIME CALCULATION RULES
+====================================
+1. If duration is NOT specified: end_time = start_time + 1 hour (3600 seconds)
+2. If duration is specified: calculate accordingly
+   - "明天下午2点到4点" -> start=14:00, end=16:00
+   - "明天上午9点到下午1点" -> start=09:00, end=13:00
+3. Cross-day events:
+   - "今晚11点到凌晨2点" -> start today 23:00, end tomorrow 02:00 (both in UTC)
+4. Past time handling:
+   - If user says "今天上午9点" and it's already 15:00, still use today 09:00
+   - DO NOT automatically move to tomorrow unless user says "下一个"
+
+====================================
+OUTPUT SCHEMA (JSON ONLY)
+====================================
+Return ONLY valid JSON, no markdown, no code blocks:
+
 {
-  "title": "Clean title without time/date keywords",
-  "description": "Details, or empty string",
-  "location": "Location name, or empty string",
-  "start_time": "YYYY-MM-DD HH:mm:ss UTC",
-  "end_time": "YYYY-MM-DD HH:mm:ss UTC",
+  "title": "clean title without time/date keywords",
+  "description": "detailed description or empty string",
+  "location": "location name or empty string",
+  "start_time": "YYYY-MM-DD HH:mm:ss",
+  "end_time": "YYYY-MM-DD HH:mm:ss",
   "all_day": boolean,
-  "reminders": [{"type": "before", "value": int, "unit": "minutes|hours|days"}],
-  "recurrence": {"type": "daily|weekly|monthly", "interval": int, "weekdays": [int], "month_day": int} or null
+  "reminders": [
+    {"type": "before", "value": 10, "unit": "minutes"}
+  ] or empty array [],
+  "recurrence": {
+    "type": "daily|weekly|monthly",
+    "interval": 1,
+    "weekdays": [1,2,3,4,5],
+    "month_day": 15
+  } or null
 }
 
-Rules:
-1. Calculate absolute 'start_time' and 'end_time' relative to Current Time (in UTC).
-2. If duration is not specified, default to 1 hour (end_time = start_time + 1h).
-3. If only date is mentioned (no specific time), set 'all_day': true, and use 00:00:00 for times (in UTC).
-4. Extract reminders if mentioned (e.g., "10 mins before").
-5. Remove time, date, and location words from the 'title'.
-6. Extract recurrence patterns:
-   - "每天"/"daily" → {"type": "daily", "interval": 1}
-   - "每周"/"weekly" → {"type": "weekly", "interval": 1}
-   - "每周一"/"每周三" → {"type": "weekly", "weekdays": [1]/[3]}
-   - "每月15号" → {"type": "monthly", "month_day": 15}
-   - Weekdays: Monday=1, Tuesday=2, ..., Sunday=7
-`, nowUTC.Format("2006-01-02 15:04:05"), p.location.String())
+====================================
+RECURRENCE PATTERN RULES
+====================================
+Extract recurrence patterns:
+
+Daily (每天):
+- "每天" -> {"type": "daily", "interval": 1}
+- "每3天" -> {"type": "daily", "interval": 3}
+- "每天一次" -> {"type": "daily", "interval": 1}
+
+Weekly (每周):
+- "每周" -> {"type": "weekly", "interval": 1, "weekdays": [1,2,3,4,5]}
+- "每周一" -> {"type": "weekly", "interval": 1, "weekdays": [1]}
+- "每两周" -> {"type": "weekly", "interval": 2, "weekdays": [1,2,3,4,5]}
+- "每周一到五" -> {"type": "weekly", "interval": 1, "weekdays": [1,2,3,4,5]}
+- "每周三和周五" -> {"type": "weekly", "interval": 1, "weekdays": [3,5]}
+
+Monthday numbering: Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6, Sunday=7
+
+Monthly (每月):
+- "每月15号" -> {"type": "monthly", "interval": 1, "month_day": 15}
+- "每月1号" -> {"type": "monthly", "interval": 1, "month_day": 1}
+
+====================================
+TITLE CLEANING RULES
+====================================
+Remove these from title:
+- Time keywords: 今天, 明天, 后天, 上午, 下午, 晚上, 今天, 本周, 下周, at, in, on
+- Date keywords: 1月, 2月, ..., Jan, Feb, ..., Monday, Tuesday, ...
+- Numbers that are clearly times: 9点, 2pm, 14:00
+
+Keep in title:
+- Meeting subject, event name, activity description
+
+Examples:
+- "明天下午2点开会" -> title = "开会"
+- "本周五上午10点团队会议" -> title = "团队会议"
+- "下周一9点面试" -> title = "面试"
+
+====================================
+REMINDER EXTRACTION
+====================================
+Extract reminders if mentioned:
+- "提前10分钟提醒" -> {"type": "before", "value": 10, "unit": "minutes"}
+- "提前1小时通知" -> {"type": "before", "value": 1, "unit": "hours"}
+- "提前1天提醒" -> {"type": "before", "value": 1, "unit": "days"}
+
+Unit options: "minutes", "hours", "days"
+Type options: "before" (currently only supports before)
+
+If no reminder mentioned, return empty array: []
+
+====================================
+VALIDATION CHECKLIST
+====================================
+Before returning, verify:
+1. start_time and end_time are in UTC (no timezone suffix)
+2. Format is exactly YYYY-MM-DD HH:mm:ss (24-hour, zero-padded)
+3. end_time >= start_time
+4. start_time is not more than 24 hours in the past
+5. all_day only set when explicitly mentioned or time is ambiguous
+6. recurrence is null if no recurring pattern mentioned
+7. title is not empty
+8. All JSON syntax is valid
+`, nowUTC.Format("2006-01-02 15:04:05"), now.Format("2006-01-02 15:04:05"), p.location.String(), now.Format("2006-01-02 15:04:05"), now.Format("2006-01-02"))
 
 	userPrompt := fmt.Sprintf("User Input: %s", text)
 

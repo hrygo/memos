@@ -518,12 +518,12 @@ func TestFormatSchedulesForContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := service.formatSchedulesForContext(tt.schedules)
 
-			if tt.wantEmpty && result != "无" {
-				t.Errorf("formatSchedulesForContext() = %v, want \"无\"", result)
+			if tt.wantEmpty && result != "共找到 0 个日程安排（暂无日程）" {
+				t.Errorf("formatSchedulesForContext() = %v, want \"共找到 0 个日程安排（暂无日程）\"", result)
 			}
 
-			if !tt.wantEmpty && result == "无" {
-				t.Errorf("formatSchedulesForContext() = \"无\", want non-empty")
+			if !tt.wantEmpty && result == "共找到 0 个日程安排（暂无日程）" {
+				t.Errorf("formatSchedulesForContext() = \"共找到 0 个日程安排（暂无日程）\", want non-empty")
 			}
 
 			if !tt.wantEmpty && len(tt.schedules) > 0 {

@@ -13,11 +13,18 @@ import {
   ParseAndCreateScheduleRequestSchema,
 } from "@/types/proto/api/v1/schedule_service_pb";
 
+// Type for query parameters with string timestamps (for React Query cache keys)
+// This avoids BigInt serialization issues in JSON.stringify()
+export type ListSchedulesRequestWithStringTs = Omit<ListSchedulesRequest, 'startTs' | 'endTs'> & {
+  startTs?: string;
+  endTs?: string;
+};
+
 // Query keys factory for consistent cache management
 export const scheduleKeys = {
   all: ["schedules"] as const,
   lists: () => [...scheduleKeys.all, "list"] as const,
-  list: (filters: Partial<ListSchedulesRequest>) => [...scheduleKeys.lists(), filters] as const,
+  list: (filters: Partial<ListSchedulesRequestWithStringTs>) => [...scheduleKeys.lists(), filters] as const,
   details: () => [...scheduleKeys.all, "detail"] as const,
   detail: (name: string) => [...scheduleKeys.details(), name] as const,
   conflicts: () => [...scheduleKeys.all, "conflicts"] as const,
@@ -26,12 +33,27 @@ export const scheduleKeys = {
 /**
  * Hook to fetch schedules with optional filters
  */
-export function useSchedules(request: Partial<ListSchedulesRequest> = {}) {
+export function useSchedules(request: Partial<ListSchedulesRequestWithStringTs> = {}) {
   return useQuery({
     queryKey: scheduleKeys.list(request),
     queryFn: async () => {
-      const response = await scheduleServiceClient.listSchedules(create(ListSchedulesRequestSchema, request as Record<string, unknown>));
-      return response;
+      console.log('[useSchedules] API Call request:', request);
+      try {
+        // Convert string timestamps to bigint for Protobuf serialization
+        const requestWithBigint = {
+          ...request,
+          startTs: request.startTs ? BigInt(request.startTs) : undefined,
+          endTs: request.endTs ? BigInt(request.endTs) : undefined,
+        };
+        const response = await scheduleServiceClient.listSchedules(create(ListSchedulesRequestSchema, requestWithBigint as Record<string, unknown>));
+        console.log('[useSchedules] API Response:', response);
+        console.log('[useSchedules] Response.schedules:', response.schedules);
+        console.log('[useSchedules] Response.schedules.length:', response.schedules?.length || 0);
+        return response;
+      } catch (error) {
+        console.error('[useSchedules] API Error:', error);
+        throw error;
+      }
     },
     staleTime: 1000 * 30, // 30 seconds (optimized for multi-user sync)
   });
@@ -51,9 +73,19 @@ export function useSchedulesOptimized(anchorDate?: Date) {
   endOfRange.setDate(now.getDate() + 15);
   endOfRange.setHours(23, 59, 59, 999);
 
-  // Convert to Unix timestamps (seconds) as numbers for React Query serialization
-  const startTs = Math.floor(startOfRange.getTime() / 1000);
-  const endTs = Math.floor(endOfRange.getTime() / 1000);
+  // Convert to Unix timestamps (seconds) as STRING to avoid BigInt serialization issues
+  // Will be converted to BigInt in useSchedules queryFn
+  const startTs = Math.floor(startOfRange.getTime() / 1000).toString();
+  const endTs = Math.floor(endOfRange.getTime() / 1000).toString();
+
+  // Debug logging
+  console.log('[useSchedulesOptimized] Query params:', {
+    anchorDate: anchorDate?.toISOString() || 'undefined',
+    startOfRange: startOfRange.toISOString(),
+    endOfRange: endOfRange.toISOString(),
+    startTs,
+    endTs,
+  });
 
   return useSchedules({
     startTs,

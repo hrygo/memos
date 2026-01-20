@@ -50,6 +50,10 @@ func (d *DB) CreateSchedule(ctx context.Context, create *store.Schedule) (*store
 func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*store.Schedule, error) {
 	where, args := []string{"1 = 1"}, []any{}
 
+	// Debug logging
+	fmt.Printf("[DEBUG] ListSchedules called with find.StartTs=%v, find.EndTs=%v\n",
+		find.StartTs, find.EndTs)
+
 	if v := find.ID; v != nil {
 		where, args = append(where, "schedule.id = "+placeholder(len(args)+1)), append(args, *v)
 	}
@@ -66,11 +70,13 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		// Find schedules that overlap with the query range
 		// A schedule overlaps if its end time is after or at the query start time
 		where, args = append(where, "(schedule.end_ts >= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
+		fmt.Printf("[DEBUG] Added start_ts condition: schedule.end_ts >= %d\n", *v)
 	}
 	if v := find.EndTs; v != nil {
 		// Find schedules that overlap with the query range
 		// A schedule overlaps if its start time is before or at the query end time
 		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
+		fmt.Printf("[DEBUG] Added end_ts condition: schedule.start_ts <= %d\n", *v)
 	}
 
 	// Ordering (always by start_ts ascending)
@@ -130,13 +136,19 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		schedule.Description = description
 		schedule.Location = location
 		if endTs.Valid {
-			schedule.EndTs = &endTs.Int64
+			// Create a new int64 value to avoid pointer to local variable
+			endTsVal := endTs.Int64
+			schedule.EndTs = &endTsVal
 		}
 		if recurrenceRule.Valid {
-			schedule.RecurrenceRule = &recurrenceRule.String
+			// Create a new string value to avoid pointer to local variable
+			ruleVal := recurrenceRule.String
+			schedule.RecurrenceRule = &ruleVal
 		}
 		if recurrenceEndTs.Valid {
-			schedule.RecurrenceEndTs = &recurrenceEndTs.Int64
+			// Create a new int64 value to avoid pointer to local variable
+			recEndTsVal := recurrenceEndTs.Int64
+			schedule.RecurrenceEndTs = &recEndTsVal
 		}
 		// Always set reminders and payload (use default if empty)
 		if reminders == "" || reminders == "[]" {
@@ -153,6 +165,17 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to iterate schedules: %w", err)
+	}
+
+	// Debug logging
+	fmt.Printf("[DEBUG] ListSchedules returning %d schedules\n", len(list))
+	for i, sched := range list {
+		endTsVal := int64(0)
+		if sched.EndTs != nil {
+			endTsVal = *sched.EndTs
+		}
+		fmt.Printf("[DEBUG]   [%d] %s: start_ts=%d, end_ts=%d\n",
+			i, sched.Title, sched.StartTs, endTsVal)
 	}
 
 	return list, nil
