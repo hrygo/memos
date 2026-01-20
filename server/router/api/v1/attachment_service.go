@@ -309,7 +309,8 @@ func SaveAttachmentBlob(ctx context.Context, profile *profile.Profile, stores *s
 		return errors.Wrap(err, "Failed to find instance storage setting")
 	}
 
-	if instanceStorageSetting.StorageType == storepb.InstanceStorageSetting_LOCAL {
+	switch instanceStorageSetting.StorageType {
+	case storepb.InstanceStorageSetting_LOCAL:
 		filepathTemplate := "assets/{timestamp}_{filename}"
 		if instanceStorageSetting.FilepathTemplate != "" {
 			filepathTemplate = instanceStorageSetting.FilepathTemplate
@@ -339,7 +340,7 @@ func SaveAttachmentBlob(ctx context.Context, profile *profile.Profile, stores *s
 		create.Reference = internalPath
 		create.Blob = nil
 		create.StorageType = storepb.AttachmentStorageType_LOCAL
-	} else if instanceStorageSetting.StorageType == storepb.InstanceStorageSetting_S3 {
+	case storepb.InstanceStorageSetting_S3:
 		s3Config := instanceStorageSetting.S3Config
 		if s3Config == nil {
 			return errors.Errorf("No activated external storage found")

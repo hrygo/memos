@@ -15,7 +15,7 @@ endif
 
 # 数据库配置 (PostgreSQL)
 MEMOS_DRIVER ?= postgres
-MEMOS_DSN ?= postgres://memos:memos@localhost:5432/memos?sslmode=disable
+MEMOS_DSN ?= postgres://memos:memos@localhost:25432/memos?sslmode=disable
 
 # AI 配置
 AI_EMBEDDING_PROVIDER ?= siliconflow
@@ -33,7 +33,7 @@ AI_OPENAI_BASE_URL ?= https://api.siliconflow.cn/v1
 
 run: ## 启动后端 (PostgreSQL)
 	@echo "Starting Memos backend..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go run ./cmd/memos --mode dev --port 8081
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go run ./cmd/memos --mode dev --port 28081
 
 dev: run ## Alias for run
 
@@ -51,7 +51,7 @@ run-ai: ## 启动后端 + AI 支持
 		MEMOS_AI_EMBEDDING_MODEL=$(AI_EMBEDDING_MODEL) \
 		MEMOS_AI_RERANK_MODEL=$(AI_RERANK_MODEL) \
 		MEMOS_AI_LLM_MODEL=$(AI_LLM_MODEL) \
-		go run ./cmd/memos --mode dev --port 8081
+		go run ./cmd/memos --mode dev --port 28081
 
 web: ## 启动前端开发服务器
 	@cd web && pnpm dev
@@ -135,7 +135,7 @@ db-connect: ## 连接 PostgreSQL shell
 db-reset: ## 重置数据库 schema
 	@echo "Resetting database schema..."
 	@docker exec memos-postgres-dev psql -U memos -d memos -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-	@go run ./cmd/memos --mode dev --driver postgres --dsn "postgres://memos:memos@localhost:5432/memos?sslmode=disable" --migrate
+	@go run ./cmd/memos --mode dev --driver postgres --dsn "postgres://memos:memos@localhost:25432/memos?sslmode=disable" --migrate
 
 db-vector: ## 验证 pgvector 扩展
 	@docker exec memos-postgres-dev psql -U memos -d memos -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
@@ -241,5 +241,5 @@ help: ## 显示此帮助信息
 	@printf "\n\033[1mQuick Start:\033[0m\n"
 	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
 	@printf "  2. make start                   # 启动后端 + 前端\n"
-	@printf "  3. 访问 http://localhost:5173   # 打开前端\n"
+	@printf "  3. 访问 http://localhost:25173   # 打开前端\n"
 	@printf ""

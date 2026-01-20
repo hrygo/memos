@@ -16,7 +16,7 @@ services:
       POSTGRES_WORK_MEM: 4MB
       POSTGRES_MAX_CONNECTIONS: 50
     ports:
-      - "127.0.0.1:5432:5432"  # Only listen on localhost
+      - "127.0.0.1:25432:5432"  # Only listen on localhost
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

@@ -172,7 +172,7 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
 # gRPC 流式测试 (需要 grpcurl)
 grpcurl -d '{"message": "我最近记录了什么?"}' \
   -H "Authorization: Bearer $TOKEN" \
-  localhost:8081 memos.api.v1.AIService/ChatWithMemos
+  localhost:28081 memos.api.v1.AIService/ChatWithMemos
 ```
 
 ## 依赖

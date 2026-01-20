@@ -154,7 +154,7 @@ func vectorToString(v []float32) string {
 ## 测试命令
 
 ```bash
-DRIVER=postgres DSN="postgres://user:pass@localhost:5432/memos_test?sslmode=disable" \
+DRIVER=postgres DSN="postgres://user:pass@localhost:25432/memos_test?sslmode=disable" \
 go test ./store/test/... -run TestMemoEmbedding -v
 ```
 

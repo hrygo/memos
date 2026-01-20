@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"runtime/debug"
 
 	"connectrpc.com/connect"
@@ -56,7 +57,7 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 
 		// Prevent browser caching of API responses to avoid stale data issues
 		// See: https://github.com/usememos/memos/issues/5470
-		if resp != nil {
+		if err == nil && resp != nil && !isNil(resp) {
 			resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			resp.Header().Set("Pragma", "no-cache")
 			resp.Header().Set("Expires", "0")
@@ -64,6 +65,17 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 
 		return resp, err
 	}
+}
+
+func isNil(i any) bool {
+	if i == nil {
+		return true
+	}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(i).IsNil()
+	}
+	return false
 }
 
 func (*MetadataInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {

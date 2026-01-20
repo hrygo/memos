@@ -232,12 +232,13 @@ func (s *APIV1Service) UpdateShortcut(ctx context.Context, request *v1pb.UpdateS
 		if shortcut.GetId() == shortcutID {
 			foundShortcut = shortcut
 			for _, field := range request.UpdateMask.Paths {
-				if field == "title" {
+				switch field {
+				case "title":
 					if request.Shortcut.GetTitle() == "" {
 						return nil, status.Errorf(codes.InvalidArgument, "title is required")
 					}
 					shortcut.Title = request.Shortcut.GetTitle()
-				} else if field == "filter" {
+				case "filter":
 					if err := s.validateFilter(ctx, request.Shortcut.GetFilter()); err != nil {
 						return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
 					}

@@ -16,7 +16,7 @@ services:
       POSTGRES_WORK_MEM: 4MB
       POSTGRES_MAX_CONNECTIONS: 50
     ports:
-      - "5432:5432"
+      - "25432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

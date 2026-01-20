@@ -29,8 +29,8 @@ BACKEND_PID_FILE="$PID_DIR/backend.pid"
 FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
 
 # 端口配置
-BACKEND_PORT=8081
-FRONTEND_PORT=5173
+BACKEND_PORT=28081
+FRONTEND_PORT=25173
 
 # 日志文件
 BACKEND_LOG="$LOG_DIR/backend.log"
@@ -166,7 +166,7 @@ start_postgres() {
 
     # 等待 PostgreSQL 启动
     echo -n "等待 PostgreSQL 启动"
-    if wait_for_port 5432 "PostgreSQL" 30; then
+    if wait_for_port 25432 "PostgreSQL" 30; then
         log_success "PostgreSQL 已启动"
         return 0
     else
