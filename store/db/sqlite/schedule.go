@@ -137,12 +137,15 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		if recurrenceEndTs.Valid {
 			schedule.RecurrenceEndTs = &recurrenceEndTs.Int64
 		}
-		if reminders != "" && reminders != "[]" {
-			schedule.Reminders = &reminders
+		// Always set reminders and payload (use default if empty) - match PostgreSQL behavior
+		if reminders == "" || reminders == "[]" {
+			reminders = "[]"
 		}
-		if payload != "" && payload != "{}" {
-			schedule.Payload = &payload
+		schedule.Reminders = &reminders
+		if payload == "" || payload == "{}" {
+			payload = "{}"
 		}
+		schedule.Payload = &payload
 
 		list = append(list, &schedule)
 	}

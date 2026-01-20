@@ -57,8 +57,10 @@ export const ScheduleInput = ({
         setParsedSchedule(result.parsedSchedule);
 
         // Check for conflicts
-        // Default to 1 hour duration if endTs is not specified
-        const endTs = result.parsedSchedule.endTs || (result.parsedSchedule.startTs + BigInt(3600))
+        // Default to 1 hour duration if endTs is not specified or is 0
+        const endTs = result.parsedSchedule.endTs > 0
+          ? result.parsedSchedule.endTs
+          : result.parsedSchedule.startTs + BigInt(3600);
         const conflictResult = await checkConflict.mutateAsync({
           startTs: result.parsedSchedule.startTs,
           endTs: endTs,

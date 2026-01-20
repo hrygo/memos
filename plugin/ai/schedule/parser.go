@@ -29,6 +29,46 @@ const (
 	MaxRemindersCount        = 10
 )
 
+// Precompiled regex patterns for performance
+var (
+	// Time patterns
+	hourMinutePattern     = regexp.MustCompile(`(\d{1,2}):(\d{2})`)
+	chineseHourPattern    = regexp.MustCompile(`(\d{1,2})点`)
+	chineseMinutePattern  = regexp.MustCompile(`(\d{1,2})分`)
+
+	// Date patterns
+	datePattern           = regexp.MustCompile(`(\d{1,4})年?(\d{1,2})月(\d{1,2})日?`)
+
+	// Time and date removal patterns for title parsing
+	timePatternsToRemove = []*regexp.Regexp{
+		regexp.MustCompile(`\d{1,2}:\d{2}`),
+		regexp.MustCompile(`\d{1,2}点\d{1,2}分`),
+		regexp.MustCompile(`\d{1,2}点半`),
+		regexp.MustCompile(`\d{1,2}点`),
+		regexp.MustCompile(`\d{1,4}年\d{1,2}月\d{1,2}日`),
+		regexp.MustCompile(`\d{1,2}月\d{1,2}日`),
+		regexp.MustCompile(`(周|星期|下周|本)[一二三四五六七日天]`),
+	}
+
+	// Location patterns
+	locationPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`地点[:：](.{2,20})`),
+		regexp.MustCompile(`在(.{2,20})`),
+		regexp.MustCompile(`位于(.{2,20})`),
+		regexp.MustCompile(`@(.{2,20})`),
+	}
+
+	// Reminder pattern
+	reminderPattern = regexp.MustCompile(`提前(\d+)(分钟|小时|天|分|时)`)
+
+	// Description cleanup patterns
+	descriptionCleanupPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`\d{1,2}:\d{2}`),
+		regexp.MustCompile(`提前\d+(分钟|小时|天|分|时)`),
+		regexp.MustCompile(`\s+`),
+	}
+)
+
 // Parser handles natural language parsing for schedules.
 type Parser struct {
 	llmService ai.LLMService
@@ -68,6 +108,11 @@ func (p *Parser) Parse(ctx context.Context, text string) (*ParseResult, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return nil, fmt.Errorf("empty input")
+	}
+
+	// Validate input length
+	if len(text) > MaxInputLength {
+		return nil, fmt.Errorf("input too long: maximum %d characters, got %d", MaxInputLength, len(text))
 	}
 
 	// Try regex parsing first (faster)
@@ -124,6 +169,7 @@ func (p *Parser) parseTime(text string, now time.Time) (startTs, endTs int64, al
 	// Check for "全天" or "all day" keywords
 	if strings.Contains(text, "全天") || strings.Contains(text, "all day") {
 		allDay = true
+		startTs = now.Unix()
 		endTs = now.Add(24 * time.Hour).Unix()
 		return
 	}
@@ -146,7 +192,7 @@ func (p *Parser) parseTime(text string, now time.Time) (startTs, endTs int64, al
 	}
 
 	// Parse absolute dates (e.g., "1月20日", "2024年1月20日")
-	if match := regexp.MustCompile(`(\d{1,4})年?(\d{1,2})月(\d{1,2})日?`).FindStringSubmatch(text); len(match) > 0 {
+	if match := datePattern.FindStringSubmatch(text); len(match) > 0 {
 		year := now.Year()
 		month, _ := strconv.Atoi(match[2])
 		day, _ := strconv.Atoi(match[3])
@@ -172,7 +218,7 @@ func (p *Parser) parseTimeForDate(date time.Time, text string, allDay bool) (sta
 	isAllDay = allDay
 
 	// Parse hour:minute format (e.g., "15:00", "15:30")
-	if match := regexp.MustCompile(`(\d{1,2}):(\d{2})`).FindStringSubmatch(text); len(match) > 0 {
+	if match := hourMinutePattern.FindStringSubmatch(text); len(match) > 0 {
 		hour, _ := strconv.Atoi(match[1])
 		minute, _ := strconv.Atoi(match[2])
 
@@ -206,7 +252,7 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 
 	// Check for AM/PM
 	if strings.Contains(text, "下午") || strings.Contains(text, "pm") {
-		if match := regexp.MustCompile(`(\d{1,2})点`).FindStringSubmatch(text); len(match) > 0 {
+		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
 			hour, _ = strconv.Atoi(match[1])
 			if hour < 12 {
 				hour += 12
@@ -219,11 +265,11 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 		}
 
 		// Check for specific minutes
-		if match := regexp.MustCompile(`(\d{1,2})分`).FindStringSubmatch(text); len(match) > 0 {
+		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
 			minute, _ = strconv.Atoi(match[1])
 		}
 	} else if strings.Contains(text, "上午") || strings.Contains(text, "am") {
-		if match := regexp.MustCompile(`(\d{1,2})点`).FindStringSubmatch(text); len(match) > 0 {
+		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
 			hour, _ = strconv.Atoi(match[1])
 			if hour == 12 {
 				hour = 0
@@ -234,23 +280,22 @@ func (p *Parser) parseChineseTime(text string) (hour, minute int) {
 			minute = 30
 		}
 
-		if match := regexp.MustCompile(`(\d{1,2})分`).FindStringSubmatch(text); len(match) > 0 {
+		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
 			minute, _ = strconv.Atoi(match[1])
 		}
 	} else {
-		// No AM/PM specified, use 24-hour format or default to AM
-		if match := regexp.MustCompile(`(\d{1,2})点`).FindStringSubmatch(text); len(match) > 0 {
+		// No AM/PM specified, use 24-hour format
+		if match := chineseHourPattern.FindStringSubmatch(text); len(match) > 0 {
 			hour, _ = strconv.Atoi(match[1])
-			if hour > 12 {
-				hour = hour % 12
-			}
+			// Keep 24-hour format as-is: 13点 = 13:00, 23点 = 23:00
+			// Don't convert hour % 12, that would incorrectly change 13 to 1
 		}
 
 		if strings.Contains(text, "半") {
 			minute = 30
 		}
 
-		if match := regexp.MustCompile(`(\d{1,2})分`).FindStringSubmatch(text); len(match) > 0 {
+		if match := chineseMinutePattern.FindStringSubmatch(text); len(match) > 0 {
 			minute, _ = strconv.Atoi(match[1])
 		}
 	}
@@ -309,18 +354,10 @@ func (p *Parser) parseTitle(text string, allDay bool) string {
 		title = strings.ReplaceAll(title, keyword, "")
 	}
 
-	// Remove time patterns
-	title = regexp.MustCompile(`\d{1,2}:\d{2}`).ReplaceAllString(title, "")
-	title = regexp.MustCompile(`\d{1,2}点\d{1,2}分`).ReplaceAllString(title, "")
-	title = regexp.MustCompile(`\d{1,2}点半`).ReplaceAllString(title, "")
-	title = regexp.MustCompile(`\d{1,2}点`).ReplaceAllString(title, "")
-
-	// Remove date patterns
-	title = regexp.MustCompile(`\d{1,4}年\d{1,2}月\d{1,2}日`).ReplaceAllString(title, "")
-	title = regexp.MustCompile(`\d{1,2}月\d{1,2}日`).ReplaceAllString(title, "")
-
-	// Remove weekday patterns
-	title = regexp.MustCompile(`(周|星期|下周|本)[一二三四五六七日天]`).ReplaceAllString(title, "")
+	// Remove time and date patterns using precompiled regexes
+	for _, pattern := range timePatternsToRemove {
+		title = pattern.ReplaceAllString(title, "")
+	}
 
 	// Clean up whitespace
 	title = strings.TrimSpace(title)
@@ -339,16 +376,9 @@ func (p *Parser) parseTitle(text string, allDay bool) string {
 
 // parseLocation extracts location from text.
 func (p *Parser) parseLocation(text string) string {
-	// Look for location patterns
-	patterns := []string{
-		`地点[:：](.{2,20})`,
-		`在(.{2,20})`,
-		`位于(.{2,20})`,
-		`@(.{2,20})`,
-	}
-
-	for _, pattern := range patterns {
-		if match := regexp.MustCompile(pattern).FindStringSubmatch(text); len(match) > 1 {
+	// Use precompiled location patterns
+	for _, pattern := range locationPatterns {
+		if match := pattern.FindStringSubmatch(text); len(match) > 1 {
 			location := strings.TrimSpace(match[1])
 			// Remove common words that aren't locations
 			if !strings.ContainsAny(location, "的") && len(location) > 1 {
@@ -369,19 +399,24 @@ func (p *Parser) parseReminders(text string) []*v1pb.Reminder {
 		return reminders
 	}
 
-	// Parse "提前X分钟/小时/天"
-	if match := regexp.MustCompile(`提前(\d+)(分钟|小时|天|分|小时|天)`).FindStringSubmatch(text); len(match) > 2 {
+	// Parse "提前X分钟/小时/天" or "提前X分/时/天" using precompiled regex
+	if match := reminderPattern.FindStringSubmatch(text); len(match) > 2 {
 		value, _ := strconv.Atoi(match[1])
 		unit := match[2]
 
-		// Normalize unit
-		if unit == "分" {
-			unit = "minutes"
-		} else if unit == "小时" {
-			unit = "hours"
-		} else if unit == "天" {
-			unit = "days"
+		// Normalize unit using map
+		unitMap := map[string]string{
+			"分钟": "minutes",
+			"分":   "minutes",
+			"小时": "hours",
+			"时":   "hours",
+			"天":   "days",
+		}
+
+		if normalizedUnit, ok := unitMap[unit]; ok {
+			unit = normalizedUnit
 		} else {
+			// Default to minutes if unknown unit
 			unit = "minutes"
 		}
 
@@ -418,13 +453,13 @@ func (p *Parser) parseDescription(text, title, location string) string {
 		desc = strings.ReplaceAll(desc, location, "")
 	}
 
-	// Remove time patterns
-	desc = regexp.MustCompile(`\d{1,2}:\d{2}`).ReplaceAllString(desc, "")
-	desc = regexp.MustCompile(`提前\d+(分钟|小时|天)`).ReplaceAllString(desc, "")
+	// Remove time patterns using precompiled regexes
+	for _, pattern := range descriptionCleanupPatterns {
+		desc = pattern.ReplaceAllString(desc, "")
+	}
 
 	// Clean up
 	desc = strings.TrimSpace(desc)
-	desc = regexp.MustCompile(`\s+`).ReplaceAllString(desc, " ")
 
 	// Only return description if there's meaningful content
 	if len(desc) > 2 && !strings.ContainsAny(desc, "的") {

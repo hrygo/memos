@@ -107,6 +107,12 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 		timezone = "Asia/Shanghai"
 	}
 
+	// Validate reminders count
+	const maxReminders = 10
+	if len(pb.Reminders) > maxReminders {
+		return nil, status.Errorf(codes.InvalidArgument, "too many reminders: maximum %d allowed, got %d", maxReminders, len(pb.Reminders))
+	}
+
 	s := &store.Schedule{
 		UID:         uid,
 		CreatorID:   creatorID,
@@ -529,7 +535,10 @@ func (s *ScheduleService) ParseAndCreateSchedule(ctx context.Context, req *v1pb.
 		return nil, status.Errorf(codes.InvalidArgument, "text is required")
 	}
 
-	// Use default timezone for now (can be enhanced to get from user settings later)
+	// TODO: Get timezone from user settings instead of hardcoding
+	// For now, use Asia/Shanghai as default
+	// Future enhancement: user, err := s.Store.GetUser(ctx, &store.FindUser{ID: &userID})
+	// timezone := user.Timezone
 	timezone := "Asia/Shanghai"
 
 	// Create parser

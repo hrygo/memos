@@ -209,7 +209,13 @@ func (d *DB) UpdateSchedule(ctx context.Context, update *store.UpdateSchedule) e
 	args = append(args, update.ID)
 
 	stmt := `UPDATE schedule SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id, updated_ts`
-	if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
+	var id int32
+	var updatedTs int64
+	err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&id, &updatedTs)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("schedule not found")
+	}
+	if err != nil {
 		return fmt.Errorf("failed to update schedule: %w", err)
 	}
 

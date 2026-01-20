@@ -42,7 +42,7 @@ CREATE TABLE schedule (
   CONSTRAINT chk_schedule_time_range
     CHECK (end_ts IS NULL OR end_ts >= start_ts),
   CONSTRAINT chk_schedule_reminders_json
-    CHECK (reminders ~ '^(\[\]|\[\{.*\}\])$')
+    CHECK (reminders::jsonb IS NOT NULL)
 );
 
 -- Performance indexes
