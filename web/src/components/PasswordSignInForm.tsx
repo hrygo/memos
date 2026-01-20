@@ -1,7 +1,7 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { LoaderIcon } from "lucide-react";
+import { LoaderIcon, AlertTriangle } from "lucide-react";
 import { useState } from "react";
-import { toast } from "react-hot-toast";
+import { cn } from "@/lib/utils";
 import { setAccessToken } from "@/auth-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import useLoading from "@/hooks/useLoading";
 import useNavigateTo from "@/hooks/useNavigateTo";
-import { handleError } from "@/lib/error";
 import { useTranslate } from "@/utils/i18n";
 
 function PasswordSignInForm() {
@@ -21,15 +20,18 @@ function PasswordSignInForm() {
   const actionBtnLoadingState = useLoading(false);
   const [username, setUsername] = useState(profile.mode === "demo" ? "demo" : "");
   const [password, setPassword] = useState(profile.mode === "demo" ? "secret" : "");
+  const [error, setError] = useState("");
 
   const handleUsernameInputChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value as string;
     setUsername(text);
+    if (error) setError("");
   };
 
   const handlePasswordInputChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value as string;
     setPassword(text);
+    if (error) setError("");
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,10 +62,9 @@ function PasswordSignInForm() {
       }
       await initialize();
       navigateTo("/");
-    } catch (error: unknown) {
-      handleError(error, toast.error, {
-        fallbackMessage: "Failed to sign in.",
-      });
+    } catch (error: any) {
+      console.error(error);
+      setError(error.message || t("common.failed-to-sign-in"));
     }
     actionBtnLoadingState.setFinish();
   };
@@ -71,10 +72,15 @@ function PasswordSignInForm() {
   return (
     <form className="w-full mt-2" onSubmit={handleFormSubmit}>
       <div className="flex flex-col justify-start items-start w-full gap-4">
+        {error && (
+          <div className="w-full flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md animate-in fade-in slide-in-from-top-1">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
         <div className="w-full flex flex-col justify-start items-start">
           <span className="leading-8 text-muted-foreground">{t("common.username")}</span>
           <Input
-            className="w-full bg-background h-10"
             type="text"
             readOnly={actionBtnLoadingState.isLoading}
             placeholder={t("common.username")}
@@ -83,13 +89,13 @@ function PasswordSignInForm() {
             autoCapitalize="off"
             spellCheck={false}
             onChange={handleUsernameInputChanged}
+            className={cn("w-full bg-background h-10", error && "border-destructive focus-visible:ring-destructive/50")}
             required
           />
         </div>
         <div className="w-full flex flex-col justify-start items-start">
           <span className="leading-8 text-muted-foreground">{t("common.password")}</span>
           <Input
-            className="w-full bg-background h-10"
             type="password"
             readOnly={actionBtnLoadingState.isLoading}
             placeholder={t("common.password")}
@@ -98,6 +104,7 @@ function PasswordSignInForm() {
             autoCapitalize="off"
             spellCheck={false}
             onChange={handlePasswordInputChanged}
+            className={cn("w-full bg-background h-10", error && "border-destructive focus-visible:ring-destructive/50")}
             required
           />
         </div>

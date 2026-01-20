@@ -19,7 +19,7 @@ var (
 // P2 改进：添加配置支持和并发控制
 type QueryRouter struct {
 	// 配置
-	config *Config
+	config      *Config
 	configMutex sync.RWMutex // P2 改进：并发控制
 
 	// 时间关键词库
@@ -96,13 +96,15 @@ func NewQueryRouterWithConfig(config *Config) *QueryRouter {
 
 // initTimeKeywords 初始化时间关键词映射
 // P1 改进：统一使用 UTC 时区，避免时区混淆
+// 举一反三优化：系统性扩展时间关键词库，覆盖所有常见时间表达
 func (r *QueryRouter) initTimeKeywords() {
 	// 将当前时间转换为 UTC
 	now := time.Now().In(utcLocation)
 
-	// 精确时间关键词（使用 UTC）
+	// ============================================================
+	// 1. 精确日期关键词
+	// ============================================================
 	r.timeKeywords["今天"] = func(t time.Time) *TimeRange {
-		// 转换为 UTC
 		utcTime := t.In(utcLocation)
 		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 0, 0, 0, 0, utcLocation)
 		end := start.Add(24 * time.Hour)
@@ -125,6 +127,45 @@ func (r *QueryRouter) initTimeKeywords() {
 		return &TimeRange{Start: start, End: end, Label: "后天"}
 	}
 
+	// 举一反三：添加过去的日期
+	r.timeKeywords["昨天"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		yesterday := utcTime.AddDate(0, 0, -1)
+		start := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, utcLocation)
+		end := start.Add(24 * time.Hour)
+		return &TimeRange{Start: start, End: end, Label: "昨天"}
+	}
+
+	r.timeKeywords["前天"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		dayBefore := utcTime.AddDate(0, 0, -2)
+		start := time.Date(dayBefore.Year(), dayBefore.Month(), dayBefore.Day(), 0, 0, 0, 0, utcLocation)
+		end := start.Add(24 * time.Hour)
+		return &TimeRange{Start: start, End: end, Label: "前天"}
+	}
+
+	// 举一反三：添加更远的日期
+	r.timeKeywords["大后天"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		dayAfter := utcTime.AddDate(0, 0, 3)
+		start := time.Date(dayAfter.Year(), dayAfter.Month(), dayAfter.Day(), 0, 0, 0, 0, utcLocation)
+		end := start.Add(24 * time.Hour)
+		return &TimeRange{Start: start, End: end, Label: "大后天"}
+	}
+
+	// ============================================================
+	// 同义词映射（举一反三优化：覆盖文言表达）
+	// ============================================================
+	// 精确日期同义词
+	r.timeKeywords["今日"] = r.timeKeywords["今天"]
+	r.timeKeywords["明日"] = r.timeKeywords["明天"]
+	r.timeKeywords["后日"] = r.timeKeywords["后天"]
+	r.timeKeywords["昨日"] = r.timeKeywords["昨天"]
+	r.timeKeywords["前日"] = r.timeKeywords["前天"]
+
+	// ============================================================
+	// 2. 周相关关键词
+	// ============================================================
 	r.timeKeywords["本周"] = func(t time.Time) *TimeRange {
 		utcTime := t.In(utcLocation)
 		weekday := int(utcTime.Weekday())
@@ -147,6 +188,71 @@ func (r *QueryRouter) initTimeKeywords() {
 		return &TimeRange{Start: start, End: end, Label: "下周"}
 	}
 
+	// 举一反三：添加上周
+	r.timeKeywords["上周"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		weekday := int(utcTime.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day()-weekday+1-7, 0, 0, 0, 0, utcLocation)
+		end := start.AddDate(0, 0, 7)
+		return &TimeRange{Start: start, End: end, Label: "上周"}
+	}
+
+	// 举一反三：添加这周（同义词）
+	r.timeKeywords["这周"] = r.timeKeywords["本周"]
+
+	// ============================================================
+	// 3. 星期关键词
+	// ============================================================
+	weekdayMap := map[string]time.Weekday{
+		"周一":  time.Monday,
+		"周二":  time.Tuesday,
+		"周三":  time.Wednesday,
+		"周四":  time.Thursday,
+		"周五":  time.Friday,
+		"周六":  time.Saturday,
+		"周日":  time.Sunday,
+		"星期一": time.Monday,
+		"星期二": time.Tuesday,
+		"星期三": time.Wednesday,
+		"星期四": time.Thursday,
+		"星期五": time.Friday,
+		"星期六": time.Saturday,
+		"星期日": time.Sunday,
+	}
+
+	for name, targetWeekday := range weekdayMap {
+		r.timeKeywords[name] = func(targetWD time.Weekday) func(time.Time) *TimeRange {
+			return func(t time.Time) *TimeRange {
+				utcTime := t.In(utcLocation)
+				currentWeekday := int(utcTime.Weekday())
+				if currentWeekday == 0 {
+					currentWeekday = 7
+				}
+				targetWDInt := int(targetWD)
+				if targetWD == 0 {
+					targetWDInt = 7
+				}
+
+				daysUntil := (targetWDInt - currentWeekday + 7) % 7
+				if daysUntil == 0 && utcTime.Hour() > 12 {
+					// 如果今天已经是目标星期且已过中午，查询下周的
+					daysUntil = 7
+				}
+
+				targetDate := utcTime.AddDate(0, 0, daysUntil)
+				start := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, utcLocation)
+				end := start.Add(24 * time.Hour)
+				return &TimeRange{Start: start, End: end, Label: name}
+			}
+		}(targetWeekday)
+	}
+
+	// ============================================================
+	// 4. 时段关键词
+	// ============================================================
 	r.timeKeywords["上午"] = func(t time.Time) *TimeRange {
 		utcTime := t.In(utcLocation)
 		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 0, 0, 0, 0, utcLocation)
@@ -167,6 +273,130 @@ func (r *QueryRouter) initTimeKeywords() {
 		end := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 23, 59, 59, 0, utcLocation)
 		return &TimeRange{Start: start, End: end, Label: "晚上"}
 	}
+
+	// 举一反三：添加更多时段
+	r.timeKeywords["早上"] = r.timeKeywords["上午"]
+	r.timeKeywords["中午"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 11, 0, 0, 0, utcLocation)
+		end := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 13, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "中午"}
+	}
+	r.timeKeywords["凌晨"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 0, 0, 0, 0, utcLocation)
+		end := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 6, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "凌晨"}
+	}
+
+	// ============================================================
+	// 5. 模糊时间关键词（举一反三优化重点）
+	// ============================================================
+	// 5.1 短期模糊时间（7天内）
+	r.timeKeywords["近期"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), utcTime.Day(), 0, 0, 0, 0, utcLocation)
+		end := start.AddDate(0, 0, 7) // 近期 = 7天
+		return &TimeRange{Start: start, End: end, Label: "近期"}
+	}
+
+	r.timeKeywords["最近"] = r.timeKeywords["近期"]
+	r.timeKeywords["这几天"] = r.timeKeywords["近期"]
+
+	// 5.2 中期模糊时间（30天内）
+	r.timeKeywords["这个月"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), 1, 0, 0, 0, 0, utcLocation)
+		end := start.AddDate(0, 1, 0)
+		return &TimeRange{Start: start, End: end, Label: "这个月"}
+	}
+
+	r.timeKeywords["本月"] = r.timeKeywords["这个月"]
+	r.timeKeywords["这月"] = r.timeKeywords["这个月"]
+	r.timeKeywords["月内"] = r.timeKeywords["这个月"]
+
+	// 5.3 未来月份
+	r.timeKeywords["下个月"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), 1, 0, 0, 0, 0, utcLocation).AddDate(0, 1, 0)
+		end := start.AddDate(0, 1, 0)
+		return &TimeRange{Start: start, End: end, Label: "下个月"}
+	}
+
+	r.timeKeywords["下月"] = r.timeKeywords["下个月"]
+
+	// 5.4 过去月份
+	r.timeKeywords["上个月"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), utcTime.Month(), 1, 0, 0, 0, 0, utcLocation).AddDate(0, -1, 0)
+		end := start.AddDate(0, 1, 0)
+		return &TimeRange{Start: start, End: end, Label: "上个月"}
+	}
+
+	r.timeKeywords["上月"] = r.timeKeywords["上个月"]
+
+	// ============================================================
+	// 6. 年份关键词
+	// ============================================================
+	r.timeKeywords["今年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year(), 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(utcTime.Year()+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "今年"}
+	}
+
+	r.timeKeywords["明年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year()+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(utcTime.Year()+2, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "明年"}
+	}
+
+	r.timeKeywords["去年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start := time.Date(utcTime.Year()-1, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(utcTime.Year(), 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "去年"}
+	}
+
+	// ============================================================
+	// 7. 季度关键词
+	// ============================================================
+	// 获取季度的辅助函数
+	getQuarterRange := func(year int, quarter int) (time.Time, time.Time) {
+		startMonth := time.Month((quarter-1)*3 + 1)
+		start := time.Date(year, startMonth, 1, 0, 0, 0, 0, utcLocation)
+		end := start.AddDate(0, 3, 0)
+		return start, end
+	}
+
+	r.timeKeywords["一季度"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start, end := getQuarterRange(utcTime.Year(), 1)
+		return &TimeRange{Start: start, End: end, Label: "一季度"}
+	}
+	r.timeKeywords["第一季度"] = r.timeKeywords["一季度"]
+
+	r.timeKeywords["二季度"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start, end := getQuarterRange(utcTime.Year(), 2)
+		return &TimeRange{Start: start, End: end, Label: "二季度"}
+	}
+	r.timeKeywords["第二季度"] = r.timeKeywords["二季度"]
+
+	r.timeKeywords["三季度"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start, end := getQuarterRange(utcTime.Year(), 3)
+		return &TimeRange{Start: start, End: end, Label: "三季度"}
+	}
+	r.timeKeywords["第三季度"] = r.timeKeywords["三季度"]
+
+	r.timeKeywords["四季度"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		start, end := getQuarterRange(utcTime.Year(), 4)
+		return &TimeRange{Start: start, End: end, Label: "四季度"}
+	}
+	r.timeKeywords["第四季度"] = r.timeKeywords["四季度"]
 
 	// 初始化时调用一次，避免 now 变量未使用警告
 	_ = r.timeKeywords["今天"](now)
@@ -325,11 +555,33 @@ func (r *QueryRouter) isGeneralQuestion(query string) bool {
 }
 
 // extractContentQuery 提取内容查询（去除时间词和停用词）
+// 举一反三优化：扩展时间词列表，覆盖所有新增的时间关键词
 func (r *QueryRouter) extractContentQuery(query string) string {
 	contentQuery := query
 
-	// 移除时间词
-	timeWords := []string{"今天", "明天", "后天", "本周", "下周", "上午", "下午", "晚上"}
+	// 移除时间词（全面覆盖所有时间关键词）
+	timeWords := []string{
+		// 精确日期
+		"今天", "明天", "后天", "昨天", "前天", "大后天",
+		"今日", "明日", "后日", "昨日", "前日", "大后日",
+		// 周相关
+		"本周", "下周", "上周", "这周",
+		// 星期
+		"周一", "周二", "周三", "周四", "周五", "周六", "周日",
+		"星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日",
+		// 时段
+		"上午", "下午", "晚上", "早上", "中午", "凌晨",
+		// 模糊时间
+		"近期", "最近", "这几天",
+		"这个月", "本月", "这月", "月内",
+		"下个月", "下月", "上个月", "上月",
+		// 年份
+		"今年", "明年", "去年",
+		// 季度
+		"一季度", "第一季度", "二季度", "第二季度",
+		"三季度", "第三季度", "四季度", "第四季度",
+	}
+
 	for _, word := range timeWords {
 		contentQuery = strings.ReplaceAll(contentQuery, word, " ")
 	}

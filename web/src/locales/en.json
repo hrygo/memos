@@ -93,6 +93,7 @@
     "share": "Share",
     "shortcut-filter": "Shortcut filter",
     "shortcuts": "Shortcuts",
+    "failed-to-sign-in": "Failed to sign in",
     "sign-in": "Sign in",
     "sign-in-with": "Sign in with {{provider}}",
     "sign-out": "Sign out",
