@@ -19,9 +19,7 @@ const EmptyState = ({ onSuggestedPrompt }: EmptyStateProps) => {
       </div>
 
       <h2 className="text-xl font-semibold mb-2">{t("ai.welcome-title")}</h2>
-      <p className="text-muted-foreground text-center max-w-md mb-8">
-        {t("ai.welcome-description")}
-      </p>
+      <p className="text-muted-foreground text-center max-w-md mb-8">{t("ai.welcome-description")}</p>
 
       <SuggestedPrompts onSelect={onSuggestedPrompt} />
 

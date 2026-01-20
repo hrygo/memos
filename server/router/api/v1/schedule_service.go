@@ -4,14 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/internal/util"
+	"github.com/usememos/memos/plugin/ai"
+	aischedule "github.com/usememos/memos/plugin/ai/schedule"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/store"
 )
@@ -20,20 +24,21 @@ import (
 type ScheduleService struct {
 	v1pb.UnimplementedScheduleServiceServer
 
-	Store *store.Store
+	Store      *store.Store
+	LLMService ai.LLMService
 }
 
 // scheduleFromStore converts a store.Schedule to v1pb.Schedule.
 func scheduleFromStore(s *store.Schedule) *v1pb.Schedule {
 	pb := &v1pb.Schedule{
-		Name:       fmt.Sprintf("schedules/%s", s.UID),
-		Title:      s.Title,
-		StartTs:    s.StartTs,
-		AllDay:     s.AllDay,
-		Timezone:   s.Timezone,
-		CreatedTs:  s.CreatedTs,
-		UpdatedTs:  s.UpdatedTs,
-		State:      s.RowStatus.String(),
+		Name:      fmt.Sprintf("schedules/%s", s.UID),
+		Title:     s.Title,
+		StartTs:   s.StartTs,
+		AllDay:    s.AllDay,
+		Timezone:  s.Timezone,
+		CreatedTs: s.CreatedTs,
+		UpdatedTs: s.UpdatedTs,
+		State:     s.RowStatus.String(),
 	}
 
 	if s.Description != "" {
@@ -86,13 +91,36 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule name format")
 	}
 
+	// Validate required fields
+	if strings.TrimSpace(pb.Title) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "title is required")
+	}
+	if pb.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts must be a positive timestamp")
+	}
+	if pb.EndTs != 0 && pb.EndTs < pb.StartTs {
+		return nil, status.Errorf(codes.InvalidArgument, "end_ts must be greater than or equal to start_ts")
+	}
+
+	// Set default timezone if not provided
+	timezone := pb.Timezone
+	if timezone == "" {
+		timezone = "Asia/Shanghai"
+	}
+
+	// Validate reminders count
+	const maxReminders = 10
+	if len(pb.Reminders) > maxReminders {
+		return nil, status.Errorf(codes.InvalidArgument, "too many reminders: maximum %d allowed, got %d", maxReminders, len(pb.Reminders))
+	}
+
 	s := &store.Schedule{
 		UID:         uid,
 		CreatorID:   creatorID,
 		Title:       pb.Title,
 		StartTs:     pb.StartTs,
 		AllDay:      pb.AllDay,
-		Timezone:    pb.Timezone,
+		Timezone:    timezone,
 		RowStatus:   store.RowStatus(pb.State),
 		Description: pb.Description,
 		Location:    pb.Location,
@@ -113,6 +141,13 @@ func scheduleToStore(pb *v1pb.Schedule, creatorID int32) (*store.Schedule, error
 	if len(pb.Reminders) > 0 {
 		reminders := make([]map[string]interface{}, len(pb.Reminders))
 		for i, r := range pb.Reminders {
+			// Validate reminder fields
+			if r.Type == "" {
+				return nil, status.Errorf(codes.InvalidArgument, "reminder type is required")
+			}
+			if r.Unit == "" {
+				return nil, status.Errorf(codes.InvalidArgument, "reminder unit is required")
+			}
 			reminders[i] = map[string]interface{}{
 				"type":  r.Type,
 				"value": r.Value,
@@ -178,13 +213,18 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		if creatorID == "" {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid creator format")
 		}
-		id := parseInt32(creatorID)
+		id, err := parseInt32(creatorID)
+		if err != nil {
+			return nil, err
+		}
 		find.CreatorID = &id
 	} else {
 		// Default to current user
 		find.CreatorID = &userID
 	}
 
+	// NOTE: For recurring schedules, we need to query without time constraints first
+	// to get the schedule templates, then expand instances
 	if req.StartTs != 0 {
 		find.StartTs = &req.StartTs
 	}
@@ -205,14 +245,92 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		return nil, status.Errorf(codes.Internal, "failed to list schedules: %v", err)
 	}
 
-	response := &v1pb.ListSchedulesResponse{
-		Schedules: make([]*v1pb.Schedule, len(list)),
+	// Expand recurring schedules
+	var expandedSchedules []*v1pb.Schedule
+	queryStartTs := req.StartTs
+	queryEndTs := req.EndTs
+
+	// Default query window: from now to 30 days later
+	now := time.Now().Unix()
+	if queryStartTs == 0 {
+		queryStartTs = now
 	}
-	for i, s := range list {
-		response.Schedules[i] = scheduleFromStore(s)
+	if queryEndTs == 0 {
+		queryEndTs = now + 30*24*3600 // Default to 30 days
 	}
 
-	return response, nil
+	// Limit total instances to prevent performance issues
+	const maxTotalInstances = 500
+
+	for _, schedule := range list {
+		// Check total instance limit before processing each schedule
+		if len(expandedSchedules) >= maxTotalInstances {
+			break
+		}
+
+		pbSchedule := scheduleFromStore(schedule)
+
+		// If this is a recurring schedule, expand it
+		if schedule.RecurrenceRule != nil && *schedule.RecurrenceRule != "" {
+			// Parse recurrence rule
+			rule, err := aischedule.ParseRecurrenceRuleFromJSON(*schedule.RecurrenceRule)
+			if err != nil {
+				// If parsing fails, just return the base schedule
+				expandedSchedules = append(expandedSchedules, pbSchedule)
+				continue
+			}
+
+			// Generate instances starting from the schedule's start time
+			// This ensures we get the correct sequence from the first occurrence
+			instances := rule.GenerateInstances(pbSchedule.StartTs, queryEndTs)
+
+			// For each instance, create a schedule with adjusted time
+			for _, instanceTs := range instances {
+				// Check if we've hit the total instance limit
+				if len(expandedSchedules) >= maxTotalInstances {
+					break
+				}
+
+				// Only add instances within the query window
+				if instanceTs < queryStartTs || instanceTs > queryEndTs {
+					continue
+				}
+
+				instance := &v1pb.Schedule{
+					Name:        fmt.Sprintf("%s/instances/%d", pbSchedule.Name, instanceTs),
+					Title:       pbSchedule.Title,
+					Description: pbSchedule.Description,
+					Location:    pbSchedule.Location,
+					StartTs:     instanceTs,
+					AllDay:      pbSchedule.AllDay,
+					Timezone:    pbSchedule.Timezone,
+					Reminders:   pbSchedule.Reminders,
+					Creator:     pbSchedule.Creator,
+					State:       pbSchedule.State,
+				}
+
+				// Calculate end time for this instance
+				if pbSchedule.EndTs > 0 && pbSchedule.StartTs > 0 {
+					duration := pbSchedule.EndTs - pbSchedule.StartTs
+					instance.EndTs = instanceTs + duration
+				}
+
+				expandedSchedules = append(expandedSchedules, instance)
+
+				// Break if we've hit the limit
+				if len(expandedSchedules) >= maxTotalInstances {
+					break
+				}
+			}
+		} else {
+			// Non-recurring schedule, add as-is
+			expandedSchedules = append(expandedSchedules, pbSchedule)
+		}
+	}
+
+	return &v1pb.ListSchedulesResponse{
+		Schedules: expandedSchedules,
+	}, nil
 }
 
 // GetSchedule gets a schedule by name.
@@ -424,41 +542,54 @@ func (s *ScheduleService) CheckConflict(ctx context.Context, req *v1pb.CheckConf
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
 
-	// Find schedules that might conflict
-	find := &store.FindSchedule{
-		CreatorID: &userID,
-		StartTs:   &req.StartTs,
+	// Validate time range
+	if req.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts must be positive")
 	}
 
 	endTs := req.EndTs
 	if endTs == 0 {
-		// Default to 1 hour from start
+		// Default to 1 hour from start if not specified
 		endTs = req.StartTs + 3600
 	}
-	find.EndTs = &endTs
+	if endTs < req.StartTs {
+		return nil, status.Errorf(codes.InvalidArgument, "end_ts must be >= start_ts")
+	}
+
+	// Find schedules that might conflict within the time window
+	find := &store.FindSchedule{
+		CreatorID: &userID,
+		StartTs:   &req.StartTs,
+		EndTs:     &endTs,
+	}
 
 	list, err := s.Store.ListSchedules(ctx, find)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check conflicts: %v", err)
 	}
 
-	// Filter out excluded schedules
+	// Filter out excluded schedules and check for actual conflicts
 	var conflicts []*store.Schedule
 	excludeSet := make(map[string]bool)
 	for _, name := range req.ExcludeNames {
 		excludeSet[name] = true
 	}
 
-	for _, s := range list {
-		name := fmt.Sprintf("schedules/%s", s.UID)
+	for _, schedule := range list {
+		name := fmt.Sprintf("schedules/%s", schedule.UID)
 		if !excludeSet[name] {
-			// Check if time ranges overlap
-			sEnd := s.EndTs
-			if sEnd == nil {
-				sEnd = &s.StartTs
+			// Check if time ranges actually overlap
+			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
+			scheduleEnd := schedule.EndTs
+			if scheduleEnd == nil {
+				// For schedules without end time, treat as a point event at start_ts
+				// It conflicts if it falls within the query window
+				scheduleEnd = &schedule.StartTs
 			}
-			if req.StartTs <= *sEnd && endTs >= s.StartTs {
-				conflicts = append(conflicts, s)
+
+			// Check overlap: query window [req.StartTs, endTs] vs schedule [schedule.StartTs, *scheduleEnd]
+			if req.StartTs <= *scheduleEnd && endTs >= schedule.StartTs {
+				conflicts = append(conflicts, schedule)
 			}
 		}
 	}
@@ -480,9 +611,54 @@ func (s *ScheduleService) ParseAndCreateSchedule(ctx context.Context, req *v1pb.
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
 
-	// TODO: Implement natural language parsing
-	// For now, return Unimplemented
-	return nil, status.Errorf(codes.Unimplemented, "natural language parsing not yet implemented")
+	// Validate input
+	if strings.TrimSpace(req.Text) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "text is required")
+	}
+
+	// TODO: Get timezone from user settings instead of hardcoding
+	// For now, use Asia/Shanghai as default
+	// Future enhancement: user, err := s.Store.GetUser(ctx, &store.FindUser{ID: &userID})
+	// timezone := user.Timezone
+	timezone := "Asia/Shanghai"
+
+	// Create parser
+	parser, err := aischedule.NewParser(s.LLMService, timezone)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create parser: %v", err)
+	}
+
+	// Parse natural language
+	parsed, err := parser.Parse(ctx, req.Text)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse text: %v", err)
+	}
+
+	response := &v1pb.ParseAndCreateScheduleResponse{
+		ParsedSchedule: parsed.ToSchedule(),
+	}
+
+	// If autoConfirm is true, create the schedule
+	if req.AutoConfirm {
+
+		// Create schedule
+		schedule, err := scheduleToStore(parsed.ToSchedule(), userID)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid schedule: %v", err)
+		}
+
+		// Generate UID
+		schedule.UID = util.GenUUID()
+
+		created, err := s.Store.CreateSchedule(ctx, schedule)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create schedule: %v", err)
+		}
+
+		response.CreatedSchedule = scheduleFromStore(created)
+	}
+
+	return response, nil
 }
 
 // Helper functions
@@ -491,8 +667,10 @@ func pointerOf[T any](v T) *T {
 	return &v
 }
 
-func parseInt32(s string) int32 {
-	var i int32
-	fmt.Sscanf(s, "%d", &i)
-	return i
+func parseInt32(s string) (int32, error) {
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return 0, status.Errorf(codes.InvalidArgument, "invalid ID format: %s", s)
+	}
+	return int32(i), nil
 }

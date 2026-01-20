@@ -30,12 +30,12 @@ type APIV1Service struct {
 	v1pb.UnimplementedAIServiceServer
 	v1pb.UnimplementedScheduleServiceServer
 
-	Secret             string
-	Profile            *profile.Profile
-	Store              *store.Store
-	MarkdownService    markdown.Service
-	AIService          *AIService
-	ScheduleService    *ScheduleService
+	Secret          string
+	Profile         *profile.Profile
+	Store           *store.Store
+	MarkdownService markdown.Service
+	AIService       *AIService
+	ScheduleService *ScheduleService
 
 	// thumbnailSemaphore limits concurrent thumbnail generation to prevent memory exhaustion
 	thumbnailSemaphore *semaphore.Weighted
@@ -70,6 +70,11 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 					EmbeddingService: embeddingService,
 					RerankerService:  rerankerService,
 					LLMService:       llmService,
+				}
+				// Initialize ScheduleService with LLM service for natural language parsing
+				service.ScheduleService = &ScheduleService{
+					Store:      store,
+					LLMService: llmService,
 				}
 			}
 		}

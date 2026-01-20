@@ -1,4 +1,4 @@
-import { LightbulbIcon, MessageSquareIcon, BookOpenIcon, SparklesIcon } from "lucide-react";
+import { BookOpenIcon, LightbulbIcon, MessageSquareIcon, SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SuggestedPromptsProps {

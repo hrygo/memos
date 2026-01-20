@@ -95,11 +95,8 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		where, args = append(where, "schedule.start_ts <= ?"), append(args, *v)
 	}
 
-	// Ordering
+	// Ordering (always by start_ts ascending)
 	orderBy := "ORDER BY schedule.start_ts ASC"
-	if find.OrderByTimeAsc {
-		orderBy = "ORDER BY schedule.start_ts ASC"
-	}
 
 	query := `
 		SELECT

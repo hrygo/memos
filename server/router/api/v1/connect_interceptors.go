@@ -150,7 +150,7 @@ func (*LoggingInterceptor) classifyError(err error) (slog.Level, string) {
 		connect.CodeFailedPrecondition,
 		connect.CodeAborted,
 		connect.CodeOutOfRange:
-		return slog.LevelInfo, "client error"
+		return slog.LevelWarn, "client error"
 	default:
 		// Server errors
 		return slog.LevelError, "server error"

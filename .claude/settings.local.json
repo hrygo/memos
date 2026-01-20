@@ -33,7 +33,8 @@
       "Bash(__NEW_LINE_17f40c18066634e3__ echo \"\")",
       "Bash(__NEW_LINE_f46d34660dda0744__ echo \"=== Test ListSchedules ===\")",
       "Bash(__NEW_LINE_f46d34660dda0744__ echo \"\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

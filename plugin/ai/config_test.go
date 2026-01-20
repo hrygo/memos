@@ -75,12 +75,12 @@ func TestNewConfigFromProfile_SiliconFlow(t *testing.T) {
 // TestNewConfigFromProfile_OpenAI tests OpenAI configuration.
 func TestNewConfigFromProfile_OpenAI(t *testing.T) {
 	prof := &profile.Profile{
-		AIEnabled:        true,
+		AIEnabled:           true,
 		AIEmbeddingProvider: "openai",
-		AIEmbeddingModel: "text-embedding-3-small",
-		AIOpenAIAPIKey:   "openai-key",
-		AILLMProvider:    "openai",
-		AILLMModel:       "gpt-4",
+		AIEmbeddingModel:    "text-embedding-3-small",
+		AIOpenAIAPIKey:      "openai-key",
+		AILLMProvider:       "openai",
+		AILLMModel:          "gpt-4",
 	}
 
 	cfg := NewConfigFromProfile(prof)
@@ -106,12 +106,12 @@ func TestNewConfigFromProfile_OpenAI(t *testing.T) {
 // TestNewConfigFromProfile_Ollama tests Ollama configuration.
 func TestNewConfigFromProfile_Ollama(t *testing.T) {
 	prof := &profile.Profile{
-		AIEnabled:        true,
+		AIEnabled:           true,
 		AIEmbeddingProvider: "ollama",
-		AIEmbeddingModel: "nomic-embed-text",
-		AIOllamaBaseURL:   "http://localhost:11434",
-		AILLMProvider:    "ollama",
-		AILLMModel:       "llama2",
+		AIEmbeddingModel:    "nomic-embed-text",
+		AIOllamaBaseURL:     "http://localhost:11434",
+		AILLMProvider:       "ollama",
+		AILLMModel:          "llama2",
 	}
 
 	cfg := NewConfigFromProfile(prof)

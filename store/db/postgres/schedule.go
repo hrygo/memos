@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/usememos/memos/store"
 )
@@ -66,14 +67,21 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 		where, args = append(where, "schedule.start_ts >= "+placeholder(len(args)+1)), append(args, *v)
 	}
 	if v := find.EndTs; v != nil {
+		// Find schedules that overlap with the query time window.
+		// A schedule overlaps if: (schedule.start_ts <= window_end) AND
+		// (schedule.end_ts IS NULL OR schedule.end_ts >= window_start)
 		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
+
+		// If no StartTs specified, ensure end_ts is within reasonable range (e.g., not in ancient history)
+		// This prevents returning all historical schedules when only EndTs is specified
+		if find.StartTs == nil {
+			oneMonthAgo := time.Now().Add(-30 * 24 * time.Hour).Unix()
+			where, args = append(where, "(schedule.end_ts IS NULL OR schedule.end_ts >= "+placeholder(len(args)+1)+")"), append(args, oneMonthAgo)
+		}
 	}
 
-	// Ordering
+	// Ordering (always by start_ts ascending)
 	orderBy := "ORDER BY schedule.start_ts ASC"
-	if find.OrderByTimeAsc {
-		orderBy = "ORDER BY schedule.start_ts ASC"
-	}
 
 	query := `
 		SELECT
@@ -208,7 +216,13 @@ func (d *DB) UpdateSchedule(ctx context.Context, update *store.UpdateSchedule) e
 	args = append(args, update.ID)
 
 	stmt := `UPDATE schedule SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id, updated_ts`
-	if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
+	var id int32
+	var updatedTs int64
+	err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&id, &updatedTs)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("schedule not found")
+	}
+	if err != nil {
 		return fmt.Errorf("failed to update schedule: %w", err)
 	}
 

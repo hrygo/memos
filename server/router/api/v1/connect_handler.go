@@ -147,7 +147,8 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("message is required"))
 	}
 
-	// 3. Semantic Search (Top 5, Score > 0.5)
+	// 3. 两阶段检索：初步回捞 + Reranker 重排序
+	// Stage 1: 向量搜索初步回捞 (阈值 0.6，Top 20)
 	queryVector, err := s.AIService.EmbeddingService.Embed(ctx, req.Msg.Message)
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to embed query: %v", err))
@@ -156,38 +157,93 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 	results, err := s.AIService.Store.VectorSearch(ctx, &store.VectorSearchOptions{
 		UserID: user.ID,
 		Vector: queryVector,
-		Limit:  5,
+		Limit:  20, // 初步回捞更多候选
 	})
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to search: %v", err))
 	}
 
-	// 4. Build Context (max chars: 3000)
+	// 4. 过滤低相关性结果 (阈值 0.6)
+	var filteredResults []*store.MemoWithScore
+	minScoreThreshold := float32(0.6)
+	for _, r := range results {
+		if r.Score >= minScoreThreshold {
+			filteredResults = append(filteredResults, r)
+		}
+	}
+
+	// Stage 2: Reranker 重排序提升精度
+	if len(filteredResults) > 1 && s.AIService.RerankerService != nil && s.AIService.RerankerService.IsEnabled() {
+		documents := make([]string, len(filteredResults))
+		for i, r := range filteredResults {
+			documents[i] = r.Memo.Content
+		}
+
+		rerankResults, err := s.AIService.RerankerService.Rerank(ctx, req.Msg.Message, documents, 5)
+		if err == nil && len(rerankResults) > 0 {
+			// 按重排序结果重新排列
+			reordered := make([]*store.MemoWithScore, 0, len(rerankResults))
+			for _, rr := range rerankResults {
+				if rr.Index < len(filteredResults) {
+					// 更新分数为 reranker 分数
+					filteredResults[rr.Index].Score = rr.Score
+					reordered = append(reordered, filteredResults[rr.Index])
+				}
+			}
+			filteredResults = reordered
+		}
+	}
+
+	// 5. 构建上下文 (最大字符数: 3000)
 	var contextBuilder strings.Builder
 	var sources []string
 	totalChars := 0
 	maxChars := 3000
 
-	for i, r := range results {
-		if r.Score < 0.5 { // Ignore low relevance
-			continue
-		}
-
+	for i, r := range filteredResults {
 		content := r.Memo.Content
 		if totalChars+len(content) > maxChars {
-			break // Stop adding context
+			break
 		}
 
-		contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d\n%s\n\n", i+1, content))
+		contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d (相关度: %.0f%%)\n%s\n\n", i+1, r.Score*100, content))
 		sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
 		totalChars += len(content)
+
+		if len(sources) >= 5 {
+			break // 最多使用 5 条笔记
+		}
+	}
+
+	// 5.1 回退逻辑：如果没有匹配的笔记，使用所有搜索结果
+	if len(sources) == 0 && len(results) > 0 {
+		// 使用所有搜索结果（即使相关度低），因为用户可能在问通用问题
+		for i, r := range results {
+			content := r.Memo.Content
+			if totalChars+len(content) > maxChars {
+				break
+			}
+			contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d\n%s\n\n", i+1, content))
+			sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
+			totalChars += len(content)
+			if len(sources) >= 5 {
+				break
+			}
+		}
 	}
 
 	// 5. Build Prompt
+	var systemPrompt string
+	if len(sources) == 0 {
+		// 没有任何笔记时，明确告知
+		systemPrompt = "你是一个基于用户个人笔记的AI助手。当前用户没有任何备忘录，请友好地告知用户这一情况，并建议他们先创建一些备忘录。"
+	} else {
+		systemPrompt = "你是一个基于用户个人笔记的AI助手。请根据以下笔记内容回答问题。你必须严格基于提供的笔记内容回答，不要编造或假设任何笔记中没有的信息。如果笔记中没有相关信息，请明确告知用户。回答时使用中文，保持简洁准确。"
+	}
 	messages := []ai.Message{
 		{
 			Role:    "system",
-			Content: "你是一个基于用户个人笔记的AI助手。请根据以下笔记内容回答问题。如果笔记中没有相关信息，请明确告知用户。回答时使用中文，保持简洁准确。",
+			Content: systemPrompt,
 		},
 	}
 
