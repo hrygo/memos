@@ -175,6 +175,8 @@ const setThemeAttribute = (theme: ResolvedTheme): void => {
 // Main Theme Loading
 // ============================================================================
 
+const DARK_THEMES = ["default-dark", "midnight"];
+
 /**
  * Loads and applies a theme.
  * This function:
@@ -182,7 +184,8 @@ const setThemeAttribute = (theme: ResolvedTheme): void => {
  * 2. Resolves "system" to actual theme
  * 3. Injects theme CSS
  * 4. Sets data-theme attribute
- * 5. Persists to localStorage
+ * 5. Toggles 'dark' class for Tailwind
+ * 6. Persists to localStorage
  */
 export const loadTheme = (themeName: string): void => {
   const validTheme = validateTheme(themeName);
@@ -190,6 +193,17 @@ export const loadTheme = (themeName: string): void => {
 
   injectThemeStyle(resolvedTheme);
   setThemeAttribute(resolvedTheme);
+
+  // Handle Tailwind dark mode class
+  const isDark = DARK_THEMES.includes(resolvedTheme);
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.colorScheme = "dark";
+  } else {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
+  }
+
   setStoredTheme(validTheme); // Store original theme preference (not resolved)
 };
 

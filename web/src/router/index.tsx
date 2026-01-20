@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import App from "@/App";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Spinner from "@/components/Spinner";
 import MainLayout from "@/layouts/MainLayout";
 import RootLayout from "@/layouts/RootLayout";
@@ -71,7 +72,14 @@ const router = createBrowserRouter([
           },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
           { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
-          { path: Routes.CHAT, element: <LazyRoute component={AIChat} /> },
+          {
+            path: Routes.CHAT,
+            element: (
+              <ErrorBoundary>
+                <LazyRoute component={AIChat} />
+              </ErrorBoundary>
+            ),
+          },
           { path: Routes.SETTING, element: <LazyRoute component={Setting} /> },
           { path: "memos/:uid", element: <LazyRoute component={MemoDetail} /> },
           // Redirect old path to new path

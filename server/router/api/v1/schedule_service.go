@@ -11,10 +11,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/internal/util"
 	"github.com/usememos/memos/plugin/ai"
 	aischedule "github.com/usememos/memos/plugin/ai/schedule"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/store"
 )
@@ -30,14 +30,14 @@ type ScheduleService struct {
 // scheduleFromStore converts a store.Schedule to v1pb.Schedule.
 func scheduleFromStore(s *store.Schedule) *v1pb.Schedule {
 	pb := &v1pb.Schedule{
-		Name:       fmt.Sprintf("schedules/%s", s.UID),
-		Title:      s.Title,
-		StartTs:    s.StartTs,
-		AllDay:     s.AllDay,
-		Timezone:   s.Timezone,
-		CreatedTs:  s.CreatedTs,
-		UpdatedTs:  s.UpdatedTs,
-		State:      s.RowStatus.String(),
+		Name:      fmt.Sprintf("schedules/%s", s.UID),
+		Title:     s.Title,
+		StartTs:   s.StartTs,
+		AllDay:    s.AllDay,
+		Timezone:  s.Timezone,
+		CreatedTs: s.CreatedTs,
+		UpdatedTs: s.UpdatedTs,
+		State:     s.RowStatus.String(),
 	}
 
 	if s.Description != "" {

@@ -519,6 +519,7 @@
     "create": "创建",
     "input-too-long": "输入过长（最多 500 字符）",
     "parsing": "正在识别日程...",
-    "untitled": "无标题日程"
+    "untitled": "无标题日程",
+    "delete-confirm": "确定要删除该日程吗？"
   }
 }

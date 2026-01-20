@@ -1,12 +1,12 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import dayjs from "dayjs";
 import { Clock, MapPin } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useTranslate } from "@/utils/i18n";
 import { useDeleteSchedule } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
-import dayjs from "dayjs";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { toast } from "sonner";
+import { useTranslate } from "@/utils/i18n";
 
 interface ScheduleListProps {
   schedules: Schedule[];
@@ -15,12 +15,7 @@ interface ScheduleListProps {
   className?: string;
 }
 
-export const ScheduleList = ({
-  schedules,
-  selectedDate,
-  onScheduleClick,
-  className = "",
-}: ScheduleListProps) => {
+export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, className = "" }: ScheduleListProps) => {
   const t = useTranslate();
   const deleteSchedule = useDeleteSchedule();
 
@@ -116,17 +111,12 @@ export const ScheduleList = ({
                 )}
               </div>
 
-              {schedule.description && (
-                <p className="line-clamp-2 text-xs text-muted-foreground">{schedule.description}</p>
-              )}
+              {schedule.description && <p className="line-clamp-2 text-xs text-muted-foreground">{schedule.description}</p>}
 
               {schedule.reminders.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {schedule.reminders.map((reminder, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-                    >
+                    <span key={idx} className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
                       {reminder.type === "before" && t("schedule.reminders")}: {reminder.value} {reminder.unit}
                     </span>
                   ))}

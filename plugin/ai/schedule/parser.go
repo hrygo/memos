@@ -9,35 +9,35 @@ import (
 	"strings"
 	"time"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/plugin/ai"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
 const (
 	// Time constants
-	DefaultEventDuration     = time.Hour
-	TomorrowTimeOffset       = 24 * time.Hour
-	DayAfterTomorrowOffset  = 48 * time.Hour
-	DefaultHour               = 9 * time.Hour
-	HalfHour                  = 30 * time.Minute
-	OneHour                   = 60 * time.Minute
+	DefaultEventDuration   = time.Hour
+	TomorrowTimeOffset     = 24 * time.Hour
+	DayAfterTomorrowOffset = 48 * time.Hour
+	DefaultHour            = 9 * time.Hour
+	HalfHour               = 30 * time.Minute
+	OneHour                = 60 * time.Minute
 
 	// Validation constants
-	MaxInputLength            = 500 // characters
+	MaxInputLength = 500 // characters
 
 	// Time parsing limits
-	MaxRemindersCount        = 10
+	MaxRemindersCount = 10
 )
 
 // Precompiled regex patterns for performance
 var (
 	// Time patterns
-	hourMinutePattern     = regexp.MustCompile(`(\d{1,2}):(\d{2})`)
-	chineseHourPattern    = regexp.MustCompile(`(\d{1,2})点`)
-	chineseMinutePattern  = regexp.MustCompile(`(\d{1,2})分`)
+	hourMinutePattern    = regexp.MustCompile(`(\d{1,2}):(\d{2})`)
+	chineseHourPattern   = regexp.MustCompile(`(\d{1,2})点`)
+	chineseMinutePattern = regexp.MustCompile(`(\d{1,2})分`)
 
 	// Date patterns
-	datePattern           = regexp.MustCompile(`(\d{1,4})年?(\d{1,2})月(\d{1,2})日?`)
+	datePattern = regexp.MustCompile(`(\d{1,4})年?(\d{1,2})月(\d{1,2})日?`)
 
 	// Time and date removal patterns for title parsing
 	timePatternsToRemove = []*regexp.Regexp{
@@ -83,7 +83,7 @@ func mustAtoi(s string) int {
 // Parser handles natural language parsing for schedules.
 type Parser struct {
 	llmService ai.LLMService
-	location    *time.Location
+	location   *time.Location
 }
 
 // NewParser creates a new schedule parser.
@@ -418,10 +418,10 @@ func (p *Parser) parseReminders(text string) []*v1pb.Reminder {
 		// Normalize unit using map
 		unitMap := map[string]string{
 			"分钟": "minutes",
-			"分":   "minutes",
+			"分":  "minutes",
 			"小时": "hours",
-			"时":   "hours",
-			"天":   "days",
+			"时":  "hours",
+			"天":  "days",
 		}
 
 		if normalizedUnit, ok := unitMap[unit]; ok {

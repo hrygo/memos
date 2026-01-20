@@ -174,7 +174,7 @@ func TestRunnerBatchSizes(t *testing.T) {
 // TestRunnerWithContextCancellation tests context cancellation with mock embedding service.
 func TestRunnerWithContextCancellation(t *testing.T) {
 	tests := []struct {
-		name             string
+		name              string
 		cancelImmediately bool
 		cancelAfterDelay  bool
 	}{

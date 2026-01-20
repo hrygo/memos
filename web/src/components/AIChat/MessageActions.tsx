@@ -1,12 +1,7 @@
 import { CopyIcon, RefreshCwIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface MessageActionsProps {
   content: string;
@@ -21,11 +16,7 @@ const MessageActions = ({ content, onCopy, onRegenerate, onDelete }: MessageActi
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity"
-        >
+        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity">
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="1" />
             <circle cx="12" cy="5" r="1" />

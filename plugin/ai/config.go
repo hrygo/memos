@@ -17,9 +17,9 @@ type Config struct {
 
 // EmbeddingConfig represents vector embedding configuration.
 type EmbeddingConfig struct {
-	Provider   string  // siliconflow, openai, ollama
-	Model      string  // BAAI/bge-m3
-	Dimensions int     // 1024
+	Provider   string // siliconflow, openai, ollama
+	Model      string // BAAI/bge-m3
+	Dimensions int    // 1024
 	APIKey     string
 	BaseURL    string
 }
@@ -35,8 +35,8 @@ type RerankerConfig struct {
 
 // LLMConfig represents LLM configuration.
 type LLMConfig struct {
-	Provider    string  // deepseek, openai, ollama
-	Model       string  // deepseek-chat
+	Provider    string // deepseek, openai, ollama
+	Model       string // deepseek-chat
 	APIKey      string
 	BaseURL     string
 	MaxTokens   int     // default: 2048

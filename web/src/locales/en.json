@@ -519,6 +519,7 @@
     "create": "Create",
     "input-too-long": "Input too long (max 500 characters)",
     "parsing": "Recognizing schedule...",
-    "untitled": "Untitled Schedule"
+    "untitled": "Untitled Schedule",
+    "delete-confirm": "Are you sure you want to delete this schedule?"
   }
 }

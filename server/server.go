@@ -16,12 +16,12 @@ import (
 
 	"github.com/usememos/memos/internal/profile"
 	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/server/runner/embedding"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	apiv1 "github.com/usememos/memos/server/router/api/v1"
 	"github.com/usememos/memos/server/router/fileserver"
 	"github.com/usememos/memos/server/router/frontend"
 	"github.com/usememos/memos/server/router/rss"
+	"github.com/usememos/memos/server/runner/embedding"
 	"github.com/usememos/memos/server/runner/s3presign"
 	"github.com/usememos/memos/store"
 )

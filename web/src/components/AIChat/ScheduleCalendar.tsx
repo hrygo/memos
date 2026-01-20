@@ -1,10 +1,12 @@
+import { create } from "@bufbuild/protobuf";
+import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
+import dayjs, { Dayjs } from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/utils/i18n";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
-import dayjs, { Dayjs } from "dayjs";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useTranslate } from "@/utils/i18n";
 
 interface ScheduleCalendarProps {
   schedules: Schedule[];
@@ -13,14 +15,9 @@ interface ScheduleCalendarProps {
   className?: string;
 }
 
-export const ScheduleCalendar = ({
-  schedules,
-  selectedDate,
-  onDateClick,
-  className = "",
-}: ScheduleCalendarProps) => {
+export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, className = "" }: ScheduleCalendarProps) => {
   const t = useTranslate();
-  const [currentMonth, setCurrentMonth] = dayjs();
+  const [currentMonth, setCurrentMonth] = useState(dayjs());
 
   // Get days in month
   const getDaysInMonth = (date: Dayjs) => {
@@ -52,7 +49,7 @@ export const ScheduleCalendar = ({
   const getScheduleCount = (date: Dayjs) => {
     const dateStr = date.format("YYYY-MM-DD");
     return schedules.filter((s) => {
-      const scheduleDate = dayjs(timestampDate({ seconds: s.startTs, nanos: 0 })).format("YYYY-MM-DD");
+      const scheduleDate = dayjs(timestampDate(create(TimestampSchema, { seconds: s.startTs, nanos: 0 }))).format("YYYY-MM-DD");
       return scheduleDate === dateStr;
     }).length;
   };
@@ -155,13 +152,7 @@ export const ScheduleCalendar = ({
                 {scheduleCount > 0 && (
                   <div className="mt-1 flex justify-center gap-0.5">
                     {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "h-1 w-1 rounded-full",
-                          isSelectedDate ? "bg-primary-foreground" : "bg-primary",
-                        )}
-                      />
+                      <div key={i} className={cn("h-1 w-1 rounded-full", isSelectedDate ? "bg-primary-foreground" : "bg-primary")} />
                     ))}
                   </div>
                 )}

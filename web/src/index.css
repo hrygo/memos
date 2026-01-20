@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "./themes/default.css";
 
+/* Use class-based dark mode instead of media-based */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --default-transition-duration: 150ms;
 }
@@ -10,6 +13,7 @@
   * {
     @apply border-border outline-none ring-0;
   }
+
   body {
     @apply bg-background text-foreground;
   }

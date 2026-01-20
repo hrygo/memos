@@ -30,12 +30,12 @@ type APIV1Service struct {
 	v1pb.UnimplementedAIServiceServer
 	v1pb.UnimplementedScheduleServiceServer
 
-	Secret             string
-	Profile            *profile.Profile
-	Store              *store.Store
-	MarkdownService    markdown.Service
-	AIService          *AIService
-	ScheduleService    *ScheduleService
+	Secret          string
+	Profile         *profile.Profile
+	Store           *store.Store
+	MarkdownService markdown.Service
+	AIService       *AIService
+	ScheduleService *ScheduleService
 
 	// thumbnailSemaphore limits concurrent thumbnail generation to prevent memory exhaustion
 	thumbnailSemaphore *semaphore.Weighted

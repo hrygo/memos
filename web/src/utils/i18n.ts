@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 import { FallbackLngObjList } from "i18next";
 import { useTranslation } from "react-i18next";
 import i18n, { locales, TLocale } from "@/i18n";
@@ -76,15 +78,15 @@ export const isValidateLocale = (locale: string | undefined | null): boolean => 
 // 2. localStorage (from previous session)
 // 3. Browser language preference
 export const getLocaleWithFallback = (userLocale?: string): Locale => {
-  // Priority 1: User setting (if logged in and valid)
-  if (userLocale && isValidateLocale(userLocale)) {
-    return userLocale as Locale;
-  }
-
-  // Priority 2: localStorage
+  // Priority 1: localStorage
   const stored = getStoredLocale();
   if (stored) {
     return stored;
+  }
+
+  // Priority 2: User setting (if logged in and valid)
+  if (userLocale && isValidateLocale(userLocale)) {
+    return userLocale as Locale;
   }
 
   // Priority 3: Browser language
@@ -96,6 +98,14 @@ export const loadLocale = (locale: string): Locale => {
   const validLocale = isValidateLocale(locale) ? (locale as Locale) : findNearestMatchedLanguage(navigator.language);
   setStoredLocale(validLocale);
   i18n.changeLanguage(validLocale);
+
+  // Set dayjs locale
+  if (validLocale === "zh-Hans") {
+    dayjs.locale("zh-cn");
+  } else {
+    dayjs.locale("en");
+  }
+
   return validLocale;
 };
 

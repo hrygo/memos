@@ -1,11 +1,11 @@
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import dayjs from "dayjs";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useTranslate } from "@/utils/i18n";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
-import dayjs from "dayjs";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { useTranslate } from "@/utils/i18n";
 
 interface ScheduleConflictAlertProps {
   open: boolean;
@@ -14,12 +14,7 @@ interface ScheduleConflictAlertProps {
   onConfirm: () => void;
 }
 
-export const ScheduleConflictAlert = ({
-  open,
-  onOpenChange,
-  conflicts,
-  onConfirm,
-}: ScheduleConflictAlertProps) => {
+export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm }: ScheduleConflictAlertProps) => {
   const t = useTranslate();
 
   const formatTime = (ts: bigint) => {
@@ -41,19 +36,14 @@ export const ScheduleConflictAlert = ({
           </div>
           <div className="flex-1">
             <DialogTitle className="text-lg">{t("schedule.conflict-detected")}</DialogTitle>
-            <DialogDescription className="mt-2 text-sm text-muted-foreground">
-              {t("schedule.conflict-warning")}
-            </DialogDescription>
+            <DialogDescription className="mt-2 text-sm text-muted-foreground">{t("schedule.conflict-warning")}</DialogDescription>
           </div>
         </div>
 
         <ScrollArea className="mt-4 max-h-60">
           <div className="space-y-2 p-1">
             {conflicts.map((conflict) => (
-              <div
-                key={conflict.name}
-                className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3"
-              >
+              <div key={conflict.name} className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
                 <div className="mt-1">
                   <div className="h-2 w-2 rounded-full bg-destructive" />
                 </div>
@@ -66,9 +56,7 @@ export const ScheduleConflictAlert = ({
                     </span>
                     {conflict.location && <span>• {conflict.location}</span>}
                   </div>
-                  {conflict.description && (
-                    <p className="line-clamp-2 text-xs text-muted-foreground">{conflict.description}</p>
-                  )}
+                  {conflict.description && <p className="line-clamp-2 text-xs text-muted-foreground">{conflict.description}</p>}
                 </div>
               </div>
             ))}

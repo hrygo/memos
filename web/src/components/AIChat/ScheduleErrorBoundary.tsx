@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
+import React, { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -40,9 +40,7 @@ export class ScheduleErrorBoundary extends Component<Props, State> {
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
           <h3 className="mt-4 text-lg font-semibold">Something went wrong</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {this.state.error?.message || "An error occurred while loading schedules"}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{this.state.error?.message || "An error occurred while loading schedules"}</p>
           <button
             className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
             onClick={() => this.setState({ hasError: false, error: null })}
