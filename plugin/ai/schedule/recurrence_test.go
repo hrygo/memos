@@ -247,7 +247,7 @@ func TestParseRecurrenceRuleFromJSON_Normalization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rule, err := ParseRecurrenceRuleFromJSON(tt.json)
 			require.NoError(t, err)
-			assert.Equal(t, tt.expected, rule.Type)
+			assert.Equal(t, tt.expected, string(rule.Type))
 		})
 	}
 }
@@ -255,7 +255,7 @@ func TestParseRecurrenceRuleFromJSON_Normalization(t *testing.T) {
 func TestMatchesWeekday_NoMutation(t *testing.T) {
 	// Test that matchesWeekday doesn't modify the receiver
 	originalRule := &RecurrenceRule{
-		Type:     "weekly",
+		Type:     RecurrenceTypeWeekly,
 		Interval: 1,
 		Weekdays: []int{1}, // Only Monday
 	}
@@ -265,7 +265,7 @@ func TestMatchesWeekday_NoMutation(t *testing.T) {
 	copy(originalWeekdays, originalRule.Weekdays)
 
 	// Call matchesWeekday multiple times
-	monday := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC) // Monday
+	monday := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)  // Monday
 	tuesday := time.Date(2024, 1, 2, 10, 0, 0, 0, time.UTC) // Tuesday
 
 	_ = originalRule.matchesWeekday(monday)  // Should return true
@@ -279,7 +279,7 @@ func TestMatchesWeekday_NoMutation(t *testing.T) {
 func TestMatchesWeekday_DefaultWeekdays(t *testing.T) {
 	// Test default weekdays (Mon-Fri) when Weekdays is empty
 	rule := &RecurrenceRule{
-		Type:     "weekly",
+		Type:     RecurrenceTypeWeekly,
 		Interval: 1,
 		Weekdays: []int{}, // Empty
 	}

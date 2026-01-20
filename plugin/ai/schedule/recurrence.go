@@ -9,29 +9,84 @@ import (
 	"time"
 )
 
+// RecurrenceType represents the type of recurrence pattern.
+type RecurrenceType string
+
+const (
+	// RecurrenceTypeDaily represents daily recurrence.
+	RecurrenceTypeDaily RecurrenceType = "daily"
+	// RecurrenceTypeWeekly represents weekly recurrence.
+	RecurrenceTypeWeekly RecurrenceType = "weekly"
+	// RecurrenceTypeMonthly represents monthly recurrence.
+	RecurrenceTypeMonthly RecurrenceType = "monthly"
+)
+
+// IsValid checks if the recurrence type is valid.
+func (rt RecurrenceType) IsValid() bool {
+	switch rt {
+	case RecurrenceTypeDaily, RecurrenceTypeWeekly, RecurrenceTypeMonthly:
+		return true
+	default:
+		return false
+	}
+}
+
+// String returns the string representation of RecurrenceType.
+func (rt RecurrenceType) String() string {
+	return string(rt)
+}
+
 // RecurrenceRule represents a simplified recurrence rule.
 // We use a custom JSON format instead of full RFC 5545 RRULE for simplicity.
 type RecurrenceRule struct {
-	Type     string `json:"type"`      // "daily", "weekly", "monthly"
-	Interval int    `json:"interval"`  // Every N days/weeks/months
-	Weekdays []int  `json:"weekdays"`  // Only for type="weekly": [1,2,3,4,5] (Mon-Fri)
-	MonthDay int    `json:"month_day"` // Only for type="monthly": day of month (1-31)
+	Type     RecurrenceType `json:"type"`      // "daily", "weekly", "monthly"
+	Interval int            `json:"interval"`  // Every N days/weeks/months
+	Weekdays []int          `json:"weekdays"`  // Only for type="weekly": [1,2,3,4,5] (Mon-Fri)
+	MonthDay int            `json:"month_day"` // Only for type="monthly": day of month (1-31)
+}
+
+// Validate checks if the recurrence rule is valid.
+func (r *RecurrenceRule) Validate() error {
+	if !r.Type.IsValid() {
+		return fmt.Errorf("invalid recurrence type: %s", r.Type)
+	}
+	if r.Interval <= 0 {
+		return fmt.Errorf("interval must be positive, got: %d", r.Interval)
+	}
+
+	switch r.Type {
+	case RecurrenceTypeWeekly:
+		if len(r.Weekdays) == 0 {
+			return fmt.Errorf("weekdays required for weekly recurrence")
+		}
+		for _, day := range r.Weekdays {
+			if day < 1 || day > 7 {
+				return fmt.Errorf("invalid weekday: %d (must be 1-7)", day)
+			}
+		}
+	case RecurrenceTypeMonthly:
+		if r.MonthDay < 1 || r.MonthDay > 31 {
+			return fmt.Errorf("invalid month_day: %d (must be 1-31)", r.MonthDay)
+		}
+	}
+
+	return nil
 }
 
 // ParseRecurrenceRule parses a natural language recurrence pattern.
 // Examples:
-//   - "每天" → {Type: "daily", Interval: 1}
-//   - "每3天" → {Type: "daily", Interval: 3}
-//   - "每周一" → {Type: "weekly", Weekdays: [1]}
-//   - "每周" → {Type: "weekly", Interval: 1}
-//   - "每两周" → {Type: "daily", Interval: 14}
-//   - "每月15号" → {Type: "monthly", MonthDay: 15}
+//   - "每天" → {Type: RecurrenceTypeDaily, Interval: 1}
+//   - "每3天" → {Type: RecurrenceTypeDaily, Interval: 3}
+//   - "每周一" → {Type: RecurrenceTypeWeekly, Weekdays: [1]}
+//   - "每周" → {Type: RecurrenceTypeWeekly, Interval: 1}
+//   - "每两周" → {Type: RecurrenceTypeDaily, Interval: 14}
+//   - "每月15号" → {Type: RecurrenceTypeMonthly, MonthDay: 15}
 func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 	text = strings.TrimSpace(text)
 
 	// Daily patterns
 	if matched, _ := regexp.MatchString(`^(每|每天)(\d+)?天?$`, text); matched {
-		rule := &RecurrenceRule{Type: "daily", Interval: 1}
+		rule := &RecurrenceRule{Type: RecurrenceTypeDaily, Interval: 1}
 		if parts := regexp.MustCompile(`(\d+)`).FindStringSubmatch(text); len(parts) > 1 {
 			if interval := parseInt(parts[1]); interval > 0 {
 				rule.Interval = interval
@@ -42,7 +97,7 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 
 	// Weekly patterns
 	if matched, _ := regexp.MatchString(`^每(\d+)?(周|星期)(一|二|三|四|五|六|日|天)?$`, text); matched {
-		rule := &RecurrenceRule{Type: "weekly", Interval: 1, Weekdays: []int{1, 2, 3, 4, 5}} // Default weekdays
+		rule := &RecurrenceRule{Type: RecurrenceTypeWeekly, Interval: 1, Weekdays: []int{1, 2, 3, 4, 5}} // Default weekdays
 
 		// Check for specific weekday
 		weekdayMap := map[string]int{
@@ -68,7 +123,7 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 
 	// Monthly patterns
 	if matched, _ := regexp.MatchString(`^每(月)(\d{1,2})号?$`, text); matched {
-		rule := &RecurrenceRule{Type: "monthly", MonthDay: 0, Interval: 1}
+		rule := &RecurrenceRule{Type: RecurrenceTypeMonthly, MonthDay: 0, Interval: 1}
 		if parts := regexp.MustCompile(`(\d{1,2})`).FindStringSubmatch(text); len(parts) > 1 {
 			if day := parseInt(parts[1]); day >= 1 && day <= 31 {
 				rule.MonthDay = day
@@ -97,7 +152,7 @@ func (r *RecurrenceRule) GenerateInstances(startTs int64, endTs int64) []int64 {
 
 	// Preserve the original timezone information
 	// Don't force conversion to UTC to avoid timezone shifts
-	startTime := time.Unix(startTs, 0).UTC() // Convert to UTC for consistent calculations
+	startTime := time.Unix(startTs, 0).UTC()              // Convert to UTC for consistent calculations
 	endTime := time.Now().UTC().Add(365 * 24 * time.Hour) // Default to 1 year limit
 
 	if endTs > 0 {
@@ -105,13 +160,13 @@ func (r *RecurrenceRule) GenerateInstances(startTs int64, endTs int64) []int64 {
 	}
 
 	switch r.Type {
-	case "daily":
+	case RecurrenceTypeDaily:
 		instances = r.generateDailyInstances(startTime, endTime)
 
-	case "weekly":
+	case RecurrenceTypeWeekly:
 		instances = r.generateWeeklyInstances(startTime, endTime)
 
-	case "monthly":
+	case RecurrenceTypeMonthly:
 		instances = r.generateMonthlyInstances(startTime, endTime)
 	}
 
@@ -244,7 +299,7 @@ func ParseRecurrenceRuleFromJSON(jsonStr string) (*RecurrenceRule, error) {
 		return nil, err
 	}
 	// Normalize type to lowercase to handle LLM variations (Daily, DAILY, etc.)
-	rule.Type = strings.ToLower(rule.Type)
+	rule.Type = RecurrenceType(strings.ToLower(string(rule.Type)))
 	return &rule, nil
 }
 
