@@ -64,7 +64,8 @@ const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              { path: "", element: <Home /> },
+              { path: "", element: <LazyRoute component={AIChat} /> },
+              { path: Routes.HOME, element: <Home /> },
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },

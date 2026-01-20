@@ -30,7 +30,7 @@ const Navigation = (props: Props) => {
 
   const homeNavLink: NavLinkItem = {
     id: "header-memos",
-    path: Routes.ROOT,
+    path: Routes.HOME,
     title: t("common.memos"),
     icon: <LibraryIcon className="w-6 h-auto shrink-0" />,
   };
