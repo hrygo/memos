@@ -738,10 +738,12 @@ type ParseAndCreateScheduleResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parsed schedule (always returned)
 	ParsedSchedule *Schedule `protobuf:"bytes,1,opt,name=parsed_schedule,json=parsedSchedule,proto3" json:"parsed_schedule,omitempty"`
-	// Created schedule (only returned when auto_confirm is true)
+	// Created schedule (only returned when auto_confirm is true and no conflicts)
 	CreatedSchedule *Schedule `protobuf:"bytes,2,opt,name=created_schedule,json=createdSchedule,proto3" json:"created_schedule,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
+	Conflicts     []*Schedule `protobuf:"bytes,3,rep,name=conflicts,proto3" json:"conflicts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ParseAndCreateScheduleResponse) Reset() {
@@ -784,6 +786,13 @@ func (x *ParseAndCreateScheduleResponse) GetParsedSchedule() *Schedule {
 func (x *ParseAndCreateScheduleResponse) GetCreatedSchedule() *Schedule {
 	if x != nil {
 		return x.CreatedSchedule
+	}
+	return nil
+}
+
+func (x *ParseAndCreateScheduleResponse) GetConflicts() []*Schedule {
+	if x != nil {
+		return x.Conflicts
 	}
 	return nil
 }
@@ -845,10 +854,11 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\tconflicts\x18\x01 \x03(\v2\x16.memos.api.v1.ScheduleR\tconflicts\"[\n" +
 	"\x1dParseAndCreateScheduleRequest\x12\x17\n" +
 	"\x04text\x18\x01 \x01(\tB\x03\xe0A\x02R\x04text\x12!\n" +
-	"\fauto_confirm\x18\x02 \x01(\bR\vautoConfirm\"\xa4\x01\n" +
+	"\fauto_confirm\x18\x02 \x01(\bR\vautoConfirm\"\xda\x01\n" +
 	"\x1eParseAndCreateScheduleResponse\x12?\n" +
 	"\x0fparsed_schedule\x18\x01 \x01(\v2\x16.memos.api.v1.ScheduleR\x0eparsedSchedule\x12A\n" +
-	"\x10created_schedule\x18\x02 \x01(\v2\x16.memos.api.v1.ScheduleR\x0fcreatedSchedule2\xfc\x06\n" +
+	"\x10created_schedule\x18\x02 \x01(\v2\x16.memos.api.v1.ScheduleR\x0fcreatedSchedule\x124\n" +
+	"\tconflicts\x18\x03 \x03(\v2\x16.memos.api.v1.ScheduleR\tconflicts2\xfc\x06\n" +
 	"\x0fScheduleService\x12k\n" +
 	"\x0eCreateSchedule\x12#.memos.api.v1.CreateScheduleRequest\x1a\x16.memos.api.v1.Schedule\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/schedules\x12s\n" +
 	"\rListSchedules\x12\".memos.api.v1.ListSchedulesRequest\x1a#.memos.api.v1.ListSchedulesResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/schedules\x12k\n" +
@@ -897,25 +907,26 @@ var file_api_v1_schedule_service_proto_depIdxs = []int32{
 	0,  // 5: memos.api.v1.CheckConflictResponse.conflicts:type_name -> memos.api.v1.Schedule
 	0,  // 6: memos.api.v1.ParseAndCreateScheduleResponse.parsed_schedule:type_name -> memos.api.v1.Schedule
 	0,  // 7: memos.api.v1.ParseAndCreateScheduleResponse.created_schedule:type_name -> memos.api.v1.Schedule
-	2,  // 8: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
-	3,  // 9: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
-	5,  // 10: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
-	6,  // 11: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
-	7,  // 12: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
-	8,  // 13: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
-	10, // 14: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
-	0,  // 15: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
-	4,  // 16: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
-	0,  // 17: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
-	0,  // 18: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
-	13, // 19: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
-	9,  // 20: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
-	11, // 21: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
-	15, // [15:22] is the sub-list for method output_type
-	8,  // [8:15] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 8: memos.api.v1.ParseAndCreateScheduleResponse.conflicts:type_name -> memos.api.v1.Schedule
+	2,  // 9: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
+	3,  // 10: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
+	5,  // 11: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
+	6,  // 12: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
+	7,  // 13: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
+	8,  // 14: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
+	10, // 15: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
+	0,  // 16: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
+	4,  // 17: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
+	0,  // 18: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
+	0,  // 19: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
+	13, // 20: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
+	9,  // 21: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
+	11, // 22: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
+	16, // [16:23] is the sub-list for method output_type
+	9,  // [9:16] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_schedule_service_proto_init() }

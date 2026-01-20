@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/ollama"
@@ -90,7 +91,8 @@ func (s *llmService) Chat(ctx context.Context, messages []Message) (string, erro
 }
 
 func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan string, <-chan error) {
-	contentChan := make(chan string)
+	// Add buffer to prevent blocking if receiver exits early
+	contentChan := make(chan string, 10)
 	errChan := make(chan error, 1)
 
 	go func() {
@@ -99,21 +101,30 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 
 		llmMessages := convertMessages(messages)
 
+		// Add timeout protection to prevent goroutine leak
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
 		_, err := s.model.GenerateContent(ctx, llmMessages,
 			llms.WithMaxTokens(s.maxTokens),
 			llms.WithTemperature(float64(s.temperature)),
 			llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
 				select {
 				case contentChan <- string(chunk):
+					return nil
 				case <-ctx.Done():
 					return ctx.Err()
 				}
-				return nil
 			}),
 		)
 
 		if err != nil {
-			errChan <- err
+			// Check if context is still valid before sending error
+			select {
+			case errChan <- err:
+			case <-ctx.Done():
+				// Context cancelled, unable to send error
+			}
 		}
 	}()
 

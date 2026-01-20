@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -188,6 +189,17 @@ func (s *ScheduleService) CreateSchedule(ctx context.Context, req *v1pb.CreateSc
 		schedule.UID = util.GenUUID()
 	}
 
+	// Check for conflicts before creating
+	conflicts, err := s.checkScheduleConflicts(ctx, userID, schedule.StartTs, schedule.EndTs, nil)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check conflicts: %v", err)
+	}
+	if len(conflicts) > 0 {
+		// Build conflict details
+		conflictDetails := buildConflictError(conflicts)
+		return nil, status.Errorf(codes.AlreadyExists, "schedule conflicts detected: %s", conflictDetails)
+	}
+
 	created, err := s.Store.CreateSchedule(ctx, schedule)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create schedule: %v", err)
@@ -260,11 +272,21 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 	}
 
 	// Limit total instances to prevent performance issues
-	const maxTotalInstances = 500
+	// Use page size to determine limit, with a hard maximum
+	maxTotalInstances := 100 // Default value
+	if req.PageSize > 0 {
+		maxTotalInstances = int(req.PageSize) * 2 // Double for safety margin
+	}
+	if maxTotalInstances > 500 {
+		maxTotalInstances = 500 // Hard limit to prevent excessive data
+	}
+
+	truncated := false
 
 	for _, schedule := range list {
 		// Check total instance limit before processing each schedule
 		if len(expandedSchedules) >= maxTotalInstances {
+			truncated = true
 			break
 		}
 
@@ -288,6 +310,7 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 			for _, instanceTs := range instances {
 				// Check if we've hit the total instance limit
 				if len(expandedSchedules) >= maxTotalInstances {
+					truncated = true
 					break
 				}
 
@@ -319,6 +342,7 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 
 				// Break if we've hit the limit
 				if len(expandedSchedules) >= maxTotalInstances {
+					truncated = true
 					break
 				}
 			}
@@ -326,6 +350,14 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 			// Non-recurring schedule, add as-is
 			expandedSchedules = append(expandedSchedules, pbSchedule)
 		}
+	}
+
+	// Log warning if truncated
+	if truncated {
+		slog.Warn("schedule instance expansion truncated",
+			"count", len(expandedSchedules),
+			"limit", maxTotalInstances,
+			"user_id", userID)
 	}
 
 	return &v1pb.ListSchedulesResponse{
@@ -650,6 +682,20 @@ func (s *ScheduleService) ParseAndCreateSchedule(ctx context.Context, req *v1pb.
 		// Generate UID
 		schedule.UID = util.GenUUID()
 
+		// Check for conflicts before creating
+		conflicts, err := s.checkScheduleConflicts(ctx, userID, schedule.StartTs, schedule.EndTs, nil)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to check conflicts: %v", err)
+		}
+		if len(conflicts) > 0 {
+			// Return conflicts in response instead of creating
+			response.Conflicts = make([]*v1pb.Schedule, len(conflicts))
+			for i, c := range conflicts {
+				response.Conflicts[i] = scheduleFromStore(c)
+			}
+			return response, nil
+		}
+
 		created, err := s.Store.CreateSchedule(ctx, schedule)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create schedule: %v", err)
@@ -673,4 +719,88 @@ func parseInt32(s string) (int32, error) {
 		return 0, status.Errorf(codes.InvalidArgument, "invalid ID format: %s", s)
 	}
 	return int32(i), nil
+}
+
+// checkScheduleConflicts checks for schedule conflicts within a time range.
+// Returns a list of conflicting schedules.
+func (s *ScheduleService) checkScheduleConflicts(ctx context.Context, userID int32, startTs int64, endTs *int64, excludeNames []string) ([]*store.Schedule, error) {
+	// Determine end time for conflict check
+	checkEndTs := startTs
+	if endTs != nil && *endTs > startTs {
+		checkEndTs = *endTs
+	} else {
+		// Default to 1 hour from start if not specified
+		checkEndTs = startTs + 3600
+	}
+
+	// Find schedules that might conflict within the time window
+	find := &store.FindSchedule{
+		CreatorID: &userID,
+		StartTs:   &startTs,
+		EndTs:     &checkEndTs,
+	}
+
+	list, err := s.Store.ListSchedules(ctx, find)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list schedules: %w", err)
+	}
+
+	// Filter out excluded schedules and check for actual conflicts
+	var conflicts []*store.Schedule
+	excludeSet := make(map[string]bool)
+	for _, name := range excludeNames {
+		excludeSet[name] = true
+	}
+
+	for _, schedule := range list {
+		name := fmt.Sprintf("schedules/%s", schedule.UID)
+		if !excludeSet[name] {
+			// Check if time ranges actually overlap
+			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
+			scheduleEnd := schedule.EndTs
+			if scheduleEnd == nil {
+				// For schedules without end time, treat as a point event at start_ts
+				scheduleEnd = &schedule.StartTs
+			}
+
+			// Check overlap: query window [startTs, checkEndTs] vs schedule [schedule.StartTs, *scheduleEnd]
+			if startTs <= *scheduleEnd && checkEndTs >= schedule.StartTs {
+				conflicts = append(conflicts, schedule)
+			}
+		}
+	}
+
+	return conflicts, nil
+}
+
+// buildConflictError builds a human-readable error message for schedule conflicts.
+func buildConflictError(conflicts []*store.Schedule) string {
+	if len(conflicts) == 0 {
+		return ""
+	}
+
+	if len(conflicts) == 1 {
+		c := conflicts[0]
+		return fmt.Sprintf("conflicts with existing schedule \"%s\" (from %d to %s)",
+			c.Title,
+			c.StartTs,
+			formatEndTs(c.EndTs))
+	}
+
+	var titles []string
+	for _, c := range conflicts {
+		titles = append(titles, fmt.Sprintf("\"%s\"", c.Title))
+	}
+
+	return fmt.Sprintf("conflicts with %d existing schedules: %s",
+		len(conflicts),
+		strings.Join(titles, ", "))
+}
+
+// formatEndTs formats an end timestamp for display.
+func formatEndTs(endTs *int64) string {
+	if endTs == nil {
+		return "no end time"
+	}
+	return fmt.Sprintf("%d", *endTs)
 }

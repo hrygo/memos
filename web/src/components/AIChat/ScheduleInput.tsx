@@ -2,14 +2,14 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import { Calendar, Clock, Loader2, MapPin, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCheckConflict, useCreateSchedule, useDeleteSchedule, useParseAndCreateSchedule } from "@/hooks/useScheduleQueries";
+import { useCheckConflict, useCreateSchedule, useDeleteSchedule, useParseAndCreateSchedule, useUpdateSchedule } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
@@ -19,22 +19,36 @@ interface ScheduleInputProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialText?: string;
+  editSchedule?: Schedule | null;
   onSuccess?: (schedule: Schedule) => void;
 }
 
-export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess }: ScheduleInputProps) => {
+export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedule, onSuccess }: ScheduleInputProps) => {
   const t = useTranslate();
   const parseAndCreate = useParseAndCreateSchedule();
   const createSchedule = useCreateSchedule();
+  const updateSchedule = useUpdateSchedule();
   const checkConflict = useCheckConflict();
   const deleteSchedule = useDeleteSchedule();
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const isEditMode = !!editSchedule;
 
   const [input, setInput] = useState(initialText);
-  const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(null);
+  const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(editSchedule || null);
   const [isParsing, setIsParsing] = useState(false);
   const [conflicts, setConflicts] = useState<Schedule[]>([]);
   const [showConflictAlert, setShowConflictAlert] = useState(false);
+
+  // Initialize with editSchedule when it changes
+  useEffect(() => {
+    if (editSchedule) {
+      setParsedSchedule(editSchedule);
+      setInput(editSchedule.title || "");
+    } else {
+      setParsedSchedule(null);
+      setInput(initialText);
+    }
+  }, [editSchedule, initialText]);
 
   const handleParse = async () => {
     if (!input.trim()) return;
@@ -54,15 +68,17 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
       });
 
       if (result.parsedSchedule) {
+        // Ensure endTs has a default duration if missing (1 hour)
+        if (result.parsedSchedule.endTs === BigInt(0)) {
+          result.parsedSchedule.endTs = result.parsedSchedule.startTs + BigInt(3600);
+        }
         setParsedSchedule(result.parsedSchedule);
 
         // Check for conflicts
-        // Default to 1 hour duration if endTs is not specified or is 0
-        const endTs = result.parsedSchedule.endTs > 0 ? result.parsedSchedule.endTs : result.parsedSchedule.startTs + BigInt(3600);
-
         const conflictResult = await checkConflict.mutateAsync({
           startTs: result.parsedSchedule.startTs,
-          endTs: endTs,
+          endTs: result.parsedSchedule.endTs,
+          excludeNames: [],
         });
 
         if (conflictResult.conflicts.length > 0) {
@@ -82,24 +98,50 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
     if (!parsedSchedule) return;
 
     try {
-      // Ensure valid name format required by backend
-      const validName =
-        parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
-          ? parsedSchedule.name
-          : `schedules/${self.crypto.randomUUID()}`;
+      if (isEditMode && parsedSchedule.name) {
+        // Update existing schedule
+        const updatedSchedule = await updateSchedule.mutateAsync({
+          schedule: parsedSchedule,
+          updateMask: ["title", "description", "location", "start_ts", "end_ts", "reminders"],
+        });
 
-      const scheduleToCreate = { ...parsedSchedule, name: validName };
+        if (updatedSchedule) {
+          toast.success((t("schedule.schedule-updated") as string) || "Schedule updated");
+          onSuccess?.(updatedSchedule);
+          handleClose();
+        }
+      } else {
+        // Create new schedule
+        const validName =
+          parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
+            ? parsedSchedule.name
+            : `schedules/${self.crypto.randomUUID()}`;
 
-      const createdSchedule = await createSchedule.mutateAsync(scheduleToCreate);
+        const scheduleToCreate = { ...parsedSchedule, name: validName };
 
-      if (createdSchedule) {
-        toast.success(t("schedule.schedule-created"));
-        onSuccess?.(createdSchedule);
-        handleClose();
+        const createdSchedule = await createSchedule.mutateAsync(scheduleToCreate);
+
+        if (createdSchedule) {
+          toast.success(t("schedule.schedule-created"));
+          onSuccess?.(createdSchedule);
+          handleClose();
+        }
       }
     } catch (error) {
-      toast.error("Failed to create schedule");
-      console.error("Create error:", error);
+      // Check if error is due to schedule conflicts
+      const isConflictError = error && typeof error === "object" && "message" in error
+        ? (error.message as string).includes("conflicts detected")
+        : false;
+
+      if (isConflictError) {
+        toast.error(t("schedule.conflict-error") || "Schedule conflicts detected. Please check your schedule.", {
+          duration: 5000,
+          id: "schedule-conflict-error",
+        });
+      } else {
+        toast.error(isEditMode ? "Failed to update schedule" : "Failed to create schedule");
+      }
+      console.error(isEditMode ? "Update error:" : "Create error:", error);
     }
   };
 
@@ -107,11 +149,17 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
     if (!parsedSchedule) return;
 
     try {
-      // Check conflict
+      // Ensure parsedSchedule has a valid endTs (default 1 hour if 0)
+      if (parsedSchedule.endTs === BigInt(0)) {
+        parsedSchedule.endTs = parsedSchedule.startTs + BigInt(3600);
+        setParsedSchedule({ ...parsedSchedule });
+      }
+
+      // Check conflict - exclude self if editing
       const conflict = await checkConflict.mutateAsync({
         startTs: parsedSchedule.startTs,
         endTs: parsedSchedule.endTs,
-        excludeNames: [],
+        excludeNames: isEditMode && parsedSchedule.name ? [parsedSchedule.name] : [],
       });
 
       if (conflict.conflicts.length > 0) {
@@ -147,7 +195,12 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
   const executeOverwrite = async () => {
     setShowOverwriteConfirm(false);
     try {
-      for (const conflict of conflicts) {
+      // Filter out the schedule being edited to prevent self-deletion
+      const schedulesToDelete = isEditMode && parsedSchedule?.name
+        ? conflicts.filter((c) => c.name !== parsedSchedule.name)
+        : conflicts;
+
+      for (const conflict of schedulesToDelete) {
         await deleteSchedule.mutateAsync(conflict.name);
       }
       await executeCreate();
@@ -175,51 +228,58 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ScheduleErrorBoundary>
           <DialogContent className="max-w-md">
-            <DialogTitle>{t("schedule.create-schedule")}</DialogTitle>
-            <DialogDescription>{t("schedule.natural-language-hint")}</DialogDescription>
+            <DialogTitle>{isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}</DialogTitle>
+            <DialogDescription>{isEditMode ? "" : t("schedule.natural-language-hint")}</DialogDescription>
 
             <div className="space-y-4 mt-4">
-              {/* Input */}
-              <div className="space-y-2">
-                <Label htmlFor="schedule-input">{t("schedule.description") || "Description"}</Label>
-                <Textarea
-                  id="schedule-input"
-                  placeholder='e.g., "明天下午3点开会"'
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleParse();
-                    }
-                  }}
-                  className="min-h-24 resize-none"
-                />
-              </div>
+              {/* Natural Language Input - Only for create mode */}
+              {!isEditMode && !parsedSchedule && (
+                <div className="space-y-2">
+                  <Label htmlFor="schedule-input">{t("schedule.description") || "Description"}</Label>
+                  <Textarea
+                    id="schedule-input"
+                    placeholder='e.g., "明天下午3点开会"'
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleParse();
+                      }
+                    }}
+                    className="min-h-24 resize-none"
+                  />
+                </div>
+              )}
 
-              {/* Parse Button */}
-              {!parsedSchedule && (
+              {/* Parse Button - Only for create mode */}
+              {!isEditMode && !parsedSchedule && (
                 <Button onClick={handleParse} disabled={!input.trim() || isParsing} className="w-full">
                   {isParsing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("schedule.create-schedule")}
                 </Button>
               )}
 
-              {/* Parsed Result */}
+              {/* Schedule Details Form */}
               {parsedSchedule && (
                 <div className="space-y-3 rounded-lg border bg-muted/50 p-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">解析结果</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setParsedSchedule(null);
-                        setConflicts([]);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <h4 className="font-medium text-sm">
+                      {isEditMode ? t("schedule.edit-schedule") : t("schedule.suggested-schedule") || "解析结果"}
+                    </h4>
+                    {/* Only show reset button in create mode */}
+                    {!isEditMode && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setParsedSchedule(null);
+                          setConflicts([]);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
                   <div className="space-y-3 text-sm">
@@ -271,11 +331,11 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
                       />
                     </div>
 
-                    {/* Description */}
-                    {parsedSchedule.description && (
+                    {/* Description - Always show in edit mode or when present */}
+                    {(isEditMode || parsedSchedule.description) && (
                       <div className="pl-6">
                         <Textarea
-                          value={parsedSchedule.description}
+                          value={parsedSchedule.description || ""}
                           onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
                           className="min-h-[60px] text-xs resize-none"
                           placeholder={t("schedule.description")}
@@ -299,7 +359,9 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", onSuccess 
                     <Button variant="outline" onClick={handleClose}>
                       {t("common.cancel")}
                     </Button>
-                    <Button onClick={handleCreate}>{t("schedule.create-schedule")}</Button>
+                    <Button onClick={handleCreate}>
+                      {isEditMode ? t("common.save") : t("schedule.create-schedule")}
+                    </Button>
                   </div>
                 </div>
               )}

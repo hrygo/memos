@@ -112,6 +112,8 @@ message ListSchedulesRequest {
 message ListSchedulesResponse {
   repeated Schedule schedules = 1;
   string next_page_token = 2;
+  // truncated indicates whether the results were truncated due to instance limits
+  bool truncated = 3;
 }
 
 // GetScheduleRequest is the request for GetSchedule.
@@ -156,6 +158,8 @@ message ParseAndCreateScheduleRequest {
 message ParseAndCreateScheduleResponse {
   // Parsed schedule (always returned)
   Schedule parsed_schedule = 1;
-  // Created schedule (only returned when auto_confirm is true)
+  // Created schedule (only returned when auto_confirm is true and no conflicts)
   Schedule created_schedule = 2;
+  // Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
+  repeated Schedule conflicts = 3;
 }

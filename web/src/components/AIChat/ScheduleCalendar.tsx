@@ -13,9 +13,11 @@ interface ScheduleCalendarProps {
   selectedDate?: string;
   onDateClick?: (date: string) => void;
   className?: string;
+  // Show mobile hint about tapping to view details
+  showMobileHint?: boolean;
 }
 
-export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, className = "" }: ScheduleCalendarProps) => {
+export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, className = "", showMobileHint = false }: ScheduleCalendarProps) => {
   const t = useTranslate();
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
@@ -144,9 +146,9 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                   !inCurrentMonth && "text-muted-foreground/30",
                   // Selected state (overrides everything)
                   isSelectedDate && !isTodayDate && "bg-primary text-primary-foreground shadow-md font-semibold",
-                  isSelectedDate && isTodayDate && "bg-blue-600 text-white shadow-md font-semibold",
-                  // Today state (when not selected)
-                  !isSelectedDate && isTodayDate && "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold",
+                  isSelectedDate && isTodayDate && "bg-orange-700 text-white shadow-md font-semibold",
+                  // Today state (when not selected) - deeper warm orange color
+                  !isSelectedDate && isTodayDate && "bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 font-bold",
                   // Hover state (when not selected and not today)
                   !isSelectedDate && !isTodayDate && "hover:bg-accent text-foreground",
                 )}
@@ -157,7 +159,16 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                 {scheduleCount > 0 && (
                   <div className="mt-1 flex justify-center gap-0.5">
                     {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
-                      <div key={i} className={cn("h-1 w-1 rounded-full", isSelectedDate ? "bg-primary-foreground" : "bg-primary")} />
+                      <div
+                        key={i}
+                        className={cn(
+                          "h-1 w-1 rounded-full",
+                          // Use foreground color for selected state (works in both light/dark themes)
+                          isSelectedDate
+                            ? "bg-foreground shadow-sm"
+                            : "bg-primary"
+                        )}
+                      />
                     ))}
                   </div>
                 )}
@@ -174,10 +185,20 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
           <span>{t("schedule.has-schedules") || "Has schedules"}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800" />
+          <div className="h-2 w-2 rounded-full bg-orange-200 border border-orange-300 dark:bg-orange-900/50 dark:border-orange-800" />
           <span>{t("common.today") || "Today"}</span>
         </div>
       </div>
+
+      {/* Mobile hint - shown only on small screens */}
+      {showMobileHint && (
+        <div className="md:hidden mt-3 pt-3 border-t border-border/50">
+          <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            {t("schedule.tap-to-view") || "Tap a date to view schedule details"}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

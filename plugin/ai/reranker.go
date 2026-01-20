@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"time"
 )
 
 // RerankResult represents a reranking result.
@@ -40,7 +41,14 @@ func NewRerankerService(cfg *RerankerConfig) RerankerService {
 		apiKey:  cfg.APIKey,
 		baseURL: cfg.BaseURL,
 		model:   cfg.Model,
-		client:  &http.Client{},
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		},
 	}
 }
 

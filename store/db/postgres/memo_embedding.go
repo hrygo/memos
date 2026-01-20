@@ -130,7 +130,7 @@ func (d *DB) VectorSearch(ctx context.Context, opts *store.VectorSearchOptions) 
 			AND m.row_status = 'NORMAL'
 			AND e.model = ` + placeholder(3) + `
 		ORDER BY e.embedding <=> ` + placeholder(4) + `
-		LIMIT ` + fmt.Sprint(limit)
+		LIMIT ` + placeholder(5)
 
 	// Use default model if not specified
 	model := "BAAI/bge-m3"
@@ -141,6 +141,7 @@ func (d *DB) VectorSearch(ctx context.Context, opts *store.VectorSearchOptions) 
 		opts.UserID,
 		model,
 		vector,
+		limit,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to vector search")
@@ -207,9 +208,9 @@ func (d *DB) FindMemosWithoutEmbedding(ctx context.Context, find *store.FindMemo
 			AND m.row_status = 'NORMAL'
 			AND LENGTH(m.content) > 0
 		ORDER BY m.created_ts DESC
-		LIMIT ` + fmt.Sprint(limit)
+		LIMIT ` + placeholder(2)
 
-	rows, err := d.db.QueryContext(ctx, query, find.Model)
+	rows, err := d.db.QueryContext(ctx, query, find.Model, limit)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find memos without embedding")
 	}

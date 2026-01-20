@@ -1,10 +1,14 @@
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import { AlertCircle, AlertTriangle, Calendar, Clock, Globe, MapPin, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
+
+// Helper function to convert int64 timestamp to Date
+const toDate = (seconds: bigint): Date => {
+  return new Date(Number(seconds) * 1000);
+};
 
 interface ScheduleSuggestionCardProps {
   parsedSchedule: Schedule;
@@ -28,8 +32,7 @@ export const ScheduleSuggestionCard = ({
   const hasConflicts = conflicts.length > 0;
 
   const formatDateTime = (ts: bigint) => {
-    const date = timestampDate({ seconds: ts, nanos: 0 });
-    const targetDate = dayjs(date);
+    const targetDate = dayjs(toDate(ts));
     const now = dayjs();
 
     // Smart year display: show year only if different from current year

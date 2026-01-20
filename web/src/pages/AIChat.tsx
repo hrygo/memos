@@ -75,6 +75,7 @@ const AIChat = () => {
   const [scheduleInputText, setScheduleInputText] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [scheduleViewMode, setScheduleViewMode] = useState<"timeline" | "calendar">("timeline");
+  const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
   const { data: schedulesData } = useSchedules({});
 
   const schedules = schedulesData?.schedules || [];
@@ -447,7 +448,6 @@ const AIChat = () => {
                   {msg.role === "assistant" && !msg.error && index === items.length - 1 && (
                     <div className="flex items-start gap-2">
                       <MessageActions
-                        content={msg.content}
                         onCopy={() => handleCopyMessage(msg.content)}
                         onRegenerate={handleRegenerate}
                         onDelete={() => handleDeleteMessage(index)}
@@ -559,33 +559,38 @@ const AIChat = () => {
             <div className="bg-muted/30 animate-in slide-in-from-top-2 duration-300">
               <div className="w-full p-4 flex flex-col h-[60vh] md:h-[50vh]">
                 <div className="flex items-center justify-between mb-2 px-1">
-                  <h3 className="font-semibold text-lg">
-                    {scheduleViewMode === "timeline"
-                      ? t("schedule.your-timeline") || "Timeline"
-                      : t("schedule.calendar-view") || "Calendar"}
-                  </h3>
-                  <div className="flex items-center gap-1">
+                  {/* Mobile-Friendly Segmented Control */}
+                  <div className="flex items-center bg-muted rounded-lg p-0.5">
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setScheduleViewMode(scheduleViewMode === "timeline" ? "calendar" : "timeline")}
-                      title={scheduleViewMode === "timeline" ? "Switch to Calendar" : "Switch to Timeline"}
+                      variant={scheduleViewMode === "timeline" ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-7 px-3 text-xs font-medium rounded-md ${scheduleViewMode === "timeline" ? "" : "hover:bg-transparent"}`}
+                      onClick={() => setScheduleViewMode("timeline")}
                     >
-                      {scheduleViewMode === "timeline" ? <CalendarDays className="w-4 h-4" /> : <LayoutList className="w-4 h-4" />}
+                      <LayoutList className="w-3.5 h-3.5 mr-1.5" />
+                      {t("schedule.your-timeline") || "Timeline"}
                     </Button>
                     <Button
+                      variant={scheduleViewMode === "calendar" ? "default" : "ghost"}
                       size="sm"
-                      className="h-8 gap-1"
-                      onClick={() => {
-                        setScheduleInputText(input);
-                        setScheduleInputOpen(true);
-                      }}
+                      className={`h-7 px-3 text-xs font-medium rounded-md ${scheduleViewMode === "calendar" ? "" : "hover:bg-transparent"}`}
+                      onClick={() => setScheduleViewMode("calendar")}
                     >
-                      <PlusIcon className="w-3.5 h-3.5" />
-                      {t("schedule.add") || "Add"}
+                      <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                      {t("schedule.calendar-view") || "Calendar"}
                     </Button>
                   </div>
+                  <Button
+                    size="sm"
+                    className="h-8 gap-1"
+                    onClick={() => {
+                      setScheduleInputText(input);
+                      setScheduleInputOpen(true);
+                    }}
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t("schedule.add") || "Add"}</span>
+                  </Button>
                 </div>
 
                 <div className="flex-1 min-h-0 bg-background/60 rounded-xl border border-border/50 shadow-sm overflow-hidden">
@@ -594,6 +599,10 @@ const AIChat = () => {
                       schedules={schedules}
                       selectedDate={selectedDate}
                       onDateClick={setSelectedDate}
+                      onScheduleEdit={(schedule) => {
+                        setEditSchedule(schedule);
+                        setScheduleInputOpen(true);
+                      }}
                       className="rounded-none bg-transparent"
                     />
                   ) : (
@@ -602,9 +611,13 @@ const AIChat = () => {
                       selectedDate={selectedDate}
                       onDateClick={(date) => {
                         setSelectedDate(date);
-                        // Optional: switch back to timeline nicely or stay in calendar
-                        // setScheduleViewMode("timeline");
+                        // On mobile, automatically switch to timeline view to see the day's schedule
+                        // On desktop, stay in calendar view for better browsing experience
+                        if (!md) {
+                          setScheduleViewMode("timeline");
+                        }
                       }}
+                      showMobileHint={!md}
                       className="p-4 bg-background/50 h-full overflow-y-auto"
                     />
                   )}
@@ -724,10 +737,18 @@ const AIChat = () => {
       {/* Schedule Input Dialog */}
       <ScheduleInput
         open={scheduleInputOpen}
-        onOpenChange={setScheduleInputOpen}
+        onOpenChange={(open) => {
+          setScheduleInputOpen(open);
+          if (!open) {
+            setEditSchedule(null);
+            setScheduleInputText("");
+          }
+        }}
         initialText={scheduleInputText}
+        editSchedule={editSchedule}
         onSuccess={(schedule) => {
-          console.log("Schedule created:", schedule);
+          console.log("Schedule saved:", schedule);
+          setEditSchedule(null);
           // Refresh schedules by invalidating cache
           // The query will automatically refetch
         }}

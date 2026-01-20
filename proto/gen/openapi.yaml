@@ -3008,7 +3008,12 @@ components:
                 createdSchedule:
                     allOf:
                         - $ref: '#/components/schemas/Schedule'
-                    description: Created schedule (only returned when auto_confirm is true)
+                    description: Created schedule (only returned when auto_confirm is true and no conflicts)
+                conflicts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Schedule'
+                    description: Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
             description: ParseAndCreateScheduleResponse is the response for ParseAndCreateSchedule.
         PersonalAccessToken:
             type: object

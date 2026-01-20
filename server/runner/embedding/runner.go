@@ -71,6 +71,15 @@ func (r *Runner) processNewMemos(ctx context.Context) {
 
 	// Process in batches
 	for i := 0; i < len(memos); i += r.batchSize {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			slog.Info("embedding processing cancelled", "processed", i, "total", len(memos))
+			return
+		default:
+			// Continue processing
+		}
+
 		end := i + r.batchSize
 		if end > len(memos) {
 			end = len(memos)
@@ -93,6 +102,14 @@ func (r *Runner) findMemosWithoutEmbedding(ctx context.Context) ([]*store.Memo, 
 }
 
 func (r *Runner) processBatch(ctx context.Context, memos []*store.Memo) error {
+	// Check context before processing batch
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Continue processing
+	}
+
 	// Extract content
 	texts := make([]string, len(memos))
 	for i, m := range memos {

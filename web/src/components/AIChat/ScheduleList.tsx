@@ -1,4 +1,3 @@
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
 import { Clock, MapPin } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -7,6 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDeleteSchedule } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
+
+// Helper function to convert int64 timestamp to Date
+const toDate = (seconds: bigint): Date => {
+  return new Date(Number(seconds) * 1000);
+};
 
 interface ScheduleListProps {
   schedules: Schedule[];
@@ -32,11 +36,11 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
       return t("schedule.all-day");
     }
 
-    const startDate = timestampDate({ seconds: schedule.startTs, nanos: 0 });
+    const startDate = toDate(schedule.startTs);
     const startTime = dayjs(startDate).format("HH:mm");
 
     if (schedule.endTs > 0) {
-      const endDate = timestampDate({ seconds: schedule.endTs, nanos: 0 });
+      const endDate = toDate(schedule.endTs);
       const endTime = dayjs(endDate).format("HH:mm");
       return `${startTime} - ${endTime}`;
     }
@@ -47,7 +51,7 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
   const getTodaySchedules = () => {
     const today = dayjs().format("YYYY-MM-DD");
     return schedules.filter((s) => {
-      const date = dayjs(timestampDate({ seconds: s.startTs, nanos: 0 })).format("YYYY-MM-DD");
+      const date = dayjs(toDate(s.startTs)).format("YYYY-MM-DD");
       return date === (selectedDate || today);
     });
   };
@@ -77,10 +81,10 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
             <div className="flex flex-col items-center">
               <div className="rounded-md bg-primary/10 px-2 py-1 text-center">
                 <div className="text-xs font-medium text-primary">
-                  {dayjs(timestampDate({ seconds: schedule.startTs, nanos: 0 })).format("ddd")}
+                  {dayjs(toDate(schedule.startTs)).format("ddd")}
                 </div>
                 <div className="text-lg font-bold text-primary">
-                  {dayjs(timestampDate({ seconds: schedule.startTs, nanos: 0 })).format("D")}
+                  {dayjs(toDate(schedule.startTs)).format("D")}
                 </div>
               </div>
             </div>

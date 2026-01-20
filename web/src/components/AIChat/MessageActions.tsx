@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface MessageActionsProps {
-  content: string;
   onCopy: () => void;
   onRegenerate: () => void;
   onDelete: () => void;
 }
 
-const MessageActions = ({ content, onCopy, onRegenerate, onDelete }: MessageActionsProps) => {
+const MessageActions = ({ onCopy, onRegenerate, onDelete }: MessageActionsProps) => {
   const { t } = useTranslation();
 
   return (

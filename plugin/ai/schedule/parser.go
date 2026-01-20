@@ -80,27 +80,34 @@ type llmScheduleResponse struct {
 // parseWithLLM uses LLM to parse complex natural language.
 func (p *Parser) parseWithLLM(ctx context.Context, text string) (*ParseResult, error) {
 	now := time.Now().In(p.location)
+	nowUTC := now.UTC()
+
 	systemPrompt := fmt.Sprintf(`You are an intelligent schedule parser. Your goal is to extract schedule details from user input into a strict JSON format.
 
-Current Time: %s
-Timezone: %s
+Current Time (UTC): %s
+User Timezone: %s
+
+IMPORTANT RULES:
+1. Always return start_time and end_time in UTC timezone
+2. Format: YYYY-MM-DD HH:mm:ss (no timezone suffix)
+3. Calculate times in UTC, accounting for the user's timezone
 
 Output Schema (JSON Only):
 {
   "title": "Clean title without time/date keywords",
   "description": "Details, or empty string",
   "location": "Location name, or empty string",
-  "start_time": "YYYY-MM-DD HH:mm:ss",
-  "end_time": "YYYY-MM-DD HH:mm:ss",
+  "start_time": "YYYY-MM-DD HH:mm:ss UTC",
+  "end_time": "YYYY-MM-DD HH:mm:ss UTC",
   "all_day": boolean,
   "reminders": [{"type": "before", "value": int, "unit": "minutes|hours|days"}],
   "recurrence": {"type": "daily|weekly|monthly", "interval": int, "weekdays": [int], "month_day": int} or null
 }
 
 Rules:
-1. Calculate absolute 'start_time' and 'end_time' relative to Current Time.
+1. Calculate absolute 'start_time' and 'end_time' relative to Current Time (in UTC).
 2. If duration is not specified, default to 1 hour (end_time = start_time + 1h).
-3. If only date is mentioned (no specific time), set 'all_day': true, and use 00:00:00 for times.
+3. If only date is mentioned (no specific time), set 'all_day': true, and use 00:00:00 for times (in UTC).
 4. Extract reminders if mentioned (e.g., "10 mins before").
 5. Remove time, date, and location words from the 'title'.
 6. Extract recurrence patterns:
@@ -109,7 +116,7 @@ Rules:
    - "每周一"/"每周三" → {"type": "weekly", "weekdays": [1]/[3]}
    - "每月15号" → {"type": "monthly", "month_day": 15}
    - Weekdays: Monday=1, Tuesday=2, ..., Sunday=7
-`, now.Format("2006-01-02 15:04:05"), p.location.String())
+`, nowUTC.Format("2006-01-02 15:04:05"), p.location.String())
 
 	userPrompt := fmt.Sprintf("User Input: %s", text)
 
@@ -136,11 +143,16 @@ Rules:
 	// Convert string times to int64
 	var startTs, endTs int64
 
-	// Helper to parse time in location
+	// Helper to parse time as UTC
 	parseTime := func(timeStr string) (int64, error) {
-		t, err := time.ParseInLocation("2006-01-02 15:04:05", timeStr, p.location)
+		// Remove possible UTC suffix
+		timeStr = strings.TrimSuffix(timeStr, " UTC")
+		timeStr = strings.TrimSpace(timeStr)
+
+		// Parse as UTC
+		t, err := time.Parse("2006-01-02 15:04:05", timeStr)
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("failed to parse time %q: %w", timeStr, err)
 		}
 		return t.Unix(), nil
 	}
@@ -156,9 +168,19 @@ Rules:
 		}
 	}
 
+	// Validate time is not too far in the past (more than 24 hours)
+	if startTs < nowUTC.Add(-24*time.Hour).Unix() {
+		return nil, fmt.Errorf("parsed start time is too far in the past: %d", startTs)
+	}
+
+	// Validate end time is not before start time
+	if endTs > 0 && endTs < startTs {
+		return nil, fmt.Errorf("end time %d is before start time %d", endTs, startTs)
+	}
+
 	// Fallback if parsing failed (should rely on LLM correctness though)
 	if startTs == 0 {
-		startTs = now.Add(time.Hour).Unix()
+		startTs = nowUTC.Add(time.Hour).Unix()
 	}
 	if endTs == 0 || endTs < startTs {
 		endTs = startTs + 3600

@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-cn";
-import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,11 @@ interface ScheduleTimelineProps {
   schedules: Schedule[];
   selectedDate?: string;
   onDateClick?: (date: string) => void;
+  onScheduleEdit?: (schedule: Schedule) => void;
   className?: string;
 }
 
-export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, className = "" }: ScheduleTimelineProps) => {
+export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onScheduleEdit, className = "" }: ScheduleTimelineProps) => {
   const t = useTranslate();
   const deleteSchedule = useDeleteSchedule();
   // Initialize with selectedDate or today
@@ -127,8 +128,8 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                 className={cn(
                   "relative flex flex-col items-center justify-center min-w-[3rem] py-2 px-1 rounded-2xl transition-all duration-200",
                   isSelected && !isToday && "bg-primary text-primary-foreground shadow-md scale-105",
-                  isSelected && isToday && "bg-blue-600 text-white shadow-md scale-105",
-                  !isSelected && isToday && "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold",
+                  isSelected && isToday && "bg-orange-700 text-white shadow-md scale-105",
+                  !isSelected && isToday && "bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 font-bold",
                   !isSelected && !isToday && "hover:bg-muted text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -137,7 +138,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                     "text-[10px] font-medium uppercase tracking-wider mb-1 opacity-80",
                     isSelected && "text-primary-foreground/90",
                     isSelected && isToday && "text-white/90",
-                    !isSelected && isToday && "text-blue-600/80 dark:text-blue-300/80",
+                    !isSelected && isToday && "text-orange-700/80 dark:text-orange-300/80",
                   )}
                 >
                   {date.format("ddd")}
@@ -151,18 +152,33 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                 >
                   {date.format("D")}
                 </span>
-                {/* Schedule Indicator Dot */}
-                {schedules.some((s) => {
-                  const sDate = dayjs(timestampDate(create(TimestampSchema, { seconds: s.startTs, nanos: 0 }))).format("YYYY-MM-DD");
-                  return sDate === date.format("YYYY-MM-DD");
-                }) && (
-                    <span
-                      className={cn(
-                        "absolute bottom-1.5 w-1 h-1 rounded-full",
-                        isSelected ? "bg-primary-foreground/80" : "bg-primary"
-                      )}
-                    />
-                  )}
+                {/* Schedule Indicator Dots */}
+                {(() => {
+                  const dateStr = date.format("YYYY-MM-DD");
+                  const scheduleCount = schedules.filter((s) => {
+                    const sDate = dayjs(timestampDate(create(TimestampSchema, { seconds: s.startTs, nanos: 0 }))).format("YYYY-MM-DD");
+                    return sDate === dateStr;
+                  }).length;
+
+                  if (scheduleCount === 0) return null;
+
+                  return (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                      {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={cn(
+                            "w-1 h-1 rounded-full",
+                            // Use foreground color for selected state (works in both light/dark themes)
+                            isSelected
+                              ? "bg-foreground shadow-sm"
+                              : "bg-primary"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
               </button>
             );
           })}
@@ -217,6 +233,16 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onScheduleEdit?.(schedule);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              {t("common.edit")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
