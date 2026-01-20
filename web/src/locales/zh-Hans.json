@@ -545,7 +545,8 @@
       "sat": "周六",
       "sun": "周日",
       "monthly-on": "每月{{day}}号",
-      "every-n": "每{{n}}个"
+      "every-n": "每{{n}}个",
+      "separator": "、"
     }
   }
 }

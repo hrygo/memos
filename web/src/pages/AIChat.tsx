@@ -2,9 +2,11 @@ import copy from "copy-to-clipboard";
 import {
   BotIcon,
   Calendar,
+  CalendarDays,
   ChevronDown,
   ChevronUp,
   EraserIcon,
+  LayoutList,
   Loader2,
   MoreHorizontalIcon,
   PlusIcon,
@@ -22,6 +24,7 @@ import EmptyState from "@/components/AIChat/EmptyState";
 import ErrorMessage from "@/components/AIChat/ErrorMessage";
 import MessageActions from "@/components/AIChat/MessageActions";
 import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
+import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleSuggestionCard } from "@/components/AIChat/ScheduleSuggestionCard";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
 import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
@@ -71,6 +74,7 @@ const AIChat = () => {
   const [scheduleInputOpen, setScheduleInputOpen] = useState(false);
   const [scheduleInputText, setScheduleInputText] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
+  const [scheduleViewMode, setScheduleViewMode] = useState<"timeline" | "calendar">("timeline");
   const { data: schedulesData } = useSchedules({});
 
   const schedules = schedulesData?.schedules || [];
@@ -555,27 +559,55 @@ const AIChat = () => {
             <div className="bg-muted/30 animate-in slide-in-from-top-2 duration-300">
               <div className="w-full p-4 flex flex-col h-[60vh] md:h-[50vh]">
                 <div className="flex items-center justify-between mb-2 px-1">
-                  <h3 className="font-semibold text-lg">{t("schedule.your-timeline") || "Timeline"}</h3>
-                  <Button
-                    size="sm"
-                    className="h-8 gap-1"
-                    onClick={() => {
-                      setScheduleInputText(input);
-                      setScheduleInputOpen(true);
-                    }}
-                  >
-                    <PlusIcon className="w-3.5 h-3.5" />
-                    {t("schedule.add") || "Add"}
-                  </Button>
+                  <h3 className="font-semibold text-lg">
+                    {scheduleViewMode === "timeline"
+                      ? t("schedule.your-timeline") || "Timeline"
+                      : t("schedule.calendar-view") || "Calendar"}
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setScheduleViewMode(scheduleViewMode === "timeline" ? "calendar" : "timeline")}
+                      title={scheduleViewMode === "timeline" ? "Switch to Calendar" : "Switch to Timeline"}
+                    >
+                      {scheduleViewMode === "timeline" ? <CalendarDays className="w-4 h-4" /> : <LayoutList className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 gap-1"
+                      onClick={() => {
+                        setScheduleInputText(input);
+                        setScheduleInputOpen(true);
+                      }}
+                    >
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      {t("schedule.add") || "Add"}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex-1 min-h-0 bg-background/60 rounded-xl border border-border/50 shadow-sm overflow-hidden">
-                  <ScheduleTimeline
-                    schedules={schedules}
-                    selectedDate={selectedDate}
-                    onDateClick={setSelectedDate}
-                    className="rounded-none bg-transparent"
-                  />
+                  {scheduleViewMode === "timeline" ? (
+                    <ScheduleTimeline
+                      schedules={schedules}
+                      selectedDate={selectedDate}
+                      onDateClick={setSelectedDate}
+                      className="rounded-none bg-transparent"
+                    />
+                  ) : (
+                    <ScheduleCalendar
+                      schedules={schedules}
+                      selectedDate={selectedDate}
+                      onDateClick={(date) => {
+                        setSelectedDate(date);
+                        // Optional: switch back to timeline nicely or stay in calendar
+                        // setScheduleViewMode("timeline");
+                      }}
+                      className="p-4 bg-background/50 h-full overflow-y-auto"
+                    />
+                  )}
                 </div>
               </div>
             </div>

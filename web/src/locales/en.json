@@ -545,7 +545,8 @@
       "sat": "Sat",
       "sun": "Sun",
       "monthly-on": "Monthly on day {{day}}",
-      "every-n": "Every {{n}}"
+      "every-n": "Every {{n}}",
+      "separator": ", "
     }
   }
 }

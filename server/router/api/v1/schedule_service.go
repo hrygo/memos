@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -249,16 +250,17 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 	queryStartTs := req.StartTs
 	queryEndTs := req.EndTs
 
-	// Default query window: from now to 1 year later
+	// Default query window: from now to 30 days later
+	now := time.Now().Unix()
 	if queryStartTs == 0 {
-		// Use current time if not specified
-		// Note: In production, this should be server time
-		queryStartTs = 0 // We'll let each recurrence rule use its own default
+		queryStartTs = now
 	}
 	if queryEndTs == 0 {
-		// Default to 1 year from now
-		queryEndTs = 0 // Will use recurrence rule's default (1 year)
+		queryEndTs = now + 30*24*3600 // Default to 30 days
 	}
+
+	// Limit total instances to prevent performance issues
+	const maxTotalInstances = 500
 
 	for _, schedule := range list {
 		pbSchedule := scheduleFromStore(schedule)
@@ -273,13 +275,24 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 				continue
 			}
 
-			// Generate instances within query window
-			instances := rule.GenerateInstances(queryStartTs, queryEndTs)
+			// Generate instances starting from the schedule's start time
+			// This ensures we get the correct sequence from the first occurrence
+			instances := rule.GenerateInstances(pbSchedule.StartTs, queryEndTs)
 
 			// For each instance, create a schedule with adjusted time
-			for idx, instanceTs := range instances {
+			for _, instanceTs := range instances {
+				// Check if we've hit the total instance limit
+				if len(expandedSchedules) >= maxTotalInstances {
+					break
+				}
+
+				// Only add instances within the query window
+				if instanceTs < queryStartTs || instanceTs > queryEndTs {
+					continue
+				}
+
 				instance := &v1pb.Schedule{
-					Name:        fmt.Sprintf("%s/instances/%d", pbSchedule.Name, idx),
+					Name:        fmt.Sprintf("%s/instances/%d", pbSchedule.Name, instanceTs),
 					Title:       pbSchedule.Title,
 					Description: pbSchedule.Description,
 					Location:    pbSchedule.Location,
@@ -297,10 +310,11 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 					instance.EndTs = instanceTs + duration
 				}
 
-				// Only add if it falls within query window
-				if (queryStartTs == 0 || instance.StartTs >= queryStartTs) &&
-					(queryEndTs == 0 || instance.StartTs <= queryEndTs) {
-					expandedSchedules = append(expandedSchedules, instance)
+				expandedSchedules = append(expandedSchedules, instance)
+
+				// Break if we've hit the limit
+				if len(expandedSchedules) >= maxTotalInstances {
+					break
 				}
 			}
 		} else {

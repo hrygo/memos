@@ -66,7 +66,8 @@ export const ScheduleSuggestionCard = ({
         ];
         const days = rule.weekdays.map((d: number) => weekdayNames[d] || "").filter(Boolean);
         if (days.length > 0) {
-          text = days.join("、");
+          const separator = t("schedule.recurrence.separator") || "、";
+          text = days.join(separator);
         }
       } else if (rule.type === "monthly" && rule.month_day) {
         text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) ||

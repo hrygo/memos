@@ -125,7 +125,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                 key={date.toString()}
                 onClick={() => handleDateSelect(date)}
                 className={cn(
-                  "flex flex-col items-center justify-center min-w-[3rem] py-2 px-1 rounded-2xl transition-all duration-200",
+                  "relative flex flex-col items-center justify-center min-w-[3rem] py-2 px-1 rounded-2xl transition-all duration-200",
                   isSelected && !isToday && "bg-primary text-primary-foreground shadow-md scale-105",
                   isSelected && isToday && "bg-blue-600 text-white shadow-md scale-105",
                   !isSelected && isToday && "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold",
@@ -151,6 +151,18 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, classNa
                 >
                   {date.format("D")}
                 </span>
+                {/* Schedule Indicator Dot */}
+                {schedules.some((s) => {
+                  const sDate = dayjs(timestampDate(create(TimestampSchema, { seconds: s.startTs, nanos: 0 }))).format("YYYY-MM-DD");
+                  return sDate === date.format("YYYY-MM-DD");
+                }) && (
+                    <span
+                      className={cn(
+                        "absolute bottom-1.5 w-1 h-1 rounded-full",
+                        isSelected ? "bg-primary-foreground/80" : "bg-primary"
+                      )}
+                    />
+                  )}
               </button>
             );
           })}
