@@ -64,12 +64,13 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 	}
 	if v := find.StartTs; v != nil {
 		// Find schedules that overlap with the query range
-		// A schedule overlaps if: (schedule.start < query_end) AND
-		// (schedule.end > query_start OR schedule.end IS NULL)
-		where, args = append(where, "schedule.start_ts < "+placeholder(len(args)+1)), append(args, *v)
+		// A schedule overlaps if its end time is after or at the query start time
+		where, args = append(where, "(schedule.end_ts >= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
 	}
 	if v := find.EndTs; v != nil {
-		where, args = append(where, "(schedule.end_ts > "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
+		// Find schedules that overlap with the query range
+		// A schedule overlaps if its start time is before or at the query end time
+		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
 	}
 
 	// Ordering (always by start_ts ascending)
