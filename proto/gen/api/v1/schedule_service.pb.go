@@ -379,6 +379,8 @@ type ListSchedulesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Schedules     []*Schedule            `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
 	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// truncated indicates whether the results were truncated due to instance limits
+	Truncated     bool `protobuf:"varint,3,opt,name=truncated,proto3" json:"truncated,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -425,6 +427,13 @@ func (x *ListSchedulesResponse) GetNextPageToken() string {
 		return x.NextPageToken
 	}
 	return ""
+}
+
+func (x *ListSchedulesResponse) GetTruncated() bool {
+	if x != nil {
+		return x.Truncated
+	}
+	return false
 }
 
 // GetScheduleRequest is the request for GetSchedule.
@@ -834,10 +843,11 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x05state\x18\x04 \x01(\tR\x05state\x12\x1b\n" +
 	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x06 \x01(\tR\tpageToken\"u\n" +
+	"page_token\x18\x06 \x01(\tR\tpageToken\"\x93\x01\n" +
 	"\x15ListSchedulesResponse\x124\n" +
 	"\tschedules\x18\x01 \x03(\v2\x16.memos.api.v1.ScheduleR\tschedules\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"-\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1c\n" +
+	"\ttruncated\x18\x03 \x01(\bR\ttruncated\"-\n" +
 	"\x12GetScheduleRequest\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\"\x8d\x01\n" +
 	"\x15UpdateScheduleRequest\x127\n" +

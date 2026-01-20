@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -11,8 +12,12 @@ import (
 	"github.com/usememos/memos/plugin/ai"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
+	"github.com/usememos/memos/server/middleware"
 	"github.com/usememos/memos/store"
 )
+
+// Global AI rate limiter
+var globalAILimiter = middleware.NewRateLimiter()
 
 // AIService provides AI-powered features for memo management.
 type AIService struct {
@@ -63,6 +68,24 @@ func (s *AIService) SemanticSearch(ctx context.Context, req *v1pb.SemanticSearch
 	// Validate parameters
 	if req.Query == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "query is required")
+	}
+
+	// Add input length validation
+	const (
+		maxQueryLength = 1000
+		minQueryLength = 2
+	)
+
+	if len(req.Query) > maxQueryLength {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"query too long: maximum %d characters, got %d", maxQueryLength, len(req.Query))
+	}
+
+	// Trim and check minimum length
+	trimmedQuery := strings.TrimSpace(req.Query)
+	if len(trimmedQuery) < minQueryLength {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"query too short: minimum %d characters after trimming", minQueryLength)
 	}
 
 	limit := int(req.Limit)
@@ -270,6 +293,13 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// 1.5. 速率限制检查
+	userKey := strconv.FormatInt(int64(user.ID), 10)
+	if !globalAILimiter.Allow(userKey) {
+		return status.Errorf(codes.ResourceExhausted,
+			"rate limit exceeded: please wait before making another AI chat request")
 	}
 
 	// 2. 参数校验

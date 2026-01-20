@@ -2745,6 +2745,9 @@ components:
                         $ref: '#/components/schemas/Schedule'
                 nextPageToken:
                     type: string
+                truncated:
+                    type: boolean
+                    description: truncated indicates whether the results were truncated due to instance limits
             description: ListSchedulesResponse is the response for ListSchedules.
         ListShortcutsResponse:
             type: object
