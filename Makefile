@@ -1,320 +1,265 @@
-.PHONY: help build run test clean docker-up docker-down docker-logs db-migrate frontend
+# Memos Makefile
 
-# ==============================================
-#  COLORS & STYLES
-# ==============================================
-RESET  := \033[0m
-BOLD   := \033[1m
-DIM    := \033[2m
+# 加载 .env 文件 (如果存在)
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
-# Colors
-BLACK   := \033[30m
-RED     := \033[31m
-GREEN   := \033[32m
-YELLOW  := \033[33m
-BLUE    := \033[34m
-MAGENTA := \033[35m
-CYAN    := \033[36m
-WHITE   := \033[37m
+.PHONY: help run dev web test deps clean
+.PHONY: docker-up docker-down docker-logs docker-reset
+.PHONY: db-connect db-reset db-vector
+.PHONY: start stop restart status logs
+.PHONY: logs-backend logs-frontend logs-postgres logs-follow-backend logs-follow-frontend logs-follow-postgres
 
-# Bright colors
-BRIGHT_RED     := \033[91m
-BRIGHT_GREEN   := \033[92m
-BRIGHT_YELLOW  := \033[93m
-BRIGHT_BLUE    := \033[94m
-BRIGHT_MAGENTA := \033[95m
-BRIGHT_CYAN    := \033[96m
+.DEFAULT_GOAL := help
 
-# Background colors
-BG_BLACK  := \033[40m
-BG_RED    := \033[41m
-BG_GREEN  := \033[42m
-BG_YELLOW := \033[43m
-BG_BLUE   := \033[44m
+# 数据库配置 (PostgreSQL)
+MEMOS_DRIVER ?= postgres
+MEMOS_DSN ?= postgres://memos:memos@localhost:25432/memos?sslmode=disable
 
-# ==============================================
-#  CONFIGURATION
-# ==============================================
-GO_FILES := $(shell find . -name '*.go' -type f -not -path "./build/*" -not -path "./vendor/*")
-PROTO_FILES := $(shell find proto -name '*.proto' -type f)
-DOCKER_COMPOSE := docker compose
+# AI 配置
+AI_EMBEDDING_PROVIDER ?= siliconflow
+AI_LLM_PROVIDER ?= deepseek
+AI_EMBEDDING_MODEL ?= BAAI/bge-m3
+AI_RERANK_MODEL ?= BAAI/bge-reranker-v2-m3
+AI_LLM_MODEL ?= deepseek-chat
+AI_OPENAI_BASE_URL ?= https://api.siliconflow.cn/v1
 
-# ==============================================
-#  HELP
-# ==============================================
-help: ## Show this help message
-	@echo ""
-	@echo "$(BOLD)$(BRIGHT_CYAN)╔═══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(BOLD)$(BRIGHT_CYAN)║$(RESET)$(BOLD) $(BRIGHT_YELLOW)  Memos Development Environment$(RESET)                    $(BOLD)$(BRIGHT_CYAN)║$(RESET)"
-	@echo "$(BOLD)$(BRIGHT_CYAN)╚═══════════════════════════════════════════════════════════════╝$(RESET)"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Usage:$(RESET)"
-	@echo "  $(CYAN)make$(RESET) $(GREEN)<target>$(RESET)"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Available Commands:$(RESET)"
-	@echo ""
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { \
-		if (length($$1) > 0) { \
-			cmd = $$1; \
-			desc = $$2; \
-			printf "  $(BRIGHT_GREEN)%-20s$(RESET) %s\n", cmd, desc; \
-		} \
-	}' $(MAKEFILE_LIST)
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Examples:$(RESET)"
-	@echo "  $(CYAN)make$(RESET) $(GREEN)up$(RESET)       # Start all services"
-	@echo "  $(CYAN)make$(RESET) $(GREEN)dev$(RESET)       # Start development server"
-	@echo "  $(CYAN)make$(RESET) $(GREEN)test$(RESET)      # Run tests"
-	@echo "  $(CYAN)make$(RESET) $(GREEN)build$(RESET)     # Build the project"
-	@echo ""
+# ===================================================================
+# 开发
+# ===================================================================
 
-# ==============================================
-#  DEVELOPMENT
-# ==============================================
-run: ## Run the server (requires PostgreSQL)
-	@echo "$(BOLD)$(CYAN)▶ Starting Memos server...$(RESET)"
-	@echo "$(DIM)Using local PostgreSQL connection$(RESET)"
-	@go run ./cmd/memos --mode dev --port 8081
+##@ 开发
 
-dev: ## Start development server with hot reload
-	@echo "$(BOLD)$(CYAN)▶ Starting development server...$(RESET)"
-	@echo "$(DIM)Press Ctrl+C to stop$(RESET)"
-	@air || echo "$(YELLOW)air not installed. Run: go install github.com/cosmtrek/air@latest$(RESET)"
+run: ## 启动后端 (PostgreSQL + AI)
+	@echo "Starting Memos with AI support..."
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) \
+		MEMOS_DSN=$(MEMOS_DSN) \
+		MEMOS_AI_ENABLED=true \
+		MEMOS_AI_EMBEDDING_PROVIDER=$(AI_EMBEDDING_PROVIDER) \
+		MEMOS_AI_LLM_PROVIDER=$(AI_LLM_PROVIDER) \
+		MEMOS_AI_SILICONFLOW_API_KEY=$(SILICONFLOW_API_KEY) \
+		MEMOS_AI_DEEPSEEK_API_KEY=$(DEEPSEEK_API_KEY) \
+		MEMOS_AI_OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		MEMOS_AI_OPENAI_BASE_URL=$(AI_OPENAI_BASE_URL) \
+		MEMOS_AI_EMBEDDING_MODEL=$(AI_EMBEDDING_MODEL) \
+		MEMOS_AI_RERANK_MODEL=$(AI_RERANK_MODEL) \
+		MEMOS_AI_LLM_MODEL=$(AI_LLM_MODEL) \
+		go run ./cmd/memos --mode dev --port 28081
 
-dev-docker: ## Start development environment with Docker
-	@echo "$(BOLD)$(CYAN)▶ Starting Docker development environment...$(RESET)"
-	@$(DOCKER_COMPOSE) up --build
-	@$(DOCKER_COMPOSE) down
+dev: run ## Alias for run
 
-# ==============================================
-#  BUILD
-# ==============================================
-build: ## Build the backend binary
-	@echo "$(BOLD)$(CYAN)🔨 Building backend...$(RESET)"
-	@go build -o bin/memos ./cmd/memos
-	@echo "$(BOLD)$(GREEN)✓ Build complete: bin/memos$(RESET)"
-
-build-frontend: ## Build the frontend
-	@echo "$(BOLD)$(CYAN)🔨 Building frontend...$(RESET)"
-	@cd web && pnpm build
-	@echo "$(BOLD)$(GREEN)✓ Frontend build complete$(RESET)"
-
-build-all: build build-frontend ## Build both backend and frontend
-	@echo "$(BOLD)$(GREEN)✓ All builds complete$(RESET)"
-
-release: ## Build release version with embedded frontend
-	@echo "$(BOLD)$(CYAN)🔨 Building release...$(RESET)"
-	@cd web && pnpm release
-	@echo "$(BOLD)$(GREEN)✓ Release build complete$(RESET)"
-
-# ==============================================
-#  DOCKER
-# ==============================================
-up: ## Start all services (PostgreSQL + Memos)
-	@echo "$(BOLD)$(CYAN)🐳 Starting services...$(RESET)"
-	@$(DOCKER_COMPOSE) up -d
-	@echo "$(GREEN)✓ Services started$(RESET)"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Services:$(RESET)"
-	@echo "  $(CYAN)Memos:$(RESET)  http://localhost:8081"
-	@echo "  $(CYAN)PostgreSQL:$(RESET) localhost:5433"
-	@echo ""
-	@echo "Run '$(CYAN)make logs$(RESET)' to view logs"
-
-down: ## Stop all services
-	@echo "$(BOLD)$(CYAN)🐳 Stopping services...$(RESET)"
-	@$(DOCKER_COMPOSE) down
-	@echo "$(GREEN)✓ Services stopped$(RESET)"
-
-restart: down up ## Restart all services
-
-logs: ## View service logs
-	@$(DOCKER_COMPOSE) logs -f
-
-logs-backend: ## View backend logs only
-	@$(DOCKER_COMPOSE) logs -f memos
-
-logs-db: ## View database logs only
-	@$(DOCKER_COMPOSE) logs -f db
-
-ps: ## Show running containers
-	@$(DOCKER_COMPOSE) ps
-
-shell: ## Open shell in the backend container
-	@$(DOCKER_COMPOSE) exec memos sh
-
-db-shell: ## Open PostgreSQL shell
-	@$(DOCKER_COMPOSE) exec db psql -U memos -d memos
-
-# ==============================================
-#  DATABASE
-# ==============================================
-db-migrate: ## Run database migrations
-	@echo "$(BOLD)$(CYAN)▶ Running migrations...$(RESET)"
-	@go run ./cmd/memos migrate
-
-db-reset: ## Reset database (WARNING: deletes all data)
-	@echo "$(BOLD)$(RED)⚠ This will delete all data! Type 'yes' to confirm: $(RESET)"
-	@read -r confirmation; \
-	if [ "$$confirmation" = "yes" ]; then \
-		$(DOCKER_COMPOSE) down -v; \
-		$(DOCKER_COMPOSE) up -d; \
-		echo "$(GREEN)✓ Database reset$(RESET)"; \
-	else \
-		echo "$(YELLOW)Cancelled$(RESET)"; \
-	fi
-
-db-status: ## Show database status
-	@echo "$(BOLD)$(CYAN)📊 Database Status:$(RESET)"
-	@echo ""
-	@$(DOCKER_COMPOSE) exec db psql -U memos -d memos -c "\dt" 2>/dev/null || echo "$(YELLOW)Database not running$(RESET)"
-
-# ==============================================
-#  FRONTEND
-# ==============================================
-frontend-dev: ## Start frontend development server
-	@echo "$(BOLD)$(CYAN)▶ Starting frontend dev server...$(RESET)"
+web: ## 启动前端开发服务器
 	@cd web && pnpm dev
 
-frontend-lint: ## Lint frontend code
-	@echo "$(BOLD)$(CYAN)▶ Linting frontend...$(RESET)"
-	@cd web && pnpm lint
+start: build ## 一键启动所有服务 (PostgreSQL -> 后端 -> 前端) - 自动构建最新版本
+	@./scripts/dev.sh start
 
-frontend-lint-fix: ## Fix frontend linting issues
-	@cd web && pnpm lint:fix
+stop: ## 一键停止所有服务
+	@./scripts/dev.sh stop
 
-frontend-format: ## Format frontend code
-	@cd web && pnpm format
+restart: build ## 重启所有服务 - 自动构建最新版本
+	@./scripts/dev.sh restart
 
-# ==============================================
-#  TESTING
-# ==============================================
-test: ## Run all tests
-	@echo "$(BOLD)$(CYAN)▶ Running tests...$(RESET)"
-	@go test -v -race -coverprofile=coverage.out ./...
-	@echo ""
-	@echo "$(BOLD)$(CYAN)Coverage Report:$(RESET)"
-	@go tool cover -func=coverage.out | tail -1
+status: ## 查看所有服务状态
+	@./scripts/dev.sh status
 
-test-short: ## Run quick tests (skip integration)
-	@echo "$(BOLD)$(CYAN)▶ Running quick tests...$(RESET)"
-	@go test -short -v ./...
+logs: ## 查看所有服务日志
+	@./scripts/dev.sh logs
 
-test-backend: ## Run backend tests only
-	@echo "$(BOLD)$(CYAN)▶ Running backend tests...$(RESET)"
-	@go test -v ./store/... ./server/... ./cmd/...
+logs-backend: ## 查看后端日志
+	@./scripts/dev.sh logs backend
 
-bench: ## Run benchmarks
-	@echo "$(BOLD)$(CYAN)▶ Running benchmarks...$(RESET)"
-	@go test -bench=. -benchmem ./...
+logs-frontend: ## 查看前端日志
+	@./scripts/dev.sh logs frontend
 
-# ==============================================
-#  CODE QUALITY
-# ==============================================
-lint: ## Run Go linter
-	@echo "$(BOLD)$(CYAN)▶ Running linters...$(RESET)"
-	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run; \
-	else \
-		echo "$(YELLOW)golangci-lint not installed. Installing...$(RESET)"; \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
-		golangci-lint run; \
-	fi
+logs-postgres: ## 查看 PostgreSQL 日志
+	@./scripts/dev.sh logs postgres
 
-fmt: ## Format Go code
-	@echo "$(BOLD)$(CYAN)▶ Formatting code...$(RESET)"
-	@goimports -w .
-	@echo "$(GREEN)✓ Code formatted$(RESET)
+logs-follow-backend: ## 实时跟踪后端日志
+	@./scripts/dev.sh logs backend -f
 
-vet: ## Run go vet
-	@echo "$(BOLD)$(CYAN)▶ Running go vet...$(RESET)"
-	@go vet ./...
+logs-follow-frontend: ## 实时跟踪前端日志
+	@./scripts/dev.sh logs frontend -f
 
-tidy: ## Tidy go modules
-	@echo "$(BOLD)$(CYAN)▶ Tidying modules...$(RESET)"
+logs-follow-postgres: ## 实时跟踪 PostgreSQL 日志
+	@./scripts/dev.sh logs postgres -f
+
+##@ 依赖
+
+deps: ## 安装后端依赖
+	@echo "Installing Go dependencies..."
+	@go mod download
 	@go mod tidy
-	@echo "$(GREEN)✓ Modules tidied$(RESET)"
 
-proto: ## Regenerate protocol buffers
-	@echo "$(BOLD)$(CYAN)▶ Generating proto files...$(RESET)"
-	@cd proto && buf generate
-	@echo "$(GREEN)✓ Proto files generated$(RESET)"
-
-# ==============================================
-#  CLEAN
-# ==============================================
-clean: ## Clean build artifacts
-	@echo "$(BOLD)$(CYAN)▶ Cleaning...$(RESET)"
-	@rm -rf bin/
-	@rm -f coverage.out
-	@cd web && rm -rf dist/ node_modules/.vite
-	@echo "$(GREEN)✓ Cleaned$(RESET)"
-
-clean-all: clean ## Clean everything including Docker volumes
-	@echo "$(BOLD)$(CYAN)▶ Deep cleaning...$(RESET)"
-	@$(DOCKER_COMPOSE) down -v
-	@rm -rf bin/
-	@rm -f coverage.out
-	@cd web && rm -rf dist/ node_modules
-	@echo "$(GREEN)✓ Deep cleaned$(RESET)"
-
-# ==============================================
-#  INSTALLATION
-# ==============================================
-install-tools: ## Install development tools
-	@echo "$(BOLD)$(CYAN)▶ Installing development tools...$(RESET)"
-	@echo "Installing air..."
-	@go install github.com/cosmtrek/air@latest
-	@echo "Installing golangci-lint..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@echo "Installing goimports..."
-	@go install golang.org/x/tools/cmd/goimports@latest
-	@echo "Installing buf..."
-	@go install github.com/bufbuild/buf/cmd/buf@latest
-	@echo "$(GREEN)✓ Tools installed$(RESET)"
-
-install-frontend: ## Install frontend dependencies
-	@echo "$(BOLD)$(CYAN)▶ Installing frontend dependencies...$(RESET)"
+deps-web: ## 安装前端依赖
 	@cd web && pnpm install
-	@echo "$(GREEN)✓ Frontend dependencies installed$(RESET)"
 
-# ==============================================
-#  AI FEATURES
-# ==============================================
-ai-embed: ## Generate embeddings for existing memos
-	@echo "$(BOLD)$(CYAN)▶ Generating embeddings...$(RESET)"
-	@echo "$(YELLOW)Set MEMOS_AI_API_KEY environment variable first$(RESET)"
-	@if [ -z "$$MEMOS_AI_API_KEY" ]; then \
-		echo "$(RED)Error: MEMOS_AI_API_KEY not set$(RESET)"; \
-		exit 1; \
-	fi
-	@echo "$(DIM)This may take a while...$(RESET)"
+deps-ai: ## 安装 AI 依赖
+	@echo "Installing AI dependencies..."
+	@go get github.com/tmc/langchaingo
+	@go mod tidy
 
-# ==============================================
-#  INFO
-# ==============================================
-info: ## Show project information
-	@echo ""
-	@echo "$(BOLD)$(BRIGHT_CYAN)╔═══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(BOLD)$(BRIGHT_CYAN)║$(RESET)$(BOLD) $(BRIGHT_YELLOW)  Memos Project Information$(RESET)                       $(BOLD)$(BRIGHT_CYAN)║$(RESET)"
-	@echo "$(BOLD)$(BRIGHT_CYAN)╚═══════════════════════════════════════════════════════════════╝$(RESET)"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Project:$(RESET) Memos - An open source, lightweight note-taking service"
-	@echo "$(BOLD)$(BLUE)Version:$(RESET) $(shell git describe --tags --always 2>/dev/null || echo 'unknown')"
-	@echo "$(BOLD)$(BLUE)Go:$(RESET) $(shell go version | awk '{print $$3}')"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Directories:$(RESET)"
-	@echo "  $(CYAN)cmd/$(RESET)      - Application entry point"
-	@echo "  $(CYAN)server/$(RESET)   - Server implementation"
-	@echo "  $(CYAN)store/$(RESET)    - Data layer"
-	@echo "  $(CYAN)web/$(RESET)      - Frontend (React + TypeScript)"
-	@echo "  $(CYAN)proto/$(RESET)    - Protocol buffers"
-	@echo ""
-	@echo "$(BOLD)$(BLUE)Quick Start:$(RESET)"
-	@echo "  1. $(CYAN)make up$(RESET)           - Start services"
-	@echo "  2. $(CYAN)make frontend-dev$(RESET)  - Start frontend"
-	@echo "  3. Open http://localhost:8081"
-	@echo ""
+deps-all: deps deps-web ## 安装所有依赖
 
-# Default target
-.DEFAULT_GOAL := help
+# ===================================================================
+# Docker (PostgreSQL)
+# ===================================================================
+
+##@ Docker
+
+docker-up: ## 启动 PostgreSQL
+	@echo "Starting PostgreSQL..."
+	@docker compose -f docker/compose/dev.yml up -d
+
+docker-down: ## 停止 PostgreSQL
+	@echo "Stopping PostgreSQL..."
+	@docker compose -f docker/compose/dev.yml down --remove-orphans
+
+docker-logs: ## 查看 PostgreSQL 日志
+	@docker compose -f docker/compose/dev.yml logs -f postgres
+
+docker-reset: ## 重置 PostgreSQL 数据 (危险!)
+	@echo "Resetting PostgreSQL data..."
+	@docker compose -f docker/compose/dev.yml down -v
+	@docker volume rm memos_postgres_data 2>/dev/null || true
+	@make docker-up
+
+# 生产环境部署
+docker-prod-up: ## 启动生产环境
+	@echo "Starting production environment..."
+	@docker compose -f docker/compose/prod.yml up -d
+
+docker-prod-down: ## 停止生产环境
+	@echo "Stopping production environment..."
+	@docker compose -f docker/compose/prod.yml down
+
+docker-prod-logs: ## 查看生产环境日志
+	@docker compose -f docker/compose/prod.yml logs -f
+
+# ===================================================================
+# 数据库
+# ===================================================================
+
+##@ 数据库
+
+db-connect: ## 连接 PostgreSQL shell
+	@docker exec -it memos-postgres-dev psql -U memos -d memos
+
+db-reset: ## 重置数据库 schema
+	@echo "Resetting database schema..."
+	@docker exec memos-postgres-dev psql -U memos -d memos -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@go run ./cmd/memos --mode dev --driver postgres --dsn "postgres://memos:memos@localhost:25432/memos?sslmode=disable" --migrate
+
+db-vector: ## 验证 pgvector 扩展
+	@docker exec memos-postgres-dev psql -U memos -d memos -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+
+# ===================================================================
+# 测试
+# ===================================================================
+
+##@ 测试
+
+test: ## 运行所有测试
+	@echo "Running tests..."
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./... -v -timeout 30s
+
+test-ai: ## 运行 AI 测试
+	@echo "Running AI tests..."
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./plugin/ai/... -v
+
+test-embedding: ## 运行 Embedding 测试
+	@echo "Running Embedding tests..."
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./plugin/ai/... -run Embedding -v
+
+test-runner: ## 运行 Runner 测试
+	@echo "Running Runner tests..."
+	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./server/runner/embedding/... -v
+
+# ===================================================================
+# 构建
+# ===================================================================
+
+##@ 构建
+
+build: ## 构建后端
+	@echo "Building backend..."
+	@go build -o bin/memos ./cmd/memos
+
+build-web: ## 构建前端
+	@echo "Building frontend..."
+	@cd web && pnpm build
+
+build-all: build build-web ## 构建前后端
+
+# ===================================================================
+# 清理
+# ===================================================================
+
+##@ 清理
+
+clean: ## 清理构建文件
+	@rm -rf bin/
+	@cd web && rm -rf dist/ node_modules/.vite
+
+clean-all: clean ## 清理所有
+	@cd web && rm -rf node_modules/
+	@go clean -modcache
+
+# ===================================================================
+# 帮助
+# ===================================================================
+
+help: ## 显示此帮助信息
+	@printf "\033[1m\033[36m\nMemos Development Commands\033[0m\n\n"
+	@printf "\033[1m一键操作:\033[0m\n"
+	@printf "  start                一键启动所有服务 (自动编译最新版本)\n"
+	@printf "  stop                 一键停止所有服务\n"
+	@printf "  restart              重启所有服务 (自动编译最新版本)\n"
+	@printf "  status               查看所有服务状态\n"
+	@printf "\n\033[1m日志查看:\033[0m\n"
+	@printf "  logs                 查看所有服务日志\n"
+	@printf "  logs-backend         查看后端日志\n"
+	@printf "  logs-frontend        查看前端日志\n"
+	@printf "  logs-postgres        查看 PostgreSQL 日志\n"
+	@printf "  logs-follow-backend  实时跟踪后端日志\n"
+	@printf "  logs-follow-frontend 实时跟踪前端日志\n"
+	@printf "  logs-follow-postgres 实时跟踪 PostgreSQL 日志\n"
+	@printf "\n\033[1m开发:\033[0m\n"
+	@printf "  run                  启动后端 (PostgreSQL + AI)\n"
+	@printf "  dev                  Alias for run\n"
+	@printf "  web                  启动前端开发服务器\n"
+	@printf "\n\033[1m依赖:\033[0m\n"
+	@printf "  deps                 安装后端依赖\n"
+	@printf "  deps-web             安装前端依赖\n"
+	@printf "  deps-ai              安装 AI 依赖\n"
+	@printf "  deps-all             安装所有依赖\n"
+	@printf "\n\033[1mDocker:\033[0m\n"
+	@printf "  docker-up            启动开发环境 PostgreSQL\n"
+	@printf "  docker-down          停止开发环境 PostgreSQL\n"
+	@printf "  docker-logs          查看 PostgreSQL 日志\n"
+	@printf "  docker-reset         重置 PostgreSQL 数据 (危险!)\n"
+	@printf "  docker-prod-up       启动生产环境 (PostgreSQL)\n"
+	@printf "  docker-prod-down     停止生产环境\n"
+	@printf "\n\033[1m数据库:\033[0m\n"
+	@printf "  db-connect           连接 PostgreSQL shell\n"
+	@printf "  db-reset             重置数据库 schema\n"
+	@printf "  db-vector            验证 pgvector 扩展\n"
+	@printf "\n\033[1m测试:\033[0m\n"
+	@printf "  test                 运行所有测试\n"
+	@printf "  test-ai              运行 AI 测试\n"
+	@printf "  test-embedding       运行 Embedding 测试\n"
+	@printf "  test-runner          运行 Runner 测试\n"
+	@printf "\n\033[1m构建:\033[0m\n"
+	@printf "  build                构建后端\n"
+	@printf "  build-web            构建前端\n"
+	@printf "  build-all            构建前后端\n"
+	@printf "\n\033[1m清理:\033[0m\n"
+	@printf "  clean                清理构建文件\n"
+	@printf "  clean-all            清理所有\n"
+	@printf "\n\033[1mQuick Start:\033[0m\n"
+	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
+	@printf "  2. make start                   # 启动后端 + 前端\n"
+	@printf "  3. 访问 http://localhost:25173   # 打开前端\n"
+	@printf ""

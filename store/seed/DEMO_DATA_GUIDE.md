@@ -115,21 +115,21 @@ Configured with popular reactions:
 
 ## Coverage of Markdown Features
 
-| Feature | Demo Memos |
-|---------|-----------|
-| Headings (H1-H3) | 1, 2, 3, 4 |
-| Bold text | All |
-| Links | 6 |
-| Images | 6 |
-| Code blocks | 3 |
-| Inline code | 3 |
-| Task lists | 2 |
-| Bullet lists | 1, 2, 4 |
-| Tables | 4 |
-| Horizontal rules | 1 |
-| Hierarchical tags | All |
-| Emoji | 5 |
-| Pinned memos | 1, 6 |
+| Feature           | Demo Memos |
+| ----------------- | ---------- |
+| Headings (H1-H3)  | 1, 2, 3, 4 |
+| Bold text         | All        |
+| Links             | 6          |
+| Images            | 6          |
+| Code blocks       | 3          |
+| Inline code       | 3          |
+| Task lists        | 2          |
+| Bullet lists      | 1, 2, 4    |
+| Tables            | 4          |
+| Horizontal rules  | 1          |
+| Hierarchical tags | All        |
+| Emoji             | 5          |
+| Pinned memos      | 1, 6       |
 
 ## Tag Hierarchy
 
@@ -174,7 +174,7 @@ To run with demo data:
 
 ```bash
 # Start in demo mode
-go run ./cmd/memos --mode demo --port 8081
+go run ./cmd/memos --mode demo --port 28081
 
 # Or use the binary
 ./memos --mode demo

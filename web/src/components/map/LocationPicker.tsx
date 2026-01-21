@@ -168,14 +168,16 @@ const MapControls = ({ position }: MapControlsProps) => {
 
     return () => {
       // Cleanup: unmount React component and remove control
-      if (rootRef.current) {
-        rootRef.current.unmount();
-        rootRef.current = null;
-      }
-      if (controlRef.current) {
-        controlRef.current.remove();
-        controlRef.current = null;
-      }
+      setTimeout(() => {
+        if (rootRef.current) {
+          rootRef.current.unmount();
+          rootRef.current = null;
+        }
+        if (controlRef.current) {
+          controlRef.current.remove();
+          controlRef.current = null;
+        }
+      }, 0);
     };
   }, [map]);
 

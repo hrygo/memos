@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "gen/api/v1";
+
+// ScheduleService provides schedule management APIs.
+service ScheduleService {
+  // CreateSchedule creates a new schedule.
+  rpc CreateSchedule(CreateScheduleRequest) returns (Schedule) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules"
+      body: "*"
+    };
+  }
+
+  // ListSchedules lists schedules with filters.
+  rpc ListSchedules(ListSchedulesRequest) returns (ListSchedulesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/schedules"
+    };
+  }
+
+  // GetSchedule gets a schedule by name.
+  rpc GetSchedule(GetScheduleRequest) returns (Schedule) {
+    option (google.api.http) = {
+      get: "/api/v1/{name=schedules/*}"
+    };
+  }
+
+  // UpdateSchedule updates a schedule.
+  rpc UpdateSchedule(UpdateScheduleRequest) returns (Schedule) {
+    option (google.api.http) = {
+      patch: "/api/v1/{schedule.name=schedules/*}"
+      body: "*"
+    };
+  }
+
+  // DeleteSchedule deletes a schedule.
+  rpc DeleteSchedule(DeleteScheduleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/{name=schedules/*}"
+    };
+  }
+
+  // CheckConflict checks for schedule conflicts.
+  rpc CheckConflict(CheckConflictRequest) returns (CheckConflictResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules:checkConflict"
+      body: "*"
+    };
+  }
+
+  // ParseAndCreateSchedule parses natural language and creates a schedule.
+  rpc ParseAndCreateSchedule(ParseAndCreateScheduleRequest) returns (ParseAndCreateScheduleResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules:parseAndCreate"
+      body: "*"
+    };
+  }
+}
+
+// Schedule represents a schedule event.
+message Schedule {
+  // Format: schedules/{uid}
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string title = 2 [(google.api.field_behavior) = REQUIRED];
+  string description = 3;
+  string location = 4;
+  int64 start_ts = 5 [(google.api.field_behavior) = REQUIRED];  // Unix timestamp in seconds
+  int64 end_ts = 6;
+  bool all_day = 7;
+  string timezone = 8;
+  string recurrence_rule = 9;  // JSON string
+  int64 recurrence_end_ts = 10;
+  repeated Reminder reminders = 11;
+  string creator = 12;  // Format: users/{id}
+  int64 created_ts = 13;
+  int64 updated_ts = 14;
+  string state = 15;  // NORMAL, ARCHIVED
+}
+
+// Reminder represents a schedule reminder.
+message Reminder {
+  string type = 1;   // "before" or "at"
+  int32 value = 2;
+  string unit = 3;   // "minutes", "hours", "days"
+}
+
+// CreateScheduleRequest is the request for CreateSchedule.
+message CreateScheduleRequest {
+  Schedule schedule = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// ListSchedulesRequest is the request for ListSchedules.
+message ListSchedulesRequest {
+  // Format: users/{id}. Filter by creator.
+  string creator = 1;
+  int64 start_ts = 2;
+  int64 end_ts = 3;
+  string state = 4;
+  int32 page_size = 5;
+  string page_token = 6;
+}
+
+// ListSchedulesResponse is the response for ListSchedules.
+message ListSchedulesResponse {
+  repeated Schedule schedules = 1;
+  string next_page_token = 2;
+  // truncated indicates whether the results were truncated due to instance limits
+  bool truncated = 3;
+}
+
+// GetScheduleRequest is the request for GetSchedule.
+message GetScheduleRequest {
+  // Format: schedules/{uid}
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// UpdateScheduleRequest is the request for UpdateSchedule.
+message UpdateScheduleRequest {
+  Schedule schedule = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// DeleteScheduleRequest is the request for DeleteSchedule.
+message DeleteScheduleRequest {
+  // Format: schedules/{uid}
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// CheckConflictRequest is the request for CheckConflict.
+message CheckConflictRequest {
+  int64 start_ts = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 end_ts = 2;
+  repeated string exclude_names = 3;  // Schedules to exclude from conflict check
+}
+
+// CheckConflictResponse is the response for CheckConflict.
+message CheckConflictResponse {
+  repeated Schedule conflicts = 1;
+}
+
+// ParseAndCreateScheduleRequest is the request for ParseAndCreateSchedule.
+message ParseAndCreateScheduleRequest {
+  // Natural language text to parse
+  string text = 1 [(google.api.field_behavior) = REQUIRED];
+  // Whether to auto-confirm and create the schedule
+  bool auto_confirm = 2;
+}
+
+// ParseAndCreateScheduleResponse is the response for ParseAndCreateSchedule.
+message ParseAndCreateScheduleResponse {
+  // Parsed schedule (always returned)
+  Schedule parsed_schedule = 1;
+  // Created schedule (only returned when auto_confirm is true and no conflicts)
+  Schedule created_schedule = 2;
+  // Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
+  repeated Schedule conflicts = 3;
+}

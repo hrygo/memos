@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "gen/api/v1";
+
+// AIService provides AI-powered features for memo management.
+service AIService {
+  // SemanticSearch performs semantic search on memos.
+  rpc SemanticSearch(SemanticSearchRequest) returns (SemanticSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/search"
+      body: "*"
+    };
+  }
+
+  // SuggestTags suggests tags for memo content.
+  rpc SuggestTags(SuggestTagsRequest) returns (SuggestTagsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/suggest-tags"
+      body: "*"
+    };
+  }
+
+  // ChatWithMemos streams a chat response using memos as context.
+  rpc ChatWithMemos(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/chat"
+      body: "*"
+    };
+  }
+
+  // GetRelatedMemos finds memos related to a specific memo.
+  rpc GetRelatedMemos(GetRelatedMemosRequest) returns (GetRelatedMemosResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/{name=memos/*}/related"
+    };
+  }
+}
+
+// SemanticSearchRequest is the request for SemanticSearch.
+message SemanticSearchRequest {
+  string query = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 limit = 2;  // default: 10, max: 50
+}
+
+// SemanticSearchResponse is the response for SemanticSearch.
+message SemanticSearchResponse {
+  repeated SearchResult results = 1;
+}
+
+// SearchResult represents a single search result.
+message SearchResult {
+  string name = 1;      // memos/{id}
+  string snippet = 2;   // content snippet
+  float score = 3;      // relevance score
+}
+
+// SuggestTagsRequest is the request for SuggestTags.
+message SuggestTagsRequest {
+  string content = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 limit = 2;  // default: 5
+}
+
+// SuggestTagsResponse is the response for SuggestTags.
+message SuggestTagsResponse {
+  repeated string tags = 1;
+}
+
+// ScheduleQueryMode specifies the query mode for schedule filtering.
+enum ScheduleQueryMode {
+  AUTO = 0;       // Auto-select query mode based on query type (relative time → STANDARD, absolute time → STRICT)
+  STANDARD = 1;   // Standard mode: return schedules that have any part within the query range
+  STRICT = 2;     // Strict mode: return only schedules completely within the query range
+}
+
+// ChatWithMemosRequest is the request for ChatWithMemos.
+message ChatWithMemosRequest {
+  string message = 1 [(google.api.field_behavior) = REQUIRED];
+  repeated string history = 2;  // conversation history
+  string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
+  ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
+}
+
+// ChatWithMemosResponse is the response for ChatWithMemos.
+message ChatWithMemosResponse {
+  string content = 1;                       // streaming content chunk
+  repeated string sources = 2;              // citation sources memos/{id}
+  bool done = 3;                            // stream end marker
+  ScheduleCreationIntent schedule_creation_intent = 4;  // AI-detected schedule creation intent (sent in final chunk)
+  ScheduleQueryResult schedule_query_result = 5;        // AI-detected schedule query result (sent in final chunk)
+}
+
+// ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+message ScheduleCreationIntent {
+  bool detected = 1;                    // Whether user wants to create a schedule
+  string schedule_description = 2;      // Natural language description of the schedule (e.g., "明天下午2点开会")
+  string reasoning = 3;                 // AI's reasoning for intent detection (optional, for debugging)
+}
+
+// ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+message ScheduleQueryResult {
+  bool detected = 1;                    // Whether the user's intent is to query schedules
+  repeated ScheduleSummary schedules = 2; // Queried schedules matching the user's intent
+  string time_range_description = 3;     // Human-readable time range description (e.g., "未来7天", "本周")
+  string query_type = 4;                 // Type of query (e.g., "upcoming", "range", "filter")
+}
+
+// ScheduleSummary represents a simplified schedule for query results.
+// This avoids circular dependencies with the full Schedule message in schedule_service.proto.
+message ScheduleSummary {
+  string uid = 1;                   // Schedule unique identifier in format "schedules/{uid}"
+  string title = 2;                 // Schedule title
+  int64 start_ts = 3;               // Start timestamp (Unix timestamp in seconds)
+  int64 end_ts = 4;                 // End timestamp (Unix timestamp in seconds, 0 if not set)
+  bool all_day = 5;                 // Whether this is an all-day event
+  string location = 6;              // Event location (optional)
+  string recurrence_rule = 7;       // Recurrence rule in JSON format (empty if not recurring)
+  string status = 8;                // Schedule status (e.g., "ACTIVE", "CANCELLED")
+}
+
+// GetRelatedMemosRequest is the request for GetRelatedMemos.
+message GetRelatedMemosRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];  // memos/{id}
+  int32 limit = 2;  // default: 5
+}
+
+// GetRelatedMemosResponse is the response for GetRelatedMemos.
+message GetRelatedMemosResponse {
+  repeated SearchResult memos = 1;
+}

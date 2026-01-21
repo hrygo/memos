@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"runtime/debug"
 
 	"connectrpc.com/connect"
@@ -56,7 +57,7 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 
 		// Prevent browser caching of API responses to avoid stale data issues
 		// See: https://github.com/usememos/memos/issues/5470
-		if resp != nil {
+		if err == nil && resp != nil && !isNil(resp) {
 			resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			resp.Header().Set("Pragma", "no-cache")
 			resp.Header().Set("Expires", "0")
@@ -64,6 +65,17 @@ func (*MetadataInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc 
 
 		return resp, err
 	}
+}
+
+func isNil(i any) bool {
+	if i == nil {
+		return true
+	}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(i).IsNil()
+	}
+	return false
 }
 
 func (*MetadataInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
@@ -138,7 +150,7 @@ func (*LoggingInterceptor) classifyError(err error) (slog.Level, string) {
 		connect.CodeFailedPrecondition,
 		connect.CodeAborted,
 		connect.CodeOutOfRange:
-		return slog.LevelInfo, "client error"
+		return slog.LevelWarn, "client error"
 	default:
 		// Server errors
 		return slog.LevelError, "server error"
@@ -233,6 +245,30 @@ func (*AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) co
 	return next
 }
 
-func (*AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
-	return next
+func (in *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		header := conn.RequestHeader()
+		authHeader := header.Get("Authorization")
+
+		result := in.authenticator.Authenticate(ctx, authHeader)
+
+		// Enforce authentication for non-public methods
+		if result == nil && !IsPublicMethod(conn.Spec().Procedure) {
+			return connect.NewError(connect.CodeUnauthenticated, errors.New("authentication required"))
+		}
+
+		// Set context based on auth result
+		if result != nil {
+			if result.Claims != nil {
+				// Access Token V2 - stateless, use claims
+				ctx = auth.SetUserClaimsInContext(ctx, result.Claims)
+				ctx = context.WithValue(ctx, auth.UserIDContextKey, result.Claims.UserID)
+			} else if result.User != nil {
+				// PAT - have full user
+				ctx = auth.SetUserInContext(ctx, result.User, result.AccessToken)
+			}
+		}
+
+		return next(ctx, conn)
+	}
 }

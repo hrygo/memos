@@ -181,7 +181,7 @@ func GetPostgresDSN(t *testing.T) string {
 		}
 
 		container, err := postgres.Run(ctx,
-			"postgres:18",
+			"pgvector/pgvector:pg16",
 			postgres.WithDatabase("init_db"),
 			postgres.WithUsername(testUser),
 			postgres.WithPassword(testPassword),
@@ -299,7 +299,7 @@ func GetDedicatedPostgresDSN(t *testing.T) (dsn string, containerHost string, cl
 	}
 
 	container, err := postgres.Run(ctx,
-		"postgres:18",
+		"pgvector/pgvector:pg16",
 		postgres.WithDatabase("memos"),
 		postgres.WithUsername(testUser),
 		postgres.WithPassword(testPassword),

@@ -74,4 +74,17 @@ type Driver interface {
 	ListReactions(ctx context.Context, find *FindReaction) ([]*Reaction, error)
 	GetReaction(ctx context.Context, find *FindReaction) (*Reaction, error)
 	DeleteReaction(ctx context.Context, delete *DeleteReaction) error
+
+	// MemoEmbedding model related methods.
+	UpsertMemoEmbedding(ctx context.Context, embedding *MemoEmbedding) (*MemoEmbedding, error)
+	ListMemoEmbeddings(ctx context.Context, find *FindMemoEmbedding) ([]*MemoEmbedding, error)
+	DeleteMemoEmbedding(ctx context.Context, memoID int32) error
+	FindMemosWithoutEmbedding(ctx context.Context, find *FindMemosWithoutEmbedding) ([]*Memo, error)
+	VectorSearch(ctx context.Context, opts *VectorSearchOptions) ([]*MemoWithScore, error)
+
+	// Schedule model related methods.
+	CreateSchedule(ctx context.Context, create *Schedule) (*Schedule, error)
+	ListSchedules(ctx context.Context, find *FindSchedule) ([]*Schedule, error)
+	UpdateSchedule(ctx context.Context, update *UpdateSchedule) error
+	DeleteSchedule(ctx context.Context, delete *DeleteSchedule) error
 }

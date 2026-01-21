@@ -1,8 +1,7 @@
 import { GlobeIcon } from "lucide-react";
 import { FC } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { locales } from "@/i18n";
-import { getLocaleDisplayName, loadLocale } from "@/utils/i18n";
+import { Button } from "@/components/ui/button";
+import { loadLocale } from "@/utils/i18n";
 
 interface Props {
   value: Locale;
@@ -12,29 +11,17 @@ interface Props {
 const LocaleSelect: FC<Props> = (props: Props) => {
   const { onChange, value } = props;
 
-  const handleSelectChange = async (locale: Locale) => {
-    // Apply locale globally immediately
-    loadLocale(locale);
-    // Also notify parent component
-    onChange(locale);
+  const handleLocaleChange = () => {
+    const nextLocale = value === "en" ? "zh-Hans" : "en";
+    loadLocale(nextLocale);
+    onChange(nextLocale);
   };
 
   return (
-    <Select value={value} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <div className="flex items-center gap-2">
-          <GlobeIcon className="w-4 h-auto" />
-          <SelectValue placeholder="Select language" />
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {locales.map((locale) => (
-          <SelectItem key={locale} value={locale}>
-            {getLocaleDisplayName(locale)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Button variant="outline" className="w-auto" onClick={handleLocaleChange}>
+      <GlobeIcon className="w-4 h-auto mr-2" />
+      {value === "en" ? "中文(简体)" : "English"}
+    </Button>
   );
 };
 

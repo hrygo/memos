@@ -284,16 +284,16 @@ See SAFARI_FIX.md for recommended test coverage.
 ### Manual Testing
 ```bash
 # Test attachment
-curl "http://localhost:8081/file/attachments/{uid}/file.jpg"
+curl "http://localhost:28081/file/attachments/{uid}/file.jpg"
 
 # Test avatar by ID
-curl "http://localhost:8081/file/users/1/avatar"
+curl "http://localhost:28081/file/users/1/avatar"
 
 # Test avatar by username
-curl "http://localhost:8081/file/users/steven/avatar"
+curl "http://localhost:28081/file/users/steven/avatar"
 
 # Test range request
-curl -H "Range: bytes=0-999" "http://localhost:8081/file/attachments/{uid}/video.mp4"
+curl -H "Range: bytes=0-999" "http://localhost:28081/file/attachments/{uid}/video.mp4"
 ```
 
 ## Future Improvements

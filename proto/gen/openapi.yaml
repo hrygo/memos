@@ -69,6 +69,81 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/chat:
+        post:
+            tags:
+                - AIService
+            description: ChatWithMemos streams a chat response using memos as context.
+            operationId: AIService_ChatWithMemos
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatWithMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatWithMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/search:
+        post:
+            tags:
+                - AIService
+            description: SemanticSearch performs semantic search on memos.
+            operationId: AIService_SemanticSearch
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SemanticSearchRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SemanticSearchResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/suggest-tags:
+        post:
+            tags:
+                - AIService
+            description: SuggestTags suggests tags for memo content.
+            operationId: AIService_SuggestTags
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SuggestTagsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SuggestTagsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/attachments:
         get:
             tags:
@@ -989,6 +1064,37 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/memos/{memo}/related:
+        get:
+            tags:
+                - AIService
+            description: GetRelatedMemos finds memos related to a specific memo.
+            operationId: AIService_GetRelatedMemos
+            parameters:
+                - name: memo
+                  in: path
+                  description: The memo id.
+                  required: true
+                  schema:
+                    type: string
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetRelatedMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/memos/{memo}/relations:
         get:
             tags:
@@ -1048,6 +1154,205 @@ paths:
                 "200":
                     description: OK
                     content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedules:
+        get:
+            tags:
+                - ScheduleService
+            description: ListSchedules lists schedules with filters.
+            operationId: ScheduleService_ListSchedules
+            parameters:
+                - name: creator
+                  in: query
+                  description: 'Format: users/{id}. Filter by creator.'
+                  schema:
+                    type: string
+                - name: startTs
+                  in: query
+                  schema:
+                    type: string
+                - name: endTs
+                  in: query
+                  schema:
+                    type: string
+                - name: state
+                  in: query
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListSchedulesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - ScheduleService
+            description: CreateSchedule creates a new schedule.
+            operationId: ScheduleService_CreateSchedule
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateScheduleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Schedule'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedules/{schedule}:
+        get:
+            tags:
+                - ScheduleService
+            description: GetSchedule gets a schedule by name.
+            operationId: ScheduleService_GetSchedule
+            parameters:
+                - name: schedule
+                  in: path
+                  description: The schedule id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Schedule'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - ScheduleService
+            description: DeleteSchedule deletes a schedule.
+            operationId: ScheduleService_DeleteSchedule
+            parameters:
+                - name: schedule
+                  in: path
+                  description: The schedule id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - ScheduleService
+            description: UpdateSchedule updates a schedule.
+            operationId: ScheduleService_UpdateSchedule
+            parameters:
+                - name: schedule
+                  in: path
+                  description: The schedule id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateScheduleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Schedule'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedules:checkConflict:
+        post:
+            tags:
+                - ScheduleService
+            description: CheckConflict checks for schedule conflicts.
+            operationId: ScheduleService_CheckConflict
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CheckConflictRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CheckConflictResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedules:parseAndCreate:
+        post:
+            tags:
+                - ScheduleService
+            description: ParseAndCreateSchedule parses natural language and creates a schedule.
+            operationId: ScheduleService_ParseAndCreateSchedule
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ParseAndCreateScheduleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ParseAndCreateScheduleResponse'
                 default:
                     description: Default error response
                     content:
@@ -2030,6 +2335,65 @@ components:
                     description: |-
                         Optional. The related memo. Refer to `Memo.name`.
                          Format: memos/{memo}
+        ChatWithMemosRequest:
+            required:
+                - message
+            type: object
+            properties:
+                message:
+                    type: string
+                history:
+                    type: array
+                    items:
+                        type: string
+                userTimezone:
+                    type: string
+                scheduleQueryMode:
+                    enum:
+                        - AUTO
+                        - STANDARD
+                        - STRICT
+                    type: string
+                    format: enum
+            description: ChatWithMemosRequest is the request for ChatWithMemos.
+        ChatWithMemosResponse:
+            type: object
+            properties:
+                content:
+                    type: string
+                sources:
+                    type: array
+                    items:
+                        type: string
+                done:
+                    type: boolean
+                scheduleCreationIntent:
+                    $ref: '#/components/schemas/ScheduleCreationIntent'
+                scheduleQueryResult:
+                    $ref: '#/components/schemas/ScheduleQueryResult'
+            description: ChatWithMemosResponse is the response for ChatWithMemos.
+        CheckConflictRequest:
+            required:
+                - startTs
+            type: object
+            properties:
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                excludeNames:
+                    type: array
+                    items:
+                        type: string
+            description: CheckConflictRequest is the request for CheckConflict.
+        CheckConflictResponse:
+            type: object
+            properties:
+                conflicts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Schedule'
+            description: CheckConflictResponse is the response for CheckConflict.
         CreatePersonalAccessTokenRequest:
             required:
                 - parent
@@ -2059,6 +2423,14 @@ components:
                     description: |-
                         The actual token value - only returned on creation.
                          This is the only time the token value will be visible.
+        CreateScheduleRequest:
+            required:
+                - schedule
+            type: object
+            properties:
+                schedule:
+                    $ref: '#/components/schemas/Schedule'
+            description: CreateScheduleRequest is the request for CreateSchedule.
         FieldMapping:
             type: object
             properties:
@@ -2087,6 +2459,14 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/User'
                     description: The authenticated user's information.
+        GetRelatedMemosResponse:
+            type: object
+            properties:
+                memos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SearchResult'
+            description: GetRelatedMemosResponse is the response for GetRelatedMemos.
         GoogleProtobufAny:
             type: object
             properties:
@@ -2369,6 +2749,19 @@ components:
                     type: integer
                     description: The total count of personal access tokens.
                     format: int32
+        ListSchedulesResponse:
+            type: object
+            properties:
+                schedules:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Schedule'
+                nextPageToken:
+                    type: string
+                truncated:
+                    type: boolean
+                    description: truncated indicates whether the results were truncated due to instance limits
+            description: ListSchedulesResponse is the response for ListSchedules.
         ListShortcutsResponse:
             type: object
             properties:
@@ -2609,6 +3002,35 @@ components:
                         type: string
                 fieldMapping:
                     $ref: '#/components/schemas/FieldMapping'
+        ParseAndCreateScheduleRequest:
+            required:
+                - text
+            type: object
+            properties:
+                text:
+                    type: string
+                    description: Natural language text to parse
+                autoConfirm:
+                    type: boolean
+                    description: Whether to auto-confirm and create the schedule
+            description: ParseAndCreateScheduleRequest is the request for ParseAndCreateSchedule.
+        ParseAndCreateScheduleResponse:
+            type: object
+            properties:
+                parsedSchedule:
+                    allOf:
+                        - $ref: '#/components/schemas/Schedule'
+                    description: Parsed schedule (always returned)
+                createdSchedule:
+                    allOf:
+                        - $ref: '#/components/schemas/Schedule'
+                    description: Created schedule (only returned when auto_confirm is true and no conflicts)
+                conflicts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Schedule'
+                    description: Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
+            description: ParseAndCreateScheduleResponse is the response for ParseAndCreateSchedule.
         PersonalAccessToken:
             type: object
             properties:
@@ -2682,6 +3104,134 @@ components:
                     type: string
                     description: When the access token expires.
                     format: date-time
+        Reminder:
+            type: object
+            properties:
+                type:
+                    type: string
+                value:
+                    type: integer
+                    format: int32
+                unit:
+                    type: string
+            description: Reminder represents a schedule reminder.
+        Schedule:
+            required:
+                - name
+                - title
+                - startTs
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: 'Format: schedules/{uid}'
+                title:
+                    type: string
+                description:
+                    type: string
+                location:
+                    type: string
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                allDay:
+                    type: boolean
+                timezone:
+                    type: string
+                recurrenceRule:
+                    type: string
+                recurrenceEndTs:
+                    type: string
+                reminders:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Reminder'
+                creator:
+                    type: string
+                createdTs:
+                    type: string
+                updatedTs:
+                    type: string
+                state:
+                    type: string
+            description: Schedule represents a schedule event.
+        ScheduleCreationIntent:
+            type: object
+            properties:
+                detected:
+                    type: boolean
+                scheduleDescription:
+                    type: string
+                reasoning:
+                    type: string
+            description: ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
+        ScheduleQueryResult:
+            type: object
+            properties:
+                detected:
+                    type: boolean
+                schedules:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ScheduleSummary'
+                timeRangeDescription:
+                    type: string
+                queryType:
+                    type: string
+            description: ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
+        ScheduleSummary:
+            type: object
+            properties:
+                uid:
+                    type: string
+                title:
+                    type: string
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                allDay:
+                    type: boolean
+                location:
+                    type: string
+                recurrenceRule:
+                    type: string
+                status:
+                    type: string
+            description: |-
+                ScheduleSummary represents a simplified schedule for query results.
+                 This avoids circular dependencies with the full Schedule message in schedule_service.proto.
+        SearchResult:
+            type: object
+            properties:
+                name:
+                    type: string
+                snippet:
+                    type: string
+                score:
+                    type: number
+                    format: float
+            description: SearchResult represents a single search result.
+        SemanticSearchRequest:
+            required:
+                - query
+            type: object
+            properties:
+                query:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: SemanticSearchRequest is the request for SemanticSearch.
+        SemanticSearchResponse:
+            type: object
+            properties:
+                results:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SearchResult'
+            description: SemanticSearchResponse is the response for SemanticSearch.
         SetMemoAttachmentsRequest:
             required:
                 - name
@@ -2829,6 +3379,36 @@ components:
             description: |-
                 S3 configuration for cloud storage backend.
                  Reference: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-go/
+        SuggestTagsRequest:
+            required:
+                - content
+            type: object
+            properties:
+                content:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: SuggestTagsRequest is the request for SuggestTags.
+        SuggestTagsResponse:
+            type: object
+            properties:
+                tags:
+                    type: array
+                    items:
+                        type: string
+            description: SuggestTagsResponse is the response for SuggestTags.
+        UpdateScheduleRequest:
+            required:
+                - schedule
+            type: object
+            properties:
+                schedule:
+                    $ref: '#/components/schemas/Schedule'
+                updateMask:
+                    type: string
+                    format: field-mask
+            description: UpdateScheduleRequest is the request for UpdateSchedule.
         UpsertMemoReactionRequest:
             required:
                 - name
@@ -3057,11 +3637,15 @@ components:
                     format: date-time
             description: UserWebhook represents a webhook owned by a user.
 tags:
+    - name: AIService
+      description: AIService provides AI-powered features for memo management.
     - name: ActivityService
     - name: AttachmentService
     - name: AuthService
     - name: IdentityProviderService
     - name: InstanceService
     - name: MemoService
+    - name: ScheduleService
+      description: ScheduleService provides schedule management APIs.
     - name: ShortcutService
     - name: UserService

@@ -1,47 +1,11 @@
 import i18n, { BackendModule, FallbackLng, FallbackLngObjList } from "i18next";
-import { orderBy } from "lodash-es";
+
 import { initReactI18next } from "react-i18next";
 import { findNearestMatchedLanguage } from "./utils/i18n";
 
-export const locales = orderBy([
-  "ar",
-  "ca",
-  "cs",
-  "de",
-  "en",
-  "en-GB",
-  "es",
-  "fa",
-  "fr",
-  "gl",
-  "hi",
-  "hr",
-  "hu",
-  "id",
-  "it",
-  "ja",
-  "ka-GE",
-  "ko",
-  "mr",
-  "nb",
-  "nl",
-  "pl",
-  "pt-PT",
-  "pt-BR",
-  "ru",
-  "sl",
-  "sv",
-  "th",
-  "tr",
-  "uk",
-  "vi",
-  "zh-Hans",
-  "zh-Hant",
-]);
+export const locales = ["en", "zh-Hans"];
 
 const fallbacks = {
-  "zh-HK": ["zh-Hant", "en"],
-  "zh-TW": ["zh-Hant", "en"],
   zh: ["zh-Hans", "en"],
 } as FallbackLngObjList;
 

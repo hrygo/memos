@@ -367,7 +367,8 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 		ID: memo.ID,
 	}
 	for _, path := range request.UpdateMask.Paths {
-		if path == "content" {
+		switch path {
+		case "content":
 			contentLengthLimit, err := s.getContentLengthLimit(ctx)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to get content length limit")
@@ -381,7 +382,7 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			}
 			update.Content = &memo.Content
 			update.Payload = memo.Payload
-		} else if path == "visibility" {
+		case "visibility":
 			instanceMemoRelatedSetting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to get instance memo related setting")
@@ -391,21 +392,21 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 				return nil, status.Errorf(codes.PermissionDenied, "disable public memos system setting is enabled")
 			}
 			update.Visibility = &visibility
-		} else if path == "pinned" {
+		case "pinned":
 			update.Pinned = &request.Memo.Pinned
-		} else if path == "state" {
+		case "state":
 			rowStatus := convertStateToStore(request.Memo.State)
 			update.RowStatus = &rowStatus
-		} else if path == "create_time" {
+		case "create_time":
 			createdTs := request.Memo.CreateTime.AsTime().Unix()
 			update.CreatedTs = &createdTs
-		} else if path == "update_time" {
+		case "update_time":
 			updatedTs := time.Now().Unix()
 			if request.Memo.UpdateTime != nil {
 				updatedTs = request.Memo.UpdateTime.AsTime().Unix()
 			}
 			update.UpdatedTs = &updatedTs
-		} else if path == "display_time" {
+		case "display_time":
 			displayTs := request.Memo.DisplayTime.AsTime().Unix()
 			memoRelatedSetting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
 			if err != nil {
@@ -416,11 +417,11 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			} else {
 				update.CreatedTs = &displayTs
 			}
-		} else if path == "location" {
+		case "location":
 			payload := memo.Payload
 			payload.Location = convertLocationToStore(request.Memo.Location)
 			update.Payload = payload
-		} else if path == "attachments" {
+		case "attachments":
 			_, err := s.SetMemoAttachments(ctx, &v1pb.SetMemoAttachmentsRequest{
 				Name:        request.Memo.Name,
 				Attachments: request.Memo.Attachments,
@@ -428,7 +429,7 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to set memo attachments")
 			}
-		} else if path == "relations" {
+		case "relations":
 			_, err := s.SetMemoRelations(ctx, &v1pb.SetMemoRelationsRequest{
 				Name:      request.Memo.Name,
 				Relations: request.Memo.Relations,

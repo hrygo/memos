@@ -35,6 +35,7 @@ var (
 				InstanceURL: viper.GetString("instance-url"),
 				Version:     version.GetCurrentVersion(viper.GetString("mode")),
 			}
+			instanceProfile.FromEnv()
 			if err := instanceProfile.Validate(); err != nil {
 				panic(err)
 			}
@@ -90,15 +91,15 @@ var (
 
 func init() {
 	viper.SetDefault("mode", "dev")
-	viper.SetDefault("driver", "sqlite")
-	viper.SetDefault("port", 8081)
+	viper.SetDefault("driver", "postgres")
+	viper.SetDefault("port", 28081)
 
 	rootCmd.PersistentFlags().String("mode", "dev", `mode of server, can be "prod" or "dev" or "demo"`)
 	rootCmd.PersistentFlags().String("addr", "", "address of server")
-	rootCmd.PersistentFlags().Int("port", 8081, "port of server")
+	rootCmd.PersistentFlags().Int("port", 28081, "port of server")
 	rootCmd.PersistentFlags().String("unix-sock", "", "path to the unix socket, overrides --addr and --port")
 	rootCmd.PersistentFlags().String("data", "", "data directory")
-	rootCmd.PersistentFlags().String("driver", "sqlite", "database driver")
+	rootCmd.PersistentFlags().String("driver", "postgres", "database driver (postgres, mysql, sqlite)")
 	rootCmd.PersistentFlags().String("dsn", "", "database source name(aka. DSN)")
 	rootCmd.PersistentFlags().String("instance-url", "", "the url of your memos instance")
 
@@ -129,6 +130,13 @@ func init() {
 
 	viper.SetEnvPrefix("memos")
 	viper.AutomaticEnv()
+	// Bind environment variables for configuration
+	if err := viper.BindEnv("driver", "MEMOS_DRIVER"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("dsn", "MEMOS_DSN"); err != nil {
+		panic(err)
+	}
 	if err := viper.BindEnv("instance-url", "MEMOS_INSTANCE_URL"); err != nil {
 		panic(err)
 	}

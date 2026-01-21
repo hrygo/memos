@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import App from "@/App";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Spinner from "@/components/Spinner";
 import MainLayout from "@/layouts/MainLayout";
 import RootLayout from "@/layouts/RootLayout";
@@ -21,6 +22,7 @@ const SignIn = lazy(() => import("@/pages/SignIn"));
 const SignUp = lazy(() => import("@/pages/SignUp"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const MemoDetailRedirect = lazy(() => import("./MemoDetailRedirect"));
+const AIChat = lazy(() => import("@/pages/AIChat"));
 
 import { ROUTES } from "./routes";
 
@@ -62,7 +64,8 @@ const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              { path: "", element: <Home /> },
+              { path: "", element: <LazyRoute component={AIChat} /> },
+              { path: Routes.HOME, element: <Home /> },
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },
@@ -70,6 +73,14 @@ const router = createBrowserRouter([
           },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
           { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
+          {
+            path: Routes.CHAT,
+            element: (
+              <ErrorBoundary>
+                <LazyRoute component={AIChat} />
+              </ErrorBoundary>
+            ),
+          },
           { path: Routes.SETTING, element: <LazyRoute component={Setting} /> },
           { path: "memos/:uid", element: <LazyRoute component={MemoDetail} /> },
           // Redirect old path to new path
