@@ -23,6 +23,8 @@ const _ = connect.IsAtLeastVersion1_13_0
 const (
 	// AIServiceName is the fully-qualified name of the AIService service.
 	AIServiceName = "memos.api.v1.AIService"
+	// ScheduleAgentServiceName is the fully-qualified name of the ScheduleAgentService service.
+	ScheduleAgentServiceName = "memos.api.v1.ScheduleAgentService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -43,6 +45,18 @@ const (
 	// AIServiceGetRelatedMemosProcedure is the fully-qualified name of the AIService's GetRelatedMemos
 	// RPC.
 	AIServiceGetRelatedMemosProcedure = "/memos.api.v1.AIService/GetRelatedMemos"
+	// AIServiceChatWithScheduleAgentProcedure is the fully-qualified name of the AIService's
+	// ChatWithScheduleAgent RPC.
+	AIServiceChatWithScheduleAgentProcedure = "/memos.api.v1.AIService/ChatWithScheduleAgent"
+	// AIServiceChatWithMemosIntegratedProcedure is the fully-qualified name of the AIService's
+	// ChatWithMemosIntegrated RPC.
+	AIServiceChatWithMemosIntegratedProcedure = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
+	// ScheduleAgentServiceChatProcedure is the fully-qualified name of the ScheduleAgentService's Chat
+	// RPC.
+	ScheduleAgentServiceChatProcedure = "/memos.api.v1.ScheduleAgentService/Chat"
+	// ScheduleAgentServiceChatStreamProcedure is the fully-qualified name of the ScheduleAgentService's
+	// ChatStream RPC.
+	ScheduleAgentServiceChatStreamProcedure = "/memos.api.v1.ScheduleAgentService/ChatStream"
 )
 
 // AIServiceClient is a client for the memos.api.v1.AIService service.
@@ -55,6 +69,10 @@ type AIServiceClient interface {
 	ChatWithMemos(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
+	// ChatWithScheduleAgent streams a chat response using the schedule agent.
+	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
+	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
+	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
 }
 
 // NewAIServiceClient constructs a client for the memos.api.v1.AIService service. By default, it
@@ -92,15 +110,29 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("GetRelatedMemos")),
 			connect.WithClientOptions(opts...),
 		),
+		chatWithScheduleAgent: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
+			httpClient,
+			baseURL+AIServiceChatWithScheduleAgentProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ChatWithScheduleAgent")),
+			connect.WithClientOptions(opts...),
+		),
+		chatWithMemosIntegrated: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
+			httpClient,
+			baseURL+AIServiceChatWithMemosIntegratedProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aIServiceClient implements AIServiceClient.
 type aIServiceClient struct {
-	semanticSearch  *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
-	suggestTags     *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
-	chatWithMemos   *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
-	getRelatedMemos *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
+	semanticSearch          *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
+	suggestTags             *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
+	chatWithMemos           *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
+	getRelatedMemos         *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
+	chatWithScheduleAgent   *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
+	chatWithMemosIntegrated *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
 }
 
 // SemanticSearch calls memos.api.v1.AIService.SemanticSearch.
@@ -123,6 +155,16 @@ func (c *aIServiceClient) GetRelatedMemos(ctx context.Context, req *connect.Requ
 	return c.getRelatedMemos.CallUnary(ctx, req)
 }
 
+// ChatWithScheduleAgent calls memos.api.v1.AIService.ChatWithScheduleAgent.
+func (c *aIServiceClient) ChatWithScheduleAgent(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
+	return c.chatWithScheduleAgent.CallServerStream(ctx, req)
+}
+
+// ChatWithMemosIntegrated calls memos.api.v1.AIService.ChatWithMemosIntegrated.
+func (c *aIServiceClient) ChatWithMemosIntegrated(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
+	return c.chatWithMemosIntegrated.CallServerStream(ctx, req)
+}
+
 // AIServiceHandler is an implementation of the memos.api.v1.AIService service.
 type AIServiceHandler interface {
 	// SemanticSearch performs semantic search on memos.
@@ -133,6 +175,10 @@ type AIServiceHandler interface {
 	ChatWithMemos(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
+	// ChatWithScheduleAgent streams a chat response using the schedule agent.
+	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
+	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
+	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
 }
 
 // NewAIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -166,6 +212,18 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("GetRelatedMemos")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceChatWithScheduleAgentHandler := connect.NewServerStreamHandler(
+		AIServiceChatWithScheduleAgentProcedure,
+		svc.ChatWithScheduleAgent,
+		connect.WithSchema(aIServiceMethods.ByName("ChatWithScheduleAgent")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceChatWithMemosIntegratedHandler := connect.NewServerStreamHandler(
+		AIServiceChatWithMemosIntegratedProcedure,
+		svc.ChatWithMemosIntegrated,
+		connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AIServiceSemanticSearchProcedure:
@@ -176,6 +234,10 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceChatWithMemosHandler.ServeHTTP(w, r)
 		case AIServiceGetRelatedMemosProcedure:
 			aIServiceGetRelatedMemosHandler.ServeHTTP(w, r)
+		case AIServiceChatWithScheduleAgentProcedure:
+			aIServiceChatWithScheduleAgentHandler.ServeHTTP(w, r)
+		case AIServiceChatWithMemosIntegratedProcedure:
+			aIServiceChatWithMemosIntegratedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -199,4 +261,113 @@ func (UnimplementedAIServiceHandler) ChatWithMemos(context.Context, *connect.Req
 
 func (UnimplementedAIServiceHandler) GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetRelatedMemos is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithScheduleAgent is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithMemosIntegrated is not implemented"))
+}
+
+// ScheduleAgentServiceClient is a client for the memos.api.v1.ScheduleAgentService service.
+type ScheduleAgentServiceClient interface {
+	// Chat handles non-streaming schedule agent chat requests.
+	Chat(context.Context, *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.Response[v1.ScheduleAgentChatResponse], error)
+	// ChatStream handles streaming schedule agent chat requests.
+	ChatStream(context.Context, *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.ServerStreamForClient[v1.ScheduleAgentStreamResponse], error)
+}
+
+// NewScheduleAgentServiceClient constructs a client for the memos.api.v1.ScheduleAgentService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewScheduleAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ScheduleAgentServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	scheduleAgentServiceMethods := v1.File_api_v1_ai_service_proto.Services().ByName("ScheduleAgentService").Methods()
+	return &scheduleAgentServiceClient{
+		chat: connect.NewClient[v1.ScheduleAgentChatRequest, v1.ScheduleAgentChatResponse](
+			httpClient,
+			baseURL+ScheduleAgentServiceChatProcedure,
+			connect.WithSchema(scheduleAgentServiceMethods.ByName("Chat")),
+			connect.WithClientOptions(opts...),
+		),
+		chatStream: connect.NewClient[v1.ScheduleAgentChatRequest, v1.ScheduleAgentStreamResponse](
+			httpClient,
+			baseURL+ScheduleAgentServiceChatStreamProcedure,
+			connect.WithSchema(scheduleAgentServiceMethods.ByName("ChatStream")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// scheduleAgentServiceClient implements ScheduleAgentServiceClient.
+type scheduleAgentServiceClient struct {
+	chat       *connect.Client[v1.ScheduleAgentChatRequest, v1.ScheduleAgentChatResponse]
+	chatStream *connect.Client[v1.ScheduleAgentChatRequest, v1.ScheduleAgentStreamResponse]
+}
+
+// Chat calls memos.api.v1.ScheduleAgentService.Chat.
+func (c *scheduleAgentServiceClient) Chat(ctx context.Context, req *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.Response[v1.ScheduleAgentChatResponse], error) {
+	return c.chat.CallUnary(ctx, req)
+}
+
+// ChatStream calls memos.api.v1.ScheduleAgentService.ChatStream.
+func (c *scheduleAgentServiceClient) ChatStream(ctx context.Context, req *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.ServerStreamForClient[v1.ScheduleAgentStreamResponse], error) {
+	return c.chatStream.CallServerStream(ctx, req)
+}
+
+// ScheduleAgentServiceHandler is an implementation of the memos.api.v1.ScheduleAgentService
+// service.
+type ScheduleAgentServiceHandler interface {
+	// Chat handles non-streaming schedule agent chat requests.
+	Chat(context.Context, *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.Response[v1.ScheduleAgentChatResponse], error)
+	// ChatStream handles streaming schedule agent chat requests.
+	ChatStream(context.Context, *connect.Request[v1.ScheduleAgentChatRequest], *connect.ServerStream[v1.ScheduleAgentStreamResponse]) error
+}
+
+// NewScheduleAgentServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewScheduleAgentServiceHandler(svc ScheduleAgentServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	scheduleAgentServiceMethods := v1.File_api_v1_ai_service_proto.Services().ByName("ScheduleAgentService").Methods()
+	scheduleAgentServiceChatHandler := connect.NewUnaryHandler(
+		ScheduleAgentServiceChatProcedure,
+		svc.Chat,
+		connect.WithSchema(scheduleAgentServiceMethods.ByName("Chat")),
+		connect.WithHandlerOptions(opts...),
+	)
+	scheduleAgentServiceChatStreamHandler := connect.NewServerStreamHandler(
+		ScheduleAgentServiceChatStreamProcedure,
+		svc.ChatStream,
+		connect.WithSchema(scheduleAgentServiceMethods.ByName("ChatStream")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/memos.api.v1.ScheduleAgentService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ScheduleAgentServiceChatProcedure:
+			scheduleAgentServiceChatHandler.ServeHTTP(w, r)
+		case ScheduleAgentServiceChatStreamProcedure:
+			scheduleAgentServiceChatStreamHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedScheduleAgentServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedScheduleAgentServiceHandler struct{}
+
+func (UnimplementedScheduleAgentServiceHandler) Chat(context.Context, *connect.Request[v1.ScheduleAgentChatRequest]) (*connect.Response[v1.ScheduleAgentChatResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleAgentService.Chat is not implemented"))
+}
+
+func (UnimplementedScheduleAgentServiceHandler) ChatStream(context.Context, *connect.Request[v1.ScheduleAgentChatRequest], *connect.ServerStream[v1.ScheduleAgentStreamResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleAgentService.ChatStream is not implemented"))
 }

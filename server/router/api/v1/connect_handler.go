@@ -10,6 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -62,6 +63,11 @@ func (s *ConnectServiceHandler) RegisterConnectHandlers(mux *http.ServeMux, opts
 
 	// Register Schedule service handlers
 	handlers = append(handlers, wrap(apiv1connect.NewScheduleServiceHandler(s, opts...)))
+
+	// Register ScheduleAgent service handlers if available
+	if s.ScheduleAgentService != nil {
+		handlers = append(handlers, wrap(apiv1connect.NewScheduleAgentServiceHandler(s, opts...)))
+	}
 
 	for _, h := range handlers {
 		mux.Handle(h.path, h.handler)
@@ -651,4 +657,149 @@ func (s *ConnectServiceHandler) ParseAndCreateSchedule(ctx context.Context, req 
 		return nil, convertGRPCError(err)
 	}
 	return connect.NewResponse(resp), nil
+}
+
+// ChatWithScheduleAgent streams a chat response using the schedule agent.
+func (s *ConnectServiceHandler) ChatWithScheduleAgent(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
+	if s.ScheduleAgentService == nil {
+		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
+	}
+
+	// Create schedule agent request
+	agentReq := &v1pb.ScheduleAgentChatRequest{
+		Message:      req.Msg.Message,
+		UserTimezone: req.Msg.UserTimezone,
+	}
+
+	// Create a stream adapter that wraps the Connect stream
+	grpcStream := &chatStreamToScheduleAgentAdapter{
+		connectStream: stream,
+		ctx:           ctx,
+	}
+
+	// Call the schedule agent's streaming implementation
+	return s.ScheduleAgentService.ChatStream(agentReq, grpcStream)
+}
+
+// ChatWithMemosIntegrated integrates both RAG and schedule agent.
+// For now, this is an alias to ChatWithMemos (RAG only).
+func (s *ConnectServiceHandler) ChatWithMemosIntegrated(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
+	// TODO: Implement true integration with schedule agent
+	// For now, just use the existing ChatWithMemos implementation
+	return s.ChatWithMemos(ctx, req, stream)
+}
+
+// chatStreamToScheduleAgentAdapter adapts Connect ChatWithMemosResponse stream to ScheduleAgentStreamResponse
+type chatStreamToScheduleAgentAdapter struct {
+	connectStream *connect.ServerStream[v1pb.ChatWithMemosResponse]
+	ctx           context.Context
+}
+
+func (a *chatStreamToScheduleAgentAdapter) Context() context.Context {
+	return a.ctx
+}
+
+func (a *chatStreamToScheduleAgentAdapter) Send(resp *v1pb.ScheduleAgentStreamResponse) error {
+	// Convert ScheduleAgentStreamResponse to ChatWithMemosResponse
+	chatResp := &v1pb.ChatWithMemosResponse{
+		Content: resp.Content,
+		Done:    resp.Done,
+		// Sources field doesn't exist in ScheduleAgentStreamResponse
+		// The agent response in Content field should contain all necessary information
+	}
+	return a.connectStream.Send(chatResp)
+}
+
+func (a *chatStreamToScheduleAgentAdapter) SendMsg(m any) error {
+	if resp, ok := m.(*v1pb.ScheduleAgentStreamResponse); ok {
+		return a.Send(resp)
+	}
+	return fmt.Errorf("invalid message type: %T", m)
+}
+
+func (a *chatStreamToScheduleAgentAdapter) RecvMsg(m any) error {
+	return fmt.Errorf("RecvMsg not supported for server streaming")
+}
+
+func (a *chatStreamToScheduleAgentAdapter) SetHeader(md metadata.MD) error {
+	return nil
+}
+
+func (a *chatStreamToScheduleAgentAdapter) SendHeader(md metadata.MD) error {
+	return nil
+}
+
+func (a *chatStreamToScheduleAgentAdapter) SetTrailer(md metadata.MD) {
+	// Connect doesn't support gRPC metadata trailers
+}
+
+// ScheduleAgentService wrappers for Connect
+
+// Chat handles non-streaming schedule agent chat requests.
+func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest]) (*connect.Response[v1pb.ScheduleAgentChatResponse], error) {
+	if s.ScheduleAgentService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
+	}
+
+	resp, err := s.ScheduleAgentService.Chat(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// ChatStream handles streaming schedule agent chat requests.
+func (s *ConnectServiceHandler) ChatStream(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest], stream *connect.ServerStream[v1pb.ScheduleAgentStreamResponse]) error {
+	if s.ScheduleAgentService == nil {
+		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
+	}
+
+	// Convert Connect stream to gRPC stream interface
+	grpcStream := &scheduleAgentStreamAdapter{
+		connectStream: stream,
+		ctx:           ctx,
+	}
+
+	// Call the gRPC streaming implementation
+	return s.ScheduleAgentService.ChatStream(req.Msg, grpcStream)
+}
+
+// scheduleAgentStreamAdapter adapts Connect ServerStream to gRPC ScheduleAgentService_ChatStreamServer
+type scheduleAgentStreamAdapter struct {
+	connectStream *connect.ServerStream[v1pb.ScheduleAgentStreamResponse]
+	ctx           context.Context
+}
+
+func (a *scheduleAgentStreamAdapter) Context() context.Context {
+	return a.ctx
+}
+
+func (a *scheduleAgentStreamAdapter) Send(resp *v1pb.ScheduleAgentStreamResponse) error {
+	return a.connectStream.Send(resp)
+}
+
+func (a *scheduleAgentStreamAdapter) SendMsg(m any) error {
+	if resp, ok := m.(*v1pb.ScheduleAgentStreamResponse); ok {
+		return a.connectStream.Send(resp)
+	}
+	return fmt.Errorf("invalid message type: %T", m)
+}
+
+func (a *scheduleAgentStreamAdapter) RecvMsg(m any) error {
+	// Server-side streaming doesn't receive messages from client after initial request
+	return fmt.Errorf("RecvMsg not supported for server streaming")
+}
+
+func (a *scheduleAgentStreamAdapter) SetHeader(md metadata.MD) error {
+	// Connect doesn't support gRPC metadata headers
+	return nil
+}
+
+func (a *scheduleAgentStreamAdapter) SendHeader(md metadata.MD) error {
+	// Connect doesn't support gRPC metadata headers
+	return nil
+}
+
+func (a *scheduleAgentStreamAdapter) SetTrailer(md metadata.MD) {
+	// Connect doesn't support gRPC metadata trailers
 }

@@ -13,6 +13,9 @@ import {
   ParseAndCreateScheduleRequestSchema,
 } from "@/types/proto/api/v1/schedule_service_pb";
 
+// Re-export ScheduleAgent hooks for convenience
+export { useScheduleAgentChat, scheduleAgentChatStream } from "./useScheduleAgent";
+
 // Type for query parameters with string timestamps (for React Query cache keys)
 // This avoids BigInt serialization issues in JSON.stringify()
 export type ListSchedulesRequestWithStringTs = Omit<ListSchedulesRequest, 'startTs' | 'endTs'> & {

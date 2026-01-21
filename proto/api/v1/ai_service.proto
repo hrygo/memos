@@ -39,6 +39,59 @@ service AIService {
       get: "/api/v1/{name=memos/*}/related"
     };
   }
+
+  // ChatWithScheduleAgent streams a chat response using the schedule agent.
+  rpc ChatWithScheduleAgent(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/chat/schedule"
+      body: "*"
+    };
+  }
+
+  // ChatWithMemosIntegrated integrates both RAG and schedule agent.
+  rpc ChatWithMemosIntegrated(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/chat/integrated"
+      body: "*"
+    };
+  }
+}
+
+// ScheduleAgentService provides schedule-specific AI agent functionality.
+service ScheduleAgentService {
+  // Chat handles non-streaming schedule agent chat requests.
+  rpc Chat(ScheduleAgentChatRequest) returns (ScheduleAgentChatResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedule-agent/chat"
+      body: "*"
+    };
+  }
+
+  // ChatStream handles streaming schedule agent chat requests.
+  rpc ChatStream(ScheduleAgentChatRequest) returns (stream ScheduleAgentStreamResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedule-agent/chat/stream"
+      body: "*"
+    };
+  }
+}
+
+// ScheduleAgentChatRequest is the request for schedule agent chat.
+message ScheduleAgentChatRequest {
+  string message = 1 [(google.api.field_behavior) = REQUIRED];  // User's message
+  string user_timezone = 2;  // User's timezone in IANA format (e.g., "Asia/Shanghai")
+}
+
+// ScheduleAgentChatResponse is the response for schedule agent chat (non-streaming).
+message ScheduleAgentChatResponse {
+  string response = 1;  // Agent's response
+}
+
+// ScheduleAgentStreamResponse is the streaming response for schedule agent chat.
+message ScheduleAgentStreamResponse {
+  string event = 1;     // JSON-encoded event with "type" and "data" fields
+  string content = 2;   // Streaming content chunk
+  bool done = 3;        // Stream end marker
 }
 
 // SemanticSearchRequest is the request for SemanticSearch.
@@ -92,6 +145,10 @@ message ChatWithMemosResponse {
   bool done = 3;                            // stream end marker
   ScheduleCreationIntent schedule_creation_intent = 4;  // AI-detected schedule creation intent (sent in final chunk)
   ScheduleQueryResult schedule_query_result = 5;        // AI-detected schedule query result (sent in final chunk)
+
+  // Agent event signaling (for schedule agent integration)
+  string event_type = 6;                    // Event type: "thinking", "tool_use", "tool_result", "answer", "error", "schedule_updated"
+  string event_data = 7;                    // Event data (JSON or plain text depending on event type)
 }
 
 // ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.

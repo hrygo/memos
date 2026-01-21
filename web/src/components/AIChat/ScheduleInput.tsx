@@ -1,15 +1,19 @@
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
-import { Calendar, Clock, Loader2, MapPin, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Bot, Calendar, Clock, Loader2, MapPin, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 import { toast } from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCheckConflict, useCreateSchedule, useParseAndCreateSchedule, useUpdateSchedule } from "@/hooks/useScheduleQueries";
+import { useCheckConflict, useCreateSchedule, useUpdateSchedule, useScheduleAgentChat } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
@@ -23,19 +27,49 @@ interface ScheduleInputProps {
   onSuccess?: (schedule: Schedule) => void;
 }
 
+// Type definitions for conversation history
+type ConversationRole = 'user' | 'assistant';
+
+interface ConversationMessage {
+  role: ConversationRole;
+  content: string;
+}
+
+// Constants
+const MAX_CONVERSATION_ROUNDS = 5;
+const SUCCESS_AUTO_CLOSE_DELAY_MS = 1500;
+const MAX_INPUT_LENGTH = 500;
+
 export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedule, onSuccess }: ScheduleInputProps) => {
   const t = useTranslate();
-  const parseAndCreate = useParseAndCreateSchedule();
+  const queryClient = useQueryClient();
   const createSchedule = useCreateSchedule();
   const updateSchedule = useUpdateSchedule();
   const checkConflict = useCheckConflict();
+  const agentChat = useScheduleAgentChat();
   const isEditMode = !!editSchedule;
 
   const [input, setInput] = useState(initialText);
   const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(editSchedule || null);
-  const [isParsing, setIsParsing] = useState(false);
   const [conflicts, setConflicts] = useState<Schedule[]>([]);
   const [showConflictAlert, setShowConflictAlert] = useState(false);
+
+  // Agent mode states
+  const [agentResponse, setAgentResponse] = useState<string | null>(null);
+  const [isProcessingAgent, setIsProcessingAgent] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+
+  // Ref for auto-close timeout to prevent memory leaks
+  const closeTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Initialize with editSchedule when it changes
   useEffect(() => {
@@ -48,47 +82,92 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     }
   }, [editSchedule, initialText]);
 
-  const handleParse = async () => {
+  // Handle Agent-based parsing
+  const handleAgentParse = async () => {
     if (!input.trim()) return;
 
-    // Validate input length (max 500 characters)
-    if (input.length > 500) {
-      // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing translation key
+    // Validate input length
+    if (input.length > MAX_INPUT_LENGTH) {
       toast.error(t("schedule.input-too-long" as any));
       return;
     }
 
-    setIsParsing(true);
+    setIsProcessingAgent(true);
+
+    // Limit conversation history to prevent excessive context
+    const trimmedHistory = conversationHistory.slice(-MAX_CONVERSATION_ROUNDS * 2);
+
+    // Add user message to history
+    const newHistory: ConversationMessage[] = [
+      ...trimmedHistory,
+      { role: "user", content: input }
+    ];
+
     try {
-      const result = await parseAndCreate.mutateAsync({
-        text: input,
-        autoConfirm: false,
+      // Build full conversation context using StringBuilder pattern for better performance
+      const parts: string[] = [];
+      for (const msg of newHistory) {
+        parts.push(`${msg.role}: ${msg.content}`);
+      }
+      const conversationContext = parts.join("\n");
+
+      const result = await agentChat.mutateAsync({
+        message: conversationContext,
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
-      if (result.parsedSchedule) {
-        // Ensure endTs has a default duration if missing (1 hour)
-        if (result.parsedSchedule.endTs === BigInt(0)) {
-          result.parsedSchedule.endTs = result.parsedSchedule.startTs + BigInt(3600);
-        }
-        setParsedSchedule(result.parsedSchedule);
+      if (result.response) {
+        // Add assistant response to history
+        const updatedHistory: ConversationMessage[] = [
+          ...newHistory,
+          { role: "assistant", content: result.response }
+        ];
+        setConversationHistory(updatedHistory);
+        setAgentResponse(result.response);
 
-        // Check for conflicts
-        const conflictResult = await checkConflict.mutateAsync({
-          startTs: result.parsedSchedule.startTs,
-          endTs: result.parsedSchedule.endTs,
-          excludeNames: [],
-        });
+        // Check if agent successfully created a schedule (improved regex matching)
+        const createdSchedule = /已成功创建|成功创建日程|successfully created/i.test(result.response);
 
-        if (conflictResult.conflicts.length > 0) {
-          setConflicts(conflictResult.conflicts);
-          setShowConflictAlert(true);
+        if (createdSchedule) {
+          toast.success("日程创建成功");
+          // Refresh schedules
+          queryClient.invalidateQueries({ queryKey: ["schedules"] });
+          // Clear history after successful creation
+          setConversationHistory([]);
+          // Clear input
+          setInput("");
+          // Close dialog after short delay with cleanup
+          if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+          }
+          closeTimeoutRef.current = setTimeout(() => {
+            handleClose();
+          }, SUCCESS_AUTO_CLOSE_DELAY_MS);
+        } else {
+          // Agent is asking for clarification
+          // Don't show toast - response is already visible in UI
+          // Keep input empty for user's response
+          setInput("");
         }
       }
     } catch (error) {
-      toast.error(t("schedule.parse-error"));
-      console.error("Parse error:", error);
+      console.error("Agent error:", error);
+
+      // Improved error handling
+      let errorMessage = "智能解析失败";
+      if (error instanceof Error) {
+        if (error.message.includes("timeout") || error.message.includes("TIMEOUT")) {
+          errorMessage = "请求超时，请重试";
+        } else if (error.message.includes("network") || error.message.includes("fetch")) {
+          errorMessage = "网络错误，请检查连接";
+        } else if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+          errorMessage = "未授权，请重新登录";
+        }
+      }
+
+      toast.error(errorMessage + "，请重试或使用手动模式");
     } finally {
-      setIsParsing(false);
+      setIsProcessingAgent(false);
     }
   };
 
@@ -216,6 +295,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     setParsedSchedule(null);
     setConflicts([]);
     setShowConflictAlert(false);
+    setAgentResponse(null);
+    setConversationHistory([]); // Clear conversation history
     onOpenChange(false);
   };
 
@@ -233,16 +314,25 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
               {/* Natural Language Input - Only for create mode */}
               {!isEditMode && !parsedSchedule && (
                 <div className="space-y-2">
-                  <Label htmlFor="schedule-input">{t("schedule.description") || "Description"}</Label>
+                  <Label htmlFor="schedule-input">
+                    {t("schedule.description") || "Description"}
+                    {agentResponse && (
+                      <span className="text-primary ml-2">💬 请在下方回复助手的问题</span>
+                    )}
+                  </Label>
                   <Textarea
                     id="schedule-input"
-                    placeholder='e.g., "明天下午3点开会"'
+                    placeholder={
+                      agentResponse
+                        ? "例如：\"晚上9点\" 或 \"大概30分钟\""
+                        : "智能模式：\"明天下午3点开会\" 或 \"查看本周日程\""
+                    }
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        handleParse();
+                        handleAgentParse();
                       }
                     }}
                     className="min-h-24 resize-none"
@@ -252,10 +342,75 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
               {/* Parse Button - Only for create mode */}
               {!isEditMode && !parsedSchedule && (
-                <Button onClick={handleParse} disabled={!input.trim() || isParsing} className="w-full cursor-pointer">
-                  {isParsing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t("schedule.create-schedule")}
+                <Button
+                  onClick={handleAgentParse}
+                  disabled={!input.trim() || isProcessingAgent}
+                  className="w-full cursor-pointer"
+                >
+                  {isProcessingAgent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Bot className="mr-2 h-4 w-4" />
+                  {agentResponse ? "继续对话" : "智能解析"}
                 </Button>
+              )}
+
+              {/* Agent Response Display */}
+              {agentResponse && !parsedSchedule && (
+                <div className="rounded-lg border bg-primary/5 p-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Bot className="h-4 w-4 text-primary mt-0.5" />
+                    <h4 className="text-sm font-medium">智能助手回复</h4>
+                  </div>
+                  <div className="prose dark:prose-invert prose-sm max-w-none break-words text-sm text-muted-foreground">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
+                      components={{
+                        a: ({ node, ...props }) => (
+                          <a
+                            {...props}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          />
+                        ),
+                        p: ({ node, ...props }) => (
+                          <p {...props} className="mb-2 last:mb-0" />
+                        ),
+                        ul: ({ node, ...props }) => (
+                          <ul {...props} className="list-disc list-inside mb-2 space-y-1" />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol {...props} className="list-decimal list-inside mb-2 space-y-1" />
+                        ),
+                      }}
+                    >
+                      {agentResponse}
+                    </ReactMarkdown>
+                  </div>
+                  <div className="mt-3 flex justify-end gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAgentResponse(null);
+                        setInput("");
+                        setConversationHistory([]);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      清除
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setAgentResponse(null);
+                        queryClient.invalidateQueries({ queryKey: ["schedules"] });
+                      }}
+                      className="cursor-pointer"
+                    >
+                      刷新日程
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {/* Schedule Details Form */}

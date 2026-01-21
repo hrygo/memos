@@ -12,7 +12,91 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIjoKFVNlbWFudGljU2VhcmNoUmVxdWVzdBISCgVxdWVyeRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkUKFlNlbWFudGljU2VhcmNoUmVzcG9uc2USKwoHcmVzdWx0cxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQiPAoMU2VhcmNoUmVzdWx0EgwKBG5hbWUYASABKAkSDwoHc25pcHBldBgCIAEoCRINCgVzY29yZRgDIAEoAiI5ChJTdWdnZXN0VGFnc1JlcXVlc3QSFAoHY29udGVudBgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIiMKE1N1Z2dlc3RUYWdzUmVzcG9uc2USDAoEdGFncxgBIAMoCSKSAQoUQ2hhdFdpdGhNZW1vc1JlcXVlc3QSFAoHbWVzc2FnZRgBIAEoCUID4EECEg8KB2hpc3RvcnkYAiADKAkSFQoNdXNlcl90aW1lem9uZRgDIAEoCRI8ChNzY2hlZHVsZV9xdWVyeV9tb2RlGAQgASgOMh8ubWVtb3MuYXBpLnYxLlNjaGVkdWxlUXVlcnlNb2RlItEBChVDaGF0V2l0aE1lbW9zUmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIPCgdzb3VyY2VzGAIgAygJEgwKBGRvbmUYAyABKAgSRgoYc2NoZWR1bGVfY3JlYXRpb25faW50ZW50GAQgASgLMiQubWVtb3MuYXBpLnYxLlNjaGVkdWxlQ3JlYXRpb25JbnRlbnQSQAoVc2NoZWR1bGVfcXVlcnlfcmVzdWx0GAUgASgLMiEubWVtb3MuYXBpLnYxLlNjaGVkdWxlUXVlcnlSZXN1bHQiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQqNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIy/wMKCUFJU2VydmljZRJ5Cg5TZW1hbnRpY1NlYXJjaBIjLm1lbW9zLmFwaS52MS5TZW1hbnRpY1NlYXJjaFJlcXVlc3QaJC5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXNwb25zZSIcgtPkkwIWOgEqIhEvYXBpL3YxL2FpL3NlYXJjaBJ2CgtTdWdnZXN0VGFncxIgLm1lbW9zLmFwaS52MS5TdWdnZXN0VGFnc1JlcXVlc3QaIS5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXNwb25zZSIigtPkkwIcOgEqIhcvYXBpL3YxL2FpL3N1Z2dlc3QtdGFncxJ2Cg1DaGF0V2l0aE1lbW9zEiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIagtPkkwIUOgEqIg8vYXBpL3YxL2FpL2NoYXQwARKGAQoPR2V0UmVsYXRlZE1lbW9zEiQubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QaJS5tZW1vcy5hcGkudjEuR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2UiJoLT5JMCIBIeL2FwaS92MS97bmFtZT1tZW1vcy8qfS9yZWxhdGVkQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIpIBChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUi+QEKFUNoYXRXaXRoTWVtb3NSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg8KB3NvdXJjZXMYAiADKAkSDAoEZG9uZRgDIAEoCBJGChhzY2hlZHVsZV9jcmVhdGlvbl9pbnRlbnQYBCABKAsyJC5tZW1vcy5hcGkudjEuU2NoZWR1bGVDcmVhdGlvbkludGVudBJAChVzY2hlZHVsZV9xdWVyeV9yZXN1bHQYBSABKAsyIS5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeVJlc3VsdBISCgpldmVudF90eXBlGAYgASgJEhIKCmV2ZW50X2RhdGEYByABKAkiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQqNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIylwYKCUFJU2VydmljZRJ5Cg5TZW1hbnRpY1NlYXJjaBIjLm1lbW9zLmFwaS52MS5TZW1hbnRpY1NlYXJjaFJlcXVlc3QaJC5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXNwb25zZSIcgtPkkwIWOgEqIhEvYXBpL3YxL2FpL3NlYXJjaBJ2CgtTdWdnZXN0VGFncxIgLm1lbW9zLmFwaS52MS5TdWdnZXN0VGFnc1JlcXVlc3QaIS5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXNwb25zZSIigtPkkwIcOgEqIhcvYXBpL3YxL2FpL3N1Z2dlc3QtdGFncxJ2Cg1DaGF0V2l0aE1lbW9zEiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIagtPkkwIUOgEqIg8vYXBpL3YxL2FpL2NoYXQwARKGAQoPR2V0UmVsYXRlZE1lbW9zEiQubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QaJS5tZW1vcy5hcGkudjEuR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2UiJoLT5JMCIBIeL2FwaS92MS97bmFtZT1tZW1vcy8qfS9yZWxhdGVkEocBChVDaGF0V2l0aFNjaGVkdWxlQWdlbnQSIi5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlIiOC0+STAh06ASoiGC9hcGkvdjEvYWkvY2hhdC9zY2hlZHVsZTABEosBChdDaGF0V2l0aE1lbW9zSW50ZWdyYXRlZBIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiJYLT5JMCHzoBKiIaL2FwaS92MS9haS9jaGF0L2ludGVncmF0ZWQwATKqAgoUU2NoZWR1bGVBZ2VudFNlcnZpY2USfwoEQ2hhdBImLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50Q2hhdFJlcXVlc3QaJy5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXNwb25zZSImgtPkkwIgOgEqIhsvYXBpL3YxL3NjaGVkdWxlLWFnZW50L2NoYXQSkAEKCkNoYXRTdHJlYW0SJi5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXF1ZXN0GikubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZSItgtPkkwInOgEqIiIvYXBpL3YxL3NjaGVkdWxlLWFnZW50L2NoYXQvc3RyZWFtMAFCpgEKEGNvbS5tZW1vcy5hcGkudjFCDkFpU2VydmljZVByb3RvUAFaMGdpdGh1Yi5jb20vdXNlbWVtb3MvbWVtb3MvcHJvdG8vZ2VuL2FwaS92MTthcGl2MaICA01BWKoCDE1lbW9zLkFwaS5WMcoCDE1lbW9zXEFwaVxWMeICGE1lbW9zXEFwaVxWMVxHUEJNZXRhZGF0YeoCDk1lbW9zOjpBcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_api_field_behavior]);
+
+/**
+ * ScheduleAgentChatRequest is the request for schedule agent chat.
+ *
+ * @generated from message memos.api.v1.ScheduleAgentChatRequest
+ */
+export type ScheduleAgentChatRequest = Message<"memos.api.v1.ScheduleAgentChatRequest"> & {
+  /**
+   * User's message
+   *
+   * @generated from field: string message = 1;
+   */
+  message: string;
+
+  /**
+   * User's timezone in IANA format (e.g., "Asia/Shanghai")
+   *
+   * @generated from field: string user_timezone = 2;
+   */
+  userTimezone: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleAgentChatRequest.
+ * Use `create(ScheduleAgentChatRequestSchema)` to create a new message.
+ */
+export const ScheduleAgentChatRequestSchema: GenMessage<ScheduleAgentChatRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 0);
+
+/**
+ * ScheduleAgentChatResponse is the response for schedule agent chat (non-streaming).
+ *
+ * @generated from message memos.api.v1.ScheduleAgentChatResponse
+ */
+export type ScheduleAgentChatResponse = Message<"memos.api.v1.ScheduleAgentChatResponse"> & {
+  /**
+   * Agent's response
+   *
+   * @generated from field: string response = 1;
+   */
+  response: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleAgentChatResponse.
+ * Use `create(ScheduleAgentChatResponseSchema)` to create a new message.
+ */
+export const ScheduleAgentChatResponseSchema: GenMessage<ScheduleAgentChatResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 1);
+
+/**
+ * ScheduleAgentStreamResponse is the streaming response for schedule agent chat.
+ *
+ * @generated from message memos.api.v1.ScheduleAgentStreamResponse
+ */
+export type ScheduleAgentStreamResponse = Message<"memos.api.v1.ScheduleAgentStreamResponse"> & {
+  /**
+   * JSON-encoded event with "type" and "data" fields
+   *
+   * @generated from field: string event = 1;
+   */
+  event: string;
+
+  /**
+   * Streaming content chunk
+   *
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * Stream end marker
+   *
+   * @generated from field: bool done = 3;
+   */
+  done: boolean;
+};
+
+/**
+ * Describes the message memos.api.v1.ScheduleAgentStreamResponse.
+ * Use `create(ScheduleAgentStreamResponseSchema)` to create a new message.
+ */
+export const ScheduleAgentStreamResponseSchema: GenMessage<ScheduleAgentStreamResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 2);
 
 /**
  * SemanticSearchRequest is the request for SemanticSearch.
@@ -38,7 +122,7 @@ export type SemanticSearchRequest = Message<"memos.api.v1.SemanticSearchRequest"
  * Use `create(SemanticSearchRequestSchema)` to create a new message.
  */
 export const SemanticSearchRequestSchema: GenMessage<SemanticSearchRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 0);
+  messageDesc(file_api_v1_ai_service, 3);
 
 /**
  * SemanticSearchResponse is the response for SemanticSearch.
@@ -57,7 +141,7 @@ export type SemanticSearchResponse = Message<"memos.api.v1.SemanticSearchRespons
  * Use `create(SemanticSearchResponseSchema)` to create a new message.
  */
 export const SemanticSearchResponseSchema: GenMessage<SemanticSearchResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 1);
+  messageDesc(file_api_v1_ai_service, 4);
 
 /**
  * SearchResult represents a single search result.
@@ -92,7 +176,7 @@ export type SearchResult = Message<"memos.api.v1.SearchResult"> & {
  * Use `create(SearchResultSchema)` to create a new message.
  */
 export const SearchResultSchema: GenMessage<SearchResult> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 2);
+  messageDesc(file_api_v1_ai_service, 5);
 
 /**
  * SuggestTagsRequest is the request for SuggestTags.
@@ -118,7 +202,7 @@ export type SuggestTagsRequest = Message<"memos.api.v1.SuggestTagsRequest"> & {
  * Use `create(SuggestTagsRequestSchema)` to create a new message.
  */
 export const SuggestTagsRequestSchema: GenMessage<SuggestTagsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 3);
+  messageDesc(file_api_v1_ai_service, 6);
 
 /**
  * SuggestTagsResponse is the response for SuggestTags.
@@ -137,7 +221,7 @@ export type SuggestTagsResponse = Message<"memos.api.v1.SuggestTagsResponse"> & 
  * Use `create(SuggestTagsResponseSchema)` to create a new message.
  */
 export const SuggestTagsResponseSchema: GenMessage<SuggestTagsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 4);
+  messageDesc(file_api_v1_ai_service, 7);
 
 /**
  * ChatWithMemosRequest is the request for ChatWithMemos.
@@ -177,7 +261,7 @@ export type ChatWithMemosRequest = Message<"memos.api.v1.ChatWithMemosRequest"> 
  * Use `create(ChatWithMemosRequestSchema)` to create a new message.
  */
 export const ChatWithMemosRequestSchema: GenMessage<ChatWithMemosRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 5);
+  messageDesc(file_api_v1_ai_service, 8);
 
 /**
  * ChatWithMemosResponse is the response for ChatWithMemos.
@@ -219,6 +303,22 @@ export type ChatWithMemosResponse = Message<"memos.api.v1.ChatWithMemosResponse"
    * @generated from field: memos.api.v1.ScheduleQueryResult schedule_query_result = 5;
    */
   scheduleQueryResult?: ScheduleQueryResult;
+
+  /**
+   * Agent event signaling (for schedule agent integration)
+   *
+   * Event type: "thinking", "tool_use", "tool_result", "answer", "error", "schedule_updated"
+   *
+   * @generated from field: string event_type = 6;
+   */
+  eventType: string;
+
+  /**
+   * Event data (JSON or plain text depending on event type)
+   *
+   * @generated from field: string event_data = 7;
+   */
+  eventData: string;
 };
 
 /**
@@ -226,7 +326,7 @@ export type ChatWithMemosResponse = Message<"memos.api.v1.ChatWithMemosResponse"
  * Use `create(ChatWithMemosResponseSchema)` to create a new message.
  */
 export const ChatWithMemosResponseSchema: GenMessage<ChatWithMemosResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 6);
+  messageDesc(file_api_v1_ai_service, 9);
 
 /**
  * ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
@@ -261,7 +361,7 @@ export type ScheduleCreationIntent = Message<"memos.api.v1.ScheduleCreationInten
  * Use `create(ScheduleCreationIntentSchema)` to create a new message.
  */
 export const ScheduleCreationIntentSchema: GenMessage<ScheduleCreationIntent> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 7);
+  messageDesc(file_api_v1_ai_service, 10);
 
 /**
  * ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
@@ -303,7 +403,7 @@ export type ScheduleQueryResult = Message<"memos.api.v1.ScheduleQueryResult"> & 
  * Use `create(ScheduleQueryResultSchema)` to create a new message.
  */
 export const ScheduleQueryResultSchema: GenMessage<ScheduleQueryResult> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 8);
+  messageDesc(file_api_v1_ai_service, 11);
 
 /**
  * ScheduleSummary represents a simplified schedule for query results.
@@ -374,7 +474,7 @@ export type ScheduleSummary = Message<"memos.api.v1.ScheduleSummary"> & {
  * Use `create(ScheduleSummarySchema)` to create a new message.
  */
 export const ScheduleSummarySchema: GenMessage<ScheduleSummary> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 9);
+  messageDesc(file_api_v1_ai_service, 12);
 
 /**
  * GetRelatedMemosRequest is the request for GetRelatedMemos.
@@ -402,7 +502,7 @@ export type GetRelatedMemosRequest = Message<"memos.api.v1.GetRelatedMemosReques
  * Use `create(GetRelatedMemosRequestSchema)` to create a new message.
  */
 export const GetRelatedMemosRequestSchema: GenMessage<GetRelatedMemosRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 10);
+  messageDesc(file_api_v1_ai_service, 13);
 
 /**
  * GetRelatedMemosResponse is the response for GetRelatedMemos.
@@ -421,7 +521,7 @@ export type GetRelatedMemosResponse = Message<"memos.api.v1.GetRelatedMemosRespo
  * Use `create(GetRelatedMemosResponseSchema)` to create a new message.
  */
 export const GetRelatedMemosResponseSchema: GenMessage<GetRelatedMemosResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 11);
+  messageDesc(file_api_v1_ai_service, 14);
 
 /**
  * ScheduleQueryMode specifies the query mode for schedule filtering.
@@ -503,6 +603,55 @@ export const AIService: GenService<{
     input: typeof GetRelatedMemosRequestSchema;
     output: typeof GetRelatedMemosResponseSchema;
   },
+  /**
+   * ChatWithScheduleAgent streams a chat response using the schedule agent.
+   *
+   * @generated from rpc memos.api.v1.AIService.ChatWithScheduleAgent
+   */
+  chatWithScheduleAgent: {
+    methodKind: "server_streaming";
+    input: typeof ChatWithMemosRequestSchema;
+    output: typeof ChatWithMemosResponseSchema;
+  },
+  /**
+   * ChatWithMemosIntegrated integrates both RAG and schedule agent.
+   *
+   * @generated from rpc memos.api.v1.AIService.ChatWithMemosIntegrated
+   */
+  chatWithMemosIntegrated: {
+    methodKind: "server_streaming";
+    input: typeof ChatWithMemosRequestSchema;
+    output: typeof ChatWithMemosResponseSchema;
+  },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_ai_service, 0);
+
+/**
+ * ScheduleAgentService provides schedule-specific AI agent functionality.
+ *
+ * @generated from service memos.api.v1.ScheduleAgentService
+ */
+export const ScheduleAgentService: GenService<{
+  /**
+   * Chat handles non-streaming schedule agent chat requests.
+   *
+   * @generated from rpc memos.api.v1.ScheduleAgentService.Chat
+   */
+  chat: {
+    methodKind: "unary";
+    input: typeof ScheduleAgentChatRequestSchema;
+    output: typeof ScheduleAgentChatResponseSchema;
+  },
+  /**
+   * ChatStream handles streaming schedule agent chat requests.
+   *
+   * @generated from rpc memos.api.v1.ScheduleAgentService.ChatStream
+   */
+  chatStream: {
+    methodKind: "server_streaming";
+    input: typeof ScheduleAgentChatRequestSchema;
+    output: typeof ScheduleAgentStreamResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_api_v1_ai_service, 1);
 

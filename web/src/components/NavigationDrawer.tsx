@@ -20,7 +20,7 @@ const NavigationDrawer = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="px-2">
+        <Button variant="ghost" className="px-2 cursor-pointer">
           <UserAvatar className="shrink-0 w-6 h-6 rounded-md" avatarUrl={avatarUrl} />
           <span className="font-bold text-lg leading-10 text-ellipsis overflow-hidden text-foreground">{title}</span>
         </Button>

@@ -72,6 +72,165 @@ func (ScheduleQueryMode) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{0}
 }
 
+// ScheduleAgentChatRequest is the request for schedule agent chat.
+type ScheduleAgentChatRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`                               // User's message
+	UserTimezone  string                 `protobuf:"bytes,2,opt,name=user_timezone,json=userTimezone,proto3" json:"user_timezone,omitempty"` // User's timezone in IANA format (e.g., "Asia/Shanghai")
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleAgentChatRequest) Reset() {
+	*x = ScheduleAgentChatRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleAgentChatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleAgentChatRequest) ProtoMessage() {}
+
+func (x *ScheduleAgentChatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleAgentChatRequest.ProtoReflect.Descriptor instead.
+func (*ScheduleAgentChatRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ScheduleAgentChatRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ScheduleAgentChatRequest) GetUserTimezone() string {
+	if x != nil {
+		return x.UserTimezone
+	}
+	return ""
+}
+
+// ScheduleAgentChatResponse is the response for schedule agent chat (non-streaming).
+type ScheduleAgentChatResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"` // Agent's response
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleAgentChatResponse) Reset() {
+	*x = ScheduleAgentChatResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleAgentChatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleAgentChatResponse) ProtoMessage() {}
+
+func (x *ScheduleAgentChatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleAgentChatResponse.ProtoReflect.Descriptor instead.
+func (*ScheduleAgentChatResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ScheduleAgentChatResponse) GetResponse() string {
+	if x != nil {
+		return x.Response
+	}
+	return ""
+}
+
+// ScheduleAgentStreamResponse is the streaming response for schedule agent chat.
+type ScheduleAgentStreamResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         string                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`     // JSON-encoded event with "type" and "data" fields
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"` // Streaming content chunk
+	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`      // Stream end marker
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleAgentStreamResponse) Reset() {
+	*x = ScheduleAgentStreamResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleAgentStreamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleAgentStreamResponse) ProtoMessage() {}
+
+func (x *ScheduleAgentStreamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleAgentStreamResponse.ProtoReflect.Descriptor instead.
+func (*ScheduleAgentStreamResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ScheduleAgentStreamResponse) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
+}
+
+func (x *ScheduleAgentStreamResponse) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *ScheduleAgentStreamResponse) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
 // SemanticSearchRequest is the request for SemanticSearch.
 type SemanticSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -83,7 +242,7 @@ type SemanticSearchRequest struct {
 
 func (x *SemanticSearchRequest) Reset() {
 	*x = SemanticSearchRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[0]
+	mi := &file_api_v1_ai_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +254,7 @@ func (x *SemanticSearchRequest) String() string {
 func (*SemanticSearchRequest) ProtoMessage() {}
 
 func (x *SemanticSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[0]
+	mi := &file_api_v1_ai_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,7 +267,7 @@ func (x *SemanticSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SemanticSearchRequest.ProtoReflect.Descriptor instead.
 func (*SemanticSearchRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{0}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SemanticSearchRequest) GetQuery() string {
@@ -135,7 +294,7 @@ type SemanticSearchResponse struct {
 
 func (x *SemanticSearchResponse) Reset() {
 	*x = SemanticSearchResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[1]
+	mi := &file_api_v1_ai_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +306,7 @@ func (x *SemanticSearchResponse) String() string {
 func (*SemanticSearchResponse) ProtoMessage() {}
 
 func (x *SemanticSearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[1]
+	mi := &file_api_v1_ai_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +319,7 @@ func (x *SemanticSearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SemanticSearchResponse.ProtoReflect.Descriptor instead.
 func (*SemanticSearchResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{1}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SemanticSearchResponse) GetResults() []*SearchResult {
@@ -182,7 +341,7 @@ type SearchResult struct {
 
 func (x *SearchResult) Reset() {
 	*x = SearchResult{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[2]
+	mi := &file_api_v1_ai_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +353,7 @@ func (x *SearchResult) String() string {
 func (*SearchResult) ProtoMessage() {}
 
 func (x *SearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[2]
+	mi := &file_api_v1_ai_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +366,7 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{2}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SearchResult) GetName() string {
@@ -242,7 +401,7 @@ type SuggestTagsRequest struct {
 
 func (x *SuggestTagsRequest) Reset() {
 	*x = SuggestTagsRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[3]
+	mi := &file_api_v1_ai_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -254,7 +413,7 @@ func (x *SuggestTagsRequest) String() string {
 func (*SuggestTagsRequest) ProtoMessage() {}
 
 func (x *SuggestTagsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[3]
+	mi := &file_api_v1_ai_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -267,7 +426,7 @@ func (x *SuggestTagsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuggestTagsRequest.ProtoReflect.Descriptor instead.
 func (*SuggestTagsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{3}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SuggestTagsRequest) GetContent() string {
@@ -294,7 +453,7 @@ type SuggestTagsResponse struct {
 
 func (x *SuggestTagsResponse) Reset() {
 	*x = SuggestTagsResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[4]
+	mi := &file_api_v1_ai_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +465,7 @@ func (x *SuggestTagsResponse) String() string {
 func (*SuggestTagsResponse) ProtoMessage() {}
 
 func (x *SuggestTagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[4]
+	mi := &file_api_v1_ai_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +478,7 @@ func (x *SuggestTagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SuggestTagsResponse.ProtoReflect.Descriptor instead.
 func (*SuggestTagsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{4}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SuggestTagsResponse) GetTags() []string {
@@ -342,7 +501,7 @@ type ChatWithMemosRequest struct {
 
 func (x *ChatWithMemosRequest) Reset() {
 	*x = ChatWithMemosRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[5]
+	mi := &file_api_v1_ai_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +513,7 @@ func (x *ChatWithMemosRequest) String() string {
 func (*ChatWithMemosRequest) ProtoMessage() {}
 
 func (x *ChatWithMemosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[5]
+	mi := &file_api_v1_ai_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +526,7 @@ func (x *ChatWithMemosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatWithMemosRequest.ProtoReflect.Descriptor instead.
 func (*ChatWithMemosRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{5}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ChatWithMemosRequest) GetMessage() string {
@@ -406,13 +565,16 @@ type ChatWithMemosResponse struct {
 	Done                   bool                    `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`                                                                    // stream end marker
 	ScheduleCreationIntent *ScheduleCreationIntent `protobuf:"bytes,4,opt,name=schedule_creation_intent,json=scheduleCreationIntent,proto3" json:"schedule_creation_intent,omitempty"` // AI-detected schedule creation intent (sent in final chunk)
 	ScheduleQueryResult    *ScheduleQueryResult    `protobuf:"bytes,5,opt,name=schedule_query_result,json=scheduleQueryResult,proto3" json:"schedule_query_result,omitempty"`          // AI-detected schedule query result (sent in final chunk)
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// Agent event signaling (for schedule agent integration)
+	EventType     string `protobuf:"bytes,6,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"` // Event type: "thinking", "tool_use", "tool_result", "answer", "error", "schedule_updated"
+	EventData     string `protobuf:"bytes,7,opt,name=event_data,json=eventData,proto3" json:"event_data,omitempty"` // Event data (JSON or plain text depending on event type)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ChatWithMemosResponse) Reset() {
 	*x = ChatWithMemosResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[6]
+	mi := &file_api_v1_ai_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +586,7 @@ func (x *ChatWithMemosResponse) String() string {
 func (*ChatWithMemosResponse) ProtoMessage() {}
 
 func (x *ChatWithMemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[6]
+	mi := &file_api_v1_ai_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +599,7 @@ func (x *ChatWithMemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatWithMemosResponse.ProtoReflect.Descriptor instead.
 func (*ChatWithMemosResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{6}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ChatWithMemosResponse) GetContent() string {
@@ -475,6 +637,20 @@ func (x *ChatWithMemosResponse) GetScheduleQueryResult() *ScheduleQueryResult {
 	return nil
 }
 
+func (x *ChatWithMemosResponse) GetEventType() string {
+	if x != nil {
+		return x.EventType
+	}
+	return ""
+}
+
+func (x *ChatWithMemosResponse) GetEventData() string {
+	if x != nil {
+		return x.EventData
+	}
+	return ""
+}
+
 // ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
 type ScheduleCreationIntent struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -487,7 +663,7 @@ type ScheduleCreationIntent struct {
 
 func (x *ScheduleCreationIntent) Reset() {
 	*x = ScheduleCreationIntent{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	mi := &file_api_v1_ai_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -499,7 +675,7 @@ func (x *ScheduleCreationIntent) String() string {
 func (*ScheduleCreationIntent) ProtoMessage() {}
 
 func (x *ScheduleCreationIntent) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[7]
+	mi := &file_api_v1_ai_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -512,7 +688,7 @@ func (x *ScheduleCreationIntent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleCreationIntent.ProtoReflect.Descriptor instead.
 func (*ScheduleCreationIntent) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{7}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ScheduleCreationIntent) GetDetected() bool {
@@ -549,7 +725,7 @@ type ScheduleQueryResult struct {
 
 func (x *ScheduleQueryResult) Reset() {
 	*x = ScheduleQueryResult{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	mi := &file_api_v1_ai_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +737,7 @@ func (x *ScheduleQueryResult) String() string {
 func (*ScheduleQueryResult) ProtoMessage() {}
 
 func (x *ScheduleQueryResult) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[8]
+	mi := &file_api_v1_ai_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +750,7 @@ func (x *ScheduleQueryResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleQueryResult.ProtoReflect.Descriptor instead.
 func (*ScheduleQueryResult) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{8}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ScheduleQueryResult) GetDetected() bool {
@@ -623,7 +799,7 @@ type ScheduleSummary struct {
 
 func (x *ScheduleSummary) Reset() {
 	*x = ScheduleSummary{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[9]
+	mi := &file_api_v1_ai_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -635,7 +811,7 @@ func (x *ScheduleSummary) String() string {
 func (*ScheduleSummary) ProtoMessage() {}
 
 func (x *ScheduleSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[9]
+	mi := &file_api_v1_ai_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -648,7 +824,7 @@ func (x *ScheduleSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleSummary.ProtoReflect.Descriptor instead.
 func (*ScheduleSummary) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{9}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ScheduleSummary) GetUid() string {
@@ -718,7 +894,7 @@ type GetRelatedMemosRequest struct {
 
 func (x *GetRelatedMemosRequest) Reset() {
 	*x = GetRelatedMemosRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[10]
+	mi := &file_api_v1_ai_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +906,7 @@ func (x *GetRelatedMemosRequest) String() string {
 func (*GetRelatedMemosRequest) ProtoMessage() {}
 
 func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[10]
+	mi := &file_api_v1_ai_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +919,7 @@ func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosRequest.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{10}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetRelatedMemosRequest) GetName() string {
@@ -770,7 +946,7 @@ type GetRelatedMemosResponse struct {
 
 func (x *GetRelatedMemosResponse) Reset() {
 	*x = GetRelatedMemosResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[11]
+	mi := &file_api_v1_ai_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +958,7 @@ func (x *GetRelatedMemosResponse) String() string {
 func (*GetRelatedMemosResponse) ProtoMessage() {}
 
 func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[11]
+	mi := &file_api_v1_ai_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +971,7 @@ func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosResponse.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{11}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetRelatedMemosResponse) GetMemos() []*SearchResult {
@@ -809,7 +985,16 @@ var File_api_v1_ai_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\n" +
-	"\x17api/v1/ai_service.proto\x12\fmemos.api.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\"H\n" +
+	"\x17api/v1/ai_service.proto\x12\fmemos.api.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\"^\n" +
+	"\x18ScheduleAgentChatRequest\x12\x1d\n" +
+	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12#\n" +
+	"\ruser_timezone\x18\x02 \x01(\tR\fuserTimezone\"7\n" +
+	"\x19ScheduleAgentChatResponse\x12\x1a\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse\"a\n" +
+	"\x1bScheduleAgentStreamResponse\x12\x14\n" +
+	"\x05event\x18\x01 \x01(\tR\x05event\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12\x12\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\"H\n" +
 	"\x15SemanticSearchRequest\x12\x19\n" +
 	"\x05query\x18\x01 \x01(\tB\x03\xe0A\x02R\x05query\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"N\n" +
@@ -828,13 +1013,17 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12\x18\n" +
 	"\ahistory\x18\x02 \x03(\tR\ahistory\x12#\n" +
 	"\ruser_timezone\x18\x03 \x01(\tR\fuserTimezone\x12O\n" +
-	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\"\x96\x02\n" +
+	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\"\xd4\x02\n" +
 	"\x15ChatWithMemosResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\x12\x12\n" +
 	"\x04done\x18\x03 \x01(\bR\x04done\x12^\n" +
 	"\x18schedule_creation_intent\x18\x04 \x01(\v2$.memos.api.v1.ScheduleCreationIntentR\x16scheduleCreationIntent\x12U\n" +
-	"\x15schedule_query_result\x18\x05 \x01(\v2!.memos.api.v1.ScheduleQueryResultR\x13scheduleQueryResult\"\x85\x01\n" +
+	"\x15schedule_query_result\x18\x05 \x01(\v2!.memos.api.v1.ScheduleQueryResultR\x13scheduleQueryResult\x12\x1d\n" +
+	"\n" +
+	"event_type\x18\x06 \x01(\tR\teventType\x12\x1d\n" +
+	"\n" +
+	"event_data\x18\a \x01(\tR\teventData\"\x85\x01\n" +
 	"\x16ScheduleCreationIntent\x12\x1a\n" +
 	"\bdetected\x18\x01 \x01(\bR\bdetected\x121\n" +
 	"\x14schedule_description\x18\x02 \x01(\tR\x13scheduleDescription\x12\x1c\n" +
@@ -863,12 +1052,18 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
 	"\n" +
-	"\x06STRICT\x10\x022\xff\x03\n" +
+	"\x06STRICT\x10\x022\x97\x06\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12v\n" +
 	"\rChatWithMemos\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/ai/chat0\x01\x12\x86\x01\n" +
-	"\x0fGetRelatedMemos\x12$.memos.api.v1.GetRelatedMemosRequest\x1a%.memos.api.v1.GetRelatedMemosResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/{name=memos/*}/relatedB\xa6\x01\n" +
+	"\x0fGetRelatedMemos\x12$.memos.api.v1.GetRelatedMemosRequest\x1a%.memos.api.v1.GetRelatedMemosResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/{name=memos/*}/related\x12\x87\x01\n" +
+	"\x15ChatWithScheduleAgent\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/ai/chat/schedule0\x01\x12\x8b\x01\n" +
+	"\x17ChatWithMemosIntegrated\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/ai/chat/integrated0\x012\xaa\x02\n" +
+	"\x14ScheduleAgentService\x12\x7f\n" +
+	"\x04Chat\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a'.memos.api.v1.ScheduleAgentChatResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/schedule-agent/chat\x12\x90\x01\n" +
+	"\n" +
+	"ChatStream\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a).memos.api.v1.ScheduleAgentStreamResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/api/v1/schedule-agent/chat/stream0\x01B\xa6\x01\n" +
 	"\x10com.memos.api.v1B\x0eAiServiceProtoP\x01Z0github.com/usememos/memos/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
@@ -884,39 +1079,50 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_api_v1_ai_service_proto_goTypes = []any{
-	(ScheduleQueryMode)(0),          // 0: memos.api.v1.ScheduleQueryMode
-	(*SemanticSearchRequest)(nil),   // 1: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),  // 2: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),            // 3: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),      // 4: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),     // 5: memos.api.v1.SuggestTagsResponse
-	(*ChatWithMemosRequest)(nil),    // 6: memos.api.v1.ChatWithMemosRequest
-	(*ChatWithMemosResponse)(nil),   // 7: memos.api.v1.ChatWithMemosResponse
-	(*ScheduleCreationIntent)(nil),  // 8: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),     // 9: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),         // 10: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),  // 11: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil), // 12: memos.api.v1.GetRelatedMemosResponse
+	(ScheduleQueryMode)(0),              // 0: memos.api.v1.ScheduleQueryMode
+	(*ScheduleAgentChatRequest)(nil),    // 1: memos.api.v1.ScheduleAgentChatRequest
+	(*ScheduleAgentChatResponse)(nil),   // 2: memos.api.v1.ScheduleAgentChatResponse
+	(*ScheduleAgentStreamResponse)(nil), // 3: memos.api.v1.ScheduleAgentStreamResponse
+	(*SemanticSearchRequest)(nil),       // 4: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),      // 5: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),                // 6: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),          // 7: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),         // 8: memos.api.v1.SuggestTagsResponse
+	(*ChatWithMemosRequest)(nil),        // 9: memos.api.v1.ChatWithMemosRequest
+	(*ChatWithMemosResponse)(nil),       // 10: memos.api.v1.ChatWithMemosResponse
+	(*ScheduleCreationIntent)(nil),      // 11: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),         // 12: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),             // 13: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),      // 14: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil),     // 15: memos.api.v1.GetRelatedMemosResponse
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
-	3,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
+	6,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
 	0,  // 1: memos.api.v1.ChatWithMemosRequest.schedule_query_mode:type_name -> memos.api.v1.ScheduleQueryMode
-	8,  // 2: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
-	9,  // 3: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
-	10, // 4: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
-	3,  // 5: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
-	1,  // 6: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	4,  // 7: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	6,  // 8: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
-	11, // 9: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	2,  // 10: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	5,  // 11: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	7,  // 12: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
-	12, // 13: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
+	11, // 2: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	12, // 3: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	13, // 4: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	6,  // 5: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
+	4,  // 6: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	7,  // 7: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	9,  // 8: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	14, // 9: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	9,  // 10: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
+	9,  // 11: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
+	1,  // 12: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	1,  // 13: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	5,  // 14: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	8,  // 15: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	10, // 16: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	15, // 17: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	10, // 18: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
+	10, // 19: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse
+	2,  // 20: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	3,  // 21: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	14, // [14:22] is the sub-list for method output_type
+	6,  // [6:14] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -933,9 +1139,9 @@ func file_api_v1_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   15,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_api_v1_ai_service_proto_goTypes,
 		DependencyIndexes: file_api_v1_ai_service_proto_depIdxs,

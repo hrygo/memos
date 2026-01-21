@@ -32,13 +32,15 @@ type APIV1Service struct {
 	v1pb.UnimplementedIdentityProviderServiceServer
 	v1pb.UnimplementedAIServiceServer
 	v1pb.UnimplementedScheduleServiceServer
+	v1pb.UnimplementedScheduleAgentServiceServer
 
-	Secret          string
-	Profile         *profile.Profile
-	Store           *store.Store
-	MarkdownService markdown.Service
-	AIService       *AIService
-	ScheduleService *ScheduleService
+	Secret              string
+	Profile             *profile.Profile
+	Store               *store.Store
+	MarkdownService     markdown.Service
+	AIService           *AIService
+	ScheduleService     *ScheduleService
+	ScheduleAgentService *ScheduleAgentService
 
 	// thumbnailSemaphore limits concurrent thumbnail generation to prevent memory exhaustion
 	thumbnailSemaphore *semaphore.Weighted
@@ -88,6 +90,9 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 					Store:      store,
 					LLMService: llmService,
 				}
+
+				// Initialize ScheduleAgentService
+				service.ScheduleAgentService = NewScheduleAgentService(store, llmService, profile)
 			}
 		}
 	}
@@ -173,6 +178,12 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	// Register Schedule service
 	if err := v1pb.RegisterScheduleServiceHandlerServer(ctx, gwMux, s.ScheduleService); err != nil {
 		return err
+	}
+	// Register ScheduleAgent service if available
+	if s.ScheduleAgentService != nil {
+		if err := v1pb.RegisterScheduleAgentServiceHandlerServer(ctx, gwMux, s.ScheduleAgentService); err != nil {
+			return err
+		}
 	}
 	gwGroup := echoServer.Group("")
 	gwGroup.Use(middleware.CORS())

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.6.0] - 2026-01-21
+
+### 🤖 Schedule Agent V2
+
+- **Full Connect RPC Integration**: Migrated Schedule Agent to gRPC Connect protocols for robust streaming support.
+- **Streaming Response**: Enabled real-time character streaming for smoother AI interactions, resolving previous gRPC-Gateway buffering issues.
+- **Automated Testing Suite**: Added `scripts/test_schedule_agent.sh` and `QUICKSTART_AGENT.md` for comprehensive capabilities verification.
+- **Agent Architecture**: Consolidated agent logic into `plugin/ai/agent/`, separating concerns between tools, core logic, and service layers.
+- **Environment Management**: Improved dev scripts to handle `.env` loading and project root detection more intelligently.
+
 ## [v0.5.0] - 2026-01-21
 
 ### 📅 Intelligent Schedule Assistant

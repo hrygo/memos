@@ -152,18 +152,26 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                 key={idx}
                 onClick={() => handleDateClick(date)}
                 className={cn(
-                  "relative w-full h-full min-h-[3rem] rounded-lg p-1 text-sm transition-colors cursor-pointer flex flex-col items-center justify-start pt-1.5 gap-1",
+                  "relative w-full h-full min-h-[3rem] rounded-lg p-1 text-sm transition-colors cursor-pointer flex flex-col items-center justify-start pt-1 gap-1",
                   !inCurrentMonth && "text-muted-foreground/30",
-                  // Selected state (overrides everything)
-                  isSelectedDate && !isTodayDate && "bg-primary text-primary-foreground shadow-md font-semibold",
-                  isSelectedDate && isTodayDate && "bg-orange-700 text-white shadow-md font-semibold",
-                  // Today state (when not selected) - deeper warm orange color
-                  !isSelectedDate && isTodayDate && "bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 font-bold",
-                  // Hover state (when not selected and not today)
-                  !isSelectedDate && !isTodayDate && "hover:bg-accent text-foreground",
+                  // Hover state for the whole cell
+                  "hover:bg-accent/30",
                 )}
               >
-                <span className="block text-center leading-none">{date.format("D")}</span>
+                <span
+                  className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full transition-colors font-medium",
+                    // Selected state
+                    isSelectedDate && !isTodayDate && "bg-primary text-primary-foreground shadow-sm",
+                    isSelectedDate && isTodayDate && "bg-orange-600 text-white shadow-sm",
+                    // Today state (when not selected)
+                    !isSelectedDate && isTodayDate && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+                    // Logic to ensure text color is correct when not selected/today
+                    !isSelectedDate && !isTodayDate && "text-foreground"
+                  )}
+                >
+                  {date.format("D")}
+                </span>
 
                 {/* Schedule indicator */}
                 {scheduleCount > 0 && (
@@ -172,11 +180,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                       <div
                         key={i}
                         className={cn(
-                          "h-1 w-1 rounded-full",
-                          // Use foreground color for selected state (works in both light/dark themes)
-                          isSelectedDate
-                            ? "bg-foreground shadow-sm"
-                            : "bg-primary"
+                          "h-1 w-1 rounded-full bg-primary/70"
                         )}
                       />
                     ))}

@@ -94,6 +94,56 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/chat/integrated:
+        post:
+            tags:
+                - AIService
+            description: ChatWithMemosIntegrated integrates both RAG and schedule agent.
+            operationId: AIService_ChatWithMemosIntegrated
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatWithMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatWithMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/chat/schedule:
+        post:
+            tags:
+                - AIService
+            description: ChatWithScheduleAgent streams a chat response using the schedule agent.
+            operationId: AIService_ChatWithScheduleAgent
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatWithMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatWithMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/search:
         post:
             tags:
@@ -1154,6 +1204,56 @@ paths:
                 "200":
                     description: OK
                     content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedule-agent/chat:
+        post:
+            tags:
+                - ScheduleAgentService
+            description: Chat handles non-streaming schedule agent chat requests.
+            operationId: ScheduleAgentService_Chat
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ScheduleAgentChatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ScheduleAgentChatResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/schedule-agent/chat/stream:
+        post:
+            tags:
+                - ScheduleAgentService
+            description: ChatStream handles streaming schedule agent chat requests.
+            operationId: ScheduleAgentService_ChatStream
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ScheduleAgentChatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ScheduleAgentStreamResponse'
                 default:
                     description: Default error response
                     content:
@@ -2371,6 +2471,11 @@ components:
                     $ref: '#/components/schemas/ScheduleCreationIntent'
                 scheduleQueryResult:
                     $ref: '#/components/schemas/ScheduleQueryResult'
+                eventType:
+                    type: string
+                    description: Agent event signaling (for schedule agent integration)
+                eventData:
+                    type: string
             description: ChatWithMemosResponse is the response for ChatWithMemos.
         CheckConflictRequest:
             required:
@@ -3156,6 +3261,32 @@ components:
                 state:
                     type: string
             description: Schedule represents a schedule event.
+        ScheduleAgentChatRequest:
+            required:
+                - message
+            type: object
+            properties:
+                message:
+                    type: string
+                userTimezone:
+                    type: string
+            description: ScheduleAgentChatRequest is the request for schedule agent chat.
+        ScheduleAgentChatResponse:
+            type: object
+            properties:
+                response:
+                    type: string
+            description: ScheduleAgentChatResponse is the response for schedule agent chat (non-streaming).
+        ScheduleAgentStreamResponse:
+            type: object
+            properties:
+                event:
+                    type: string
+                content:
+                    type: string
+                done:
+                    type: boolean
+            description: ScheduleAgentStreamResponse is the streaming response for schedule agent chat.
         ScheduleCreationIntent:
             type: object
             properties:
@@ -3645,6 +3776,8 @@ tags:
     - name: IdentityProviderService
     - name: InstanceService
     - name: MemoService
+    - name: ScheduleAgentService
+      description: ScheduleAgentService provides schedule-specific AI agent functionality.
     - name: ScheduleService
       description: ScheduleService provides schedule management APIs.
     - name: ShortcutService

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -12,9 +13,9 @@ import (
 // TestConnectHandler_ScheduleSupport 测试 Connect RPC 版本是否支持日程
 func TestConnectHandler_ScheduleSupport(t *testing.T) {
 	tests := []struct {
-		name           string
-		searchResults  []*retrieval.SearchResult
-		expectNotes    bool
+		name            string
+		searchResults   []*retrieval.SearchResult
+		expectNotes     bool
 		expectSchedules bool
 	}{
 		{
@@ -26,9 +27,9 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 					Score:   1.0,
 					Content: "团队周会",
 					Schedule: &store.Schedule{
-						ID:      1,
-						Title:   "团队周会",
-						StartTs: time.Now().Unix(),
+						ID:       1,
+						Title:    "团队周会",
+						StartTs:  time.Now().Unix(),
 						Location: "会议室A",
 					},
 				},
@@ -56,8 +57,8 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 					Score:   0.95,
 					Content: "软件进化 集成AI功能",
 					Memo: &store.Memo{
-						ID:     1,
-						UID:    "uid1",
+						ID:      1,
+						UID:     "uid1",
 						Content: "软件进化 集成AI功能",
 					},
 				},
@@ -77,7 +78,7 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 			expectSchedules: true,
 		},
 		{
-			name:           "纯笔记查询",
+			name: "纯笔记查询",
 			searchResults: []*retrieval.SearchResult{
 				{
 					ID:      1,
@@ -85,8 +86,8 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 					Score:   0.95,
 					Content: "软件进化 集成AI功能",
 					Memo: &store.Memo{
-						ID:     1,
-						UID:    "uid1",
+						ID:      1,
+						UID:     "uid1",
 						Content: "软件进化 集成AI功能",
 					},
 				},
@@ -147,11 +148,11 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 			}
 
 			systemContent := systemMsg.Content
-			if !contains(systemContent, "日程查询") {
+			if !strings.Contains(systemContent, "日程查询") {
 				t.Error("system prompt should mention schedule query handling")
 			}
 
-			if !contains(systemContent, "优先回复日程信息") {
+			if !strings.Contains(systemContent, "优先回复日程信息") {
 				t.Error("system prompt should prioritize schedule information")
 			}
 
@@ -165,14 +166,14 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 
 			// 如果有日程，验证日程上下文被添加
 			if tt.expectSchedules {
-				if !contains(userContent, "📅 日程安排") {
+				if !strings.Contains(userContent, "📅 日程安排") {
 					t.Error("user message should contain schedule section when schedules exist")
 				}
 			}
 
 			// 如果有笔记，验证笔记上下文被添加
 			if tt.expectNotes {
-				if !contains(userContent, "📝 相关笔记") {
+				if !strings.Contains(userContent, "📝 相关笔记") {
 					t.Error("user message should contain notes section when notes exist")
 				}
 			}
@@ -184,14 +185,12 @@ func TestConnectHandler_ScheduleSupport(t *testing.T) {
 func TestConnectHandler_RouteDecision(t *testing.T) {
 	// 模拟路由决策
 	routeDecision := &queryengine.RouteDecision{
-		Strategy:      "schedule_bm25_only",
-		Confidence:    0.95,
+		Strategy:   "schedule_bm25_only",
+		Confidence: 0.95,
 		TimeRange: &queryengine.TimeRange{
 			Start: time.Now().Truncate(24 * time.Hour),
 			End:   time.Now().Truncate(24 * time.Hour).Add(24 * time.Hour),
 		},
-		SemanticQuery: "",
-		NeedsReranker: false,
 	}
 
 	// 验证决策
@@ -214,7 +213,7 @@ func TestConnectHandler_IntentDetection(t *testing.T) {
 
 	// 构建消息（模拟纯日程查询场景）
 	messages := handler.buildOptimizedMessagesForConnect(
-		"明天有哪些事要干",  // ⭐ 关键：这是查询，不是创建
+		"明天有哪些事要干", // ⭐ 关键：这是查询，不是创建
 		[]string{},
 		"",
 		[]*retrieval.SearchResult{},
@@ -231,31 +230,31 @@ func TestConnectHandler_IntentDetection(t *testing.T) {
 	systemContent := systemMsg.Content
 
 	// 验证提示词明确说明何时检测意图
-	if !contains(systemContent, "仅在用户的原始问题明确表示要创建日程时") {
+	if !strings.Contains(systemContent, "仅在用户的原始问题明确表示要创建日程时") {
 		t.Error("system prompt should clarify that intent detection is only for creation")
 	}
 
 	// 验证提示词明确列出查询类场景不是创建意图
-	if !contains(systemContent, "查询类") {
+	if !strings.Contains(systemContent, "查询类") {
 		t.Error("system prompt should explicitly list query scenarios as non-creation")
 	}
 
-	if !contains(systemContent, "明天的事要干") {
+	if !strings.Contains(systemContent, "明天的事要干") {
 		t.Error("system prompt should include '明天的事要干' as an example of query (not creation)")
 	}
 
 	// 验证提示词包含明确的创建关键词
-	if !contains(systemContent, "帮我创建") {
+	if !strings.Contains(systemContent, "帮我创建") {
 		t.Error("system prompt should include clear creation keywords like '帮我创建'")
 	}
 
-	if !contains(systemContent, "设置提醒") {
+	if !strings.Contains(systemContent, "设置提醒") {
 		t.Error("system prompt should include clear creation keywords like '设置提醒'")
 	}
 
 	// 验证提示词不包含误导性的"安排"关键词作为创建意图
 	// 因为"有什么安排"是查询，不是创建
-	if contains(systemContent, "关键词：\"创建\"、\"提醒\"、\"安排\"、\"添加\"") {
+	if strings.Contains(systemContent, "关键词：\"创建\"、\"提醒\"、\"安排\"、\"添加\"") {
 		t.Error("system prompt should NOT list '安排' as a creation keyword without context")
 	}
 }

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,20 +35,20 @@ func TestParseScheduleIntentFromAIResponse(t *testing.T) {
 			expectDesc:     "明天下午2点的团队会议",
 		},
 		{
-			name: "no intent marker",
-			aiResponse: `好的，我来帮您查看日程安排。`,
+			name:           "no intent marker",
+			aiResponse:     `好的，我来帮您查看日程安排。`,
 			expectDetected: false,
 			expectDesc:     "",
 		},
 		{
-			name: "intent detected but false",
-			aiResponse: `明天没有安排。<<<SCHEDULE_INTENT:{"detected":false,"description":""}>>>`,
+			name:           "intent detected but false",
+			aiResponse:     `明天没有安排。<<<SCHEDULE_INTENT:{"detected":false,"description":""}>>>`,
 			expectDetected: false,
 			expectDesc:     "",
 		},
 		{
-			name: "intent with special characters in description",
-			aiResponse: `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"讨论 <AI> 项目 >>> 进展"}>>>`,
+			name:           "intent with special characters in description",
+			aiResponse:     `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"讨论 <AI> 项目 >>> 进展"}>>>`,
 			expectDetected: true,
 			expectDesc:     "讨论 <AI> 项目 >>> 进展",
 		},
@@ -59,8 +60,8 @@ func TestParseScheduleIntentFromAIResponse(t *testing.T) {
 			expectDesc:     "明天\n下午\t开会", // 清理逻辑只在外层，JSON内的换行符会保留
 		},
 		{
-			name: "multiple markers - should use last",
-			aiResponse: `<<<SCHEDULE_INTENT:{"detected":false,"description":""}>>> Some text <<<SCHEDULE_INTENT:{"detected":true,"description":"最后的标记"}>>>`,
+			name:           "multiple markers - should use last",
+			aiResponse:     `<<<SCHEDULE_INTENT:{"detected":false,"description":""}>>> Some text <<<SCHEDULE_INTENT:{"detected":true,"description":"最后的标记"}>>>`,
 			expectDetected: false, // JSON 解析会失败，因为包含前面的文本
 			expectDesc:     "",
 		},
@@ -71,20 +72,20 @@ func TestParseScheduleIntentFromAIResponse(t *testing.T) {
 			expectDesc:     "",
 		},
 		{
-			name: "malformed JSON - missing closing bracket",
-			aiResponse: `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"test">>>`,
+			name:           "malformed JSON - missing closing bracket",
+			aiResponse:     `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"test">>>`,
 			expectDetected: false,
 			expectDesc:     "",
 		},
 		{
-			name: "malformed JSON - invalid JSON syntax",
-			aiResponse: `好的。<<<SCHEDULE_INTENT:{detected:true,"description":"test"}>>>`,
+			name:           "malformed JSON - invalid JSON syntax",
+			aiResponse:     `好的。<<<SCHEDULE_INTENT:{detected:true,"description":"test"}>>>`,
 			expectDetected: false,
 			expectDesc:     "",
 		},
 		{
-			name: "detected true but empty description",
-			aiResponse: `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"   "}>>>`,
+			name:           "detected true but empty description",
+			aiResponse:     `好的。<<<SCHEDULE_INTENT:{"detected":true,"description":"   "}>>>`,
 			expectDetected: false,
 			expectDesc:     "",
 		},
@@ -112,57 +113,57 @@ func TestDetectScheduleQueryIntent(t *testing.T) {
 	service := &AIService{}
 
 	tests := []struct {
-		name           string
-		message        string
-		expectDetected bool
+		name            string
+		message         string
+		expectDetected  bool
 		expectTimeRange string
 	}{
 		{
-			name:           "today's schedule query",
-			message:        "今天有什么日程？",
-			expectDetected: true,
+			name:            "today's schedule query",
+			message:         "今天有什么日程？",
+			expectDetected:  true,
 			expectTimeRange: "今天",
 		},
 		{
-			name:           "tomorrow's schedule",
-			message:        "明天有什么安排",
-			expectDetected: true,
+			name:            "tomorrow's schedule",
+			message:         "明天有什么安排",
+			expectDetected:  true,
 			expectTimeRange: "未来7天", // 由于"有什么安排"通用模式在前面，会先匹配到"近期日程"
 		},
 		{
-			name:           "this week schedule",
-			message:        "本周的日程安排",
-			expectDetected: true,
+			name:            "this week schedule",
+			message:         "本周的日程安排",
+			expectDetected:  true,
 			expectTimeRange: "本周",
 		},
 		{
-			name:           "upcoming schedules",
-			message:        "近期有什么日程",
-			expectDetected: true, // 匹配"近期.*日程"模式
+			name:            "upcoming schedules",
+			message:         "近期有什么日程",
+			expectDetected:  true, // 匹配"近期.*日程"模式
 			expectTimeRange: "未来7天",
 		},
 		{
-			name:           "general schedule query",
-			message:        "有什么安排",
-			expectDetected: true,
+			name:            "general schedule query",
+			message:         "有什么安排",
+			expectDetected:  true,
 			expectTimeRange: "未来7天",
 		},
 		{
-			name:           "no schedule intent - creation",
-			message:        "帮我安排明天下午2点的会议",
-			expectDetected: false,
+			name:            "no schedule intent - creation",
+			message:         "帮我安排明天下午2点的会议",
+			expectDetected:  false,
 			expectTimeRange: "",
 		},
 		{
-			name:           "no schedule intent - question",
-			message:        "什么是人工智能",
-			expectDetected: false,
+			name:            "no schedule intent - question",
+			message:         "什么是人工智能",
+			expectDetected:  false,
 			expectTimeRange: "",
 		},
 		{
-			name:           "empty message",
-			message:        "",
-			expectDetected: false,
+			name:            "empty message",
+			message:         "",
+			expectDetected:  false,
 			expectTimeRange: "",
 		},
 	}
@@ -531,7 +532,7 @@ func TestFormatSchedulesForContext(t *testing.T) {
 				for _, sched := range tt.schedules {
 					found := false
 					for i := 1; i <= len(tt.schedules); i++ {
-						if contains(result, sched.Title) {
+						if strings.Contains(result, sched.Title) {
 							found = true
 							break
 						}
@@ -543,14 +544,14 @@ func TestFormatSchedulesForContext(t *testing.T) {
 
 				// Check location formatting if present
 				if tt.schedules[0].Location != "" {
-					if !contains(result, "@") {
+					if !strings.Contains(result, "@") {
 						t.Errorf("formatSchedulesForContext() result should contain location marker '@'")
 					}
 				}
 
 				// Check recurrence marker if present
 				if tt.schedules[0].RecurrenceRule != "" {
-					if !contains(result, "[重复]") {
+					if !strings.Contains(result, "[重复]") {
 						t.Errorf("formatSchedulesForContext() result should contain recurrence marker '[重复]'")
 					}
 				}
@@ -602,19 +603,4 @@ func TestTimeRangeCalculations(t *testing.T) {
 	if duration != expectedDuration {
 		t.Errorf("近期 duration = %v, want %v", duration, expectedDuration)
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

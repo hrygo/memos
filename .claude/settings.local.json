@@ -66,7 +66,8 @@
       "Bash(while read:*)",
       "Bash(do sed -i '' 's/router\\\\.Route\\(\\\\\\([^,]*\\\\\\), \\\\\\([^\\)]*\\\\\\)\\)/router.Route\\(\\\\1, \\\\2, nil\\)/g' \"$file\" echo \"Updated: $file\" done)",
       "Bash(echo:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(pnpm lint)"
     ]
   }
 }
