@@ -460,7 +460,7 @@ func BenchmarkQueryRouter_Route(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, query := range queries {
-			router.Route(ctx, query)
+			router.Route(ctx, query, nil)
 		}
 	}
 }

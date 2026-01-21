@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/usememos/memos/proto/gen/api/v1/apiv1connect"
 	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/server/retrieval"
+	"github.com/usememos/memos/server/timezone"
 	"github.com/usememos/memos/store"
 )
 
@@ -154,10 +156,24 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 	// Phase 1: 智能 Query Routing（⭐ 新增）
 	// ============================================================
 	var routeDecision *queryengine.RouteDecision
+
+	// 解析用户时区
+	var userTimezone *time.Location
+	if req.Msg.UserTimezone != "" {
+		var err error
+		userTimezone, err = time.LoadLocation(req.Msg.UserTimezone)
+		if err != nil {
+			fmt.Printf("[ChatWithMemos] Invalid timezone %q, using UTC: %v\n", req.Msg.UserTimezone, err)
+			userTimezone = time.UTC
+		}
+	} else {
+		userTimezone = time.UTC
+	}
+
 	if s.AIService.QueryRouter != nil {
-		routeDecision = s.AIService.QueryRouter.Route(ctx, req.Msg.Message)
-		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f\n",
-			routeDecision.Strategy, routeDecision.Confidence)
+		routeDecision = s.AIService.QueryRouter.Route(ctx, req.Msg.Message, userTimezone)
+		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f, Timezone: %v\n",
+			routeDecision.Strategy, routeDecision.Confidence, userTimezone)
 	} else {
 		// 降级：默认策略
 		routeDecision = &queryengine.RouteDecision{
@@ -243,8 +259,13 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		contextBuilder.WriteString("### 📅 日程安排\n")
 		for i, r := range scheduleResults {
 			if r.Schedule != nil {
-				scheduleTime := time.Unix(r.Schedule.StartTs, 0)
-				timeStr := scheduleTime.Format("15:04")
+				// 使用 timezone 包格式化日程时间（完整日期时间）
+				timeStr := timezone.FormatScheduleTime(
+					r.Schedule.StartTs,
+					r.Schedule.EndTs,
+					r.Schedule.AllDay,
+					userTimezone,
+				)
 				contextBuilder.WriteString(fmt.Sprintf("%d. %s - %s", i+1, timeStr, r.Schedule.Title))
 				if r.Schedule.Location != "" {
 					contextBuilder.WriteString(fmt.Sprintf(" @ %s", r.Schedule.Location))
@@ -284,6 +305,9 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		return err
 	}
 
+	// 收集完整回复内容
+	var fullContent strings.Builder
+
 	// 流式发送内容
 	for {
 		select {
@@ -291,10 +315,12 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 			if !ok {
 				contentChan = nil
 				if errChan == nil {
-					return nil // Done
+					// 流结束，发送最终响应
+					return s.sendFinalResponse(stream, fullContent.String(), scheduleResults)
 				}
 				continue
 			}
+			fullContent.WriteString(content)
 			if err := stream.Send(&v1pb.ChatWithMemosResponse{
 				Content: content,
 			}); err != nil {
@@ -305,7 +331,8 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 			if !ok {
 				errChan = nil
 				if contentChan == nil {
-					return nil // Done
+					// 流结束，发送最终响应
+					return s.sendFinalResponse(stream, fullContent.String(), scheduleResults)
 				}
 				continue
 			}
@@ -317,6 +344,130 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 			return ctx.Err()
 		}
 	}
+}
+
+// sendFinalResponse 发送最终响应（包含 Done、ScheduleQueryResult 等）
+func (s *ConnectServiceHandler) sendFinalResponse(
+	stream *connect.ServerStream[v1pb.ChatWithMemosResponse],
+	aiResponse string,
+	scheduleResults []*retrieval.SearchResult,
+) error {
+	// 解析日程创建意图
+	scheduleIntent := s.parseScheduleIntentFromAIResponse(aiResponse)
+
+	// 构建最终响应
+	response := &v1pb.ChatWithMemosResponse{
+		Done: true,
+	}
+
+	// 添加日程创建意图
+	if scheduleIntent != nil {
+		response.ScheduleCreationIntent = scheduleIntent
+	}
+
+	// 添加日程查询结果
+	if len(scheduleResults) > 0 {
+		scheduleSummaries := make([]*v1pb.ScheduleSummary, 0, len(scheduleResults))
+		for _, r := range scheduleResults {
+			if r.Schedule != nil {
+				summary := &v1pb.ScheduleSummary{
+					Uid:      fmt.Sprintf("schedules/%d", r.Schedule.ID),
+					Title:    r.Schedule.Title,
+					StartTs:  r.Schedule.StartTs,
+					AllDay:   r.Schedule.AllDay,
+					Location: r.Schedule.Location,
+				}
+
+				// 处理可选字段
+				if r.Schedule.EndTs != nil {
+					summary.EndTs = *r.Schedule.EndTs
+				}
+				if r.Schedule.RecurrenceRule != nil {
+					summary.RecurrenceRule = *r.Schedule.RecurrenceRule
+				}
+				// 使用 RowStatus 作为 Status
+				summary.Status = r.Schedule.RowStatus.String()
+
+				scheduleSummaries = append(scheduleSummaries, summary)
+			}
+		}
+		response.ScheduleQueryResult = &v1pb.ScheduleQueryResult{
+			Schedules: scheduleSummaries,
+		}
+	}
+
+	return stream.Send(response)
+}
+
+// parseScheduleIntentFromAIResponse 从 AI 响应中解析日程创建意图
+// 复用 ai_service_chat.go 中的逻辑
+func (s *ConnectServiceHandler) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.ScheduleCreationIntent {
+	// 查找意图标记：使用独特的 <<<SCHEDULE_INTENT: 格式避免误判
+	const intentMarker = "<<<SCHEDULE_INTENT:"
+
+	startIdx := strings.Index(aiResponse, intentMarker)
+	if startIdx == -1 {
+		// 没有意图标记，用户没有创建日程的意图
+		return nil
+	}
+
+	// 提取 JSON 部分
+	startIdx += len(intentMarker)
+
+	// 查找结束标记 >>>（使用 LastIndex 避免描述中的 >>> 截断）
+	endIdx := strings.LastIndex(aiResponse[startIdx:], ">>>")
+	if endIdx == -1 {
+		fmt.Printf("[ScheduleIntent] Found marker but missing closing '>>>'\n")
+		return nil
+	}
+
+	jsonStr := strings.TrimSpace(aiResponse[startIdx : startIdx+endIdx])
+
+	// 清理 JSON 字符串：移除换行符和制表符，但保留空格（description 中可能包含空格）
+	cleanJSON := strings.ReplaceAll(jsonStr, "\n", "")
+	cleanJSON = strings.ReplaceAll(cleanJSON, "\t", "")
+	cleanJSON = strings.TrimSpace(cleanJSON)
+
+	// 解析 JSON
+	type IntentJSON struct {
+		Detected            bool   `json:"detected"`
+		ScheduleDescription string `json:"schedule_description"` // 正确的字段名
+		Description         string `json:"description"`          // 兼容旧字段名
+	}
+
+	var intentJSON IntentJSON
+	if err := json.Unmarshal([]byte(cleanJSON), &intentJSON); err != nil {
+		fmt.Printf("[ScheduleIntent] Failed to parse intent JSON: %v, original: %s, cleaned: %s\n", err, jsonStr, cleanJSON)
+		return nil
+	}
+
+	// 检查是否检测到意图
+	if !intentJSON.Detected {
+		return nil
+	}
+
+	// 获取描述（优先使用正确的字段名，兼容旧字段名）
+	description := intentJSON.ScheduleDescription
+	if description == "" {
+		description = intentJSON.Description // 兼容旧格式
+	}
+
+	// 验证描述不为空
+	if strings.TrimSpace(description) == "" {
+		fmt.Printf("[ScheduleIntent] Intent detected but description is empty\n")
+		return nil
+	}
+
+	// 构建返回对象
+	intent := &v1pb.ScheduleCreationIntent{
+		Detected:            true,
+		ScheduleDescription: description,
+	}
+
+	// 记录成功解析
+	fmt.Printf("[ScheduleIntent] Successfully parsed intent: description='%s'\n", description)
+
+	return intent
 }
 
 // fallbackRetrieval 降级检索逻辑（兼容旧版本）
@@ -378,8 +529,14 @@ func (s *ConnectServiceHandler) buildOptimizedMessagesForConnect(
 2. 格式：时间 - 标题 (@地点)
 3. 如果没有日程，明确告知"暂无日程"
 
-## 日程创建检测
-当用户想创建日程时（关键词："创建"、"提醒"、"安排"、"添加"），在回复最后一行添加：
+## 日程创建检测（重要）
+⚠️ **仅在用户的原始问题明确表示要创建日程时**才添加意图标记：
+- 创建意图的明确关键词："帮我创建"、"帮我添加"、"设置提醒"、"新建日程"
+- ❌ 以下情况**不是**创建意图：
+  - 查询类："有哪些"、"有什么安排"、"今天干什么"、"明天的事要干"
+  - 确认类："我明天有安排吗"、"今天有空吗"
+
+仅在检测到创建意图时，在回复最后一行添加：
 <<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>`
 
 	// 构建消息

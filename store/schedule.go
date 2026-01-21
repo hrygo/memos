@@ -39,6 +39,12 @@ type FindSchedule struct {
 	// Status filter
 	RowStatus *RowStatus
 
+	// P1: Schedule query mode
+	// 0 = AUTO (auto-select based on query type)
+	// 1 = STANDARD (return schedules with any part in range)
+	// 2 = STRICT (return only schedules completely in range)
+	QueryMode *int32
+
 	// Pagination
 	Limit  *int
 	Offset *int

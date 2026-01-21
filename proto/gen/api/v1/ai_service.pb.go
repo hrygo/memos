@@ -22,6 +22,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ScheduleQueryMode specifies the query mode for schedule filtering.
+type ScheduleQueryMode int32
+
+const (
+	ScheduleQueryMode_AUTO     ScheduleQueryMode = 0 // Auto-select query mode based on query type (relative time → STANDARD, absolute time → STRICT)
+	ScheduleQueryMode_STANDARD ScheduleQueryMode = 1 // Standard mode: return schedules that have any part within the query range
+	ScheduleQueryMode_STRICT   ScheduleQueryMode = 2 // Strict mode: return only schedules completely within the query range
+)
+
+// Enum value maps for ScheduleQueryMode.
+var (
+	ScheduleQueryMode_name = map[int32]string{
+		0: "AUTO",
+		1: "STANDARD",
+		2: "STRICT",
+	}
+	ScheduleQueryMode_value = map[string]int32{
+		"AUTO":     0,
+		"STANDARD": 1,
+		"STRICT":   2,
+	}
+)
+
+func (x ScheduleQueryMode) Enum() *ScheduleQueryMode {
+	p := new(ScheduleQueryMode)
+	*p = x
+	return p
+}
+
+func (x ScheduleQueryMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ScheduleQueryMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_ai_service_proto_enumTypes[0].Descriptor()
+}
+
+func (ScheduleQueryMode) Type() protoreflect.EnumType {
+	return &file_api_v1_ai_service_proto_enumTypes[0]
+}
+
+func (x ScheduleQueryMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ScheduleQueryMode.Descriptor instead.
+func (ScheduleQueryMode) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{0}
+}
+
 // SemanticSearchRequest is the request for SemanticSearch.
 type SemanticSearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -281,11 +331,13 @@ func (x *SuggestTagsResponse) GetTags() []string {
 
 // ChatWithMemosRequest is the request for ChatWithMemos.
 type ChatWithMemosRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	History       []string               `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"` // conversation history
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Message           string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	History           []string               `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`                                                                                     // conversation history
+	UserTimezone      string                 `protobuf:"bytes,3,opt,name=user_timezone,json=userTimezone,proto3" json:"user_timezone,omitempty"`                                                       // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
+	ScheduleQueryMode ScheduleQueryMode      `protobuf:"varint,4,opt,name=schedule_query_mode,json=scheduleQueryMode,proto3,enum=memos.api.v1.ScheduleQueryMode" json:"schedule_query_mode,omitempty"` // Schedule query mode (optional, defaults to AUTO)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ChatWithMemosRequest) Reset() {
@@ -330,6 +382,20 @@ func (x *ChatWithMemosRequest) GetHistory() []string {
 		return x.History
 	}
 	return nil
+}
+
+func (x *ChatWithMemosRequest) GetUserTimezone() string {
+	if x != nil {
+		return x.UserTimezone
+	}
+	return ""
+}
+
+func (x *ChatWithMemosRequest) GetScheduleQueryMode() ScheduleQueryMode {
+	if x != nil {
+		return x.ScheduleQueryMode
+	}
+	return ScheduleQueryMode_AUTO
 }
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
@@ -757,10 +823,12 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\acontent\x18\x01 \x01(\tB\x03\xe0A\x02R\acontent\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\")\n" +
 	"\x13SuggestTagsResponse\x12\x12\n" +
-	"\x04tags\x18\x01 \x03(\tR\x04tags\"O\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tags\"\xc5\x01\n" +
 	"\x14ChatWithMemosRequest\x12\x1d\n" +
 	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12\x18\n" +
-	"\ahistory\x18\x02 \x03(\tR\ahistory\"\x96\x02\n" +
+	"\ahistory\x18\x02 \x03(\tR\ahistory\x12#\n" +
+	"\ruser_timezone\x18\x03 \x01(\tR\fuserTimezone\x12O\n" +
+	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\"\x96\x02\n" +
 	"\x15ChatWithMemosResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\x12\x12\n" +
@@ -790,7 +858,12 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"K\n" +
 	"\x17GetRelatedMemosResponse\x120\n" +
-	"\x05memos\x18\x01 \x03(\v2\x1a.memos.api.v1.SearchResultR\x05memos2\xff\x03\n" +
+	"\x05memos\x18\x01 \x03(\v2\x1a.memos.api.v1.SearchResultR\x05memos*7\n" +
+	"\x11ScheduleQueryMode\x12\b\n" +
+	"\x04AUTO\x10\x00\x12\f\n" +
+	"\bSTANDARD\x10\x01\x12\n" +
+	"\n" +
+	"\x06STRICT\x10\x022\xff\x03\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12v\n" +
@@ -810,40 +883,43 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_ai_service_proto_rawDescData
 }
 
+var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_api_v1_ai_service_proto_goTypes = []any{
-	(*SemanticSearchRequest)(nil),   // 0: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),  // 1: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),            // 2: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),      // 3: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),     // 4: memos.api.v1.SuggestTagsResponse
-	(*ChatWithMemosRequest)(nil),    // 5: memos.api.v1.ChatWithMemosRequest
-	(*ChatWithMemosResponse)(nil),   // 6: memos.api.v1.ChatWithMemosResponse
-	(*ScheduleCreationIntent)(nil),  // 7: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),     // 8: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),         // 9: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),  // 10: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil), // 11: memos.api.v1.GetRelatedMemosResponse
+	(ScheduleQueryMode)(0),          // 0: memos.api.v1.ScheduleQueryMode
+	(*SemanticSearchRequest)(nil),   // 1: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),  // 2: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),            // 3: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),      // 4: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),     // 5: memos.api.v1.SuggestTagsResponse
+	(*ChatWithMemosRequest)(nil),    // 6: memos.api.v1.ChatWithMemosRequest
+	(*ChatWithMemosResponse)(nil),   // 7: memos.api.v1.ChatWithMemosResponse
+	(*ScheduleCreationIntent)(nil),  // 8: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),     // 9: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),         // 10: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),  // 11: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil), // 12: memos.api.v1.GetRelatedMemosResponse
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
-	2,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
-	7,  // 1: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
-	8,  // 2: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
-	9,  // 3: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
-	2,  // 4: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
-	0,  // 5: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	3,  // 6: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	5,  // 7: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
-	10, // 8: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	1,  // 9: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	4,  // 10: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	6,  // 11: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
-	11, // 12: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	3,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
+	0,  // 1: memos.api.v1.ChatWithMemosRequest.schedule_query_mode:type_name -> memos.api.v1.ScheduleQueryMode
+	8,  // 2: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	9,  // 3: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	10, // 4: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	3,  // 5: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
+	1,  // 6: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	4,  // 7: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	6,  // 8: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	11, // 9: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	2,  // 10: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	5,  // 11: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	7,  // 12: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	12, // 13: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -856,13 +932,14 @@ func file_api_v1_ai_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_api_v1_ai_service_proto_goTypes,
 		DependencyIndexes: file_api_v1_ai_service_proto_depIdxs,
+		EnumInfos:         file_api_v1_ai_service_proto_enumTypes,
 		MessageInfos:      file_api_v1_ai_service_proto_msgTypes,
 	}.Build()
 	File_api_v1_ai_service_proto = out.File

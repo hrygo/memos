@@ -616,11 +616,11 @@ const AIChat = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleClearContext}>
+                    <DropdownMenuItem onClick={handleClearContext} className="cursor-pointer">
                       <EraserIcon className="w-4 h-4 mr-2" />
                       {t("ai.clear-context")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive cursor-pointer">
                       <EraserIcon className="w-4 h-4 mr-2" />
                       {t("ai.clear-chat")}
                     </DropdownMenuItem>
@@ -796,7 +796,7 @@ const AIChat = () => {
             variant="ghost"
             size="sm"
             onClick={() => setSchedulePanelOpen(!schedulePanelOpen)}
-            className="w-full h-8 rounded-none border-b hover:bg-muted/50"
+            className="w-full h-8 rounded-none border-b hover:bg-muted/50 cursor-pointer"
           >
             <Calendar className="w-4 h-4 mr-2" />
             <span className="flex-1 text-left">{t("schedule.title") || "Schedule"}</span>
@@ -806,14 +806,14 @@ const AIChat = () => {
           {/* Schedule Panel Content - NEW TIMELINE LAYOUT */}
           {schedulePanelOpen && (
             <div className="bg-muted/30 animate-in slide-in-from-top-2 duration-300">
-              <div className="w-full p-4 flex flex-col h-[60vh] md:h-[50vh]">
-                <div className="flex items-center justify-between mb-2 px-1">
+              <div className="w-full flex flex-col h-[45vh] md:h-[320px]">
+                <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b border-border/40">
                   {/* Mobile-Friendly Segmented Control */}
                   <div className="flex items-center bg-muted rounded-lg p-0.5">
                     <Button
                       variant={scheduleViewMode === "timeline" ? "default" : "ghost"}
                       size="sm"
-                      className={`h-7 px-3 text-xs font-medium rounded-md ${scheduleViewMode === "timeline" ? "" : "hover:bg-transparent"}`}
+                      className={`h-7 px-3 text-xs font-medium rounded-md cursor-pointer ${scheduleViewMode === "timeline" ? "" : "hover:bg-transparent"}`}
                       onClick={() => setScheduleViewMode("timeline")}
                     >
                       <LayoutList className="w-3.5 h-3.5 mr-1.5" />
@@ -822,7 +822,7 @@ const AIChat = () => {
                     <Button
                       variant={scheduleViewMode === "calendar" ? "default" : "ghost"}
                       size="sm"
-                      className={`h-7 px-3 text-xs font-medium rounded-md ${scheduleViewMode === "calendar" ? "" : "hover:bg-transparent"}`}
+                      className={`h-7 px-3 text-xs font-medium rounded-md cursor-pointer ${scheduleViewMode === "calendar" ? "" : "hover:bg-transparent"}`}
                       onClick={() => setScheduleViewMode("calendar")}
                     >
                       <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
@@ -831,7 +831,7 @@ const AIChat = () => {
                   </div>
                   <Button
                     size="sm"
-                    className="h-8 gap-1"
+                    className="h-8 gap-1 cursor-pointer"
                     onClick={() => {
                       setScheduleInputText(input);
                       setScheduleInputOpen(true);
@@ -842,7 +842,7 @@ const AIChat = () => {
                   </Button>
                 </div>
 
-                <div className="flex-1 min-h-0 bg-background/60 rounded-xl border border-border/50 shadow-sm overflow-hidden">
+                <div className="flex-1 min-h-0 bg-background shadow-none overflow-hidden relative">
                   {scheduleViewMode === "timeline" ? (
                     <ScheduleTimeline
                       schedules={schedules}
@@ -895,14 +895,14 @@ const AIChat = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleClearContext}>
+                <DropdownMenuItem onClick={handleClearContext} className="cursor-pointer">
                   <EraserIcon className="w-4 h-4 mr-2" />
                   <div>
                     <div className="font-medium">{t("ai.clear-context")}</div>
                     <div className="text-xs text-muted-foreground">{t("ai.clear-context-desc")}</div>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive cursor-pointer">
                   <EraserIcon className="w-4 h-4 mr-2" />
                   <div>
                     <div className="font-medium">{t("ai.clear-chat")}</div>

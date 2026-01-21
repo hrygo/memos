@@ -172,10 +172,24 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	// Phase 1: 智能 Query Routing（⭐ 新增）
 	// ============================================================
 	var routeDecision *queryengine.RouteDecision
+
+	// 解析用户时区
+	var userTimezone *time.Location
+	if req.UserTimezone != "" {
+		var err error
+		userTimezone, err = time.LoadLocation(req.UserTimezone)
+		if err != nil {
+			fmt.Printf("[ChatWithMemos] Invalid timezone %q, using UTC: %v\n", req.UserTimezone, err)
+			userTimezone = time.UTC
+		}
+	} else {
+		userTimezone = time.UTC
+	}
+
 	if s.QueryRouter != nil {
-		routeDecision = s.QueryRouter.Route(ctx, req.Message)
-		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f\n",
-			routeDecision.Strategy, routeDecision.Confidence)
+		routeDecision = s.QueryRouter.Route(ctx, req.Message, userTimezone)
+		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f, Timezone: %v\n",
+			routeDecision.Strategy, routeDecision.Confidence, userTimezone)
 	} else {
 		// 降级：默认策略
 		routeDecision = &queryengine.RouteDecision{
@@ -195,12 +209,13 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	if s.AdaptiveRetriever != nil {
 		// 使用新的自适应检索器
 		searchResults, err = s.AdaptiveRetriever.Retrieve(ctx, &retrieval.RetrievalOptions{
-			Query:     req.Message,
-			UserID:    user.ID,
-			Strategy:  routeDecision.Strategy,
-			TimeRange: routeDecision.TimeRange,
-			MinScore:  0.5,
-			Limit:     10,
+			Query:            req.Message,
+			UserID:           user.ID,
+			Strategy:         routeDecision.Strategy,
+			TimeRange:        routeDecision.TimeRange,
+			ScheduleQueryMode: routeDecision.ScheduleQueryMode, // P1: 传递查询模式
+			MinScore:         0.5,
+			Limit:            10,
 		})
 		if err != nil {
 			fmt.Printf("[AdaptiveRetriever] Error: %v, using fallback\n", err)
@@ -372,17 +387,20 @@ func (s *AIService) buildOptimizedMessages(
 ## 回复原则
 1. **简洁准确**：基于提供的上下文回答，不编造信息
 2. **结构清晰**：使用列表、分段组织内容
-3. **自然对话**：像真人助手一样友好、直接
+3. **完整回复**：
+   - 如果有日程，优先列出日程
+   - 如果有笔记，补充相关笔记
+   - 如果都没有，明确告知
 
-## 日程创建检测
-当用户想创建日程时（关键词："创建"、"提醒"、"安排"、"添加"），在回复最后一行添加：
-<<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>
+## 日程创建检测（重要）
+⚠️ **仅在用户的原始问题明确表示要创建日程时**才添加意图标记：
+- 创建意图的明确关键词："帮我创建"、"帮我添加"、"设置提醒"、"新建日程"
+- ❌ 以下情况**不是**创建意图：
+  - 查询类："有哪些"、"有什么安排"、"今天干什么"、"明天的事要干"
+  - 确认类："我明天有安排吗"、"今天有空吗"
 
-## 回复格式
-- 纯日程查询：直接列出日程，标明时间和标题
-- 纯笔记查询：总结相关笔记内容
-- 混合查询：分别组织日程和笔记信息
-- 无相关数据：礼貌告知，引导用户创建`
+仅在检测到创建意图时，在回复最后一行添加：
+<<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>`
 
 	// 构建消息
 	messages := []ai.Message{
@@ -556,10 +574,9 @@ func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.S
 
 	jsonStr := strings.TrimSpace(aiResponse[startIdx : startIdx+endIdx])
 
-	// 清理 JSON 字符串：移除所有空白字符（换行符、制表符、多余空格）
+	// 清理 JSON 字符串：移除换行符和制表符，但保留空格（description 中可能包含空格）
 	cleanJSON := strings.ReplaceAll(jsonStr, "\n", "")
 	cleanJSON = strings.ReplaceAll(cleanJSON, "\t", "")
-	cleanJSON = strings.ReplaceAll(cleanJSON, " ", "")
 	cleanJSON = strings.TrimSpace(cleanJSON)
 
 	// 解析 JSON

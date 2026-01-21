@@ -66,17 +66,39 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 	if v := find.RowStatus; v != nil {
 		where, args = append(where, "schedule.row_status = "+placeholder(len(args)+1)), append(args, *v)
 	}
+
+	// P1: 根据查询模式应用不同的时间范围过滤
+	// QueryMode: 0 = AUTO, 1 = STANDARD (标准模式), 2 = STRICT (严格模式)
+	queryMode := int32(0) // 默认标准模式
+	if v := find.QueryMode; v != nil {
+		queryMode = *v
+	}
+
 	if v := find.StartTs; v != nil {
-		// Find schedules that overlap with the query range
-		// A schedule overlaps if its end time is after or at the query start time
-		where, args = append(where, "(schedule.end_ts >= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
-		fmt.Printf("[DEBUG] Added start_ts condition: schedule.end_ts >= %d\n", *v)
+		if queryMode == 2 {
+			// 严格模式：日程必须完全在查询范围内
+			// 日程的开始时间 >= 查询范围的开始时间
+			where, args = append(where, "schedule.start_ts >= "+placeholder(len(args)+1)), append(args, *v)
+			fmt.Printf("[DEBUG] STRICT mode: schedule.start_ts >= %d\n", *v)
+		} else {
+			// 标准模式（默认）：返回有任何部分在范围内的日程
+			// 日程的结束时间 >= 查询范围的开始时间
+			where, args = append(where, "(schedule.end_ts >= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
+			fmt.Printf("[DEBUG] STANDARD mode: schedule.end_ts >= %d\n", *v)
+		}
 	}
 	if v := find.EndTs; v != nil {
-		// Find schedules that overlap with the query range
-		// A schedule overlaps if its start time is before or at the query end time
-		where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
-		fmt.Printf("[DEBUG] Added end_ts condition: schedule.start_ts <= %d\n", *v)
+		if queryMode == 2 {
+			// 严格模式：日程必须完全在查询范围内
+			// 日程的结束时间 <= 查询范围的结束时间
+			where, args = append(where, "(schedule.end_ts <= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
+			fmt.Printf("[DEBUG] STRICT mode: schedule.end_ts <= %d\n", *v)
+		} else {
+			// 标准模式（默认）：返回有任何部分在范围内的日程
+			// 日程的开始时间 <= 查询范围的结束时间
+			where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
+			fmt.Printf("[DEBUG] STANDARD mode: schedule.start_ts <= %d\n", *v)
+		}
 	}
 
 	// Ordering (always by start_ts ascending)

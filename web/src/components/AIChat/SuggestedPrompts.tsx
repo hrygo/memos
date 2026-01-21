@@ -21,7 +21,7 @@ const SuggestedPrompts = ({ onSelect }: SuggestedPromptsProps) => {
         <button
           key={prompt.key}
           onClick={() => onSelect(t(`ai.${prompt.key}`))}
-          className="flex items-center gap-3 p-3 text-left rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-primary/30 hover:shadow-sm transition-all group"
+          className="flex items-center gap-3 p-3 text-left rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-primary/30 hover:shadow-sm transition-all group cursor-pointer"
         >
           <prompt.icon className="w-5 h-5 text-primary/70 group-hover:text-primary transition-all shrink-0" />
           <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">{t(`ai.${prompt.key}`)}</span>

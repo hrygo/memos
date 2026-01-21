@@ -27,9 +27,12 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
     const endOfMonth = date.endOf("month");
     const days = [];
 
-    // Add days from previous month to fill the first week
-    const startDayOfWeek = startOfMonth.day();
-    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+    // Add days from previous month to fill the first week (Monday start)
+    const startDayOfWeek = startOfMonth.day(); // 0 is Sunday, 1 is Monday
+    // Calculate days to subtract: Mon(1)->0, Tue(2)->1, ..., Sun(0)->6
+    const daysFromPrevMonth = (startDayOfWeek + 6) % 7;
+
+    for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
       days.push(startOfMonth.subtract(i + 1, "day"));
     }
 
@@ -39,9 +42,12 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
     }
 
     // Add days from next month to fill the last week
-    const endDayOfWeek = endOfMonth.day();
-    for (let i = 1; i < 7 - endDayOfWeek; i++) {
-      days.push(endOfMonth.add(i, "day"));
+    // Calculate remaining days to fill the row (row length is 7)
+    const remainingSlots = 7 - (days.length % 7);
+    if (remainingSlots < 7) {
+      for (let i = 1; i <= remainingSlots; i++) {
+        days.push(endOfMonth.add(i, "day"));
+      }
     }
 
     return days;
@@ -92,45 +98,49 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
     onDateClick?.(date.format("YYYY-MM-DD"));
   };
 
-  // Weekday labels
-  const weekdays = [t("days.sun"), t("days.mon"), t("days.tue"), t("days.wed"), t("days.thu"), t("days.fri"), t("days.sat")];
+  // Weekday labels (Monday start)
+  const weekdays = [t("days.mon"), t("days.tue"), t("days.wed"), t("days.thu"), t("days.fri"), t("days.sat"), t("days.sun")];
 
   // Days to display
   const days = getDaysInMonth(currentMonth);
+  const weeks = Math.ceil(days.length / 7);
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div className={cn("flex flex-col gap-1.5", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">{currentMonth.format("YYYY MMMM")}</h3>
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">{currentMonth.format("MMMM YYYY")}</h3>
-          <Button variant="ghost" size="sm" onClick={goToToday}>
+          <Button variant="ghost" size="sm" onClick={goToToday} className="h-8 text-muted-foreground hover:text-foreground cursor-pointer">
             {t("common.today") || "Today"}
           </Button>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="cursor-pointer">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={goToNextMonth} className="cursor-pointer">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex flex-col gap-1">
+      <div className="flex-1 flex flex-col gap-1 min-h-0">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 flex-none">
           {weekdays.map((day, index) => (
-            <div key={index} className="p-2 text-center text-xs font-medium text-muted-foreground">
+            <div key={index} className="py-1 text-center text-xs font-medium text-muted-foreground">
               {day}
             </div>
           ))}
         </div>
 
         {/* Days */}
-        <div className="grid grid-cols-7 gap-1">
+        <div
+          className="grid grid-cols-7 gap-1 flex-1 min-h-0"
+          style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}
+        >
           {days.map((date, idx) => {
             const scheduleCount = getScheduleCount(date);
             const isTodayDate = isToday(date);
@@ -142,7 +152,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                 key={idx}
                 onClick={() => handleDateClick(date)}
                 className={cn(
-                  "relative aspect-square rounded-lg p-1 text-sm transition-colors cursor-pointer",
+                  "relative w-full h-full min-h-[3rem] rounded-lg p-1 text-sm transition-colors cursor-pointer flex flex-col items-center justify-start pt-1.5 gap-1",
                   !inCurrentMonth && "text-muted-foreground/30",
                   // Selected state (overrides everything)
                   isSelectedDate && !isTodayDate && "bg-primary text-primary-foreground shadow-md font-semibold",
@@ -153,11 +163,11 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                   !isSelectedDate && !isTodayDate && "hover:bg-accent text-foreground",
                 )}
               >
-                <span className="block text-center">{date.format("D")}</span>
+                <span className="block text-center leading-none">{date.format("D")}</span>
 
                 {/* Schedule indicator */}
                 {scheduleCount > 0 && (
-                  <div className="mt-1 flex justify-center gap-0.5">
+                  <div className="flex justify-center gap-0.5">
                     {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
                       <div
                         key={i}

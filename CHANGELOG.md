@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.26.1-ai.3] - 2026-01-21
+
+### 📅 Schedule UI/UX Polish
+
+- **Compact View**: Redesigned Schedule Calendar and Timeline for better information density and visual appeal.
+- **Interaction Enhancements**: Unified "finger" cursors for all interactive elements, optimized "Today" button style.
+- **Strict Conflict Policy**: Enforced backend conflict rules by removing "Create Anyway" and guiding users to "Modify/Adjust".
+- **Date Formatting**: Standardized on "YYYY MMMM" format and Monday-start weeks.
+- **Bug Fixes**: Resolved unused variables and React key warnings in Schedule components.
+
 ## [v0.26.1-ai.2] - 2026-01-21
 
 ### 🚀 Phase 1 Completion: Advanced AI Architecture

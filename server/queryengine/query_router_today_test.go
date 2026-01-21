@@ -52,7 +52,7 @@ func TestQueryRouter_TodaySynonyms(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decision := router.Route(ctx, tt.query)
+			decision := router.Route(ctx, tt.query, nil)
 
 			// 验证策略
 			if decision.Strategy != tt.expectedStrategy {
@@ -121,7 +121,7 @@ func TestQueryRouter_TodayPerformance(t *testing.T) {
 
 	// 预热
 	for _, query := range queries {
-		router.Route(ctx, query)
+		router.Route(ctx, query, nil)
 	}
 
 	// 性能测试：1000次路由
@@ -130,7 +130,7 @@ func TestQueryRouter_TodayPerformance(t *testing.T) {
 
 	for i := 0; i < iterations; i++ {
 		for _, query := range queries {
-			router.Route(ctx, query)
+			router.Route(ctx, query, nil)
 		}
 	}
 

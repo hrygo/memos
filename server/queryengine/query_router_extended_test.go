@@ -271,7 +271,7 @@ func TestQueryRouter_ExtendedTimeKeywords(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decision := router.Route(ctx, tt.query)
+			decision := router.Route(ctx, tt.query, nil)
 
 			// 验证策略
 			if decision.Strategy != tt.expectedStrategy {
@@ -377,7 +377,7 @@ func TestQueryRouter_ExtendedTimeRangeValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decision := router.Route(context.Background(), tt.keyword)
+			decision := router.Route(context.Background(), tt.keyword, nil)
 
 			if decision.TimeRange == nil {
 				t.Errorf("Expected time range for keyword '%s', got nil", tt.keyword)
@@ -460,7 +460,7 @@ func TestQueryRouter_ExtractContentQueryExtended(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decision := router.Route(context.Background(), tt.query)
+			decision := router.Route(context.Background(), tt.query, nil)
 			result := decision.SemanticQuery
 
 			if result != tt.expected {

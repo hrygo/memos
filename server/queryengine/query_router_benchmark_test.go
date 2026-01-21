@@ -23,7 +23,7 @@ func BenchmarkQueryRouter_Route(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		query := queries[i%len(queries)]
-		router.Route(ctx, query)
+		router.Route(ctx, query, nil)
 	}
 }
 
@@ -45,7 +45,7 @@ func BenchmarkQueryRouter_Route_Parallel(b *testing.B) {
 		i := 0
 		for pb.Next() {
 			query := queries[i%len(queries)]
-			router.Route(ctx, query)
+			router.Route(ctx, query, nil)
 			i++
 		}
 	})

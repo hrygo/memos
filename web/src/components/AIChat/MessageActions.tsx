@@ -24,15 +24,15 @@ const MessageActions = ({ onCopy, onRegenerate, onDelete }: MessageActionsProps)
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4}>
-        <DropdownMenuItem onClick={onCopy}>
+        <DropdownMenuItem onClick={onCopy} className="cursor-pointer">
           <CopyIcon className="w-4 h-4 mr-2" />
           {t("common.copy")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onRegenerate}>
+        <DropdownMenuItem onClick={onRegenerate} className="cursor-pointer">
           <RefreshCwIcon className="w-4 h-4 mr-2" />
           {t("ai.regenerate")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive cursor-pointer">
           <TrashIcon className="w-4 h-4 mr-2" />
           {t("common.delete")}
         </DropdownMenuItem>

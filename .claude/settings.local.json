@@ -59,7 +59,13 @@
       "Bash(ps:*)",
       "Bash(ROOT_DIR=\"/Users/huangzhonghui/memos\")",
       "mcp__web-search-prime__webSearchPrime",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(./scripts/verify_makefile_build.sh:*)",
+      "Bash(go clean:*)",
+      "Bash(go mod download:*)",
+      "Bash(while read:*)",
+      "Bash(do sed -i '' 's/router\\\\.Route\\(\\\\\\([^,]*\\\\\\), \\\\\\([^\\)]*\\\\\\)\\)/router.Route\\(\\\\1, \\\\2, nil\\)/g' \"$file\" echo \"Updated: $file\" done)",
+      "Bash(echo:*)"
     ]
   }
 }

@@ -2,8 +2,8 @@
 // @generated from file api/v1/ai_service.proto (package memos.api.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_google_api_annotations } from "../../google/api/annotations_pb";
 import { file_google_api_field_behavior } from "../../google/api/field_behavior_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIjoKFVNlbWFudGljU2VhcmNoUmVxdWVzdBISCgVxdWVyeRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkUKFlNlbWFudGljU2VhcmNoUmVzcG9uc2USKwoHcmVzdWx0cxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQiPAoMU2VhcmNoUmVzdWx0EgwKBG5hbWUYASABKAkSDwoHc25pcHBldBgCIAEoCRINCgVzY29yZRgDIAEoAiI5ChJTdWdnZXN0VGFnc1JlcXVlc3QSFAoHY29udGVudBgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIiMKE1N1Z2dlc3RUYWdzUmVzcG9uc2USDAoEdGFncxgBIAMoCSI9ChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCSLRAQoVQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSDwoHc291cmNlcxgCIAMoCRIMCgRkb25lGAMgASgIEkYKGHNjaGVkdWxlX2NyZWF0aW9uX2ludGVudBgEIAEoCzIkLm1lbW9zLmFwaS52MS5TY2hlZHVsZUNyZWF0aW9uSW50ZW50EkAKFXNjaGVkdWxlX3F1ZXJ5X3Jlc3VsdBgFIAEoCzIhLm1lbW9zLmFwaS52MS5TY2hlZHVsZVF1ZXJ5UmVzdWx0IlsKFlNjaGVkdWxlQ3JlYXRpb25JbnRlbnQSEAoIZGV0ZWN0ZWQYASABKAgSHAoUc2NoZWR1bGVfZGVzY3JpcHRpb24YAiABKAkSEQoJcmVhc29uaW5nGAMgASgJIo0BChNTY2hlZHVsZVF1ZXJ5UmVzdWx0EhAKCGRldGVjdGVkGAEgASgIEjAKCXNjaGVkdWxlcxgCIAMoCzIdLm1lbW9zLmFwaS52MS5TY2hlZHVsZVN1bW1hcnkSHgoWdGltZV9yYW5nZV9kZXNjcmlwdGlvbhgDIAEoCRISCgpxdWVyeV90eXBlGAQgASgJIpsBCg9TY2hlZHVsZVN1bW1hcnkSCwoDdWlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhAKCHN0YXJ0X3RzGAMgASgDEg4KBmVuZF90cxgEIAEoAxIPCgdhbGxfZGF5GAUgASgIEhAKCGxvY2F0aW9uGAYgASgJEhcKD3JlY3VycmVuY2VfcnVsZRgHIAEoCRIOCgZzdGF0dXMYCCABKAkiOgoWR2V0UmVsYXRlZE1lbW9zUmVxdWVzdBIRCgRuYW1lGAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRAoXR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2USKQoFbWVtb3MYASADKAsyGi5tZW1vcy5hcGkudjEuU2VhcmNoUmVzdWx0Mv8DCglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSdgoNQ2hhdFdpdGhNZW1vcxIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZEKmAQoQY29tLm1lbW9zLmFwaS52MUIOQWlTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIjoKFVNlbWFudGljU2VhcmNoUmVxdWVzdBISCgVxdWVyeRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkUKFlNlbWFudGljU2VhcmNoUmVzcG9uc2USKwoHcmVzdWx0cxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQiPAoMU2VhcmNoUmVzdWx0EgwKBG5hbWUYASABKAkSDwoHc25pcHBldBgCIAEoCRINCgVzY29yZRgDIAEoAiI5ChJTdWdnZXN0VGFnc1JlcXVlc3QSFAoHY29udGVudBgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIiMKE1N1Z2dlc3RUYWdzUmVzcG9uc2USDAoEdGFncxgBIAMoCSKSAQoUQ2hhdFdpdGhNZW1vc1JlcXVlc3QSFAoHbWVzc2FnZRgBIAEoCUID4EECEg8KB2hpc3RvcnkYAiADKAkSFQoNdXNlcl90aW1lem9uZRgDIAEoCRI8ChNzY2hlZHVsZV9xdWVyeV9tb2RlGAQgASgOMh8ubWVtb3MuYXBpLnYxLlNjaGVkdWxlUXVlcnlNb2RlItEBChVDaGF0V2l0aE1lbW9zUmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIPCgdzb3VyY2VzGAIgAygJEgwKBGRvbmUYAyABKAgSRgoYc2NoZWR1bGVfY3JlYXRpb25faW50ZW50GAQgASgLMiQubWVtb3MuYXBpLnYxLlNjaGVkdWxlQ3JlYXRpb25JbnRlbnQSQAoVc2NoZWR1bGVfcXVlcnlfcmVzdWx0GAUgASgLMiEubWVtb3MuYXBpLnYxLlNjaGVkdWxlUXVlcnlSZXN1bHQiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQqNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIy/wMKCUFJU2VydmljZRJ5Cg5TZW1hbnRpY1NlYXJjaBIjLm1lbW9zLmFwaS52MS5TZW1hbnRpY1NlYXJjaFJlcXVlc3QaJC5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXNwb25zZSIcgtPkkwIWOgEqIhEvYXBpL3YxL2FpL3NlYXJjaBJ2CgtTdWdnZXN0VGFncxIgLm1lbW9zLmFwaS52MS5TdWdnZXN0VGFnc1JlcXVlc3QaIS5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXNwb25zZSIigtPkkwIcOgEqIhcvYXBpL3YxL2FpL3N1Z2dlc3QtdGFncxJ2Cg1DaGF0V2l0aE1lbW9zEiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIagtPkkwIUOgEqIg8vYXBpL3YxL2FpL2NoYXQwARKGAQoPR2V0UmVsYXRlZE1lbW9zEiQubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QaJS5tZW1vcy5hcGkudjEuR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2UiJoLT5JMCIBIeL2FwaS92MS97bmFtZT1tZW1vcy8qfS9yZWxhdGVkQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior]);
 
 /**
  * SemanticSearchRequest is the request for SemanticSearch.
@@ -156,6 +156,20 @@ export type ChatWithMemosRequest = Message<"memos.api.v1.ChatWithMemosRequest"> 
    * @generated from field: repeated string history = 2;
    */
   history: string[];
+
+  /**
+   * User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
+   *
+   * @generated from field: string user_timezone = 3;
+   */
+  userTimezone: string;
+
+  /**
+   * Schedule query mode (optional, defaults to AUTO)
+   *
+   * @generated from field: memos.api.v1.ScheduleQueryMode schedule_query_mode = 4;
+   */
+  scheduleQueryMode: ScheduleQueryMode;
 };
 
 /**
@@ -408,6 +422,40 @@ export type GetRelatedMemosResponse = Message<"memos.api.v1.GetRelatedMemosRespo
  */
 export const GetRelatedMemosResponseSchema: GenMessage<GetRelatedMemosResponse> = /*@__PURE__*/
   messageDesc(file_api_v1_ai_service, 11);
+
+/**
+ * ScheduleQueryMode specifies the query mode for schedule filtering.
+ *
+ * @generated from enum memos.api.v1.ScheduleQueryMode
+ */
+export enum ScheduleQueryMode {
+  /**
+   * Auto-select query mode based on query type (relative time → STANDARD, absolute time → STRICT)
+   *
+   * @generated from enum value: AUTO = 0;
+   */
+  AUTO = 0,
+
+  /**
+   * Standard mode: return schedules that have any part within the query range
+   *
+   * @generated from enum value: STANDARD = 1;
+   */
+  STANDARD = 1,
+
+  /**
+   * Strict mode: return only schedules completely within the query range
+   *
+   * @generated from enum value: STRICT = 2;
+   */
+  STRICT = 2,
+}
+
+/**
+ * Describes the enum memos.api.v1.ScheduleQueryMode.
+ */
+export const ScheduleQueryModeSchema: GenEnum<ScheduleQueryMode> = /*@__PURE__*/
+  enumDesc(file_api_v1_ai_service, 0);
 
 /**
  * AIService provides AI-powered features for memo management.

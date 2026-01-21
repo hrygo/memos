@@ -207,3 +207,55 @@ func TestConnectHandler_RouteDecision(t *testing.T) {
 		t.Error("expected TimeRange to be set for schedule query")
 	}
 }
+
+// TestConnectHandler_IntentDetection 测试意图检测提示词是否正确
+func TestConnectHandler_IntentDetection(t *testing.T) {
+	handler := &ConnectServiceHandler{}
+
+	// 构建消息（模拟纯日程查询场景）
+	messages := handler.buildOptimizedMessagesForConnect(
+		"明天有哪些事要干",  // ⭐ 关键：这是查询，不是创建
+		[]string{},
+		"",
+		[]*retrieval.SearchResult{},
+		false,
+		false,
+	)
+
+	// 验证系统提示词包含正确的意图检测说明
+	systemMsg := messages[0]
+	if systemMsg.Role != "system" {
+		t.Fatalf("expected system message, got %s", systemMsg.Role)
+	}
+
+	systemContent := systemMsg.Content
+
+	// 验证提示词明确说明何时检测意图
+	if !contains(systemContent, "仅在用户的原始问题明确表示要创建日程时") {
+		t.Error("system prompt should clarify that intent detection is only for creation")
+	}
+
+	// 验证提示词明确列出查询类场景不是创建意图
+	if !contains(systemContent, "查询类") {
+		t.Error("system prompt should explicitly list query scenarios as non-creation")
+	}
+
+	if !contains(systemContent, "明天的事要干") {
+		t.Error("system prompt should include '明天的事要干' as an example of query (not creation)")
+	}
+
+	// 验证提示词包含明确的创建关键词
+	if !contains(systemContent, "帮我创建") {
+		t.Error("system prompt should include clear creation keywords like '帮我创建'")
+	}
+
+	if !contains(systemContent, "设置提醒") {
+		t.Error("system prompt should include clear creation keywords like '设置提醒'")
+	}
+
+	// 验证提示词不包含误导性的"安排"关键词作为创建意图
+	// 因为"有什么安排"是查询，不是创建
+	if contains(systemContent, "关键词：\"创建\"、\"提醒\"、\"安排\"、\"添加\"") {
+		t.Error("system prompt should NOT list '安排' as a creation keyword without context")
+	}
+}

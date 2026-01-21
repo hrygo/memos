@@ -56,7 +56,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
               <p className="text-xs text-muted-foreground mt-0.5">该时间段暂无日程安排</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 cursor-pointer">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -77,7 +77,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             <p className="text-xs text-muted-foreground mt-0.5">找到 {schedules.length} 个日程</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/30">
+        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/30 cursor-pointer">
           <X className="h-4 w-4 text-muted-foreground" />
         </Button>
       </div>
@@ -141,7 +141,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             onClose();
             onOpenSchedulePanel?.();
           }}
-          className="text-xs"
+          className="text-xs cursor-pointer"
         >
           查看完整日程表
         </Button>

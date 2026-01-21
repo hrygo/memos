@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/zh-cn";
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -125,11 +125,11 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
   return (
     <div className={cn("flex flex-col h-full bg-background/50 rounded-xl overflow-hidden", className)}>
       {/* --- Top Section: Date Strip --- */}
-      <div className="flex-none p-4 pb-2 border-b border-border/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground/90">{currentDate.format("MMMM YYYY")}</h3>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={handleGoToday} className="h-7 px-2 text-xs font-medium">
+      <div className="flex-none px-4 py-2 border-b border-border/40 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground/90">{currentDate.format("YYYY MMMM")}</h3>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleGoToday} className="h-8 text-muted-foreground hover:text-foreground cursor-pointer">
               {t("common.today")}
             </Button>
             <div className="flex items-center bg-muted/50 rounded-md p-0.5">
@@ -153,7 +153,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                 key={date.toString()}
                 onClick={() => handleDateSelect(date)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center min-w-[3rem] py-2 px-1 rounded-2xl transition-all duration-200",
+                  "relative flex flex-col items-center justify-center min-w-[3rem] py-2 px-1 rounded-2xl transition-all duration-200 cursor-pointer",
                   isSelected && !isToday && "bg-primary text-primary-foreground shadow-md scale-105",
                   isSelected && isToday && "bg-orange-700 text-white shadow-md scale-105",
                   !isSelected && isToday && "bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 font-bold",
@@ -240,7 +240,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
               const accentColor = conflict ? "bg-red-500" : colors[idx % colors.length];
 
               return (
-                <div key={idx} className="group relative flex gap-4 mb-6 last:mb-0">
+                <div key={idx} className="group relative flex gap-3 mb-3 last:mb-0">
                   {/* Time Column */}
                   <div className="w-12 flex-none flex flex-col items-end pt-0.5">
                     <span className="text-xs font-bold text-foreground/80">{startTime.format("HH:mm")}</span>
@@ -255,13 +255,17 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                   <div className="flex-1 min-w-0">
                     <div
                       className={cn(
-                        "bg-card hover:bg-accent/50 transition-colors rounded-xl p-3 shadow-sm group-hover:shadow-md relative",
+                        "bg-card hover:bg-accent/50 transition-colors rounded-xl p-2.5 shadow-sm group-hover:shadow-md relative cursor-pointer",
                         // Add red border and background for conflicts
                         conflict && "border-2 border-red-500/50 bg-red-50/50 dark:bg-red-950/20 dark:border-red-500/70"
                       )}
+                      onClick={() => onScheduleEdit?.(schedule)}
                     >
                       {/* Action Menu (Visible on Hover) */}
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <div
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-background/80">

@@ -10,6 +10,7 @@ endif
 .PHONY: docker-up docker-down docker-logs docker-reset
 .PHONY: db-connect db-reset db-vector
 .PHONY: start stop restart status logs
+.PHONY: logs-backend logs-frontend logs-postgres logs-follow-backend logs-follow-frontend logs-follow-postgres
 
 .DEFAULT_GOAL := help
 
@@ -52,20 +53,38 @@ dev: run ## Alias for run
 web: ## 启动前端开发服务器
 	@cd web && pnpm dev
 
-start: ## 一键启动所有服务 (PostgreSQL -> 后端 -> 前端)
+start: build ## 一键启动所有服务 (PostgreSQL -> 后端 -> 前端) - 自动构建最新版本
 	@./scripts/dev.sh start
 
 stop: ## 一键停止所有服务
 	@./scripts/dev.sh stop
 
-restart: ## 重启所有服务
+restart: build ## 重启所有服务 - 自动构建最新版本
 	@./scripts/dev.sh restart
 
 status: ## 查看所有服务状态
 	@./scripts/dev.sh status
 
-logs: ## 查看所有服务日志 (使用 make logs backend 查看特定服务)
-	@./scripts/dev.sh logs $(filter-out $@,$(MAKECMDGOALS))
+logs: ## 查看所有服务日志
+	@./scripts/dev.sh logs
+
+logs-backend: ## 查看后端日志
+	@./scripts/dev.sh logs backend
+
+logs-frontend: ## 查看前端日志
+	@./scripts/dev.sh logs frontend
+
+logs-postgres: ## 查看 PostgreSQL 日志
+	@./scripts/dev.sh logs postgres
+
+logs-follow-backend: ## 实时跟踪后端日志
+	@./scripts/dev.sh logs backend -f
+
+logs-follow-frontend: ## 实时跟踪前端日志
+	@./scripts/dev.sh logs frontend -f
+
+logs-follow-postgres: ## 实时跟踪 PostgreSQL 日志
+	@./scripts/dev.sh logs postgres -f
 
 ##@ 依赖
 
@@ -195,12 +214,18 @@ clean-all: clean ## 清理所有
 help: ## 显示此帮助信息
 	@printf "\033[1m\033[36m\nMemos Development Commands\033[0m\n\n"
 	@printf "\033[1m一键操作:\033[0m\n"
-	@printf "  start                一键启动所有服务 (PostgreSQL -> 后端 -> 前端)\n"
+	@printf "  start                一键启动所有服务 (自动编译最新版本)\n"
 	@printf "  stop                 一键停止所有服务\n"
-	@printf "  restart              重启所有服务\n"
+	@printf "  restart              重启所有服务 (自动编译最新版本)\n"
 	@printf "  status               查看所有服务状态\n"
+	@printf "\n\033[1m日志查看:\033[0m\n"
 	@printf "  logs                 查看所有服务日志\n"
-	@printf "  logs backend         查看后端日志 (支持: postgres/backend/frontend)\n"
+	@printf "  logs-backend         查看后端日志\n"
+	@printf "  logs-frontend        查看前端日志\n"
+	@printf "  logs-postgres        查看 PostgreSQL 日志\n"
+	@printf "  logs-follow-backend  实时跟踪后端日志\n"
+	@printf "  logs-follow-frontend 实时跟踪前端日志\n"
+	@printf "  logs-follow-postgres 实时跟踪 PostgreSQL 日志\n"
 	@printf "\n\033[1m开发:\033[0m\n"
 	@printf "  run                  启动后端 (PostgreSQL + AI)\n"
 	@printf "  dev                  Alias for run\n"

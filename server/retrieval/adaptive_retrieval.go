@@ -34,14 +34,15 @@ type SearchResult struct {
 
 // RetrievalOptions 检索选项
 type RetrievalOptions struct {
-	Query      string
-	UserID     int32
-	Strategy   string
-	TimeRange  *queryengine.TimeRange
-	MinScore   float32
-	Limit      int
-	RequestID  string // 请求追踪 ID
-	Logger     *slog.Logger // 结构化日志记录器
+	Query            string
+	UserID           int32
+	Strategy         string
+	TimeRange        *queryengine.TimeRange
+	MinScore         float32
+	Limit            int
+	RequestID        string // 请求追踪 ID
+	Logger           *slog.Logger // 结构化日志记录器
+	ScheduleQueryMode queryengine.ScheduleQueryMode // P1: 日程查询模式
 }
 
 // NewAdaptiveRetriever 创建自适应检索器
@@ -117,6 +118,12 @@ func (r *AdaptiveRetriever) scheduleBM25Only(ctx context.Context, opts *Retrieva
 	// 构建查询条件
 	findSchedule := &store.FindSchedule{
 		CreatorID: &opts.UserID,
+	}
+
+	// P1: 设置查询模式（将 queryengine.ScheduleQueryMode 转换为 int32）
+	if opts.ScheduleQueryMode != queryengine.AutoQueryMode {
+		mode := int32(opts.ScheduleQueryMode)
+		findSchedule.QueryMode = &mode
 	}
 
 	// 添加时间过滤（P0 改进：添加 nil 检查和验证）

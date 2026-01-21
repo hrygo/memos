@@ -2346,6 +2346,15 @@ components:
                     type: array
                     items:
                         type: string
+                userTimezone:
+                    type: string
+                scheduleQueryMode:
+                    enum:
+                        - AUTO
+                        - STANDARD
+                        - STRICT
+                    type: string
+                    format: enum
             description: ChatWithMemosRequest is the request for ChatWithMemos.
         ChatWithMemosResponse:
             type: object

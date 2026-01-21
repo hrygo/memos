@@ -138,8 +138,8 @@ func TestDetectScheduleQueryIntent(t *testing.T) {
 		{
 			name:           "upcoming schedules",
 			message:        "近期有什么日程",
-			expectDetected: false, // 不匹配"近期日程"，因为"日程查询"模式没有"有什么"关键词
-			expectTimeRange: "",
+			expectDetected: true, // 匹配"近期.*日程"模式
+			expectTimeRange: "未来7天",
 		},
 		{
 			name:           "general schedule query",

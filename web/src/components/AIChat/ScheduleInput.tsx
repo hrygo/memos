@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCheckConflict, useCreateSchedule, useDeleteSchedule, useParseAndCreateSchedule, useUpdateSchedule } from "@/hooks/useScheduleQueries";
+import { useCheckConflict, useCreateSchedule, useParseAndCreateSchedule, useUpdateSchedule } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
@@ -29,8 +29,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
   const createSchedule = useCreateSchedule();
   const updateSchedule = useUpdateSchedule();
   const checkConflict = useCheckConflict();
-  const deleteSchedule = useDeleteSchedule();
-  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
   const isEditMode = !!editSchedule;
 
   const [input, setInput] = useState(initialText);
@@ -202,36 +200,11 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     }
   };
 
-  const handleIgnore = async () => {
-    setShowConflictAlert(false);
-    await executeCreate();
-  };
+
 
   const handleAdjust = () => {
     setShowConflictAlert(false);
     // Keep parsedSchedule to allow editing
-  };
-
-  const handleOverwrite = () => {
-    setShowConflictAlert(false);
-    setShowOverwriteConfirm(true);
-  };
-
-  const executeOverwrite = async () => {
-    setShowOverwriteConfirm(false);
-    try {
-      // Filter out the schedule being edited to prevent self-deletion
-      const schedulesToDelete = isEditMode && parsedSchedule?.name
-        ? conflicts.filter((c) => c.name !== parsedSchedule.name)
-        : conflicts;
-
-      for (const conflict of schedulesToDelete) {
-        await deleteSchedule.mutateAsync(conflict.name);
-      }
-      await executeCreate();
-    } catch (error) {
-      toast.error("Failed to overwrite schedule");
-    }
   };
 
   const handleDiscard = () => {
@@ -279,7 +252,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
               {/* Parse Button - Only for create mode */}
               {!isEditMode && !parsedSchedule && (
-                <Button onClick={handleParse} disabled={!input.trim() || isParsing} className="w-full">
+                <Button onClick={handleParse} disabled={!input.trim() || isParsing} className="w-full cursor-pointer">
                   {isParsing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t("schedule.create-schedule")}
                 </Button>
@@ -301,6 +274,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                           setParsedSchedule(null);
                           setConflicts([]);
                         }}
+                        className="cursor-pointer"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -381,10 +355,10 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
                   {/* Actions */}
                   <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="outline" onClick={handleClose}>
+                    <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                       {t("common.cancel")}
                     </Button>
-                    <Button onClick={handleCreate}>
+                    <Button onClick={handleCreate} className="cursor-pointer">
                       {isEditMode ? t("common.save") : t("schedule.create-schedule")}
                     </Button>
                   </div>
@@ -400,28 +374,17 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         open={showConflictAlert}
         onOpenChange={setShowConflictAlert}
         conflicts={conflicts}
-        onConfirm={handleOverwrite}
-        onIgnore={handleIgnore}
         onAdjust={handleAdjust}
         onDiscard={handleDiscard}
       />
 
-      <Dialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("schedule.overwrite-confirm-title")}</DialogTitle>
-            <DialogDescription>{t("schedule.overwrite-confirm-desc")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowOverwriteConfirm(false)}>
-              {t("common.cancel")}
-            </Button>
-            <Button variant="destructive" onClick={executeOverwrite}>
-              {t("schedule.overwrite")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ScheduleConflictAlert
+        open={showConflictAlert}
+        onOpenChange={setShowConflictAlert}
+        conflicts={conflicts}
+        onAdjust={handleAdjust}
+        onDiscard={handleDiscard}
+      />
     </>
   );
 };

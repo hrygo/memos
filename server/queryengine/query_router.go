@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -38,13 +39,23 @@ type QueryRouter struct {
 	stopWords []string
 }
 
+// ScheduleQueryMode 日程查询模式
+type ScheduleQueryMode int32
+
+const (
+	AutoQueryMode     ScheduleQueryMode = 0 // 自动选择
+	StandardQueryMode ScheduleQueryMode = 1 // 标准模式：返回范围内有任何部分的日程
+	StrictQueryMode   ScheduleQueryMode = 2 // 严格模式：只返回完全在范围内的日程
+)
+
 // RouteDecision 路由决策
 type RouteDecision struct {
-	Strategy      string  // 路由策略名称
-	Confidence    float32 // 置信度 (0.0-1.0)
-	TimeRange     *TimeRange
-	SemanticQuery string // 清理后的语义查询
-	NeedsReranker bool   // 是否需要重排序
+	Strategy           string             // 路由策略名称
+	Confidence         float32            // 置信度 (0.0-1.0)
+	TimeRange          *TimeRange
+	SemanticQuery      string             // 清理后的语义查询
+	NeedsReranker      bool               // 是否需要重排序
+	ScheduleQueryMode  ScheduleQueryMode  // 日程查询模式（P1 新增）
 }
 
 // TimeRange 时间范围
@@ -151,6 +162,39 @@ func (r *QueryRouter) initTimeKeywords() {
 		start := time.Date(dayAfter.Year(), dayAfter.Month(), dayAfter.Day(), 0, 0, 0, 0, utcLocation)
 		end := start.Add(24 * time.Hour)
 		return &TimeRange{Start: start, End: end, Label: "大后天"}
+	}
+
+	// P1 新增：更远的年份关键词
+	r.timeKeywords["后年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		targetYear := utcTime.Year() + 2
+		start := time.Date(targetYear, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(targetYear+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "后年"}
+	}
+
+	r.timeKeywords["大后年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		targetYear := utcTime.Year() + 3
+		start := time.Date(targetYear, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(targetYear+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "大后年"}
+	}
+
+	r.timeKeywords["前年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		targetYear := utcTime.Year() - 2
+		start := time.Date(targetYear, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(targetYear+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "前年"}
+	}
+
+	r.timeKeywords["大前年"] = func(t time.Time) *TimeRange {
+		utcTime := t.In(utcLocation)
+		targetYear := utcTime.Year() - 3
+		start := time.Date(targetYear, 1, 1, 0, 0, 0, 0, utcLocation)
+		end := time.Date(targetYear+1, 1, 1, 0, 0, 0, 0, utcLocation)
+		return &TimeRange{Start: start, End: end, Label: "大前年"}
 	}
 
 	// ============================================================
@@ -402,15 +446,16 @@ func (r *QueryRouter) initTimeKeywords() {
 	_ = r.timeKeywords["今天"](now)
 }
 
-// Route 执行路由决策
-// 快速规则匹配（95%场景，<10ms）
-func (r *QueryRouter) Route(_ context.Context, query string) *RouteDecision {
+// Route executes routing decision with user timezone support.
+// Fast rule matching (95% scenarios, <10ms).
+// If userTimezone is nil, defaults to UTC.
+func (r *QueryRouter) Route(_ context.Context, query string, userTimezone *time.Location) *RouteDecision {
 	if query == "" {
 		return r.defaultDecision()
 	}
 
 	// 阶段 1: 快速规则匹配（95%场景）
-	decision := r.quickMatch(query)
+	decision := r.quickMatchWithTimezone(query, userTimezone)
 	if decision != nil {
 		return decision
 	}
@@ -419,14 +464,14 @@ func (r *QueryRouter) Route(_ context.Context, query string) *RouteDecision {
 	return r.defaultDecision()
 }
 
-// quickMatch 快速规则匹配
-func (r *QueryRouter) quickMatch(query string) *RouteDecision {
+// quickMatchWithTimezone 快速规则匹配（带时区支持）
+func (r *QueryRouter) quickMatchWithTimezone(query string, userTimezone *time.Location) *RouteDecision {
 	// P1 改进：保留原始查询用于内容提取
 	queryLower := strings.ToLower(strings.TrimSpace(query))
 	queryTrimmed := strings.TrimSpace(query)
 
 	// 规则 1: 日程查询 - 有明确时间关键词
-	if timeRange := r.detectTimeRange(queryLower); timeRange != nil {
+	if timeRange := r.detectTimeRangeWithTimezone(queryLower, userTimezone); timeRange != nil {
 		contentQuery := r.extractContentQuery(queryTrimmed) // 使用原始查询保留大小写
 
 		// 检查是否是纯时间查询（内容查询为空或只包含停用词）
@@ -449,21 +494,23 @@ func (r *QueryRouter) quickMatch(query string) *RouteDecision {
 		if contentQuery == "" || isScheduleOnly {
 			// 纯时间查询：只返回日程
 			return &RouteDecision{
-				Strategy:      "schedule_bm25_only",
-				Confidence:    0.95,
-				TimeRange:     timeRange,
-				SemanticQuery: "",
-				NeedsReranker: false,
+				Strategy:          "schedule_bm25_only",
+				Confidence:        0.95,
+				TimeRange:         timeRange,
+				SemanticQuery:     "",
+				NeedsReranker:     false,
+				ScheduleQueryMode: r.determineScheduleQueryMode(queryTrimmed, timeRange),
 			}
 		}
 
 		// 时间 + 内容：混合查询
 		return &RouteDecision{
-			Strategy:      "hybrid_with_time_filter",
-			Confidence:    0.90,
-			TimeRange:     timeRange,
-			SemanticQuery: contentQuery,
-			NeedsReranker: false,
+			Strategy:          "hybrid_with_time_filter",
+			Confidence:        0.90,
+			TimeRange:         timeRange,
+			SemanticQuery:     contentQuery,
+			NeedsReranker:     false,
+			ScheduleQueryMode: r.determineScheduleQueryMode(queryTrimmed, timeRange),
 		}
 	}
 
@@ -506,14 +553,268 @@ func (r *QueryRouter) quickMatch(query string) *RouteDecision {
 
 // detectTimeRange 检测时间范围
 // P1 改进：统一使用 UTC 时区
+// P2 改进：支持具体日期解析（"1月21日"、"1-21"等）
 func (r *QueryRouter) detectTimeRange(query string) *TimeRange {
 	// 使用 UTC 时间
 	now := time.Now().In(utcLocation)
 
-	// 精确匹配时间关键词
+	// ============================================================
+	// 1. 精确匹配时间关键词（相对时间）
+	// ============================================================
+	// 修复：优先匹配最长关键词，避免"大后天"匹配到"后天"
+	var matchedKeyword string
+	var matchedCalculator timeRangeCalculator
 	for keyword, calculator := range r.timeKeywords {
 		if strings.Contains(query, keyword) {
-			return calculator(now)
+			// 选择最长的匹配关键词
+			if len(keyword) > len(matchedKeyword) {
+				matchedKeyword = keyword
+				matchedCalculator = calculator
+			}
+		}
+	}
+	if matchedCalculator != nil {
+		return matchedCalculator(now)
+	}
+
+	// ============================================================
+	// 2. 解析具体日期（新增：P0 紧急修复）
+	// ============================================================
+	// 支持的格式：
+	// - "1月21日"、"01月21日"、"1月21号"
+	// - "1-21"、"01-21"、"1/21"、"01/21"
+	// - "1-21"、"1-21日"
+
+	// 匹配 "1月21日" 或 "1月21号" 或 "01月21日"
+	monthDayRegex := regexp.MustCompile(`(\d{1,2})月(\d{1,2})[日号]`)
+	if matches := monthDayRegex.FindStringSubmatch(query); len(matches) >= 3 {
+		month, err1 := strconv.Atoi(matches[1])
+		day, err2 := strconv.Atoi(matches[2])
+		if err1 == nil && err2 == nil && month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			// 构造日期（当年）
+			year := now.Year()
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, utcLocation)
+			end := start.Add(24 * time.Hour)
+
+			// 如果日期在过去，尝试明年
+			if end.Before(now) && !start.After(now) {
+				// 检查是否是去年的今天（比如12月31日，现在是1月1日）
+				// 或者是今年的未来日期
+				if start.AddDate(0, 0, 1).Before(now) {
+					// 日期在过去，使用明年
+					start = time.Date(year+1, time.Month(month), day, 0, 0, 0, 0, utcLocation)
+					end = start.Add(24 * time.Hour)
+				}
+			}
+
+			label := fmt.Sprintf("%d月%d日", month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	// 匹配 "1-21"、"01-21"、"1/21"、"01/21"
+	slashDayRegex := regexp.MustCompile(`(\d{1,2})[-/](\d{1,2})`)
+	if matches := slashDayRegex.FindStringSubmatch(query); len(matches) >= 3 {
+		month, err1 := strconv.Atoi(matches[1])
+		day, err2 := strconv.Atoi(matches[2])
+		if err1 == nil && err2 == nil && month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			// 构造日期（当年）
+			year := now.Year()
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, utcLocation)
+			end := start.Add(24 * time.Hour)
+
+			// 如果日期在过去，尝试明年
+			if end.Before(now) && !start.After(now) {
+				if start.AddDate(0, 0, 1).Before(now) {
+					start = time.Date(year+1, time.Month(month), day, 0, 0, 0, 0, utcLocation)
+					end = start.Add(24 * time.Hour)
+				}
+			}
+
+			label := fmt.Sprintf("%d月%d日", month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	return nil
+}
+
+// determineScheduleQueryMode 确定日程查询模式（P1 新增）
+// 自动选择规则：
+// - 相对时间（今天、明天、本周）→ 标准模式
+// - 绝对时间（1月21日、2025-01-21）→ 严格模式
+func (r *QueryRouter) determineScheduleQueryMode(query string, timeRange *TimeRange) ScheduleQueryMode {
+	if timeRange == nil {
+		return StandardQueryMode // 默认标准模式
+	}
+
+	// 检查是否为相对时间关键词
+	relativeTimeKeywords := []string{
+		"今天", "明天", "后天", "大后天", "昨天", "前天",
+		"今日", "明日", "后日", "昨日", "前日",
+		"本周", "这周", "下周", "上周",
+		"本月", "这月", "这个月", "下月", "上月", "月内",
+		"今年", "明年", "去年",
+		"近期", "最近", "这几天", "近几天",
+		"上午", "下午", "晚上", "中午", "凌晨", "早上",
+		"周一", "周二", "周三", "周四", "周五", "周六", "周日",
+		"星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日",
+		"一季度", "二季度", "三季度", "四季度",
+		"第一季度", "第二季度", "第三季度", "第四季度",
+	}
+
+	label := timeRange.Label
+	for _, keyword := range relativeTimeKeywords {
+		if strings.Contains(label, keyword) {
+			return StandardQueryMode // 相对时间用标准模式
+		}
+	}
+
+	// 绝对时间用严格模式
+	return StrictQueryMode
+}
+
+// detectTimeRangeWithTimezone 检测时间范围（带时区支持）
+// P2 改进：使用用户时区而非 UTC
+func (r *QueryRouter) detectTimeRangeWithTimezone(query string, userTimezone *time.Location) *TimeRange {
+	// 使用用户时区，如果为 nil 则使用 UTC
+	if userTimezone == nil {
+		userTimezone = utcLocation
+	}
+	now := time.Now().In(userTimezone)
+
+	// ============================================================
+	// 1. 精确匹配时间关键词（相对时间）
+	// ============================================================
+	// 修复：优先匹配最长关键词，避免"大后天"匹配到"后天"
+	var matchedKeyword string
+	var matchedCalculator timeRangeCalculator
+	for keyword, calculator := range r.timeKeywords {
+		if strings.Contains(query, keyword) {
+			// 选择最长的匹配关键词
+			if len(keyword) > len(matchedKeyword) {
+				matchedKeyword = keyword
+				matchedCalculator = calculator
+			}
+		}
+	}
+	if matchedCalculator != nil {
+		// calculator 仍然使用 UTC（因为 timeKeywords 是用 UTC 初始化的）
+		// 但我们在调用时会传入用户时区的 "now"
+		userNow := time.Now().In(userTimezone)
+		return matchedCalculator(userNow)
+	}
+
+	// ============================================================
+	// 2. 明确年份日期（新增：P1 优化）
+	// ============================================================
+	// 支持的格式：
+	// - "YYYY年MM月DD日" 或 "YYYY年M月D日" 或 "YYYY年MM月DD号"
+	// - "YYYY-MM-DD" 或 "YYYY-M-D"
+	// - "YYYY/MM/DD" 或 "YYYY/M/D"
+
+	// 格式 1: "YYYY年MM月DD日" 或 "YYYY年M月D日"
+	yearMonthDayRegex := regexp.MustCompile(`(\d{4})年(\d{1,2})月(\d{1,2})[日号]`)
+	if matches := yearMonthDayRegex.FindStringSubmatch(query); len(matches) >= 4 {
+		year, _ := strconv.Atoi(matches[1])
+		month, _ := strconv.Atoi(matches[2])
+		day, _ := strconv.Atoi(matches[3])
+
+		if month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+			end := start.Add(24 * time.Hour)
+
+			label := fmt.Sprintf("%d年%d月%d日", year, month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	// 格式 2: "YYYY-MM-DD" 或 "YYYY-M-D"
+	isoDateRegex := regexp.MustCompile(`(\d{4})-(\d{1,2})-(\d{1,2})`)
+	if matches := isoDateRegex.FindStringSubmatch(query); len(matches) >= 4 {
+		year, _ := strconv.Atoi(matches[1])
+		month, _ := strconv.Atoi(matches[2])
+		day, _ := strconv.Atoi(matches[3])
+
+		if month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+			end := start.Add(24 * time.Hour)
+
+			label := fmt.Sprintf("%d-%02d-%02d", year, month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	// 格式 3: "YYYY/MM/DD" 或 "YYYY/M/D"
+	slashDateRegex := regexp.MustCompile(`(\d{4})/(\d{1,2})/(\d{1,2})`)
+	if matches := slashDateRegex.FindStringSubmatch(query); len(matches) >= 4 {
+		year, _ := strconv.Atoi(matches[1])
+		month, _ := strconv.Atoi(matches[2])
+		day, _ := strconv.Atoi(matches[3])
+
+		if month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+			end := start.Add(24 * time.Hour)
+
+			label := fmt.Sprintf("%d/%02d/%02d", year, month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	// ============================================================
+	// 3. 解析具体日期（P0 紧急修复）
+	// ============================================================
+	// 支持的格式：
+	// - "1月21日"、"01月21日"、"1月21号"
+	// - "1-21"、"01-21"、"1/21"、"01/21"
+	// - "1-21"、"1-21日"
+
+	// 匹配 "1月21日" 或 "1月21号" 或 "01月21日"
+	monthDayRegex := regexp.MustCompile(`(\d{1,2})月(\d{1,2})[日号]`)
+	if matches := monthDayRegex.FindStringSubmatch(query); len(matches) >= 3 {
+		month, err1 := strconv.Atoi(matches[1])
+		day, err2 := strconv.Atoi(matches[2])
+		if err1 == nil && err2 == nil && month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			// 构造日期（当年）- 使用用户时区
+			year := now.Year()
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+			end := start.Add(24 * time.Hour)
+
+			// 如果日期在过去，尝试明年
+			if end.Before(now) && !start.After(now) {
+				if start.AddDate(0, 0, 1).Before(now) {
+					// 日期在过去，使用明年
+					start = time.Date(year+1, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+					end = start.Add(24 * time.Hour)
+				}
+			}
+
+			label := fmt.Sprintf("%d月%d日", month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
+		}
+	}
+
+	// 匹配 "1-21"、"01-21"、"1/21"、"01/21"
+	slashDayRegex := regexp.MustCompile(`(\d{1,2})[-/](\d{1,2})`)
+	if matches := slashDayRegex.FindStringSubmatch(query); len(matches) >= 3 {
+		month, err1 := strconv.Atoi(matches[1])
+		day, err2 := strconv.Atoi(matches[2])
+		if err1 == nil && err2 == nil && month >= 1 && month <= 12 && day >= 1 && day <= 31 {
+			// 构造日期（当年）- 使用用户时区
+			year := now.Year()
+			start := time.Date(year, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+			end := start.Add(24 * time.Hour)
+
+			// 如果日期在过去，尝试明年
+			if end.Before(now) && !start.After(now) {
+				if start.AddDate(0, 0, 1).Before(now) {
+					start = time.Date(year+1, time.Month(month), day, 0, 0, 0, 0, userTimezone)
+					end = start.Add(24 * time.Hour)
+				}
+			}
+
+			label := fmt.Sprintf("%d月%d日", month, day)
+			return &TimeRange{Start: start, End: end, Label: label}
 		}
 	}
 

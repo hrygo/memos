@@ -70,10 +70,19 @@ message SuggestTagsResponse {
   repeated string tags = 1;
 }
 
+// ScheduleQueryMode specifies the query mode for schedule filtering.
+enum ScheduleQueryMode {
+  AUTO = 0;       // Auto-select query mode based on query type (relative time → STANDARD, absolute time → STRICT)
+  STANDARD = 1;   // Standard mode: return schedules that have any part within the query range
+  STRICT = 2;     // Strict mode: return only schedules completely within the query range
+}
+
 // ChatWithMemosRequest is the request for ChatWithMemos.
 message ChatWithMemosRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;  // conversation history
+  string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
+  ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
 }
 
 // ChatWithMemosResponse is the response for ChatWithMemos.

@@ -74,10 +74,10 @@ export const ScheduleSuggestionCard = ({
         }
       } else if (rule.type === "monthly" && rule.month_day) {
         text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) ||
-               `每月${rule.month_day}号`;
+          `每月${rule.month_day}号`;
       } else if (rule.interval && rule.interval > 1) {
         const intervalText = t("schedule.recurrence.every-n", { n: rule.interval }) ||
-                            `每${rule.interval}个`;
+          `每${rule.interval}个`;
         text = intervalText + " " + text;
       }
 
@@ -97,7 +97,7 @@ export const ScheduleSuggestionCard = ({
         )}
         <div className="flex-1">
           <h4 className="font-medium text-sm">
-            {hasConflicts ? (t("schedule.conflict-detected") || "检测到时间冲突" ) : t("schedule.suggested-schedule")}
+            {hasConflicts ? (t("schedule.conflict-detected") || "检测到时间冲突") : t("schedule.suggested-schedule")}
           </h4>
           <p className="text-xs text-muted-foreground">
             {hasConflicts
@@ -179,24 +179,26 @@ export const ScheduleSuggestionCard = ({
       </div>
 
       <div className="mt-3 flex justify-end gap-2 flex-wrap">
-        <Button variant="ghost" size="sm" onClick={onDismiss}>
+        <Button variant="ghost" size="sm" onClick={onDismiss} className="cursor-pointer">
           {t("common.dismiss")}
         </Button>
         {hasConflicts && onAdjustTime && (
-          <Button variant="outline" size="sm" onClick={onAdjustTime}>
+          <Button variant="outline" size="sm" onClick={onAdjustTime} className="cursor-pointer">
             {t("schedule.adjust-time") || "调整时间"}
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={onEdit}>
+        <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">
           {t("common.edit")}
         </Button>
-        <Button
-          size="sm"
-          onClick={onConfirm}
-          className={hasConflicts ? "bg-destructive hover:bg-destructive/90" : ""}
-        >
-          {hasConflicts ? (t("schedule.create-anyway") || "仍要创建") : t("schedule.create")}
-        </Button>
+        {!hasConflicts && (
+          <Button
+            size="sm"
+            onClick={onConfirm}
+            className="cursor-pointer"
+          >
+            {t("schedule.create")}
+          </Button>
+        )}
       </div>
     </div>
   );

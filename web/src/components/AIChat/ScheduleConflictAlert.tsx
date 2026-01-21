@@ -1,7 +1,7 @@
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs from "dayjs";
-import { AlertCircle, Calendar, X } from "lucide-react";
+import { AlertCircle, Calendar, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
@@ -11,13 +11,11 @@ interface ScheduleConflictAlertProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   conflicts: Schedule[];
-  onConfirm: () => void;
-  onIgnore: () => void;
   onAdjust: () => void;
   onDiscard: () => void;
 }
 
-export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm, onIgnore, onAdjust, onDiscard }: ScheduleConflictAlertProps) => {
+export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust, onDiscard }: ScheduleConflictAlertProps) => {
   const t = useTranslate();
 
   const formatTime = (ts: bigint) => {
@@ -39,9 +37,10 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm
             <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
           </div>
           <div className="flex-1">
-            <DialogTitle className="text-lg">时间冲突</DialogTitle>
+            <DialogTitle className="text-lg">{t("schedule.conflict-detected") || "时间冲突"}</DialogTitle>
             <DialogDescription className="mt-1 text-sm">
-              该时间段与 {conflicts.length} 个现有日程冲突，是否继续创建？
+              {// biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing translation key
+                t("schedule.conflict-warning-desc" as any, { count: conflicts.length }) || `该时间段与 ${conflicts.length} 个现有日程冲突，请调整日程信息。`}
             </DialogDescription>
           </div>
         </div>
@@ -79,23 +78,24 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onConfirm
             className="w-full sm:w-auto"
           >
             <X className="h-4 w-4 mr-2" />
-            取消创建
+            {t("common.cancel") || "取消创建"}
           </Button>
 
-          {/* Force Create - Destructive Action */}
+          {/* Modify/Adjust - Primary Action */}
           <Button
             variant="default"
-            onClick={onIgnore}
-            className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white"
+            onClick={onAdjust}
+            className="w-full sm:w-auto cursor-pointer"
           >
-            <Calendar className="h-4 w-4 mr-2" />
-            仍然创建
+            <Pencil className="h-4 w-4 mr-2" />
+            {t("schedule.adjust-time") || "修改调整"}
           </Button>
         </div>
 
         {/* Hint Text */}
         <p className="mt-3 text-xs text-center text-muted-foreground">
-          提示：选择"仍然创建"可忽略冲突继续创建，或选择"取消创建"返回调整时间
+          {// biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing translation key
+            t("schedule.conflict-hint" as any) || "提示：当前时间段已被占用，请修改时间后重试"}
         </p>
       </DialogContent>
     </Dialog>
