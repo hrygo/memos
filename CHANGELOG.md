@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.5.0] - 2026-01-21
+
+### 📅 Intelligent Schedule Assistant
+
+- **Smart Query Mode**: Introduced `AUTO`, `STANDARD`, and `STRICT` modes for precise schedule query control.
+- **Explicit Year Support**: Parsing for full date formats (e.g., '2025年1月21日', '2025-01-21').
+- **Relative Year Keywords**: Added support forms like "后年" (Year after next), "前年" (Year before last).
+
+### 🧠 AI Architecture
+
+- **Adaptive Retrieval**: Context-aware routing for Schedule vs Memo vs QA queries.
+- **Query Optimization**: Enhanced filtering logic and schedule integration in search pipeline.
+
 ## [v0.26.1-ai.3] - 2026-01-21
 
 ### 📅 Schedule UI/UX Polish
