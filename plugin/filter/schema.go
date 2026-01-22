@@ -14,7 +14,6 @@ type DialectName string
 
 const (
 	DialectSQLite   DialectName = "sqlite"
-	DialectMySQL    DialectName = "mysql"
 	DialectPostgres DialectName = "postgres"
 )
 
@@ -125,8 +124,6 @@ func NewSchema() Schema {
 			Type:   FieldTypeTimestamp,
 			Column: Column{Table: "memo", Name: "created_ts"},
 			Expressions: map[DialectName]string{
-				// MySQL stores created_ts as TIMESTAMP, needs conversion to epoch
-				DialectMySQL: "UNIX_TIMESTAMP(%s)",
 				// PostgreSQL and SQLite store created_ts as BIGINT (epoch), no conversion needed
 				DialectPostgres: "%s",
 				DialectSQLite:   "%s",
@@ -138,8 +135,6 @@ func NewSchema() Schema {
 			Type:   FieldTypeTimestamp,
 			Column: Column{Table: "memo", Name: "updated_ts"},
 			Expressions: map[DialectName]string{
-				// MySQL stores updated_ts as TIMESTAMP, needs conversion to epoch
-				DialectMySQL: "UNIX_TIMESTAMP(%s)",
 				// PostgreSQL and SQLite store updated_ts as BIGINT (epoch), no conversion needed
 				DialectPostgres: "%s",
 				DialectSQLite:   "%s",
@@ -273,8 +268,6 @@ func NewAttachmentSchema() Schema {
 			Type:   FieldTypeTimestamp,
 			Column: Column{Table: "attachment", Name: "created_ts"},
 			Expressions: map[DialectName]string{
-				// MySQL stores created_ts as TIMESTAMP, needs conversion to epoch
-				DialectMySQL: "UNIX_TIMESTAMP(%s)",
 				// PostgreSQL and SQLite store created_ts as BIGINT (epoch), no conversion needed
 				DialectPostgres: "%s",
 				DialectSQLite:   "%s",

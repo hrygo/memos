@@ -292,14 +292,6 @@ func (r *renderer) renderJSONBoolComparison(field Field, op ComparisonOperator, 
 		default:
 			return renderResult{}, errors.Errorf("operator %s not supported for boolean JSON field", op)
 		}
-	case DialectMySQL:
-		boolStr := "false"
-		if value {
-			boolStr = "true"
-		}
-		return renderResult{
-			sql: fmt.Sprintf("%s %s CAST('%s' AS JSON)", jsonExpr, sqlOperator(op), boolStr),
-		}, nil
 	case DialectPostgres:
 		placeholder := r.addArg(value)
 		return renderResult{
@@ -356,12 +348,6 @@ func (r *renderer) renderTagInList(values []ValueExpr) (renderResult, error) {
 			prefixMatch := fmt.Sprintf("%s LIKE %s", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`%%"%s/%%`, str)))
 			expr := fmt.Sprintf("(%s OR %s)", exactMatch, prefixMatch)
 			conditions = append(conditions, expr)
-		case DialectMySQL:
-			// Support hierarchical tags: match exact tag OR tags with this prefix
-			exactMatch := fmt.Sprintf("JSON_CONTAINS(%s, %s)", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`"%s"`, str)))
-			prefixMatch := fmt.Sprintf("%s LIKE %s", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`%%"%s/%%`, str)))
-			expr := fmt.Sprintf("(%s OR %s)", exactMatch, prefixMatch)
-			conditions = append(conditions, expr)
 		case DialectPostgres:
 			// Support hierarchical tags: match exact tag OR tags with this prefix
 			exactMatch := fmt.Sprintf("%s @> jsonb_build_array(%s::json)", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`"%s"`, str)))
@@ -402,9 +388,6 @@ func (r *renderer) renderElementInCondition(cond *ElementInCondition) (renderRes
 	switch r.dialect {
 	case DialectSQLite:
 		sql := fmt.Sprintf("%s LIKE %s", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`%%"%s"%%`, str)))
-		return renderResult{sql: sql}, nil
-	case DialectMySQL:
-		sql := fmt.Sprintf("JSON_CONTAINS(%s, %s)", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`"%s"`, str)))
 		return renderResult{sql: sql}, nil
 	case DialectPostgres:
 		sql := fmt.Sprintf("%s @> jsonb_build_array(%s::json)", jsonArrayExpr(r.dialect, field), r.addArg(fmt.Sprintf(`"%s"`, str)))
@@ -491,7 +474,7 @@ func (r *renderer) renderTagStartsWith(field Field, prefix string, _ Comprehensi
 	arrayExpr := jsonArrayExpr(r.dialect, field)
 
 	switch r.dialect {
-	case DialectSQLite, DialectMySQL:
+	case DialectSQLite:
 		// Match exact tag or tags with this prefix (hierarchical support)
 		exactMatch := r.buildJSONArrayLike(arrayExpr, fmt.Sprintf(`%%"%s"%%`, prefix))
 		prefixMatch := r.buildJSONArrayLike(arrayExpr, fmt.Sprintf(`%%"%s%%`, prefix))
@@ -532,7 +515,7 @@ func (r *renderer) renderTagContains(field Field, substring string, _ Comprehens
 // Returns the LIKE clause without NULL/empty checks.
 func (r *renderer) buildJSONArrayLike(arrayExpr, pattern string) string {
 	switch r.dialect {
-	case DialectSQLite, DialectMySQL:
+	case DialectSQLite:
 		return fmt.Sprintf("%s LIKE %s", arrayExpr, r.addArg(pattern))
 	case DialectPostgres:
 		return fmt.Sprintf("(%s)::text LIKE %s", arrayExpr, r.addArg(pattern))
@@ -548,8 +531,6 @@ func (r *renderer) wrapWithNullCheck(arrayExpr, condition string) string {
 	switch r.dialect {
 	case DialectSQLite:
 		nullCheck = fmt.Sprintf("%s IS NOT NULL AND %s != '[]'", arrayExpr, arrayExpr)
-	case DialectMySQL:
-		nullCheck = fmt.Sprintf("%s IS NOT NULL AND JSON_LENGTH(%s) > 0", arrayExpr, arrayExpr)
 	case DialectPostgres:
 		nullCheck = fmt.Sprintf("%s IS NOT NULL AND jsonb_array_length(%s) > 0", arrayExpr, arrayExpr)
 	default:
@@ -563,8 +544,6 @@ func (r *renderer) jsonBoolPredicate(field Field) (string, error) {
 	switch r.dialect {
 	case DialectSQLite:
 		return fmt.Sprintf("%s IS TRUE", expr), nil
-	case DialectMySQL:
-		return fmt.Sprintf("%s = CAST('true' AS JSON)", expr), nil
 	case DialectPostgres:
 		return fmt.Sprintf("(%s)::boolean IS TRUE", expr), nil
 	default:
@@ -695,7 +674,7 @@ func jsonPath(field Field) string {
 func jsonExtractExpr(d DialectName, field Field) string {
 	column := qualifyColumn(d, field.Column)
 	switch d {
-	case DialectSQLite, DialectMySQL:
+	case DialectSQLite:
 		return fmt.Sprintf("JSON_EXTRACT(%s, '%s')", column, jsonPath(field))
 	case DialectPostgres:
 		return buildPostgresJSONAccessor(column, field.JSONPath, true)
@@ -707,7 +686,7 @@ func jsonExtractExpr(d DialectName, field Field) string {
 func jsonArrayExpr(d DialectName, field Field) string {
 	column := qualifyColumn(d, field.Column)
 	switch d {
-	case DialectSQLite, DialectMySQL:
+	case DialectSQLite:
 		return fmt.Sprintf("JSON_EXTRACT(%s, '%s')", column, jsonPath(field))
 	case DialectPostgres:
 		return buildPostgresJSONAccessor(column, field.JSONPath, false)
@@ -721,8 +700,6 @@ func jsonArrayLengthExpr(d DialectName, field Field) string {
 	switch d {
 	case DialectSQLite:
 		return fmt.Sprintf("JSON_ARRAY_LENGTH(COALESCE(%s, JSON_ARRAY()))", arrayExpr)
-	case DialectMySQL:
-		return fmt.Sprintf("JSON_LENGTH(COALESCE(%s, JSON_ARRAY()))", arrayExpr)
 	case DialectPostgres:
 		return fmt.Sprintf("jsonb_array_length(COALESCE(%s, '[]'::jsonb))", arrayExpr)
 	default:
