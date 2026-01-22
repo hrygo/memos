@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -23,6 +24,7 @@ export default function ConfirmDialog({
   onConfirm,
   confirmVariant = "default",
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
 
   const handleConfirm = async () => {
@@ -43,7 +45,9 @@ export default function ConfirmDialog({
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className={description ? "" : "sr-only"}>{description || "确认操作"}</DialogDescription>
+          <DialogDescription className={description ? "" : "sr-only"}>
+            {description || t("common.confirm")}
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" disabled={loading} onClick={() => onOpenChange(false)}>

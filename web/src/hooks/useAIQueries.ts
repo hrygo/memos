@@ -10,6 +10,9 @@ import {
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
 
+// Default timeout for streaming AI requests (5 minutes)
+const STREAM_TIMEOUT_MS = 5 * 60 * 1000;
+
 // Query keys factory for consistent cache management
 export const aiKeys = {
   all: ["ai"] as const,
@@ -132,6 +135,21 @@ export function useChatWithMemos() {
         userTimezone: params.userTimezone,
       });
 
+      console.debug("[AI Chat] Starting stream", {
+        messageLength: params.message.length,
+        agentType: params.agentType,
+        historyCount: params.history?.length ?? 0,
+      });
+
+      // Set up timeout for the entire stream operation
+      const timeoutController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        timeoutController.abort();
+        console.warn("[AI Chat] Stream timeout exceeded", { timeoutMs: STREAM_TIMEOUT_MS });
+      }, STREAM_TIMEOUT_MS);
+
+      const startTime = Date.now();
+
       try {
         // Use the streaming method from Connect RPC client
         const stream = aiServiceClient.chatWithMemos(request);
@@ -223,8 +241,37 @@ export function useChatWithMemos() {
           callbacks?.onDone?.();
         }
 
+        // Clear timeout on successful completion
+        clearTimeout(timeoutId);
+
+        const duration = Date.now() - startTime;
+        console.debug("[AI Chat] Stream completed successfully", {
+          durationMs: duration,
+          contentLength: fullContent.length,
+          sourcesCount: sources.length,
+        });
+
         return { content: fullContent, sources };
       } catch (error) {
+        // Clear timeout on error
+        clearTimeout(timeoutId);
+
+        const duration = Date.now() - startTime;
+
+        // Check if it's an abort error (timeout)
+        if (error instanceof Error && error.name === "AbortError") {
+          console.error("[AI Chat] Stream timeout", { durationMs: duration, timeoutMs: STREAM_TIMEOUT_MS });
+          const timeoutErr = new Error(`AI chat timeout after ${STREAM_TIMEOUT_MS}ms`);
+          callbacks?.onError?.(timeoutErr);
+          throw timeoutErr;
+        }
+
+        console.error("[AI Chat] Stream error", {
+          error,
+          durationMs: duration,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+
         const err = error instanceof Error ? error : new Error(String(error));
         callbacks?.onError?.(err);
         throw err;

@@ -21,6 +21,10 @@ import { redirectOnAuthFailure } from "./utils/auth-redirect";
 const RETRY_HEADER = "X-Retry";
 const RETRY_HEADER_VALUE = "true";
 
+// Default timeout for streaming requests (5 minutes)
+// Streaming requests may take longer due to LLM processing time
+const DEFAULT_STREAM_TIMEOUT_MS = 5 * 60 * 1000;
+
 // ============================================================================
 // Token Refresh State Management
 // ============================================================================
@@ -81,6 +85,42 @@ async function refreshAccessToken(): Promise<void> {
 }
 
 // ============================================================================
+// Timeout Interceptor
+// ============================================================================
+
+// Create a timeout-enabled fetch wrapper
+const createTimeoutFetch = (baseFetch: typeof fetch, timeoutMs: number): typeof fetch => {
+	return async (input, init) => {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+		try {
+			// Pass the abort signal to fetch
+			const response = await baseFetch(input, {
+				...init,
+				signal: controller.signal,
+			});
+			clearTimeout(timeoutId);
+			return response;
+		} catch (error) {
+			clearTimeout(timeoutId);
+			// Check if it's an abort error (timeout)
+			if (error instanceof Error && error.name === 'AbortError') {
+				throw new Error(`Request timeout after ${timeoutMs}ms`);
+			}
+			throw error;
+		}
+	};
+};
+
+// The timeout interceptor is now minimal since timeout is handled in the fetch wrapper
+const timeoutInterceptor: Interceptor = (next) => async (req) => {
+	// Request-level timeout tracking is handled by the fetch wrapper
+	// This interceptor can be used for request-level logging if needed
+	return next(req);
+};
+
+// ============================================================================
 // Authentication Interceptor
 // ============================================================================
 
@@ -127,11 +167,14 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 // Transport & Service Clients
 // ============================================================================
 
+// Create timeout-enabled fetch for streaming requests
+const timeoutFetch = createTimeoutFetch(fetchWithCredentials, DEFAULT_STREAM_TIMEOUT_MS);
+
 const transport = createConnectTransport({
   baseUrl: window.location.origin,
   useBinaryFormat: false,
-  fetch: fetchWithCredentials,
-  interceptors: [authInterceptor],
+  fetch: timeoutFetch,
+  interceptors: [timeoutInterceptor, authInterceptor],
 });
 
 // Core service clients

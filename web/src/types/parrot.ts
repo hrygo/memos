@@ -55,76 +55,78 @@ export function parrotToProtoAgentType(agentType: ParrotAgentType): AgentType {
 /**
  * Parrot agent metadata
  * 鹦鹉代理元数据
+ * Note: displayName, description, and examplePrompts should be localized via useParrots hook
  */
 export interface ParrotAgent {
   id: ParrotAgentType;
   name: string;
   icon: string;
-  displayName: string;
-  description: string;
+  displayName: string; // Default English, should be overridden by i18n
+  description: string; // Default English, should be overridden by i18n
   color: string;
   available: boolean; // Whether this parrot is available in current milestone
-  examplePrompts?: string[]; // Suggested prompts for this parrot
+  examplePrompts?: string[]; // Default English prompts, should be overridden by i18n
   backgroundImage?: string; // Background image for the agent card
 }
 
 /**
- * All parrot agents configuration
- * 所有鹦鹉代理配置
+ * All parrot agents configuration (English defaults)
+ * 所有鹦鹉代理配置（英文默认值）
+ * Localized versions are provided by useParrots hook
  */
 export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.DEFAULT]: {
     id: ParrotAgentType.DEFAULT,
     name: "default",
     icon: "🤖",
-    displayName: "默认助手",
-    description: "默认 AI 助手，使用 RAG 系统回答问题",
+    displayName: "Default Assistant",
+    description: "Default AI assistant with RAG system",
     color: "gray",
     available: true,
-    examplePrompts: ["总结最近的笔记", "帮我搜索关于 Python 的内容", "今天有什么安排"],
+    examplePrompts: ["Summarize recent memos", "Search for Python content", "What's on my schedule today"],
   },
   [ParrotAgentType.MEMO]: {
     id: ParrotAgentType.MEMO,
     name: "memo",
     icon: "🦜",
-    displayName: "灰灰",
-    description: "笔记助手，专注于检索、总结和管理笔记",
+    displayName: "Memo",
+    description: "Note assistant for searching, summarizing, and managing memos",
     color: "blue",
     available: true,
-    examplePrompts: ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"],
+    examplePrompts: ["Search for programming notes", "Summarize recent work memos", "Find project management notes"],
     backgroundImage: "/images/parrots/memo_parrot_bg.webp",
   },
   [ParrotAgentType.SCHEDULE]: {
     id: ParrotAgentType.SCHEDULE,
     name: "schedule",
     icon: "📅",
-    displayName: "金刚",
-    description: "日程助手，帮助创建、查询和管理日程",
+    displayName: "Schedule",
+    description: "Schedule assistant for creating, querying, and managing schedules",
     color: "orange",
     available: true,
-    examplePrompts: ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"],
+    examplePrompts: ["What's on my schedule today", "Am I free tomorrow afternoon", "Create a meeting reminder for next week"],
     backgroundImage: "/images/parrots/schedule_bg.webp",
   },
   [ParrotAgentType.AMAZING]: {
     id: ParrotAgentType.AMAZING,
     name: "amazing",
     icon: "⭐",
-    displayName: "惊奇",
-    description: "综合助手，结合笔记和日程功能",
+    displayName: "Amazing",
+    description: "Comprehensive assistant combining memo and schedule features",
     color: "purple",
     available: true,
-    examplePrompts: ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"],
+    examplePrompts: ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"],
     backgroundImage: "/images/parrots/amazing_bg.webp",
   },
   [ParrotAgentType.CREATIVE]: {
     id: ParrotAgentType.CREATIVE,
     name: "creative",
     icon: "💡",
-    displayName: "灵灵",
-    description: "创意助手，提供创意写作和头脑风暴",
+    displayName: "Creative",
+    description: "Creative writing assistant for brainstorming and content creation",
     color: "pink",
     available: true,
-    examplePrompts: ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"],
+    examplePrompts: ["Brainstorm product promotion ideas", "Write a project progress email", "Improve this text expression"],
     backgroundImage: "/images/parrots/creative_bg.webp",
   },
 };

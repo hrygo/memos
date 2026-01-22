@@ -349,28 +349,15 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   return <AIChatContext.Provider value={contextValue}>{children}</AIChatContext.Provider>;
 }
 
-// Helper function to get default conversation title based on parrot type and current language
+// Helper function to get default conversation title based on parrot type
+// Returns English default; localization should be handled by caller via useTranslation hook
 function getDefaultTitle(parrotId: ParrotAgentType): string {
-  const translations: Record<string, Record<string, string>> = {
-    "zh-CN": {
-      [ParrotAgentType.DEFAULT]: "与默认助手的对话",
-      [ParrotAgentType.MEMO]: "与灰灰的对话",
-      [ParrotAgentType.SCHEDULE]: "与金刚的对话",
-      [ParrotAgentType.AMAZING]: "与惊奇的对话",
-      [ParrotAgentType.CREATIVE]: "与灵灵的对话",
-    },
-    en: {
-      [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
-      [ParrotAgentType.MEMO]: "Chat with Memo",
-      [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
-      [ParrotAgentType.AMAZING]: "Chat with Amazing",
-      [ParrotAgentType.CREATIVE]: "Chat with Creative",
-    },
+  const titles: Record<string, string> = {
+    [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
+    [ParrotAgentType.MEMO]: "Chat with Memo",
+    [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
+    [ParrotAgentType.AMAZING]: "Chat with Amazing",
+    [ParrotAgentType.CREATIVE]: "Chat with Creative",
   };
-
-  // Try to detect language from localStorage or default to English
-  const language = localStorage.getItem("i18nextLng") || "en";
-  const lang = language.startsWith("zh") ? "zh-CN" : "en";
-
-  return translations[lang]?.[parrotId] || translations.en[parrotId] || "AI Chat";
+  return titles[parrotId] || "AI Chat";
 }
