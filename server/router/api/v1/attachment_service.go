@@ -504,8 +504,6 @@ func (s *APIV1Service) validateAttachmentFilter(ctx context.Context, filterStr s
 
 	var dialect filter.DialectName
 	switch s.Profile.Driver {
-	case "mysql":
-		dialect = filter.DialectMySQL
 	case "postgres":
 		dialect = filter.DialectPostgres
 	default:

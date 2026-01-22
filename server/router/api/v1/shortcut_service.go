@@ -332,8 +332,6 @@ func (s *APIV1Service) validateFilter(ctx context.Context, filterStr string) err
 
 	var dialect filter.DialectName
 	switch s.Profile.Driver {
-	case "mysql":
-		dialect = filter.DialectMySQL
 	case "postgres":
 		dialect = filter.DialectPostgres
 	default:
