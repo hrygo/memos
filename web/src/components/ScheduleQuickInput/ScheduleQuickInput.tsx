@@ -79,12 +79,13 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
   const { data: schedulesData } = useSchedulesOptimized(referenceDate);
   const existingSchedules = schedulesData?.schedules || [];
 
-  // Parse hook
+  // Parse hook - disabled auto parse, require manual trigger
   const { parseResult, isParsing, parse, reset } = useScheduleParse({
     debounceMs: 600,
     minLength: 2,
     enableAI: true,
     referenceDate,
+    autoParse: false,
   });
 
   // Conflict detection
@@ -170,14 +171,26 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (parseResult?.state === "success") {
-        handleCreateSchedule();
-      }
+      handleSendOrParse();
     }
     if (e.key === "Escape" && input) {
       e.preventDefault();
       handleClear();
     }
+  };
+
+  // Handle send button click - parse first if not parsed, otherwise create
+  const handleSendOrParse = async () => {
+    if (!input.trim()) return;
+
+    // If already has successful parse result, create directly
+    if (parseResult?.state === "success" || pendingSchedule) {
+      await handleCreateSchedule();
+      return;
+    }
+
+    // Otherwise, trigger AI parsing with forceAI=true
+    await parse(input, true);
   };
 
   // Handle template selection
@@ -440,11 +453,9 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
 
       {/* Loading indicator - shown inline when parsing */}
       {isParsing && !showParsingCard && (
-        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground animate-pulse">
-          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.3s]" />
-          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
-          <span className="ml-1">AI 正在理解您的需求...</span>
+        <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground bg-primary/5 rounded-lg border border-primary/10">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span className="">{t("schedule.quick-input.ai-parsing") || "AI 正在理解您的需求..."}</span>
         </div>
       )}
 
@@ -483,20 +494,52 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
         {/* Action Buttons */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {isCreating ? (
-            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+              aria-label="创建中"
+            >
               <Loader2 className="h-4 w-4 animate-spin" />
             </Button>
           ) : canCreate ? (
-            <Button size="sm" onClick={handleCreateSchedule} className="h-8 px-3 gap-1.5">
+            <Button
+              size="sm"
+              onClick={handleSendOrParse}
+              className="h-9 px-3 gap-1.5 min-h-[44px] sm:min-h-0"
+              aria-label="确认创建"
+            >
               <Send className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">确认</span>
+              <span className="hidden sm:inline">{t("schedule.quick-input.confirm") || "确认"}</span>
             </Button>
           ) : input.length > 0 ? (
-            <Button size="sm" variant="ghost" onClick={handleClear} className="h-8 w-8 p-0">
-              <X className="h-4 w-4" />
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleClear}
+                className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                aria-label="清除"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendOrParse}
+                className="h-8 px-2 gap-1.5 min-h-[44px] sm:min-h-0"
+                aria-label="AI 解析"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </>
           ) : (
-            <Button size="sm" variant="ghost" onClick={() => setShowTemplates(true)} className="h-8 w-8 p-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowTemplates(true)}
+              className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+              aria-label="显示模板"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           )}

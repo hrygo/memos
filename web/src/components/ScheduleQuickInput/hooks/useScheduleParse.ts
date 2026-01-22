@@ -12,6 +12,8 @@ interface UseScheduleParseOptions {
   enableAI?: boolean;
   /** Reference date for relative time calculations */
   referenceDate?: Date;
+  /** Whether to automatically parse on input changes (default: true) */
+  autoParse?: boolean;
 }
 
 interface UseScheduleParseReturn {
@@ -24,7 +26,7 @@ interface UseScheduleParseReturn {
   /** Confidence of the last successful parse */
   confidence: Confidence | null;
   /** Parse input manually (ignores debounce) */
-  parse: (input: string) => Promise<void>;
+  parse: (input: string, forceAI?: boolean) => Promise<void>;
   /** Reset parse state */
   reset: () => void;
 }
@@ -34,7 +36,7 @@ interface UseScheduleParseReturn {
  * Implements debouncing to reduce API calls.
  */
 export function useScheduleParse(options: UseScheduleParseOptions = {}): UseScheduleParseReturn {
-  const { debounceMs = 800, minLength = 2, enableAI = true, referenceDate = new Date() } = options;
+  const { debounceMs = 800, minLength = 2, enableAI = true, referenceDate = new Date(), autoParse = true } = options;
 
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [isParsing, setIsParsing] = useState(false);
@@ -114,9 +116,10 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
 
   /**
    * Parse input with debouncing
+   * When autoParse is false, only does local parsing without AI fallback
    */
   const parse = useCallback(
-    async (input: string) => {
+    async (input: string, forceAI = false) => {
       // Clear previous timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -133,8 +136,10 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
 
       setIsParsing(true);
 
-      // Debounce the parse
-      debounceTimerRef.current = setTimeout(async () => {
+      // When not autoParse, skip debounce and parse immediately
+      const delay = autoParse || forceAI ? debounceMs : 0;
+
+      const executeParse = async () => {
         // Cancel any pending AI request
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
@@ -170,14 +175,14 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
             }
           }
 
-          // Low confidence or failed local parse - try AI if enabled
-          if (enableAI) {
+          // Low confidence or failed local parse - try AI if enabled and (autoParse or forceAI)
+          if (enableAI && (autoParse || forceAI)) {
             const aiResult = await parseWithAI(input);
             setParseResult(aiResult);
             setParseSource("ai");
             setConfidence(aiResult.parsedSchedule?.confidence || null);
           } else {
-            // AI disabled, use local result even with low confidence
+            // AI disabled or manual mode - use local result even with low confidence
             setParseResult(
               localResult.state === "idle"
                 ? {
@@ -205,9 +210,15 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
         } finally {
           setIsParsing(false);
         }
-      }, debounceMs);
+      };
+
+      if (delay === 0) {
+        await executeParse();
+      } else {
+        debounceTimerRef.current = setTimeout(executeParse, delay);
+      }
     },
-    [debounceMs, minLength, enableAI, parseLocally, parseWithAI],
+    [debounceMs, minLength, enableAI, autoParse, parseLocally, parseWithAI],
   );
 
   /**
