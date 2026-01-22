@@ -3,6 +3,17 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 
+// Screen reader announcement for selection changes
+const announceSelection = (message: string) => {
+  const announcement = document.createElement("div");
+  announcement.setAttribute("role", "status");
+  announcement.setAttribute("aria-live", "polite");
+  announcement.className = "sr-only";
+  announcement.textContent = message;
+  document.body.appendChild(announcement);
+  setTimeout(() => document.body.removeChild(announcement), 1000);
+};
+
 /**
  * Parsed suggestion from AI response
  */
@@ -199,16 +210,33 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
       // Double-click on desktop: create directly
       onConfirmSuggestion(suggestion);
       setSelectedId(null);
+      announceSelection("日程已创建");
     } else if (selectedId === suggestion.id) {
       // Second click on same card (mobile): confirm
       onConfirmSuggestion(suggestion);
       setSelectedId(null);
+      announceSelection("日程已创建");
     } else {
       // First click: select the card
       setSelectedId(suggestion.id);
+      const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
+      announceSelection(
+        `已选择：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}`
+      );
     }
 
     setLastClickTime(now);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, suggestion: ScheduleSuggestion) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleCardClick(suggestion);
+    } else if (e.key === "Escape" && selectedId) {
+      e.preventDefault();
+      setSelectedId(null);
+      announceSelection("已取消选择");
+    }
   };
 
   return (
@@ -220,22 +248,32 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
       </div>
 
       {/* Desktop: horizontal row | Mobile: vertical stack */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3" role="listbox" aria-label={t("schedule.quick-input.ai-suggestions") || "AI 建议"}>
         {suggestions.map((suggestion) => {
           const isSelected = selectedId === suggestion.id;
+          const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
+          const ariaLabel = `创建日程：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}${suggestion.endTime ? ` - ${suggestion.endTime}` : ""}`;
 
           return (
             <button
               key={suggestion.id}
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              aria-label={ariaLabel}
+              tabIndex={0}
               onClick={() => handleCardClick(suggestion)}
+              onKeyDown={(e) => handleKeyDown(e, suggestion)}
               className={cn(
                 "group flex-1 min-w-0 text-left relative",
                 "p-3 rounded-xl border-2 transition-all duration-200",
                 "active:scale-[0.98]",
+                // Focus visible styles for keyboard navigation
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
                 // Normal state
                 !isSelected && "border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/40 hover:bg-blue-50/80 dark:hover:bg-blue-950/30",
-                // Selected state
-                isSelected && "border-blue-500 bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-500/30 shadow-md",
+                // Selected state - improved contrast
+                isSelected && "border-blue-600 bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-500/40 shadow-md",
               )}
             >
               {/* Selected indicator */}
@@ -267,9 +305,9 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
               {/* Hint text */}
               <div className="mt-2 text-[10px]">
                 {isSelected ? (
-                  <span className="text-blue-600 dark:text-blue-400 font-medium">{t("schedule.quick-input.click-again-create") as string}</span>
+                  <span className="text-blue-700 dark:text-blue-300 font-semibold">{t("schedule.quick-input.click-again-create") as string}</span>
                 ) : (
-                  <span className="text-blue-500/70 hidden sm:inline">{t("schedule.quick-input.double-click-create") as string}</span>
+                  <span className="text-blue-600/80 hidden sm:inline">{t("schedule.quick-input.double-click-create") as string}</span>
                 )}
               </div>
             </button>
