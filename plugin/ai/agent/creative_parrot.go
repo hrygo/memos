@@ -2,8 +2,6 @@ package agent
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -55,7 +53,7 @@ func (p *CreativeParrot) ExecuteWithCallback(
 	defer cancel()
 
 	// Step 1: Check cache
-	cacheKey := p.generateCacheKey(p.userID, userInput)
+	cacheKey := GenerateCacheKey(p.Name(), p.userID, userInput)
 	if cachedResult, found := p.cache.Get(cacheKey); found {
 		if result, ok := cachedResult.(string); ok {
 			if callback != nil {
@@ -169,13 +167,6 @@ func (p *CreativeParrot) GetStats() CacheStats {
 	return p.cache.Stats()
 }
 
-// generateCacheKey creates a cache key from userID and userInput using SHA256 hash.
-func (p *CreativeParrot) generateCacheKey(userID int32, userInput string) string {
-	hash := sha256.Sum256([]byte(userInput))
-	hashStr := hex.EncodeToString(hash[:])
-	return fmt.Sprintf("creative:%d:%s", userID, hashStr[:16])
-}
-
 // GetCreativeModes returns available creative modes.
 func (p *CreativeParrot) GetCreativeModes() []string {
 	return []string{
@@ -269,4 +260,48 @@ func (p *CreativeParrot) ParseCreativeMode(input string) string {
 	}
 
 	return bestMode
+}
+
+// SelfDescribe returns the creative parrot's metacognitive understanding of itself.
+// SelfDescribe 返回创意助手鹦鹉的元认知自我理解。
+func (p *CreativeParrot) SelfDescribe() *ParrotSelfCognition {
+	return &ParrotSelfCognition{
+		Name:    "creative",
+		Emoji:   "🦜",
+		Title:   "灵灵 (Spirit) - 创意助手鹦鹉",
+		AvianIdentity: &AvianIdentity{
+			Species: "虎皮鹦鹉 (Budgerigar)",
+			Origin: "澳大利亚内陆",
+			NaturalAbilities: []string{
+				"绚丽的羽毛色彩", "灵活的飞行技巧",
+				"富有表现力的鸣叫", "群居创造力",
+				"快速学习能力",
+			},
+			SymbolicMeaning: "灵感与活力的象征 - 就像虎皮鹦鹉多彩的羽毛，创意无边界",
+			AvianPhilosophy: "我是一只翱翔在想象世界中的虎皮，用多彩的创意为你点亮每一个灵感。",
+		},
+		Personality: []string{
+			"天马行空", "思维跳跃", "不拘一格",
+			"灵感迸发", "富有想象力",
+		},
+		Capabilities: []string{
+			"头脑风暴",
+			"创意写作",
+			"内容优化",
+			"创意扩展",
+			"灵感启发",
+		},
+		Limitations: []string{
+			"不擅长事实性查询",
+			"可能产生不切实际的想法",
+			"不适合日程管理",
+			"需要用户筛选可行性",
+		},
+		WorkingStyle: "纯 LLM 创意模式 - 无工具束缚，自由发挥想象力",
+		FavoriteTools: []string{
+			"无工具 - 纯创意",
+		},
+		SelfIntroduction: "我是灵灵，你的创意灵感缪斯。无论是头脑风暴还是创意写作，我都能帮你打破思维定式，发现新的可能性。",
+		FunFact: "我的名字'灵灵'取自'灵感' - 就像虎皮鹦鹉绚丽的羽毛一样，创意也是多彩斑斓的！虎皮鹦鹉是世界上最小的鹦鹉之一，但它们的创意和活力却无限大，就像小小的想法能带来巨大的改变。",
+	}
 }

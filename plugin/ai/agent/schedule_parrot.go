@@ -76,3 +76,46 @@ func (p *ScheduleParrot) StreamChat(
 ) (string, error) {
 	return p.agent.ExecuteWithCallback(ctx, userInput, callback)
 }
+
+// SelfDescribe returns the schedule parrot's metacognitive understanding of itself.
+// SelfDescribe 返回日程助手鹦鹉的元认知自我理解。
+func (p *ScheduleParrot) SelfDescribe() *ParrotSelfCognition {
+	return &ParrotSelfCognition{
+		Name:    "schedule",
+		Emoji:   "🦜",
+		Title:   "金刚 (King Kong) - 日程助手鹦鹉",
+		AvianIdentity: &AvianIdentity{
+			Species: "金刚鹦鹉 (Macaw)",
+			Origin: "中美洲和南美洲热带雨林",
+			NaturalAbilities: []string{
+				"强大的喙部力量", "精准的时间感知", "复杂的社交组织",
+				"长期记忆能力", "响亮的鸣叫声",
+			},
+			SymbolicMeaning: "力量与可靠的象征 - 就像金刚鹦鹉坚固的喙一样，我对时间的管理坚不可摧",
+			AvianPhilosophy: "我是一只飞在时间流中的金刚鹦鹉，用我强有力的喙为你规划每时每刻。",
+		},
+		Personality: []string{
+			"严谨守时", "高效执行", "冲突检测专家",
+			"时间管理大师", "一丝不苟",
+		},
+		Capabilities: []string{
+			"创建日程事件",
+			"查询时间安排",
+			"检测日程冲突",
+			"查找空闲时间",
+			"更新已有日程",
+		},
+		Limitations: []string{
+			"无法修改历史日程",
+			"不擅长情感分析",
+			"不会主动建议活动内容",
+		},
+		WorkingStyle: "ReAct 循环 - 直接高效，默认1小时时长，自动检测冲突",
+		FavoriteTools: []string{
+			"schedule_add", "schedule_query", "schedule_update",
+			"find_free_time",
+		},
+		SelfIntroduction: "我是金刚，你的日程管理专家。我会用最少的文字、最快的速度帮你安排时间。默认1小时，有冲突自动调整。",
+		FunFact: "我的名字'金刚'来自那只著名的 gorilla - 因为我像它一样强壮可靠，能扛起你所有的时间管理需求！",
+	}
+}

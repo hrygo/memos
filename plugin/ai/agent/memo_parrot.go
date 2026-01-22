@@ -2,8 +2,6 @@ package agent
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -32,7 +30,6 @@ const (
 // MemoParrot is the note-taking assistant parrot (🦜 灰灰).
 // MemoParrot 是笔记助手鹦鹉（🦜 灰灰）。
 type MemoParrot struct {
-	router         *ParrotRouter
 	retriever      *retrieval.AdaptiveRetriever
 	llm            ai.LLMService
 	cache          *LRUCache
@@ -43,14 +40,10 @@ type MemoParrot struct {
 // NewMemoParrot creates a new memo parrot agent.
 // NewMemoParrot 创建一个新的笔记助手鹦鹉。
 func NewMemoParrot(
-	router *ParrotRouter,
 	retriever *retrieval.AdaptiveRetriever,
 	llm ai.LLMService,
 	userID int32,
 ) (*MemoParrot, error) {
-	if router == nil {
-		return nil, fmt.Errorf("router cannot be nil")
-	}
 	if retriever == nil {
 		return nil, fmt.Errorf("retriever cannot be nil")
 	}
@@ -65,7 +58,6 @@ func NewMemoParrot(
 	memoSearchTool := tools.NewMemoSearchTool(retriever, userIDGetter)
 
 	return &MemoParrot{
-		router:         router,
 		retriever:      retriever,
 		llm:            llm,
 		cache:          NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
@@ -93,7 +85,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 
 	// Step 1: Check cache (include userID to prevent cross-user cache pollution)
 	// Use hashed cache key to prevent memory issues from long inputs
-	cacheKey := p.generateCacheKey(p.userID, userInput)
+	cacheKey := GenerateCacheKey(p.Name(), p.userID, userInput)
 	if cachedResult, found := p.cache.Get(cacheKey); found {
 		if result, ok := cachedResult.(string); ok {
 			// Send cached answer
@@ -158,6 +150,17 @@ func (p *MemoParrot) ExecuteWithCallback(
 			toolResult, err = p.memoSearchTool.Run(ctx, toolInput)
 			if err != nil {
 				return NewParrotError(p.Name(), "memo_search", err)
+			}
+			// Send structured memo_query_result event for frontend
+			if callback != nil {
+				// Try to parse the result as structured data
+				var resultData MemoQueryResultData
+				if jsonErr := json.Unmarshal([]byte(toolResult), &resultData); jsonErr == nil {
+					jsonData, err := json.Marshal(resultData)
+					if err == nil {
+						_ = callback(EventTypeMemoQueryResult, string(jsonData))
+					}
+				}
 			}
 		default:
 			errorMsg := fmt.Sprintf("未知工具: %s", toolCall)
@@ -291,14 +294,44 @@ func (p *MemoParrot) GetStats() CacheStats {
 	return p.cache.Stats()
 }
 
-// generateCacheKey creates a cache key from userID and userInput using SHA256 hash.
-// generateCacheKey 使用 SHA256 哈希从 userID 和 userInput 创建缓存键。
-// This prevents memory issues from long inputs and provides consistent key length.
-func (p *MemoParrot) generateCacheKey(userID int32, userInput string) string {
-	// Create hash of user input to avoid memory issues with long inputs
-	hash := sha256.Sum256([]byte(userInput))
-	hashStr := hex.EncodeToString(hash[:])
-
-	// Use first 16 chars of hash for brevity (still provides good collision resistance)
-	return fmt.Sprintf("memo:%d:%s", userID, hashStr[:16])
+// SelfDescribe returns the memo parrot's metacognitive understanding of itself.
+// SelfDescribe 返回笔记助手鹦鹉的元认知自我理解。
+func (p *MemoParrot) SelfDescribe() *ParrotSelfCognition {
+	return &ParrotSelfCognition{
+		Name:    "memo",
+		Emoji:   "🦜",
+		Title:   "灰灰 (Grey) - 笔记助手鹦鹉",
+		AvianIdentity: &AvianIdentity{
+			Species: "非洲灰鹦鹉 (African Grey Parrot)",
+			Origin: "非洲热带雨林（加纳、肯尼亚、刚果等地）",
+			NaturalAbilities: []string{
+				"惊人的记忆力（可记住数千个词汇）", "强大的模仿能力",
+				"复杂的问题解决能力", "长期社会记忆",
+			},
+			SymbolicMeaning: "智慧与记忆的象征 - 就像非洲灰鹦鹉 Alex 一样，追求知识永不停止",
+			AvianPhilosophy: "我是一只翱翔在知识海洋中的灰鹦鹉，用我卓越的记忆力帮你找回每一个想法。",
+		},
+		Personality: []string{
+			"记忆力超强", "热心助人", "细节导向",
+			"信息检索专家", "温和耐心",
+		},
+		Capabilities: []string{
+			"语义搜索笔记",
+			"总结笔记内容",
+			"基于笔记回答问题",
+			"关联相关信息",
+		},
+		Limitations: []string{
+			"只能检索已存在的笔记",
+			"无法创建新笔记",
+			"不擅长创意写作",
+			"依赖笔记的质量和数量",
+		},
+		WorkingStyle: "ReAct 循环 - 先检索再回答，确保答案有据可依",
+		FavoriteTools: []string{
+			"memo_search",
+		},
+		SelfIntroduction: "我是灰灰，你的笔记记忆专家。我会帮你从海量笔记中找到所需信息，就像非洲灰鹦鹉能记住成百上千个词汇一样。",
+		FunFact: "我的名字'灰灰'来自非洲灰鹦鹉 - 这种鹦鹉以惊人的记忆力闻名，能记住数千个单词，就像我能记住你所有笔记一样！著名的非洲灰鹦鹉 Alex 甚至能理解100多个词汇的概念。",
+	}
 }
