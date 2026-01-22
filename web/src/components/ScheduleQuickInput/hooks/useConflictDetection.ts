@@ -132,27 +132,36 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
           continue;
         }
 
-        // Check if there's a gap before this schedule
-        // Gap exists when: currentStart < sStart
+        // Determine relationship between currentStart and this schedule
         if (currentStart.isBefore(sStart)) {
+          // Case 1: There's a gap before this schedule
           const gapMinutes = sStart.diff(currentStart, "minute");
           if (gapMinutes >= durationMinutes) {
             const slotEnd = currentStart.add(durationMinutes, "minute");
-            slots.push({
-              startTs: BigInt(Math.floor(currentStart.unix())),
-              endTs: BigInt(Math.floor(slotEnd.unix())),
-              label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
-              reason: (t?.("schedule.conflict.no-conflict-slot") as string) || "无冲突时段",
-            });
+            // Verify the recommended slot doesn't overlap with this schedule
+            // Using [start, end) convention: slotEnd <= sStart means no overlap
+            if (slotEnd.isBefore(sStart) || slotEnd.isSame(sStart)) {
+              slots.push({
+                startTs: BigInt(Math.floor(currentStart.unix())),
+                endTs: BigInt(Math.floor(slotEnd.unix())),
+                label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
+                reason: (t?.("schedule.conflict.no-conflict-slot") as string) || "无冲突时段",
+              });
+              // Move to after this schedule (skip entire schedule after recommending)
+              currentStart = sEnd;
+              continue;
+            }
+            // Gap too small or overlaps, move to schedule start to check from there
+            currentStart = sStart;
+          } else {
+            // Gap too small for the required duration, move to schedule start
+            currentStart = sStart;
           }
         } else {
-          // currentStart >= sStart: there's a conflict, skip this schedule
-          // Move to after this schedule ends
+          // Case 2: currentStart >= sStart, we're overlapping with this schedule
+          // Skip to after this schedule ends
+          currentStart = sEnd;
         }
-
-        // Move current start to after this schedule ends
-        // Using [start, end) convention: next available time is sEnd
-        currentStart = sEnd;
       }
 
       // Check if there's a gap after the last schedule

@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
-import { useCheckConflict, useCreateSchedule, useSchedulesOptimized } from "@/hooks/useScheduleQueries";
+import { useCheckConflict, useCreateSchedule, useSchedulesOptimized, useSchedulesForDate } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -58,9 +58,20 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
     return dateStr ? new Date(dateStr + "T00:00:00") : new Date();
   }, [initialDate, selectedDate]);
 
-  // Get existing schedules for conflict detection
-  const { data: schedulesData } = useSchedulesOptimized(referenceDate);
-  const existingSchedules = schedulesData?.schedules || [];
+  // Get the target date for fetching fresh backend data
+  const targetDate = useMemo(() => {
+    if (!pendingSchedule?.startTs) return undefined;
+    return new Date(Number(pendingSchedule.startTs) * 1000);
+  }, [pendingSchedule?.startTs]);
+
+  // Get fresh backend data for the target date (source of truth for conflict detection)
+  // This ensures all conflict detection and suggestions are based on latest server data
+  const { data: targetDateData } = useSchedulesForDate(targetDate);
+  const targetDateSchedules = targetDateData?.schedules || [];
+
+  // Use ONLY backend data for conflict detection and suggestions
+  // Don't mix with frontend cache to ensure data consistency
+  const allKnownSchedules = targetDateSchedules;
 
   // Parse hook - disabled auto parse, require manual trigger
   const { parseResult, isParsing, parse, reset } = useScheduleParse({
@@ -71,11 +82,11 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
     autoParse: false,
   });
 
-  // Conflict detection
+  // Conflict detection - use all known schedules (frontend cache + backend conflicts)
   const { suggestions } = useConflictDetection({
     startTs: pendingSchedule?.startTs,
     endTs: pendingSchedule?.endTs,
-    existingSchedules,
+    existingSchedules: allKnownSchedules,
     t: t as (key: string) => string | unknown,
   });
 
@@ -343,6 +354,7 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
     setIsCreating(true);
 
     try {
+      // Always check conflicts before creating (backend is source of truth)
       const hasConflict = await checkForConflicts(scheduleData);
       if (hasConflict) {
         setIsCreating(false);
@@ -371,9 +383,22 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
         handleClear();
         onScheduleCreated?.();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("[ScheduleQuickInput] Create error:", error);
-      toast.error(t("schedule.parse-error") || "Failed to create, please try again");
+
+      // Check if it's a conflict error from backend
+      if (error && typeof error === "object" && "message" in error) {
+        const errorMessage = String(error.message);
+        if (errorMessage.includes("conflicts detected") || errorMessage.includes("AlreadyExists")) {
+          // Backend detected a conflict - show user-friendly message
+          toast.error((t("schedule.conflict.slot-unavailable") as string) || "仍然存在时间冲突，请选择其他时间");
+          // Don't clear state so user can try a different suggestion
+          setIsCreating(false);
+          return;
+        }
+      }
+
+      toast.error((t("schedule.parse-error") as string) || "Failed to create, please try again");
     } finally {
       setIsCreating(false);
     }
@@ -403,19 +428,17 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
   const handleSuggestionSelect = async (slot: SuggestedTimeSlot) => {
     if (!pendingSchedule) return;
 
-    // Create updated schedule data immediately (not relying on state update)
     const updatedSchedule: Partial<ParsedSchedule> = {
       ...pendingSchedule,
       startTs: slot.startTs,
       endTs: slot.endTs,
     };
 
-    // Update state for display purposes
-    setPendingSchedule(updatedSchedule);
+    // Update state and proceed to create
+    // Backend validation will catch any remaining conflicts
     setShowConflictPanel(false);
-
-    // Create directly with updated data (avoiding async state timing issue)
-    await handleCreateSchedule(updatedSchedule);
+    setShowParsingCard(false);
+    await handleCreateSchedule(updatedSchedule, false);
   };
 
   const handleForceCreate = async () => {

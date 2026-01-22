@@ -179,7 +179,7 @@ export function ScheduleParsingCard({
           {onConfirm && (
             <button
               type="button"
-              onClick={onConfirm}
+              onClick={() => onConfirm?.()}
               className="w-full mt-2.5 px-3 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {t("schedule.quick-input.confirm-create") || "确认创建"}
