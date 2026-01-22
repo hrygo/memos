@@ -15,7 +15,10 @@
 
 ## 概述
 
-本目录包含 Memos AI 能力增强的所有原子化规格说明。每个 Spec 定义一个独立、可验收的工作单元。
+本目录包含 Memos 的所有原子化规格说明。每个 Spec 定义一个独立、可验收的工作单元。
+
+- **AI-001 ~ AI-016**: AI 能力增强规格
+- **FE-001 ~ FE-XXX**: 前端架构规范
 
 ## Specs 状态
 
@@ -37,6 +40,7 @@
 | AI-014 | [SuggestTags API](./AI-014-suggest-tags-api.md)           | ✅ 已完成 | AI-010                         |
 | AI-015 | [GetRelatedMemos API](./AI-015-related-memos-api.md)      | ✅ 已完成 | AI-006, AI-008                 |
 | AI-016 | [前端 AI Hooks](./AI-016-frontend-hooks.md)               | ✅ 已完成 | AI-012, AI-013, AI-014, AI-015 |
+| FE-001 | [前端布局架构](./FE-001-layout-architecture.md)           | ✅ 已完成 | -                              |
 
 ## 状态图例
 

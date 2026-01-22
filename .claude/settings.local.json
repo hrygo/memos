@@ -74,7 +74,21 @@
       "mcp__zread__get_repo_structure",
       "Skill(code-review:code-review)",
       "Bash(gh api:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(conda info:*)",
+      "Bash(zsh:*)",
+      "Bash(/usr/bin/git:*)",
+      "Bash(git worktree:*)",
+      "Bash(git log:*)",
+      "Bash(./scripts/check-i18n.sh:*)",
+      "Bash(git merge:*)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run tsc:*)",
+      "Bash(pnpm --filter web exec:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm:*)",
+      "Bash(tail:*)",
+      "Bash(go generate:*)"
     ]
   }
 }

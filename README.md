@@ -2,30 +2,39 @@
 
 > This project is a fork of [usememos/memos](https://github.com/usememos/memos).
 
-Memos is a privacy-first, lightweight note-taking service.
+Memos is a privacy-first, lightweight note-taking service with AI-powered parrot agents.
 
 ## Key Features
 
-### 🧠 Advanced AI Copilot
-> [Implementation Plan](docs/ai-implementation-plan.md) | [RAG Architecture](docs/MEMOS_OPTIMAL_RAG_SOLUTION.md)
+### 🦜 Parrot AI Agents
 
-- **Optimal RAG Pipeline**: Implements **Adaptive Retrieval** and **Smart Query Routing** to balance performance and cost.
-- **Hybrid Search**: Combines keyword (BM25) and semantic (Vector) search with **Selective Reranking** for high accuracy.
-- **Tech Stack**:
-    - **Vector DB**: PostgreSQL + `pgvector`
-    - **Models**: SiliconFlow (`bge-m3` embedding, `bge-reranker-v2-m3`) + DeepSeek V3.
+Memos uses a multi-agent architecture where specialized AI agents handle different tasks:
 
-### 📅 Schedule Assistant
-> [Implementation Plan](docs/schedule-assistant-implementation-plan.md)
+| Agent | Name | Role |
+|-------|------|------|
+| `DEFAULT` | 默认助手 | RAG-based chat with note context |
+| `MEMO` | 灰灰 | Memo search and retrieval specialist |
+| `SCHEDULE` | 金刚 | Schedule creation and management |
+| `AMAZING` | 惊奇 | Comprehensive assistant (memo + schedule) |
+| `CREATIVE` | 灵灵 | Creative writing and brainstorming |
 
-- **Natural Language Input**: Create schedules conversationally (e.g., "Meeting tomorrow at 3 PM").
-- **Smart Integration**: Built directly into the AI Chat interface with proactive suggestions and conflict detection.
-- **Database**: Integrated `schedule` system supporting PostgreSQL and SQLite.
+**How it works**: Frontend specifies `agentType` in requests → Backend routes to corresponding Parrot Agent → Agent uses tools to complete tasks.
 
-### 🛡️ Core Reliability
-- **Privacy First**: Fully self-hosted with no telemetry.
-- **Markdown Native**: Pure text experience.
-- **Performance**: High-concurrency Go backend + React frontend.
+### 🧠 Intelligent RAG Pipeline
+- **Adaptive Retrieval**: Combines BM25 and vector search with selective reranking
+- **Smart Query Routing**: Detects intent and routes to appropriate agent
+- **Tech Stack**: PostgreSQL + pgvector, SiliconFlow (bge-m3, bge-reranker-v2-m3), DeepSeek V3
+
+### 📅 Smart Schedule Management
+- **Natural Language**: "吃午饭" → creates schedule at selected date
+- **Context-Aware**: Automatically uses calendar-selected date
+- **Conflict Detection**: Backend validates and suggests alternatives
+- **Tool-Based**: Agents use `schedule_add`, `schedule_query`, `find_free_time` tools
+
+### 🛡️ Privacy First
+- Fully self-hosted with no telemetry
+- Markdown-native plain text
+- High-performance Go backend + React frontend
 
 ## Getting Started
 
