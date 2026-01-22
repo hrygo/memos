@@ -51,8 +51,13 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Loading state
   if (isParsing) {
     return (
-      <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      <div
+        className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}
+        role="status"
+        aria-live="polite"
+        aria-label={parseSource === "ai" ? "AI 正在解析" : "正在解析"}
+      >
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
         <span>{parseSource === "ai" ? (t("schedule.quick-input.ai-parsing") as string) : (t("schedule.quick-input.parsing") as string)}</span>
       </div>
     );
@@ -74,23 +79,28 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
       : null;
 
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)}>
-        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+      <div
+        className={cn("flex items-center gap-2 text-xs", className)}
+        role="status"
+        aria-live="polite"
+        aria-label={`解析成功：${title}`}
+      >
+        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <span className="font-medium text-emerald-700 dark:text-emerald-400">{title}</span>
-          <span className="text-muted-foreground mx-1">·</span>
+          <span className="text-muted-foreground mx-1" aria-hidden="true">·</span>
           <span className="text-muted-foreground">
             {allDay ? (t("schedule.all-day") as string) : formatTime(startTs)}
             {!allDay && endTimeStr && (
               <>
-                <span className="mx-0.5">-</span>
+                <span className="mx-0.5" aria-hidden="true">-</span>
                 <span>{endTimeStr}</span>
               </>
             )}
           </span>
           {location && (
             <>
-              <span className="text-muted-foreground mx-1">·</span>
+              <span className="text-muted-foreground mx-1" aria-hidden="true">·</span>
               <span className="text-muted-foreground">@{location}</span>
             </>
           )}
@@ -103,8 +113,13 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Partial state - needs more info
   if (parseResult.state === "partial") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)}>
-        <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+      <div
+        className={cn("flex items-center gap-2 text-xs", className)}
+        role="status"
+        aria-live="polite"
+        aria-label="需要更多信息"
+      >
+        <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
         <span className="text-amber-700 dark:text-amber-400">{parseResult.message || (t("schedule.quick-input.parse-partial") as string)}</span>
       </div>
     );
@@ -113,8 +128,13 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Error state
   if (parseResult.state === "error") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)}>
-        <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+      <div
+        className={cn("flex items-center gap-2 text-xs", className)}
+        role="alert"
+        aria-live="assertive"
+        aria-label="解析失败"
+      >
+        <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" aria-hidden="true" />
         <span className="text-destructive">{parseResult.message || (t("schedule.quick-input.parse-error") as string)}</span>
       </div>
     );
@@ -135,32 +155,32 @@ interface CompactIndicatorProps {
 export function CompactParsingIndicator({ parseResult, isParsing, className }: CompactIndicatorProps) {
   if (isParsing) {
     return (
-      <div className={cn("relative", className)}>
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="正在解析">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
   }
 
   if (parseResult?.state === "success") {
     return (
-      <div className={cn("relative", className)}>
-        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="解析成功">
+        <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden="true" />
       </div>
     );
   }
 
   if (parseResult?.state === "partial") {
     return (
-      <div className={cn("relative", className)}>
-        <Bot className="h-4 w-4 text-amber-500" />
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="需要更多信息">
+        <Bot className="h-4 w-4 text-amber-500" aria-hidden="true" />
       </div>
     );
   }
 
   if (parseResult?.state === "error") {
     return (
-      <div className={cn("relative", className)}>
-        <AlertCircle className="h-4 w-4 text-destructive" />
+      <div className={cn("relative", className)} role="alert" aria-live="assertive" aria-label="解析失败">
+        <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
       </div>
     );
   }
