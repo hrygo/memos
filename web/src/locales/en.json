@@ -664,6 +664,8 @@
     },
     "error": {
       "set-time-range": "Please set start and end time",
+      "invalid-time": "Invalid time, please enter again",
+      "invalid-time-range": "End time must be later than start time",
       "create-failed": "Create failed, please try again"
     },
     "conflict": {

@@ -16,25 +16,7 @@ import { cn } from "@/lib/utils";
 import { ResizablePanel } from "./ResizablePanel";
 import type { ConflictInfo, ParsedSchedule } from "./types";
 import { useTranslate } from "@/utils/i18n";
-
-/**
- * Generate a UUID with fallback for environments where crypto.randomUUID() is unavailable.
- * Copied from ScheduleQuickInput.tsx to avoid circular dependency.
- */
-function generateUUID(): string {
-  try {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-  } catch {
-    // Fall through to manual generation
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+import { generateUUID } from "@/utils/uuid";
 
 interface ScheduleInputPanelProps {
   /** Whether panel is open */
@@ -173,12 +155,12 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
       // Validate timestamps before API call
       if (scheduleData.startTs <= 0) {
         console.error("[ScheduleInputPanel] Invalid startTs (must be positive):", scheduleData.startTs);
-        toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+        toast.error(t("schedule.error.invalid-time") as string);
         return false;
       }
       if (scheduleData.endTs <= scheduleData.startTs) {
         console.error("[ScheduleInputPanel] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
-        toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
+        toast.error(t("schedule.error.invalid-time-range") as string);
         return false;
       }
 
@@ -221,11 +203,11 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
 
     // Additional validation for timestamp validity
     if (parsedSchedule.startTs <= 0) {
-      toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+      toast.error(t("schedule.error.invalid-time") as string);
       return;
     }
     if (parsedSchedule.endTs <= parsedSchedule.startTs) {
-      toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
+      toast.error(t("schedule.error.invalid-time-range") as string);
       return;
     }
 
