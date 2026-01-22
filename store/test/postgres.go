@@ -113,7 +113,7 @@ func GetDedicatedPostgresDSN(t *testing.T) (dsn string, containerHost string, cl
 // StartMemosContainer starts a Memos container with the given configuration.
 // For version="local", it builds from the local Dockerfile.
 func StartMemosContainer(ctx context.Context, cfg MemosContainerConfig) (*MemosContainer, error) {
-	image := "neosmemo/memos:" + cfg.Version
+	image := "hrygo/memos:" + cfg.Version
 	if cfg.Version == "local" {
 		image = "memos-test:local"
 	}
