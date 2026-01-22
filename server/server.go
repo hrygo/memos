@@ -22,6 +22,7 @@ import (
 	"github.com/usememos/memos/server/router/frontend"
 	"github.com/usememos/memos/server/router/rss"
 	"github.com/usememos/memos/server/runner/embedding"
+	"github.com/usememos/memos/server/runner/ocr"
 	"github.com/usememos/memos/server/runner/s3presign"
 	"github.com/usememos/memos/store"
 )
@@ -163,9 +164,9 @@ func (s *Server) StartBackgroundRunners(ctx context.Context) {
 			embeddingService, err := ai.NewEmbeddingService(&aiConfig.Embedding)
 			if err == nil {
 				embeddingRunner := embedding.NewRunner(s.Store, embeddingService)
+				embeddingCtx, embeddingCancel := context.WithCancel(ctx)
+				s.runnerCancelFuncs = append(s.runnerCancelFuncs, embeddingCancel)
 				go func() {
-					embeddingCtx, embeddingCancel := context.WithCancel(ctx)
-					s.runnerCancelFuncs = append(s.runnerCancelFuncs, embeddingCancel)
 					embeddingRunner.Run(embeddingCtx)
 					slog.Info("embedding runner stopped")
 				}()
@@ -176,6 +177,19 @@ func (s *Server) StartBackgroundRunners(ctx context.Context) {
 		} else {
 			slog.Warn("AI config validation failed", "error", err)
 		}
+	}
+
+	// Start OCR runner for attachment text extraction (if enabled)
+	if s.Profile.OCREnabled || s.Profile.TextExtractEnabled {
+		ocrRunner := ocr.NewRunner(s.Store, s.Profile)
+		ocrRunner.RunOnce(ctx)
+		ocrCtx, ocrCancel := context.WithCancel(ctx)
+		s.runnerCancelFuncs = append(s.runnerCancelFuncs, ocrCancel)
+		go func() {
+			ocrRunner.Run(ocrCtx)
+			slog.Info("OCR runner stopped")
+		}()
+		slog.Info("OCR runner started")
 	}
 
 	// Log the number of goroutines running
