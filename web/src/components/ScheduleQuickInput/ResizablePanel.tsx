@@ -1,6 +1,62 @@
 import { GripVertical, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Focus trap hook for modal/panel dialogs
+ * Ensures keyboard navigation stays within the panel when open
+ */
+function useFocusTrap(isActive: boolean, containerRef: RefObject<HTMLElement>) {
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    // Store the previously focused element
+    previousActiveElement.current = document.activeElement as HTMLElement;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Find all focusable elements within the container
+    const focusableElements = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusable = focusableElements[0] as HTMLElement;
+    const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    // Focus the first element
+    firstFocusable?.focus();
+
+    // Handle Tab key to trap focus
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstFocusable) {
+          e.preventDefault();
+          lastFocusable?.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastFocusable) {
+          e.preventDefault();
+          firstFocusable?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleTabKey);
+
+    return () => {
+      document.removeEventListener("keydown", handleTabKey);
+      // Restore focus to the previous element when panel closes
+      previousActiveElement.current?.focus();
+    };
+  }, [isActive, containerRef]);
+}
 
 type PanelPosition = "bottom" | "right";
 
@@ -116,6 +172,24 @@ export function ResizablePanel({
     handleResizeStart(mouseEvent as any);
   };
 
+  // Handle Escape key to close panel
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onOpenChange(false);
+    }
+  }, [onOpenChange]);
+
+  // Focus trap
+  useFocusTrap(open, panelRef);
+
+  // Add global Escape key listener
+  useEffect(() => {
+    if (!open) return;
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleKeyDown]);
+
   if (!open) return null;
 
   const panelStyle = isRight ? { width: `${sizePercent}%`, height: "100%" } : { height: `${sizePercent}%`, width: "100%" };
@@ -137,11 +211,17 @@ export function ResizablePanel({
     return (
       <div className="absolute inset-0 z-50 pointer-events-none">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} />
+        <div
+          className="absolute inset-0 bg-black/20 pointer-events-auto"
+          onClick={() => onOpenChange(false)}
+          aria-hidden="true"
+        />
 
         {/* Resizable Panel */}
         <div
           ref={panelRef}
+          role="dialog"
+          aria-modal="true"
           className={cn(panelClass, "bg-background shadow-2xl pointer-events-auto", "flex flex-col", className)}
           style={panelStyle}
         >
@@ -151,6 +231,9 @@ export function ResizablePanel({
             className={cn("absolute left-0 right-0 top-0 select-none touch-none transition-colors", handleClass)}
             onMouseDown={handleResizeStart}
             onTouchStart={handleTouchStart}
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="拖动调整面板大小"
           >
             <div className={gripContainerClass}>
               <GripVertical className={cn("h-4 w-4 text-muted-foreground", gripRotation)} />
@@ -161,8 +244,10 @@ export function ResizablePanel({
           {/* Close Button */}
           {showCloseButton && (
             <button
+              type="button"
               onClick={() => onOpenChange(false)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-muted transition-colors"
+              aria-label="关闭面板"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -181,11 +266,17 @@ export function ResizablePanel({
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} />
+      <div
+        className="absolute inset-0 bg-black/20 pointer-events-auto"
+        onClick={() => onOpenChange(false)}
+        aria-hidden="true"
+      />
 
       {/* Resizable Panel */}
       <div
         ref={panelRef}
+        role="dialog"
+        aria-modal="true"
         className={cn(panelClass, "bg-background shadow-2xl pointer-events-auto", "flex flex-col", className)}
         style={panelStyle}
       >
@@ -199,6 +290,9 @@ export function ResizablePanel({
           )}
           onMouseDown={handleResizeStart}
           onTouchStart={handleTouchStart}
+          role="separator"
+          aria-orientation={isRight ? "vertical" : "horizontal"}
+          aria-label="拖动调整面板大小"
         >
           <div className={gripContainerClass}>
             <GripVertical className={cn("h-4 w-4 text-muted-foreground", gripRotation)} />
@@ -209,9 +303,11 @@ export function ResizablePanel({
         {/* Close Button */}
         {showCloseButton && (
           <button
+            type="button"
             onClick={() => onOpenChange(false)}
+            aria-label="关闭面板"
             className={cn(
-              "absolute p-1.5 rounded-full hover:bg-muted transition-colors",
+              "absolute p-1.5 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
               isRight ? "top-4 right-4" : "right-4 top-1/2 -translate-y-1/2",
             )}
           >
@@ -252,7 +348,12 @@ export function CompactResizablePanel({ title, children, ...props }: CompactResi
           <GripVertical className="h-4 w-4 text-muted-foreground rotate-90" data-resize-handle />
           {title && <span className="text-sm font-medium">{title}</span>}
         </div>
-        <button onClick={() => props.onOpenChange(false)} className="p-1 rounded-full hover:bg-muted transition-colors">
+        <button
+          type="button"
+          onClick={() => props.onOpenChange(false)}
+          aria-label="关闭面板"
+          className="p-1 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
