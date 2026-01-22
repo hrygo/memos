@@ -6,9 +6,9 @@ import { AgentType } from "@/types/proto/api/v1/ai_service_pb";
  */
 export enum ParrotAgentType {
   DEFAULT = "DEFAULT",
-  MEMO = "MEMO",       // 🦜 灰灰 - Memo Parrot
+  MEMO = "MEMO", // 🦜 灰灰 - Memo Parrot
   SCHEDULE = "SCHEDULE", // 🦜 金刚 - Schedule Parrot
-  AMAZING = "AMAZING",   // 🦜 惊奇 - Amazing Parrot (Milestone 2)
+  AMAZING = "AMAZING", // 🦜 惊奇 - Amazing Parrot (Milestone 2)
   CREATIVE = "CREATIVE", // 🦜 灵灵 - Creative Parrot (Milestone 4)
 }
 
