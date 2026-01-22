@@ -69,30 +69,35 @@ export const ScheduleSearchBar = ({ schedules, onFilteredChange, onHasFilterChan
   const totalCount = schedules.length;
 
   return (
-    <div className={cn("relative w-full", className)}>
+    <div className={cn("relative w-full", className)} role="search">
       <div className="relative flex items-center">
-        <SearchIcon className="absolute left-2.5 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <SearchIcon className="absolute left-2.5 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
         <input
           type="text"
+          id="schedule-search-input"
+          role="searchbox"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("schedule.search-placeholder") || "Search schedules..."}
+          aria-label="搜索日程"
+          aria-describedby={hasFilter ? "search-result-count" : undefined}
           className={cn(
             "h-9 w-full pl-9 pr-20 rounded-lg border border-border bg-background text-sm",
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
+            "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2",
             "transition-colors",
           )}
         />
         {hasFilter && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1" id="search-result-count" role="status" aria-live="polite">
+            <span className="text-xs text-muted-foreground" aria-label={`找到 ${resultCount} 个结果，共 ${totalCount} 个日程`}>
               {resultCount}/{totalCount}
             </span>
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Clear search"
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-h-[36px] min-w-[36px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 flex items-center justify-center"
+              aria-label="清除搜索"
             >
               <XIcon className="w-3.5 h-3.5" />
             </button>
