@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { Calendar, Clock, MapPin, Repeat, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ScheduleSummary } from "@/types/schedule";
@@ -13,6 +14,8 @@ interface ScheduleQueryResultProps {
 }
 
 export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick, onOpenSchedulePanel }: ScheduleQueryResultProps) => {
+  const { t } = useTranslation();
+
   const formatTime = (schedule: ScheduleSummary) => {
     const startDate = dayjs.unix(schedule.startTs);
     const startTime = startDate.format("HH:mm");
@@ -31,15 +34,15 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
 
     // Today
     if (date.isSame(now, "day")) {
-      return "今天";
+      return t("common.today");
     }
     // Tomorrow
     if (date.isSame(now.add(1, "day"), "day")) {
-      return "明天";
+      return t("schedule.tomorrow");
     }
     // This week
     if (date.isBefore(now.add(7, "day"))) {
-      return date.format("ddd"); // 周一、周二...
+      return date.format("ddd"); // Mon, Tue...
     }
     // Date
     return date.format("MM-DD");
@@ -53,7 +56,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <div>
               <h3 className="font-semibold text-sm text-foreground">{title}</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">该时间段暂无日程安排</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("schedule.no-schedules-this-period")}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 cursor-pointer">
@@ -74,7 +77,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
           </div>
           <div>
             <h3 className="font-semibold text-sm text-foreground">{title}</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">找到 {schedules.length} 个日程</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("schedule.found-schedules", { count: schedules.length })}</p>
           </div>
         </div>
         <Button
@@ -108,7 +111,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             {/* Content */}
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-sm text-foreground mb-1 group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors">
-                {schedule.title || "无标题日程"}
+                {schedule.title || t("schedule.untitled")}
               </h4>
 
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -125,7 +128,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
                 {schedule.recurrenceRule && (
                   <span className="flex items-center gap-1">
                     <Repeat className="h-3 w-3" />
-                    重复
+                    {t("schedule.repeat")}
                   </span>
                 )}
               </div>
@@ -146,7 +149,7 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
           }}
           className="text-xs cursor-pointer"
         >
-          查看完整日程表
+          {t("schedule.view-full-schedule")}
         </Button>
       </div>
     </div>

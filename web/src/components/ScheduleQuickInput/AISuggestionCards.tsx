@@ -35,7 +35,12 @@ export interface ScheduleSuggestion {
  * - "建议创建：明天下午3点开会"
  * - "可以帮您创建：今天15:00-16:00的会议"
  */
-export function parseSuggestions(aiResponse: string, todayStr = "今天", tomorrowStr = "明天"): ScheduleSuggestion[] {
+export function parseSuggestions(
+  aiResponse: string,
+  todayStr = "今天",
+  tomorrowStr = "明天",
+  t?: (key: string) => string | unknown,
+): ScheduleSuggestion[] {
   if (!aiResponse) return [];
 
   const suggestions: ScheduleSuggestion[] = [];
@@ -55,7 +60,7 @@ export function parseSuggestions(aiResponse: string, todayStr = "今天", tomorr
       const match = pattern.exec(line);
       if (match) {
         const [, datePart, timePart, endTimePart, titlePart] = match;
-        const suggestion = parseMatchToSuggestion(datePart, timePart, endTimePart, titlePart, line, todayStr, tomorrowStr);
+        const suggestion = parseMatchToSuggestion(datePart, timePart, endTimePart, titlePart, line, todayStr, tomorrowStr, t);
         if (suggestion) {
           suggestions.push(suggestion);
           break; // Use first match only per line
@@ -76,7 +81,7 @@ export function parseSuggestions(aiResponse: string, todayStr = "今天", tomorr
         const match = pattern.exec(content);
         if (match) {
           const [, datePart, timePart, endTimePart, titlePart] = match;
-          const suggestion = parseMatchToSuggestion(datePart, timePart, endTimePart, titlePart, content, todayStr, tomorrowStr);
+          const suggestion = parseMatchToSuggestion(datePart, timePart, endTimePart, titlePart, content, todayStr, tomorrowStr, t);
           if (suggestion && !suggestions.find((s) => s.rawText === content)) {
             suggestions.push(suggestion);
             break;
@@ -97,6 +102,7 @@ function parseMatchToSuggestion(
   rawText: string,
   todayStr: string,
   tomorrowStr: string,
+  t?: (key: string) => string | unknown,
 ): ScheduleSuggestion | null {
   // Parse date
   let date = todayStr;
@@ -120,10 +126,11 @@ function parseMatchToSuggestion(
 
   // Parse title
   const title = titlePart?.trim() || "";
+  const defaultTitle = (t?.("schedule.quick-input.default-title") as string) ?? "";
 
   return {
     id: `${Date.now()}-${Math.random()}`,
-    title: title || "新日程",
+    title: title || defaultTitle,
     date,
     startTime,
     endTime,
@@ -213,17 +220,22 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
       // Double-click on desktop: create directly
       onConfirmSuggestion(suggestion);
       setSelectedId(null);
-      announceSelection("日程已创建");
+      announceSelection(t("schedule.quick-input.schedule-created") as string);
     } else if (selectedId === suggestion.id) {
       // Second click on same card (mobile): confirm
       onConfirmSuggestion(suggestion);
       setSelectedId(null);
-      announceSelection("日程已创建");
+      announceSelection(t("schedule.quick-input.schedule-created") as string);
     } else {
       // First click: select the card
       setSelectedId(suggestion.id);
-      const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
-      announceSelection(`已选择：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}`);
+      const defaultTitle = t("schedule.quick-input.default-title") as string;
+      announceSelection(
+        (t("schedule.quick-input.selected-label") as string)
+          .replace("{title}", suggestion.title || defaultTitle)
+          .replace("{date}", suggestion.date)
+          .replace("{time}", suggestion.startTime)
+      );
     }
 
     setLastClickTime(now);
@@ -236,7 +248,7 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
     } else if (e.key === "Escape" && selectedId) {
       e.preventDefault();
       setSelectedId(null);
-      announceSelection("已取消选择");
+      announceSelection(t("schedule.quick-input.selection-canceled") as string);
     }
   };
 
@@ -254,12 +266,16 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
       <div
         className="flex flex-col sm:flex-row gap-2 sm:gap-3"
         role="listbox"
-        aria-label={t("schedule.quick-input.ai-suggestions") || "AI 建议"}
+        aria-label={t("schedule.quick-input.ai-suggestions") as string}
       >
         {suggestions.map((suggestion) => {
           const isSelected = selectedId === suggestion.id;
-          const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
-          const ariaLabel = `创建日程：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}${suggestion.endTime ? ` - ${suggestion.endTime}` : ""}`;
+          const defaultTitle = t("schedule.quick-input.default-title") as string;
+          const ariaLabel = (t("schedule.quick-input.create-schedule-label") as string)
+            .replace("{title}", suggestion.title || defaultTitle)
+            .replace("{date}", suggestion.date)
+            .replace("{time}", suggestion.startTime)
+            .replace("{endTime}", suggestion.endTime ? ` - ${suggestion.endTime}` : "");
 
           return (
             <button

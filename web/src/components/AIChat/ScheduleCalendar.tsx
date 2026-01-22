@@ -112,7 +112,7 @@ export const ScheduleCalendar = ({
   const weeks = Math.ceil(days.length / 7);
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)} role="region" aria-label="日历视图">
+    <div className={cn("flex flex-col gap-1.5", className)} role="region" aria-label={t("schedule.calendar-view") as string}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold" aria-live="polite">
@@ -124,7 +124,7 @@ export const ScheduleCalendar = ({
             size="sm"
             onClick={goToToday}
             className="h-8 min-h-[44px] sm:min-h-0 px-3 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-            aria-label="跳转到今天"
+            aria-label={t("schedule.jump-to-today") as string}
           >
             {t("common.today") || "Today"}
           </Button>
@@ -134,7 +134,7 @@ export const ScheduleCalendar = ({
               size="icon"
               onClick={goToPreviousMonth}
               className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-              aria-label="上一月"
+              aria-label={t("schedule.previous-month") as string}
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
@@ -143,7 +143,7 @@ export const ScheduleCalendar = ({
               size="icon"
               onClick={goToNextMonth}
               className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-              aria-label="下一月"
+              aria-label={t("schedule.next-month") as string}
             >
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
@@ -152,7 +152,7 @@ export const ScheduleCalendar = ({
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 flex flex-col gap-1 min-h-0" role="grid" aria-label="日历">
+      <div className="flex-1 flex flex-col gap-1 min-h-0" role="grid" aria-label={t("schedule.calendar") as string}>
         {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1 flex-none" role="row">
           {weekdays.map((day, index) => (
@@ -227,7 +227,7 @@ export const ScheduleCalendar = ({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground" role="legend" aria-label="图例">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground" role="legend" aria-label={t("schedule.legend") as string}>
         <div className="flex items-center gap-1">
           <div className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
           <span>{t("schedule.has-schedules") || "Has schedules"}</span>
@@ -243,7 +243,7 @@ export const ScheduleCalendar = ({
 
       {/* Mobile hint - shown only on small screens */}
       {showMobileHint && (
-        <div className="md:hidden mt-3 pt-3 border-t border-border/50" role="note" aria-label="提示">
+        <div className="md:hidden mt-3 pt-3 border-t border-border/50" role="note" aria-label={t("schedule.hint") as string}>
           <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
             {t("schedule.tap-to-view") || "Tap a date to view schedule details"}

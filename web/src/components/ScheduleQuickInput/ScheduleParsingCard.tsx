@@ -137,7 +137,7 @@ export function ScheduleParsingCard({
               <button
                 type="button"
                 onClick={onDismiss}
-                aria-label="关闭"
+                aria-label={t("schedule.close-card") as string}
                 className="flex-shrink-0 p-1 -mt-0.5 -mr-1 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted min-h-[28px] min-w-[28px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1"
               >
                 <X className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ export function ScheduleParsingCard({
           </div>
 
           {/* Schedule Card */}
-          <div className="bg-background rounded-lg border border-border/50 p-2.5 shadow-sm" role="region" aria-label="日程详情">
+          <div className="bg-background rounded-lg border border-border/50 p-2.5 shadow-sm" role="region" aria-label={t("schedule.schedule-details") as string}>
             {/* Title + Time in one row for compactness */}
             <div className="flex items-center gap-2 min-w-0">
               {/* Time badge */}
@@ -191,7 +191,7 @@ export function ScheduleParsingCard({
               onClick={() => onConfirm?.()}
               className="w-full mt-2.5 px-3 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              {t("schedule.quick-input.confirm-create") || "确认创建"}
+              {t("schedule.quick-input.confirm-create")}
             </button>
           )}
         </div>

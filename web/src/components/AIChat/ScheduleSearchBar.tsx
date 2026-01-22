@@ -79,7 +79,7 @@ export const ScheduleSearchBar = ({ schedules, onFilteredChange, onHasFilterChan
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("schedule.search-placeholder") || "Search schedules..."}
-          aria-label="搜索日程"
+          aria-label={t("schedule.search-schedule") as string}
           aria-describedby={hasFilter ? "search-result-count" : undefined}
           className={cn(
             "h-9 w-full pl-9 pr-20 rounded-lg border border-border bg-background text-sm",
@@ -102,7 +102,7 @@ export const ScheduleSearchBar = ({ schedules, onFilteredChange, onHasFilterChan
               type="button"
               onClick={handleClear}
               className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-h-[36px] min-w-[36px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 flex items-center justify-center"
-              aria-label="清除搜索"
+              aria-label={t("schedule.clear-search") as string}
             >
               <XIcon className="w-3.5 h-3.5" />
             </button>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
+import { useTranslate } from "@/utils/i18n";
 import type { Confidence, ParsedSchedule, ParseResult, ParseSource } from "../types";
 
 interface UseScheduleParseOptions {
@@ -39,6 +40,7 @@ interface UseScheduleParseReturn {
 export function useScheduleParse(options: UseScheduleParseOptions = {}): UseScheduleParseReturn {
   const { debounceMs = 800, minLength = 2, enableAI = true, autoParse = true, onScheduleCreated } = options;
 
+  const t = useTranslate();
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [parseSource, setParseSource] = useState<ParseSource | null>(null);
@@ -88,24 +90,24 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
           onScheduleCreated?.();
           return {
             state: "created",
-            message: response.response || "日程已创建",
+            message: response.response || (t("schedule.quick-input.schedule-created") as string),
           };
         }
 
         // AI is asking for clarification or suggesting options
         return {
           state: "partial",
-          message: response.response || "需要更多信息",
+          message: response.response || (t("schedule.need-more-info-message") as string),
         };
       } catch (error) {
         console.error("[useScheduleParse] AI parse error:", error);
         return {
           state: "error",
-          message: "智能解析失败，请重试",
+          message: t("schedule.ai-parse-failed") as string,
         };
       }
     },
-    [enableAI, agentChat, onScheduleCreated],
+    [enableAI, agentChat, onScheduleCreated, t],
   );
 
   /**
@@ -149,7 +151,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
           } else {
             setParseResult({
               state: "idle",
-              message: "请输入日程内容",
+              message: t("schedule.please-input-schedule-content") as string,
             });
             setParseSource(null);
             setConfidence(null);
@@ -160,7 +162,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
           }
           setParseResult({
             state: "error",
-            message: "解析失败，请重试",
+            message: t("schedule.parse-failed-message") as string,
           });
           setParseSource(null);
           setConfidence(null);
@@ -175,7 +177,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
         debounceTimerRef.current = setTimeout(executeParse, delay);
       }
     },
-    [debounceMs, minLength, enableAI, autoParse, parseWithAI],
+    [debounceMs, minLength, enableAI, autoParse, parseWithAI, t],
   );
 
   /**

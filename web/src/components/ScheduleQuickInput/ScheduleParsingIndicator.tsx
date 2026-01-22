@@ -120,7 +120,7 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Partial state - needs more info
   if (parseResult.state === "partial") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)} role="status" aria-live="polite" aria-label="需要更多信息">
+      <div className={cn("flex items-center gap-2 text-xs", className)} role="status" aria-live="polite" aria-label={t("schedule.need-more-info") as string}>
         <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
         <span className="text-amber-700 dark:text-amber-400">
           {parseResult.message || (t("schedule.quick-input.parse-partial") as string)}
@@ -132,7 +132,7 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Error state
   if (parseResult.state === "error") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)} role="alert" aria-live="assertive" aria-label="解析失败">
+      <div className={cn("flex items-center gap-2 text-xs", className)} role="alert" aria-live="assertive" aria-label={t("schedule.parse-failed") as string}>
         <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" aria-hidden="true" />
         <span className="text-destructive">{parseResult.message || (t("schedule.quick-input.parse-error") as string)}</span>
       </div>
@@ -152,9 +152,11 @@ interface CompactIndicatorProps {
 }
 
 export function CompactParsingIndicator({ parseResult, isParsing, className }: CompactIndicatorProps) {
+  const t = useTranslate();
+
   if (isParsing) {
     return (
-      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="正在解析">
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label={t("schedule.parsing") as string}>
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
       </div>
     );
@@ -162,7 +164,7 @@ export function CompactParsingIndicator({ parseResult, isParsing, className }: C
 
   if (parseResult?.state === "success") {
     return (
-      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="解析成功">
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label={t("schedule.parse-success") as string}>
         <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden="true" />
       </div>
     );
@@ -170,7 +172,7 @@ export function CompactParsingIndicator({ parseResult, isParsing, className }: C
 
   if (parseResult?.state === "partial") {
     return (
-      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label="需要更多信息">
+      <div className={cn("relative", className)} role="status" aria-live="polite" aria-label={t("schedule.need-more-info") as string}>
         <Bot className="h-4 w-4 text-amber-500" aria-hidden="true" />
       </div>
     );
@@ -178,7 +180,7 @@ export function CompactParsingIndicator({ parseResult, isParsing, className }: C
 
   if (parseResult?.state === "error") {
     return (
-      <div className={cn("relative", className)} role="alert" aria-live="assertive" aria-label="解析失败">
+      <div className={cn("relative", className)} role="alert" aria-live="assertive" aria-label={t("schedule.parse-failed") as string}>
         <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
       </div>
     );

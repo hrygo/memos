@@ -126,7 +126,7 @@ export function useScheduleFlow(options: UseScheduleFlowOptions = {}): UseSchedu
         endTs: BigInt(now + durationSeconds),
         description: t
           ? (t("schedule.quick-input.template-applied") as string).replace("{title}", template.title)
-          : `来自模板：${template.title}`,
+          : `From template: ${template.title}`,
       });
 
       // Add system message
@@ -136,7 +136,7 @@ export function useScheduleFlow(options: UseScheduleFlowOptions = {}): UseSchedu
           ? (t("schedule.quick-input.template-applied-message") as string)
               .replace("{title}", template.title)
               .replace("{duration}", String(template.duration))
-          : `已应用"${template.title}"模板，时长 ${template.duration} 分钟`,
+          : `Applied "${template.title}" template, duration ${template.duration} minutes`,
       );
 
       // Move to confirmation step
@@ -194,15 +194,15 @@ export function generatePromptForStep(
 ): string {
   switch (step) {
     case "initial":
-      return (t?.("schedule.flow.ask-title-time") as string) || "您想创建什么日程？请描述标题和时间。";
+      return (t?.("schedule.flow.ask-title-time") as string) ?? "";
     case "time-selection":
-      return (t?.("schedule.flow.ask-specific-time") as string) || '请告诉我具体时间，例如："明天下午3点" 或 "后天上午10点"';
+      return (t?.("schedule.flow.ask-specific-time") as string) ?? "";
     case "duration":
-      return (t?.("schedule.flow.ask-duration") as string) || '这个日程需要多长时间？例如："30分钟" 或 "2小时"';
+      return (t?.("schedule.flow.ask-duration") as string) ?? "";
     case "location":
-      return (t?.("schedule.flow.ask-location") as string) || "需要设置地点吗？（可选）";
+      return (t?.("schedule.flow.ask-location") as string) ?? "";
     case "confirmation": {
-      const title = scheduleData.title || (t?.("schedule.quick-input.default-title") as string) || "新日程";
+      const title = scheduleData.title || (t?.("schedule.quick-input.default-title") as string) ?? "";
       const timeStr = scheduleData.startTs
         ? new Date(Number(scheduleData.startTs) * 1000).toLocaleString("zh-CN", {
             month: "short",
@@ -210,10 +210,10 @@ export function generatePromptForStep(
             hour: "2-digit",
             minute: "2-digit",
           })
-        : (t?.("schedule.time.tbd") as string) || "时间待定";
-      return `${(t?.("schedule.quick-input.confirm-create") as string) || "确认创建"}：${title}\n${(t?.("schedule.time.label") as string) || "时间"}：${timeStr}`;
+        : (t?.("schedule.time.tbd") as string) ?? "";
+      return `${(t?.("schedule.quick-input.confirm-create") as string) ?? ""}：${title}\n${(t?.("schedule.time.label") as string) ?? ""}：${timeStr}`;
     }
     default:
-      return (t?.("schedule.flow.ask-continue") as string) || "请继续...";
+      return (t?.("schedule.flow.ask-continue") as string) ?? "";
   }
 }

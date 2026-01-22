@@ -2,6 +2,7 @@ import { GripVertical, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
 
 /**
  * Focus trap hook for modal/panel dialogs
@@ -96,6 +97,7 @@ export function ResizablePanel({
   showCloseButton = true,
   containerRef,
 }: ResizablePanelProps) {
+  const t = useTranslate();
   const [sizePercent, setSizePercent] = useState(initialSize);
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -230,7 +232,7 @@ export function ResizablePanel({
             onTouchStart={handleTouchStart}
             role="separator"
             aria-orientation="horizontal"
-            aria-label="拖动调整面板大小"
+            aria-label={t("schedule.drag-resize-panel") as string}
           >
             <div className={gripContainerClass}>
               <GripVertical className={cn("h-4 w-4 text-muted-foreground", gripRotation)} />
@@ -243,7 +245,7 @@ export function ResizablePanel({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              aria-label="关闭面板"
+              aria-label={t("schedule.close-panel") as string}
               className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <X className="h-4 w-4 text-muted-foreground" />
@@ -285,7 +287,7 @@ export function ResizablePanel({
           onTouchStart={handleTouchStart}
           role="separator"
           aria-orientation={isRight ? "vertical" : "horizontal"}
-          aria-label="拖动调整面板大小"
+          aria-label={t("schedule.drag-resize-panel") as string}
         >
           <div className={gripContainerClass}>
             <GripVertical className={cn("h-4 w-4 text-muted-foreground", gripRotation)} />
@@ -298,7 +300,7 @@ export function ResizablePanel({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            aria-label="关闭面板"
+            aria-label={t("schedule.close-panel") as string}
             className={cn(
               "absolute p-1.5 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
               isRight ? "top-4 right-4" : "right-4 top-1/2 -translate-y-1/2",
@@ -326,6 +328,8 @@ interface CompactResizablePanelProps extends Omit<ResizablePanelProps, "header">
 }
 
 export function CompactResizablePanel({ title, children, ...props }: CompactResizablePanelProps) {
+  const t = useTranslate();
+
   return (
     <ResizablePanel position="right" initialSize={30} minSize={20} maxSize={60} {...props}>
       {/* Minimal header with just resize handle */}
@@ -344,7 +348,7 @@ export function CompactResizablePanel({ title, children, ...props }: CompactResi
         <button
           type="button"
           onClick={() => props.onOpenChange(false)}
-          aria-label="关闭面板"
+          aria-label={t("schedule.close-panel") as string}
           className="p-1 rounded-full hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         >
           <X className="h-4 w-4 text-muted-foreground" />

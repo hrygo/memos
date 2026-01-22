@@ -264,9 +264,9 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle, dis
       style={dropdownStyle}
       className="p-1.5 bg-popover rounded-lg border shadow-lg z-[9999] max-h-[60vh] overflow-y-auto"
       role="menu"
-      aria-label={t("schedule.quick-input.quick-create") || "快速创建"}
+      aria-label={t("schedule.quick-input.quick-create") as string}
     >
-      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create") || "快速创建"}</div>
+      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create") as string}</div>
       <div className="flex flex-col gap-0.5" role="presentation">
         {DEFAULT_TEMPLATES.map((template) => {
           const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
@@ -298,7 +298,7 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle, dis
               <span className="font-medium truncate flex-1">{displayTitle}</span>
               <span className="text-[10px] text-muted-foreground shrink-0">
                 {template.duration}
-                {t("schedule.quick-input.minutes-abbr") || "分"}
+                {t("schedule.quick-input.minutes-abbr") as string}
               </span>
             </button>
           );
@@ -316,7 +316,7 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle, dis
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={t("schedule.quick-input.templates") || "模板"}
+        aria-label={t("schedule.quick-input.templates") as string}
         className={cn(
           "flex items-center justify-center text-xs font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1",
           // Golden ratio: width ≈ height * 1.618, using 32x52 for compact square

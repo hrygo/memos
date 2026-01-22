@@ -107,7 +107,7 @@ export function ConflictSuggestions({
           <button
             type="button"
             onClick={onCancel}
-            aria-label="关闭冲突提示"
+            aria-label={t("schedule.close-conflict-alert") as string}
             className={cn(
               "text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300 transition-colors",
               "min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full hover:bg-red-100/50 dark:hover:bg-red-900/20",

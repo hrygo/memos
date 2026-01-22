@@ -49,9 +49,9 @@ export const ScheduleSuggestionCard = ({
       if (!rule.type) return "";
 
       const typeMap: Record<string, string> = {
-        daily: t("schedule.recurrence.daily") || "每天",
-        weekly: t("schedule.recurrence.weekly") || "每周",
-        monthly: t("schedule.recurrence.monthly") || "每月",
+        daily: t("schedule.recurrence.daily"),
+        weekly: t("schedule.recurrence.weekly"),
+        monthly: t("schedule.recurrence.monthly"),
       };
 
       let text = typeMap[rule.type] || rule.type;
@@ -59,23 +59,23 @@ export const ScheduleSuggestionCard = ({
       if (rule.type === "weekly" && rule.weekdays && rule.weekdays.length > 0) {
         const weekdayNames = [
           "", // Monday=1
-          t("schedule.recurrence.mon") || "周一",
-          t("schedule.recurrence.tue") || "周二",
-          t("schedule.recurrence.wed") || "周三",
-          t("schedule.recurrence.thu") || "周四",
-          t("schedule.recurrence.fri") || "周五",
-          t("schedule.recurrence.sat") || "周六",
-          t("schedule.recurrence.sun") || "周日",
+          t("schedule.recurrence.mon"),
+          t("schedule.recurrence.tue"),
+          t("schedule.recurrence.wed"),
+          t("schedule.recurrence.thu"),
+          t("schedule.recurrence.fri"),
+          t("schedule.recurrence.sat"),
+          t("schedule.recurrence.sun"),
         ];
         const days = rule.weekdays.map((d: number) => weekdayNames[d] || "").filter(Boolean);
         if (days.length > 0) {
-          const separator = t("schedule.recurrence.separator") || "、";
+          const separator = t("schedule.recurrence.separator");
           text = days.join(separator);
         }
       } else if (rule.type === "monthly" && rule.month_day) {
-        text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) || `每月${rule.month_day}号`;
+        text = t("schedule.recurrence.monthly-on", { day: rule.month_day });
       } else if (rule.interval && rule.interval > 1) {
-        const intervalText = t("schedule.recurrence.every-n", { n: rule.interval }) || `每${rule.interval}个`;
+        const intervalText = t("schedule.recurrence.every-n", { n: rule.interval });
         text = intervalText + " " + text;
       }
 
@@ -100,11 +100,11 @@ export const ScheduleSuggestionCard = ({
         )}
         <div className="flex-1">
           <h4 className="font-medium text-sm">
-            {hasConflicts ? t("schedule.conflict-detected") || "检测到时间冲突" : t("schedule.suggested-schedule")}
+            {hasConflicts ? t("schedule.conflict-detected") as string : t("schedule.suggested-schedule")}
           </h4>
           <p className="text-xs text-muted-foreground">
             {hasConflicts
-              ? t("schedule.conflict-suggestion-hint") || "该时间段与其他日程冲突，建议调整"
+              ? t("schedule.conflict-suggestion-hint") as string
               : t("schedule.suggested-schedule-hint")}
           </p>
         </div>
@@ -112,13 +112,13 @@ export const ScheduleSuggestionCard = ({
 
       <div className="space-y-2 text-sm">
         <div className="flex items-start gap-2">
-          <div className="font-medium">{parsedSchedule.title || t("schedule.untitled") || "无标题日程"}</div>
+          <div className="font-medium">{parsedSchedule.title || t("schedule.untitled")}</div>
         </div>
 
         {parsedSchedule.allDay ? (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
-            <span>{t("schedule.all-day") || "全天"}</span>
+            <span>{t("schedule.all-day")}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -157,7 +157,7 @@ export const ScheduleSuggestionCard = ({
             <div className="flex items-center gap-2 text-xs font-medium text-destructive">
               <AlertCircle className="h-3.5 w-3.5" />
               <span>
-                {t("schedule.conflicting-schedules") || "冲突的日程"} ({conflicts.length})
+                {t("schedule.conflicting-schedules")} ({conflicts.length})
               </span>
             </div>
             <div className="space-y-1.5 pl-5">
@@ -175,7 +175,7 @@ export const ScheduleSuggestionCard = ({
               ))}
               {conflicts.length > 3 && (
                 <div className="text-xs text-muted-foreground pl-2">
-                  +{conflicts.length - 3} {t("schedule.more-conflicts") || "更多冲突"}
+                  +{conflicts.length - 3} {t("schedule.more-conflicts")}
                 </div>
               )}
             </div>
@@ -189,7 +189,7 @@ export const ScheduleSuggestionCard = ({
         </Button>
         {hasConflicts && onAdjustTime && (
           <Button variant="outline" size="sm" onClick={onAdjustTime} className="cursor-pointer">
-            {t("schedule.adjust-time") || "调整时间"}
+            {t("schedule.adjust-time")}
           </Button>
         )}
         <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">

@@ -145,7 +145,7 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
                 startTs: BigInt(Math.floor(currentStart.unix())),
                 endTs: BigInt(Math.floor(slotEnd.unix())),
                 label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
-                reason: (t?.("schedule.conflict.no-conflict-slot") as string) || "无冲突时段",
+                reason: (t?.("schedule.conflict.no-conflict-slot") as string) ?? "",
               });
               // Move to after this schedule (skip entire schedule after recommending)
               currentStart = sEnd;
@@ -174,8 +174,8 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
           label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
           reason:
             remainingMinutes === durationMinutes
-              ? (t?.("schedule.conflict.end-slot") as string) || "末尾时段"
-              : (t?.("schedule.conflict.no-conflict-slot") as string) || "无冲突时段",
+              ? (t?.("schedule.conflict.end-slot") as string) ?? ""
+              : (t?.("schedule.conflict.no-conflict-slot") as string) ?? "",
         });
       }
 
@@ -199,7 +199,7 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
       const nextDaySlots = findAvailableSlots(startDate.add(1, "day").toDate(), duration);
       return nextDaySlots.map((slot) => ({
         ...slot,
-        reason: (t?.("schedule.conflict.next-day-available") as string) || "次日可用",
+        reason: (t?.("schedule.conflict.next-day-available") as string) ?? "",
       }));
     }
 

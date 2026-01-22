@@ -176,7 +176,7 @@ function MessageBubble({
         )}
       >
         {role === "user" ? (
-          <img src="/images/parrots/icons/user_avatar.png" alt="User" className="w-full h-full object-cover" />
+          <img src="/images/parrots/icons/user_avatar.webp" alt="User" className="w-full h-full object-cover" />
         ) : icon?.startsWith("/") ? (
           <img src={icon} alt="" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
         ) : (

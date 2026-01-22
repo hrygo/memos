@@ -97,7 +97,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
         className="flex-1 overflow-y-auto px-4 py-3 space-y-3 max-h-[300px] min-h-[120px]"
         role="log"
         aria-live="polite"
-        aria-label="对话历史"
+        aria-label={t("schedule.dialog-history") as string}
       >
         {/* Conversation Messages */}
         {conversation.map((msg, idx) => (
@@ -110,7 +110,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             <div
               className={cn("max-w-[80%] rounded-2xl px-3 py-2", msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}
               role={msg.role === "assistant" ? "article" : "status"}
-              aria-label={msg.role === "assistant" ? "AI 助手回复" : "您的消息"}
+              aria-label={msg.role === "assistant" ? t("schedule.ai-assistant-reply") as string : t("schedule.your-message") as string}
             >
               {msg.role === "assistant" ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -136,7 +136,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
               <Bot className="h-3.5 w-3.5 text-primary" />
             </div>
-            <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted" role="article" aria-label="AI 助手提问">
+            <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted" role="article" aria-label={t("schedule.ai-assistant-question") as string}>
               <p className="text-sm text-muted-foreground mb-0">{getStepPrompt()}</p>
             </div>
           </div>
@@ -145,8 +145,8 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
 
       {/* Confirmation Step */}
       {currentStep === "confirmation" && (
-        <div role="region" aria-label="确认日程" className="px-4 py-3 border-t border-border/50 bg-muted/30">
-          <div className="flex items-start gap-3 p-3 rounded-lg border bg-background" role="group" aria-label="日程详情">
+        <div role="region" aria-label={t("schedule.confirm-schedule") as string} className="px-4 py-3 border-t border-border/50 bg-muted/30">
+          <div className="flex items-start gap-3 p-3 rounded-lg border bg-background" role="group" aria-label={t("schedule.schedule-details") as string}>
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0" aria-hidden="true">
               <Calendar className="h-4 w-4 text-primary" />
             </div>
@@ -180,13 +180,13 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between mt-3" role="group" aria-label="操作按钮">
+          <div className="flex items-center justify-between mt-3" role="group" aria-label={t("schedule.action-buttons") as string}>
             <Button
               variant="ghost"
               size="sm"
               onClick={onCancel}
               className="h-8 min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-              aria-label="取消创建"
+              aria-label={t("schedule.cancel-create") as string}
             >
               {t("common.cancel") as string}
             </Button>
@@ -196,7 +196,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
                 size="sm"
                 onClick={onCancel}
                 className="h-8 min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-                aria-label="修改日程信息"
+                aria-label={t("schedule.modify-schedule") as string}
               >
                 {t("schedule.quick-input.modify") as string}
               </Button>
@@ -204,7 +204,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
                 size="sm"
                 onClick={onConfirm}
                 className="h-8 min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-                aria-label="确认创建日程"
+                aria-label={t("schedule.confirm-create-schedule") as string}
               >
                 {t("schedule.quick-input.confirm-create") as string}
               </Button>
@@ -215,7 +215,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
 
       {/* Input Area - Not shown in confirmation step */}
       {currentStep !== "confirmation" && (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border/50" role="region" aria-label="输入区域">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-border/50" role="region" aria-label={t("schedule.input-area") as string}>
           <Input
             ref={inputRef}
             value={input}
@@ -223,7 +223,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             onKeyDown={handleKeyDown}
             placeholder={t("schedule.quick-input.reply-placeholder") as string}
             className="flex-1 h-9 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-            aria-label="输入回复"
+            aria-label={t("schedule.input-reply") as string}
             id="flow-input"
           />
           <Button
@@ -231,7 +231,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             onClick={handleSubmit}
             disabled={!input.trim()}
             className="h-9 shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-            aria-label="发送回复"
+            aria-label={t("schedule.send-reply") as string}
           >
             {t("ai.send-shortcut") as string}
           </Button>
@@ -241,7 +241,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
               size="sm"
               onClick={onCancel}
               className="h-9 px-2 shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-              aria-label="取消对话"
+              aria-label={t("schedule.cancel-chat") as string}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -288,12 +288,12 @@ export function CompactScheduleFlow({ scheduleData, onEdit, className }: Compact
   };
 
   return (
-    <div className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)} role="region" aria-label="日程预览">
+    <div className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)} role="region" aria-label={t("schedule.schedule-preview") as string}>
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate" aria-label="日程标题">
+        <div className="font-medium text-sm truncate" aria-label={t("schedule.schedule-title-label") as string}>
           {scheduleData.title || (t("schedule.quick-input.default-title") as string)}
         </div>
-        <div className="text-xs text-muted-foreground truncate" aria-label="时间和地点">
+        <div className="text-xs text-muted-foreground truncate" aria-label={t("schedule.time-and-location") as string}>
           {scheduleData.startTs ? formatTime(scheduleData.startTs) : (t("schedule.time.tbd") as string)}
           {scheduleData.location && ` · @${scheduleData.location}`}
         </div>
@@ -303,7 +303,7 @@ export function CompactScheduleFlow({ scheduleData, onEdit, className }: Compact
         variant="outline"
         onClick={onEdit}
         className="h-7 shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
-        aria-label="编辑日程"
+        aria-label={t("schedule.edit-schedule") as string}
       >
         {t("schedule.quick-input.edit") as string}
       </Button>

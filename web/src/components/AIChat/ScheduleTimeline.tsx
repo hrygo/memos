@@ -24,9 +24,10 @@ interface DateStripProps {
   onDateSelect: (date: Dayjs) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
+  t: (key: string) => string;
 }
 
-const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevWeek, onNextWeek }: DateStripProps) => {
+const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevWeek, onNextWeek, t }: DateStripProps) => {
   const todayStr = dayjs().format("YYYY-MM-DD");
   const startOfWeek = currentDate.startOf("week");
 
@@ -44,12 +45,12 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
         size="icon"
         className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 rounded-full min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
         onClick={onPrevWeek}
-        aria-label="上一周"
+        aria-label={t("schedule.previous-week") as string}
       >
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </Button>
 
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-1" role="tablist" aria-label="选择日期">
+      <div className="flex items-center gap-1 sm:gap-1.5 flex-1" role="tablist" aria-label={t("schedule.select-date") as string}>
         {Array.from({ length: 7 }, (_, i) => {
           const date = startOfWeek.add(i, "day");
           const dateStr = date.format("YYYY-MM-DD");
@@ -58,14 +59,18 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
           const scheduleCount = getScheduleCount(date);
           const dayName = date.format("dd");
           const dayNum = date.format("D");
-          const fullDate = date.format("YYYY年M月D日");
+          const fullDate = date.format("YYYY-MM-DD");
 
           return (
             <button
               key={i}
               role="tab"
               aria-selected={isSelected}
-              aria-label={`${fullDate}${isToday ? "，今天" : ""}${scheduleCount > 0 ? `，${scheduleCount} 个日程` : ""}`}
+              aria-label={t("schedule.date-aria-label", {
+                date: fullDate,
+                isToday: isToday ? t("schedule.today") : "",
+                scheduleCount: scheduleCount > 0 ? `${scheduleCount} ${t("schedule.schedules")}` : "",
+              }).trim()}
               onClick={() => onDateSelect(date)}
               className={cn(
                 "flex-1 min-w-[2.5rem] sm:min-w-[3rem] max-w-[4rem] sm:max-w-[4.5rem] aspect-square flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all duration-200 relative group",
@@ -109,7 +114,7 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
         size="icon"
         className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 rounded-full min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
         onClick={onNextWeek}
-        aria-label="下一周"
+        aria-label={t("schedule.next-week") as string}
       >
         <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Button>
@@ -163,6 +168,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
           onDateSelect={handleDateSelect}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
+          t={t}
         />
       </div>
 
@@ -190,7 +196,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       </div>
 
       {/* Timeline Content */}
-      <div className="flex-1 overflow-y-auto -mx-1 px-1" role="list" aria-label="日程列表">
+      <div className="flex-1 overflow-y-auto -mx-1 px-1" role="list" aria-label={t("schedule.schedule-list") as string}>
         {daySchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-muted-foreground" role="status">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4" aria-hidden="true">
@@ -213,7 +219,12 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
               ];
               const baseColor = colors[idx % colors.length];
               const conflictStyle = conflict ? "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300" : baseColor;
-              const ariaLabel = `${schedule.title || t("schedule.untitled")}，${startTime.format("HH:mm")} 到 ${endTime.format("HH:mm")}${conflict ? "，有冲突" : ""}`;
+              const ariaLabel = t("schedule.schedule-aria-label", {
+                title: schedule.title || t("schedule.untitled"),
+                startTime: startTime.format("HH:mm"),
+                endTime: endTime.format("HH:mm"),
+                hasConflict: conflict ? t("schedule.conflict") : "",
+              }).trim();
 
               return (
                 <button
@@ -256,7 +267,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
 
                   {/* Conflict Indicator */}
                   {conflict && (
-                    <div className="absolute top-2 right-2" aria-label="日程冲突">
+                    <div className="absolute top-2 right-2" aria-label={t("schedule.schedule-conflict") as string}>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/20 text-red-600 dark:text-red-400">
                         {t("schedule.conflict")}
                       </span>
