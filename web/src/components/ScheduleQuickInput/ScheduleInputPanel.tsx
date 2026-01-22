@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Bot, Calendar, Clock, Loader2, MapPin, Send } from "lucide-react";
+import { Bot, Calendar, Clock, Loader2, MapPin, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
@@ -16,6 +16,25 @@ import { cn } from "@/lib/utils";
 import { ResizablePanel } from "./ResizablePanel";
 import type { ConflictInfo, ParsedSchedule } from "./types";
 import { useTranslate } from "@/utils/i18n";
+
+/**
+ * Generate a UUID with fallback for environments where crypto.randomUUID() is unavailable.
+ * Copied from ScheduleQuickInput.tsx to avoid circular dependency.
+ */
+function generateUUID(): string {
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // Fall through to manual generation
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 interface ScheduleInputPanelProps {
   /** Whether panel is open */
@@ -188,7 +207,7 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
     if (hasConflict) return;
 
     try {
-      const scheduleName = `schedules/${self.crypto.randomUUID()}`;
+      const scheduleName = `schedules/${generateUUID()}`;
       await createSchedule.mutateAsync({
         name: scheduleName,
         title: parsedSchedule.title || (t("schedule.quick-input.default-title") as string),
@@ -221,17 +240,29 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
     <ResizablePanel open={open} onOpenChange={onOpenChange} position="bottom" initialSize={30} minSize={20} maxSize={30}>
       <div className="h-full flex flex-col relative">
         {/* Scrollable content area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-4 py-3 space-y-4"
+          role="log"
+          aria-live="polite"
+          aria-label="对话历史"
+        >
           {/* Conversation History */}
           {conversationHistory.map((msg, idx) => (
-            <div key={idx} className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")}>
+            <div
+              key={idx}
+              className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")}
+              role="row"
+            >
               {msg.role === "assistant" && (
-                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
                   <Bot className="h-3.5 w-3.5 text-primary" />
                 </div>
               )}
               <div
                 className={cn("max-w-[80%] rounded-2xl px-3 py-2", msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}
+                role={msg.role === "assistant" ? "article" : "status"}
+                aria-label={msg.role === "assistant" ? "AI 助手回复" : "您的消息"}
               >
                 {msg.role === "assistant" ? (
                   <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -253,11 +284,11 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
 
           {/* Agent Response */}
           {agentResponse && (
-            <div className="flex gap-2 justify-start">
-              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="flex gap-2 justify-start" role="row">
+              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
                 <Bot className="h-3.5 w-3.5 text-primary" />
               </div>
-              <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted">
+              <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted" role="article" aria-label="AI 助手最新回复">
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -274,25 +305,41 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
 
           {/* Conflict Panel */}
           {showConflictPanel && conflicts.length > 0 && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-3">
+            <div
+              role="alert"
+              aria-live="assertive"
+              aria-describedby="conflict-description"
+              className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-3"
+            >
               <div className="flex items-start gap-2 text-sm">
-                <Bot className="h-4 w-4 text-amber-500 mt-0.5" />
+                <Bot className="h-4 w-4 text-amber-500 mt-0.5" aria-hidden="true" />
                 <div className="flex-1">
-                  <p className="font-medium text-amber-700 dark:text-amber-400">
+                  <p className="font-medium text-amber-700 dark:text-amber-400" id="conflict-description">
                     {t("schedule.quick-input.conflicts-detected") as string} {conflicts.length} {t("schedule.schedule-count", { count: conflicts.length }) as string}
                   </p>
-                  <div className="mt-2 space-y-1">
+                  <div className="mt-2 space-y-1" role="list" aria-label="冲突日程列表">
                     {conflicts.map((conflict, idx) => (
-                      <div key={idx} className="text-xs text-amber-600 dark:text-amber-500">
+                      <div key={idx} className="text-xs text-amber-600 dark:text-amber-500" role="listitem">
                         · {conflict.conflictingSchedule.title} ({formatTime(conflict.conflictingSchedule.startTs)})
                       </div>
                     ))}
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setShowConflictPanel(false)} className="h-7 text-xs">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowConflictPanel(false)}
+                      className="h-7 text-xs min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      aria-label="取消创建日程"
+                    >
                       {t("common.cancel") as string}
                     </Button>
-                    <Button size="sm" onClick={handleCreate} className="h-7 text-xs">
+                    <Button
+                      size="sm"
+                      onClick={handleCreate}
+                      className="h-7 text-xs min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                      aria-label="强制创建日程，忽略冲突"
+                    >
                       {t("schedule.quick-input.force-create") as string}
                     </Button>
                   </div>
@@ -303,29 +350,37 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
 
           {/* Manual Schedule Edit Form */}
           {parsedSchedule && (
-            <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+            <div role="region" aria-label="编辑日程" className="rounded-lg border bg-muted/50 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-sm">{t("schedule.edit-schedule") as string}</h4>
-                <Button variant="ghost" size="sm" onClick={() => setParsedSchedule(null)} className="h-7 w-7 p-0">
-                  ×
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setParsedSchedule(null)}
+                  className="h-7 w-7 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                  aria-label="关闭编辑表单"
+                >
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
 
-              <div className="space-y-3 text-sm">
+              <form className="space-y-3 text-sm" onSubmit={(e) => { e.preventDefault(); handleCreate(); }}>
                 {/* Title */}
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                   <Input
                     value={parsedSchedule.title || ""}
                     onChange={(e) => handleScheduleUpdate("title", e.target.value)}
-                    className="h-8"
+                    className="h-8 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
                     placeholder={t("schedule.quick-input.title-placeholder") as string}
+                    aria-label="日程标题"
+                    id="schedule-title"
                   />
                 </div>
 
                 {/* Time */}
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                   <div className="flex items-center gap-2 w-full">
                     <Input
                       type="datetime-local"
@@ -340,9 +395,11 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                         const ts = BigInt(dayjs(e.target.value).unix());
                         handleScheduleUpdate("startTs", ts);
                       }}
-                      className="h-8 flex-1"
+                      className="h-8 flex-1 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                      aria-label="开始时间"
+                      id="schedule-start-time"
                     />
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-muted-foreground" aria-hidden="true">-</span>
                     <Input
                       type="datetime-local"
                       value={
@@ -356,28 +413,43 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                         const ts = BigInt(dayjs(e.target.value).unix());
                         handleScheduleUpdate("endTs", ts);
                       }}
-                      className="h-8 flex-1"
+                      className="h-8 flex-1 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                      aria-label="结束时间"
+                      id="schedule-end-time"
                     />
                   </div>
                 </div>
 
                 {/* Location */}
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                   <Input
                     value={parsedSchedule.location || ""}
                     onChange={(e) => handleScheduleUpdate("location", e.target.value)}
-                    className="h-8"
+                    className="h-8 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
                     placeholder={t("schedule.quick-input.location-placeholder") as string}
+                    aria-label="地点"
+                    id="schedule-location"
                   />
                 </div>
-              </div>
+              </form>
 
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setParsedSchedule(null)} className="h-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setParsedSchedule(null)}
+                  className="h-8 min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                  aria-label="取消编辑"
+                >
                   {t("common.cancel") as string}
                 </Button>
-                <Button size="sm" onClick={handleCreate} className="h-8">
+                <Button
+                  size="sm"
+                  onClick={handleCreate}
+                  className="h-8 min-h-[44px] sm:min-h-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                  aria-label="确认创建日程"
+                >
                   {t("schedule.create-schedule") as string}
                 </Button>
               </div>
@@ -386,7 +458,7 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
         </div>
 
         {/* Fixed Input Area */}
-        <div className="flex-none px-4 py-3 border-t border-border/50">
+        <div className="flex-none px-4 py-3 border-t border-border/50" role="region" aria-label="输入区域">
           <div className="flex items-end gap-2">
             <Textarea
               value={input}
@@ -398,17 +470,25 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                 }
               }}
               placeholder={t("schedule.quick-input.input-hint") as string}
-              className="min-h-[40px] max-h-[120px] resize-none"
+              className="min-h-[40px] max-h-[120px] resize-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
               rows={1}
+              aria-label="输入日程描述"
+              id="schedule-input"
             />
-            <Button onClick={handleAgentParse} disabled={!input.trim() || isProcessing} className="h-10 px-3 shrink-0">
+            <Button
+              onClick={handleAgentParse}
+              disabled={!input.trim() || isProcessing}
+              className="h-10 px-3 shrink-0 min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+              aria-label={isProcessing ? "处理中" : "发送消息"}
+            >
               {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
             <Button
               variant="outline"
               onClick={() => setParsedSchedule({ title: input })}
               disabled={!input.trim()}
-              className="h-10 shrink-0"
+              className="h-10 shrink-0 min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+              aria-label="手动解析"
             >
               {t("schedule.quick-input.local-parse") as string}
             </Button>
