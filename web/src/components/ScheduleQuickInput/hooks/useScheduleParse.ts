@@ -257,6 +257,20 @@ export function extractScheduleFromParse(parseResult: ParseResult | null, defaul
 
   const parsed = parseResult.parsedSchedule;
 
+  // Validate timestamps before returning
+  if (!parsed.startTs || parsed.startTs <= 0) {
+    console.error("[extractScheduleFromParse] Invalid startTs:", parsed.startTs);
+    return null;
+  }
+  if (!parsed.endTs || parsed.endTs <= 0) {
+    console.error("[extractScheduleFromParse] Invalid endTs:", parsed.endTs);
+    return null;
+  }
+  if (parsed.endTs <= parsed.startTs) {
+    console.error("[extractScheduleFromParse] Invalid time range (endTs <= startTs):", { startTs: parsed.startTs, endTs: parsed.endTs });
+    return null;
+  }
+
   return {
     title: parsed.title || defaultTitle || "新日程",
     startTs: parsed.startTs,
