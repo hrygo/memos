@@ -78,6 +78,7 @@ func (r *ParrotRouter) Route(
 	ctx context.Context,
 	agentType string,
 	userInput string,
+	history []string,
 	stream ParrotStream,
 ) error {
 	// Validate input
@@ -97,7 +98,7 @@ func (r *ParrotRouter) Route(
 	}
 
 	// Execute agent
-	if err := agent.ExecuteWithCallback(ctx, userInput, callback); err != nil {
+	if err := agent.ExecuteWithCallback(ctx, userInput, history, callback); err != nil {
 		return NewParrotError(agent.Name(), "ExecuteWithCallback", err)
 	}
 

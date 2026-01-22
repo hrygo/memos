@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -104,49 +105,85 @@ func (p *AmazingParrot) Name() string {
 func (p *AmazingParrot) ExecuteWithCallback(
 	ctx context.Context,
 	userInput string,
+	history []string,
 	callback EventCallback,
 ) error {
 	// Add timeout protection
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
+	startTime := time.Now()
+
+	// Log execution start
+	slog.Info("AmazingParrot: ExecuteWithCallback started",
+		"user_id", p.userID,
+		"input", truncateString(userInput, 100),
+		"history_count", len(history),
+	)
+
 	// Step 1: Check cache
 	cacheKey := GenerateCacheKey(p.Name(), p.userID, userInput)
 	if cachedResult, found := p.cache.Get(cacheKey); found {
 		if result, ok := cachedResult.(string); ok {
+			slog.Info("AmazingParrot: Cache hit", "user_id", p.userID)
 			if callback != nil {
 				callback(EventTypeAnswer, result)
 			}
 			return nil
 		}
 	}
+	slog.Debug("AmazingParrot: Cache miss, proceeding with execution", "user_id", p.userID)
 
 	// Step 2: Plan concurrent retrieval using LLM intent analysis
-	plan, err := p.planRetrieval(ctx, userInput, callback)
+	slog.Debug("AmazingParrot: Starting planning phase", "user_id", p.userID)
+	plan, err := p.planRetrieval(ctx, userInput, history, callback)
 	if err != nil {
+		slog.Error("AmazingParrot: Planning failed", "user_id", p.userID, "error", err)
 		return NewParrotError(p.Name(), "planRetrieval", err)
 	}
+	slog.Info("AmazingParrot: Plan created",
+		"user_id", p.userID,
+		"needs_memo_search", plan.needsMemoSearch,
+		"needs_schedule_query", plan.needsScheduleQuery,
+		"needs_free_time", plan.needsFreeTime,
+		"needs_schedule_add", plan.needsScheduleAdd,
+		"needs_schedule_update", plan.needsScheduleUpdate,
+	)
 
 	// Step 3: Execute concurrent retrieval
+	slog.Debug("AmazingParrot: Starting concurrent retrieval", "user_id", p.userID)
 	retrievalResults, err := p.executeConcurrentRetrieval(ctx, plan, callback)
 	if err != nil {
+		slog.Error("AmazingParrot: Concurrent retrieval failed", "user_id", p.userID, "error", err)
 		return NewParrotError(p.Name(), "executeConcurrentRetrieval", err)
 	}
+	slog.Info("AmazingParrot: Retrieval completed",
+		"user_id", p.userID,
+		"results_count", len(retrievalResults),
+	)
 
 	// Step 4: Synthesize final answer from retrieval results streaming
-	finalAnswer, err := p.synthesizeAnswer(ctx, userInput, retrievalResults, callback)
+	slog.Debug("AmazingParrot: Starting synthesis", "user_id", p.userID)
+	finalAnswer, err := p.synthesizeAnswer(ctx, userInput, history, retrievalResults, callback)
 	if err != nil {
+		slog.Error("AmazingParrot: Synthesis failed", "user_id", p.userID, "error", err)
 		return NewParrotError(p.Name(), "synthesizeAnswer", err)
 	}
 
 	// Cache answer
 	p.cache.Set(cacheKey, finalAnswer)
 
+	slog.Info("AmazingParrot: Execution completed successfully",
+		"user_id", p.userID,
+		"duration_ms", time.Since(startTime).Milliseconds(),
+		"answer_length", len(finalAnswer),
+	)
+
 	return nil
 }
 
 // planRetrieval analyzes user input and creates a concurrent retrieval plan.
-func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, callback EventCallback) (*retrievalPlan, error) {
+func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, history []string, callback EventCallback) (*retrievalPlan, error) {
 	if callback != nil {
 		callback(EventTypeThinking, "正在分析您的需求...")
 	}
@@ -162,8 +199,18 @@ func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, cal
 
 	messages := []ai.Message{
 		{Role: "system", Content: planningPrompt},
-		{Role: "user", Content: userInput},
 	}
+
+	// Add history for context (even in planning)
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// Add current user input
+	messages = append(messages, ai.Message{Role: "user", Content: userInput})
 
 	response, err := p.llm.Chat(ctx, messages)
 	if err != nil {
@@ -231,11 +278,19 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	}
 
 	// Execute tasks concurrently with goroutines
+	// Check context before launching goroutines to avoid unnecessary work
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	for _, task := range tasks {
 		wg.Add(1)
 		go func(t retrievalTask) {
 			defer wg.Done()
 
+			// Each goroutine checks context at start
 			result, err := t.fn(ctx)
 			mu.Lock()
 			defer mu.Unlock()
@@ -258,22 +313,42 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 }
 
 // synthesizeAnswer generates the final answer from retrieval results streaming.
-func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, retrievalResults map[string]string, callback EventCallback) (string, error) {
+func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, history []string, retrievalResults map[string]string, callback EventCallback) (string, error) {
 	// Build synthesis prompt with retrieved context
 	synthesisPrompt := p.buildSynthesisPrompt(retrievalResults)
 
 	messages := []ai.Message{
 		{Role: "system", Content: synthesisPrompt},
-		{Role: "user", Content: userInput},
 	}
+
+	// Add history
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// Add current user input
+	messages = append(messages, ai.Message{Role: "user", Content: userInput})
 
 	contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
 	var fullContent strings.Builder
+	var hasError bool
 	for {
 		select {
 		case chunk, ok := <-contentChan:
 			if !ok {
+				// contentChan closed, drain errChan then return
+				for len(errChan) > 0 {
+					if drainErr := <-errChan; drainErr != nil && !hasError {
+						return "", fmt.Errorf("LLM synthesis failed: %w", drainErr)
+					}
+				}
+				if hasError {
+					return "", fmt.Errorf("LLM synthesis failed")
+				}
 				return fullContent.String(), nil
 			}
 			fullContent.WriteString(chunk)
@@ -282,14 +357,14 @@ func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, 
 					return "", err
 				}
 			}
-		case err, ok := <-errChan:
+		case _, ok := <-errChan:
 			if !ok {
+				// errChan closed, continue to drain contentChan
 				errChan = nil
 				continue
 			}
-			if err != nil {
-				return "", fmt.Errorf("LLM synthesis failed: %w", err)
-			}
+			hasError = true
+			// Log error but continue processing content
 		case <-ctx.Done():
 			return "", context.Canceled
 		}

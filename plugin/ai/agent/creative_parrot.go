@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -47,16 +48,27 @@ func (p *CreativeParrot) Name() string {
 func (p *CreativeParrot) ExecuteWithCallback(
 	ctx context.Context,
 	userInput string,
+	history []string,
 	callback EventCallback,
 ) error {
 	// Add timeout protection
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
+	startTime := time.Now()
+
+	// Log execution start
+	slog.Info("CreativeParrot: ExecuteWithCallback started",
+		"user_id", p.userID,
+		"input", truncateString(userInput, 100),
+		"history_count", len(history),
+	)
+
 	// Step 1: Check cache
 	cacheKey := GenerateCacheKey(p.Name(), p.userID, userInput)
 	if cachedResult, found := p.cache.Get(cacheKey); found {
 		if result, ok := cachedResult.(string); ok {
+			slog.Info("CreativeParrot: Cache hit", "user_id", p.userID)
 			if callback != nil {
 				callback(EventTypeAnswer, result)
 			}
@@ -67,6 +79,11 @@ func (p *CreativeParrot) ExecuteWithCallback(
 	// Step 2: Build system prompt
 	systemPrompt := p.buildSystemPrompt()
 
+	slog.Debug("CreativeParrot: Calling LLM streaming",
+		"user_id", p.userID,
+		"messages_count", 2+len(history)*2+1,
+	)
+
 	// Step 3: Notify thinking
 	if callback != nil {
 		callback(EventTypeThinking, "正在构思创意...")
@@ -75,36 +92,82 @@ func (p *CreativeParrot) ExecuteWithCallback(
 	// Step 4: Get LLM response streaming (creative parrot doesn't use tools)
 	messages := []ai.Message{
 		{Role: "system", Content: systemPrompt},
-		{Role: "user", Content: userInput},
 	}
+
+	// Add history
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// Add current user input
+	messages = append(messages, ai.Message{Role: "user", Content: userInput})
 
 	contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
 	var fullContent strings.Builder
+	var streamErr error
+	var chunkCount int
+
 	for {
 		select {
 		case chunk, ok := <-contentChan:
 			if !ok {
-				// Stream closed, cache results and return
+				// Stream closed, check for errors and return
+				slog.Debug("CreativeParrot: Stream closed",
+					"user_id", p.userID,
+					"total_chunks", chunkCount,
+					"total_length", fullContent.Len(),
+					"had_error", streamErr != nil,
+				)
+				if streamErr != nil {
+					slog.Error("CreativeParrot: Stream error",
+						"user_id", p.userID,
+						"error", streamErr,
+					)
+					return NewParrotError(p.Name(), "ChatStream", streamErr)
+				}
 				p.cache.Set(cacheKey, fullContent.String())
+
+				slog.Info("CreativeParrot: Execution completed successfully",
+					"user_id", p.userID,
+					"duration_ms", time.Since(startTime).Milliseconds(),
+					"output_length", fullContent.Len(),
+				)
 				return nil
 			}
+			chunkCount++
 			fullContent.WriteString(chunk)
 			if callback != nil {
-				// Send each chunk as an answer event for real-time UI updates
 				if err := callback(EventTypeAnswer, chunk); err != nil {
+					slog.Warn("CreativeParrot: Callback error",
+						"user_id", p.userID,
+						"error", err,
+					)
 					return err
 				}
 			}
 		case err, ok := <-errChan:
 			if !ok {
+				// errChan closed, wait for contentChan to close
 				errChan = nil
 				continue
 			}
 			if err != nil {
-				return NewParrotError(p.Name(), "ChatStream", err)
+				// Store error and wait for contentChan to close
+				slog.Error("CreativeParrot: Stream error from errChan",
+					"user_id", p.userID,
+					"error", err,
+				)
+				streamErr = err
 			}
 		case <-ctx.Done():
+			slog.Warn("CreativeParrot: Context timeout",
+				"user_id", p.userID,
+				"duration_ms", time.Since(startTime).Milliseconds(),
+			)
 			return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
 		}
 	}

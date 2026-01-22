@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -75,17 +76,28 @@ func (p *MemoParrot) Name() string {
 func (p *MemoParrot) ExecuteWithCallback(
 	ctx context.Context,
 	userInput string,
+	history []string,
 	callback EventCallback,
 ) error {
 	// Add timeout protection
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentExecutionTimeout)
 	defer cancel()
 
+	startTime := time.Now()
+
+	// Log execution start
+	slog.Info("MemoParrot: ExecuteWithCallback started",
+		"user_id", p.userID,
+		"input", truncateString(userInput, 100),
+		"history_count", len(history),
+	)
+
 	// Step 1: Check cache (include userID to prevent cross-user cache pollution)
 	// Use hashed cache key to prevent memory issues from long inputs
 	cacheKey := GenerateCacheKey(p.Name(), p.userID, userInput)
 	if cachedResult, found := p.cache.Get(cacheKey); found {
 		if result, ok := cachedResult.(string); ok {
+			slog.Info("MemoParrot: Cache hit", "user_id", p.userID)
 			// Send cached answer
 			if callback != nil {
 				callback(EventTypeAnswer, result)
@@ -93,6 +105,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 			return nil
 		}
 	}
+	slog.Debug("MemoParrot: Cache miss, proceeding with execution", "user_id", p.userID)
 
 	// Step 2: Build system prompt
 	systemPrompt := p.buildSystemPrompt()
@@ -100,8 +113,23 @@ func (p *MemoParrot) ExecuteWithCallback(
 	// Step 3: ReAct loop
 	messages := []ai.Message{
 		{Role: "system", Content: systemPrompt},
-		{Role: "user", Content: userInput},
 	}
+
+	// Add history
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// Add current user input
+	messages = append(messages, ai.Message{Role: "user", Content: userInput})
+
+	slog.Debug("MemoParrot: Starting ReAct loop",
+		"user_id", p.userID,
+		"messages_count", len(messages),
+	)
 
 	var iteration int
 
@@ -109,6 +137,10 @@ func (p *MemoParrot) ExecuteWithCallback(
 		// Check for context cancellation
 		select {
 		case <-ctx.Done():
+			slog.Warn("MemoParrot: Context canceled",
+				"user_id", p.userID,
+				"iteration", iteration,
+			)
 			return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
 		default:
 		}
@@ -118,37 +150,64 @@ func (p *MemoParrot) ExecuteWithCallback(
 			callback(EventTypeThinking, "正在思考...")
 		}
 
+		slog.Debug("MemoParrot: LLM call (iteration)",
+			"user_id", p.userID,
+			"iteration", iteration,
+		)
+
 		// Get LLM response
 		// Note: We use synchronous Chat here for internal ReAct reasoning (Thinking/Tool Use)
-		// but we could optimize the final answer to be streaming.
+		// but we optimize the final answer to be streaming for better UX.
 		response, err := p.llm.Chat(ctx, messages)
 		if err != nil {
+			slog.Error("MemoParrot: LLM call failed",
+				"user_id", p.userID,
+				"iteration", iteration,
+				"error", err,
+			)
 			return NewParrotError(p.Name(), "Chat", err)
 		}
 
+		slog.Debug("MemoParrot: LLM response received",
+			"user_id", p.userID,
+			"iteration", iteration,
+			"response_length", len(response),
+		)
+
 		// Try to parse tool call
-		toolCall, toolInput, err := p.parseToolCall(response)
-		if err != nil {
-			// No tool call, this is the final answer.
-			// For the final answer, we'll re-run with streaming for better UX
-			// if it's the first turn or if we want to show it incrementally.
-			// However, to keep it simple and consistent with ReAct, we just
-			// stream the current response if it's already generated.
-			// But wait, p.llm.Chat already gave us the full response.
-			// To truly stream, we should have used ChatStream from the start of this turn.
+		toolCall, toolInput, parseErr := p.parseToolCall(response)
+		if parseErr != nil {
+			// No tool call, this is the final reasoning/answer turn.
+			// Let's optimize: perform the final answer with streaming.
+			contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
-			// Let's optimize: if no tool call, we send the response we have.
-			// In the future, we can change the whole loop to support streaming.
-
-			// Cache the result
-			p.cache.Set(cacheKey, response)
-
-			if callback != nil {
-				// To simulate streaming/incremental update even if we have full text
-				// or just send it as an answer.
-				callback(EventTypeAnswer, response)
+			var fullContent strings.Builder
+			for {
+				select {
+				case chunk, ok := <-contentChan:
+					if !ok {
+						// Stream closed, cache final result and return
+						p.cache.Set(cacheKey, fullContent.String())
+						return nil
+					}
+					fullContent.WriteString(chunk)
+					if callback != nil {
+						if err := callback(EventTypeAnswer, chunk); err != nil {
+							return err
+						}
+					}
+				case err, ok := <-errChan:
+					if !ok {
+						errChan = nil
+						continue
+					}
+					if err != nil {
+						return NewParrotError(p.Name(), "ChatStream", err)
+					}
+				case <-ctx.Done():
+					return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
+				}
 			}
-			return nil
 		}
 
 		// Execute tool
