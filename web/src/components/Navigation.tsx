@@ -1,4 +1,4 @@
-import { BellIcon, EarthIcon, LibraryIcon, PaperclipIcon, SparklesIcon, UserCircleIcon } from "lucide-react";
+import { BellIcon, CalendarDays, EarthIcon, LibraryIcon, PaperclipIcon, SparklesIcon, UserCircleIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -52,6 +52,12 @@ const Navigation = (props: Props) => {
     title: t("common.ai-assistant"),
     icon: <SparklesIcon className="w-6 h-auto shrink-0" />,
   };
+  const scheduleNavLink: NavLinkItem = {
+    id: "header-schedule",
+    path: Routes.SCHEDULE,
+    title: t("schedule.title"),
+    icon: <CalendarDays className="w-6 h-auto shrink-0" />,
+  };
   const unreadCount = notifications.filter((n) => n.status === UserNotification_Status.UNREAD).length;
   const inboxNavLink: NavLinkItem = {
     id: "header-inbox",
@@ -76,7 +82,7 @@ const Navigation = (props: Props) => {
   };
 
   const navLinks: NavLinkItem[] = currentUser
-    ? [homeNavLink, chatNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
+    ? [homeNavLink, chatNavLink, scheduleNavLink, exploreNavLink, attachmentsNavLink, inboxNavLink]
     : [exploreNavLink, signInNavLink];
 
   return (

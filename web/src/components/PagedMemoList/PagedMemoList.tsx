@@ -86,7 +86,8 @@ const PagedMemoList = (props: Props) => {
   const queryClient = useQueryClient();
 
   // Show memo editor only on the root route or home route
-  const showMemoEditor = Boolean(matchPath(Routes.ROOT, window.location.pathname)) || Boolean(matchPath(Routes.HOME, window.location.pathname));
+  const showMemoEditor =
+    Boolean(matchPath(Routes.ROOT, window.location.pathname)) || Boolean(matchPath(Routes.HOME, window.location.pathname));
 
   // Use React Query's infinite query for pagination
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteMemos({
