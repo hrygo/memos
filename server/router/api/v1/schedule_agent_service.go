@@ -137,7 +137,7 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 	}
 
 	// Execute agent with callback
-	response, err := schedulerAgent.ExecuteWithCallback(ctx, req.Message, eventCallback)
+	response, err := schedulerAgent.ExecuteWithCallback(ctx, req.Message, nil, eventCallback)
 	if err != nil {
 		errorJSON, jsonErr := json.Marshal(map[string]string{
 			"type": "error",

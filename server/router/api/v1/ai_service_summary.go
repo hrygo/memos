@@ -13,29 +13,29 @@ import (
 
 // SummaryService provides AI-powered summarization features.
 type SummaryService struct {
-	store     *store.Store
-	llm       ai.LLMService
+	store       *store.Store
+	llm         ai.LLMService
 	costMonitor *finops.CostMonitor
 }
 
 // NewSummaryService creates a new summary service.
 func NewSummaryService(st *store.Store, llm ai.LLMService, cm *finops.CostMonitor) *SummaryService {
 	return &SummaryService{
-		store:      st,
-		llm:        llm,
+		store:       st,
+		llm:         llm,
 		costMonitor: cm,
 	}
 }
 
 // SummarizeMemosOptions holds options for memo summarization.
 type SummarizeMemosOptions struct {
-	UserID      int32
-	TimeRange   *TimeRange
-	Query       string // Optional filter query
-	MaxMemos    int    // Maximum number of memos to summarize
-	MaxTokens   int    // Maximum tokens in summary
-	Language    string // "zh" or "en"
-	Style       string // "brief", "detailed", "bullet_points"
+	UserID    int32
+	TimeRange *TimeRange
+	Query     string // Optional filter query
+	MaxMemos  int    // Maximum number of memos to summarize
+	MaxTokens int    // Maximum tokens in summary
+	Language  string // "zh" or "en"
+	Style     string // "brief", "detailed", "bullet_points"
 }
 
 // TimeRange represents a time range for filtering.
@@ -56,13 +56,13 @@ type SummarizeMemosRequest struct {
 
 // SummarizeMemosResponse is the response for memo summarization.
 type SummarizeMemosResponse struct {
-	Summary         string   `json:"summary"`
-	MemoCount       int      `json:"memo_count"`
-	TopTopics       []string `json:"top_topics,omitempty"`
-	TotalChars      int      `json:"total_chars"`
-	TimeRange       string   `json:"time_range"`
-	ProcessingTime  int64    `json:"processing_time_ms"`
-	EstimatedCost   float64  `json:"estimated_cost_usd"`
+	Summary        string   `json:"summary"`
+	MemoCount      int      `json:"memo_count"`
+	TopTopics      []string `json:"top_topics,omitempty"`
+	TotalChars     int      `json:"total_chars"`
+	TimeRange      string   `json:"time_range"`
+	ProcessingTime int64    `json:"processing_time_ms"`
+	EstimatedCost  float64  `json:"estimated_cost_usd"`
 }
 
 // SummarizeMemos generates a summary of memos within the given criteria.
@@ -85,8 +85,8 @@ func (s *SummaryService) SummarizeMemos(ctx context.Context, req *SummarizeMemos
 
 	// Fetch memos
 	findMemo := &store.FindMemo{
-		CreatorID: &req.Options.UserID,
-		Limit:     &req.Options.MaxMemos,
+		CreatorID:        &req.Options.UserID,
+		Limit:            &req.Options.MaxMemos,
 		OrderByUpdatedTs: true, // Get most recent first
 	}
 
@@ -144,7 +144,7 @@ func (s *SummaryService) SummarizeMemos(ctx context.Context, req *SummarizeMemos
 	}
 
 	// Estimate cost (rough estimate for DeepSeek)
-	estimatedCost := s.estimateCost(len(content)+len(summary))
+	estimatedCost := s.estimateCost(len(content) + len(summary))
 
 	return &SummarizeMemosResponse{
 		Summary:        summary,
@@ -159,11 +159,11 @@ func (s *SummaryService) SummarizeMemos(ctx context.Context, req *SummarizeMemos
 
 // SummarizeSchedulesOptions holds options for schedule summarization.
 type SummarizeSchedulesOptions struct {
-	UserID      int32
-	TimeRange   *TimeRange
+	UserID       int32
+	TimeRange    *TimeRange
 	MaxSchedules int
-	Language    string
-	Style       string
+	Language     string
+	Style        string
 }
 
 // SummarizeSchedulesRequest is the request for schedule summarization.
@@ -173,13 +173,13 @@ type SummarizeSchedulesRequest struct {
 
 // SummarizeSchedulesResponse is the response for schedule summarization.
 type SummarizeSchedulesResponse struct {
-	Summary          string   `json:"summary"`
-	ScheduleCount    int      `json:"schedule_count"`
-	BusyPeriods      []string `json:"busy_periods,omitempty"`
-	FreePeriods      []string `json:"free_periods,omitempty"`
-	ConflictCount    int      `json:"conflict_count"`
-	TimeRange        string   `json:"time_range"`
-	ProcessingTime   int64    `json:"processing_time_ms"`
+	Summary        string   `json:"summary"`
+	ScheduleCount  int      `json:"schedule_count"`
+	BusyPeriods    []string `json:"busy_periods,omitempty"`
+	FreePeriods    []string `json:"free_periods,omitempty"`
+	ConflictCount  int      `json:"conflict_count"`
+	TimeRange      string   `json:"time_range"`
+	ProcessingTime int64    `json:"processing_time_ms"`
 }
 
 // SummarizeSchedules generates a summary of schedules within the given criteria.
@@ -246,12 +246,12 @@ func (s *SummaryService) SummarizeSchedules(ctx context.Context, req *SummarizeS
 	}
 
 	return &SummarizeSchedulesResponse{
-		Summary:       summary,
-		ScheduleCount: len(schedules),
-		BusyPeriods:   busyPeriods,
-		FreePeriods:   freePeriods,
-		ConflictCount: conflictCount,
-		TimeRange:     timeRangeStr,
+		Summary:        summary,
+		ScheduleCount:  len(schedules),
+		BusyPeriods:    busyPeriods,
+		FreePeriods:    freePeriods,
+		ConflictCount:  conflictCount,
+		TimeRange:      timeRangeStr,
 		ProcessingTime: time.Since(startTime).Milliseconds(),
 	}, nil
 }
@@ -291,9 +291,10 @@ func (s *SummaryService) buildMemoSummaryPrompt(content string, opts *SummarizeM
 	}
 
 	style := "简要"
-	if opts.Style == "detailed" {
+	switch opts.Style {
+	case "detailed":
 		style = "详细"
-	} else if opts.Style == "bullet_points" {
+	case "bullet_points":
 		style = "要点列表"
 	}
 
