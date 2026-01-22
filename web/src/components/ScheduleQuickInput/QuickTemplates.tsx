@@ -222,6 +222,22 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
     });
   }, [open]);
 
+  // Handle Escape key to close dropdown
+  useEffect(() => {
+    if (!open || !onToggle) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onToggle();
+        triggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onToggle]);
+
   useClickOutside(
     dropdownRef,
     () => {
@@ -237,8 +253,11 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
       ref={dropdownRef}
       style={dropdownStyle}
       className="p-1.5 bg-popover rounded-lg border shadow-lg z-[9999] max-h-[60vh] overflow-y-auto"
+      role="menu"
+      aria-label={t("schedule.quick-input.quick-create") || "快速创建"}
     >
-      <div className="flex flex-col gap-0.5">
+      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create") || "快速创建"}</div>
+      <div className="flex flex-col gap-0.5" role="presentation">
         {DEFAULT_TEMPLATES.map((template) => {
           const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
           const displayTitle = template.i18nKey ? (t(template.i18nKey as any) as string) || template.title : template.title;
@@ -246,17 +265,27 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
           return (
             <button
               key={template.id}
+              type="button"
+              role="menuitem"
+              tabIndex={0}
               onClick={() => {
                 onSelect?.(template);
                 onToggle?.(); // Close dropdown
               }}
-              className={cn("flex items-center gap-2 px-2 py-2 rounded-md text-xs", "hover:bg-muted transition-colors", "text-left w-full")}
-              title={`${displayTitle} (${template.duration}分)`}
+              className={cn(
+                "flex items-center gap-2 px-2 py-2 rounded-md text-xs min-h-[44px]",
+                "hover:bg-muted transition-colors",
+                "text-left w-full focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1"
+              )}
+              aria-label={`${displayTitle}，${template.duration}分钟`}
             >
-              <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", template.color, "text-white")}>
+              <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", template.color, "text-white")} aria-hidden="true">
                 <IconComponent className="h-3 w-3" />
               </div>
               <span className="font-medium truncate flex-1">{displayTitle}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {template.duration}{t("schedule.quick-input.minutes-abbr") || "分"}
+              </span>
             </button>
           );
         })}
@@ -268,9 +297,12 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
     <div className={cn("relative", className)}>
       <button
         ref={triggerRef}
+        type="button"
         onClick={onToggle}
-        aria-label={t("schedule.quick-input.templates") as string || "模板"}
-        className="flex items-center justify-center p-2 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={t("schedule.quick-input.templates") || "模板"}
+        className="flex items-center justify-center p-2 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors min-h-[36px] min-w-[36px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -283,12 +315,14 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
           strokeLinecap="round"
           strokeLinejoin="round"
           className="h-3.5 w-3.5"
+          aria-hidden="true"
         >
           <rect x="3" y="3" width="7" height="7" />
           <rect x="14" y="3" width="7" height="7" />
           <rect x="14" y="14" width="7" height="7" />
           <rect x="3" y="14" width="7" height="7" />
         </svg>
+        <span className="ml-1">{t("schedule.quick-input.templates") || "模板"}</span>
       </button>
 
       {dropdownContent && createPortal(dropdownContent, document.body)}
