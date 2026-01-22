@@ -63,9 +63,20 @@ func (d *DB) ListInboxes(ctx context.Context, find *store.FindInbox) ([]*store.I
 
 	query := "SELECT id, created_ts, sender_id, receiver_id, status, message FROM inbox WHERE " + strings.Join(where, " AND ") + " ORDER BY created_ts DESC"
 	if find.Limit != nil {
-		query = fmt.Sprintf("%s LIMIT %d", query, *find.Limit)
+		limit := *find.Limit
+		if limit < 0 {
+			limit = 0
+		}
+		if limit > 10000 {
+			limit = 10000
+		}
+		query = fmt.Sprintf("%s LIMIT %d", query, limit)
 		if find.Offset != nil {
-			query = fmt.Sprintf("%s OFFSET %d", query, *find.Offset)
+			offset := *find.Offset
+			if offset < 0 {
+				offset = 0
+			}
+			query = fmt.Sprintf("%s OFFSET %d", query, offset)
 		}
 	}
 	rows, err := d.db.QueryContext(ctx, query, args...)
