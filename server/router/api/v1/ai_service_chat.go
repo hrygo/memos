@@ -45,6 +45,17 @@ const (
 	DefaultAgentSystemPrompt = "你是 Memos AI 助手。"
 )
 
+// truncateString truncates a string to a maximum length for logging.
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
+}
+
 // Pre-compiled regex patterns for schedule query intent detection
 var scheduleQueryPatterns = []struct {
 	patterns      []*regexp.Regexp
@@ -170,10 +181,18 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	}
 
 	// Log request info with structured logging
-	slog.Debug("ChatWithMemos new request",
+	slog.Info("ChatWithMemos: Request received",
 		"message", req.Message,
+		"message_preview", truncateString(req.Message, 50),
 		"history_count", len(req.History),
 		"agent_type", req.AgentType.String(),
+		"agent_type_value", int(req.AgentType),
+		"is_default", req.AgentType == v1pb.AgentType_AGENT_TYPE_DEFAULT,
+		"is_memo", req.AgentType == v1pb.AgentType_AGENT_TYPE_MEMO,
+		"is_schedule", req.AgentType == v1pb.AgentType_AGENT_TYPE_SCHEDULE,
+		"is_amazing", req.AgentType == v1pb.AgentType_AGENT_TYPE_AMAZING,
+		"is_creative", req.AgentType == v1pb.AgentType_AGENT_TYPE_CREATIVE,
+		"user_timezone", req.UserTimezone,
 	)
 
 	// ============================================================
@@ -181,8 +200,10 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	// ============================================================
 	// 检查是否需要路由到鹦鹉代理
 	if req.AgentType != v1pb.AgentType_AGENT_TYPE_DEFAULT {
+		slog.Info("ChatWithMemos: Routing to parrot agent", "agent_type", req.AgentType.String())
 		return s.chatWithParrot(ctx, req, stream)
 	}
+	slog.Info("ChatWithMemos: Using standard RAG path")
 
 	// 原有逻辑继续...
 
@@ -425,11 +446,16 @@ func (s *AIService) buildOptimizedMessages(
 		{Role: "system", Content: DefaultAgentSystemPrompt},
 	}
 
-	// 添加历史对话
+	// 添加历史对话（跳过空消息以避免 LLM API 错误）
 	for i := 0; i < len(history)-1; i += 2 {
 		if i+1 < len(history) {
-			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+			userMsg := history[i]
+			assistantMsg := history[i+1]
+			// 只添加非空消息
+			if userMsg != "" && assistantMsg != "" {
+				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
+				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
+			}
 		}
 	}
 
@@ -667,11 +693,25 @@ func (s *AIService) chatWithParrot(
 	req *v1pb.ChatWithMemosRequest,
 	stream v1pb.AIService_ChatWithMemosServer,
 ) error {
+	executionStart := time.Now()
+	agentType := req.AgentType
+	agentTypeStr := agentType.String()
+
+	// Log entry point with full request context
+	slog.Info("ChatWithParrot: Entry",
+		"agent_type", agentTypeStr,
+		"message_length", len(req.Message),
+		"message_preview", truncateString(req.Message, 50),
+		"history_count", len(req.History),
+		"user_timezone", req.UserTimezone,
+	)
+
 	// Check if LLM service is initialized (required for all Agents)
 	if !s.IsLLMEnabled() {
-		slog.Warn("LLM service not available for Agent chat",
-			"agent_type", req.AgentType.String(),
+		slog.Warn("ChatWithParrot: LLM service not available",
+			"agent_type", agentTypeStr,
 			"user_message", req.Message,
+			"llm_service_nil", s.LLMService == nil,
 		)
 		return status.Errorf(codes.Unavailable, "LLM service is not available. Please check your AI configuration and ensure LLM provider is set correctly.")
 	}
@@ -679,37 +719,58 @@ func (s *AIService) chatWithParrot(
 	// Get current user
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
+		slog.Warn("ChatWithParrot: Failed to get current user", "error", err)
 		return status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
+
+	slog.Debug("ChatWithParrot: User authenticated",
+		"user_id", user.ID,
+		"username", user.Username,
+		"agent_type", agentTypeStr,
+	)
 
 	// Rate limiting check
 	userKey := strconv.FormatInt(int64(user.ID), 10)
 	if !globalAILimiter.Allow(userKey) {
+		slog.Warn("ChatWithParrot: Rate limit exceeded",
+			"user_id", user.ID,
+			"agent_type", agentTypeStr,
+		)
 		return status.Errorf(codes.ResourceExhausted,
 			"rate limit exceeded: please wait before making another AI chat request")
 	}
-
-	// Get agent type
-	agentType := req.AgentType
-	agentTypeStr := agentType.String()
-	slog.Info("ChatWithParrot: Starting agent execution",
-		"agent_type", agentTypeStr,
-		"user_id", user.ID,
-		"message_length", len(req.Message),
-		"history_count", len(req.History),
-	)
 
 	// Get user timezone from request
 	userTimezone := req.UserTimezone
 	if userTimezone == "" {
 		userTimezone = "Asia/Shanghai" // Default timezone
+		slog.Debug("ChatWithParrot: Using default timezone", "default", "Asia/Shanghai")
 	}
 
 	// Use mutex to ensure thread-safety for stream.Send in concurrent agent execution (e.g. AmazingParrot)
 	var streamMu sync.Mutex
 
-	// Create stream adapter
+	// Event tracking for observability
+	eventCount := make(map[string]int)
+	var totalChunks int
+
+	// Create stream adapter with event logging
 	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData interface{}) error {
+		// Track events
+		eventCount[eventType]++
+		if eventType == "answer" || eventType == "content" {
+			totalChunks++
+		}
+
+		// Log important events
+		slog.Debug("ChatWithParrot: Stream event",
+			"agent_type", agentTypeStr,
+			"user_id", user.ID,
+			"event_type", eventType,
+			"event_count", eventCount[eventType],
+			"data_preview", truncateString(fmt.Sprintf("%v", eventData), 100),
+		)
+
 		// Convert event data to string for streaming
 		var dataStr string
 		switch v := eventData.(type) {
@@ -803,16 +864,25 @@ func (s *AIService) chatWithParrot(
 
 	// Execute agent
 	slog.Info("ChatWithParrot: Executing agent", "agent_type", agentTypeStr)
+	execStart := time.Now()
 	if err := parrotAgent.ExecuteWithCallback(ctx, req.Message, req.History, callback); err != nil {
 		slog.Error("Parrot agent execution failed",
 			"error", err,
 			"agent_type", agentTypeStr,
 			"agent_name", parrotAgent.Name(),
+			"duration_ms", time.Since(execStart).Milliseconds(),
 		)
 		return status.Errorf(codes.Internal, "agent execution failed: %v", err)
 	}
 
-	slog.Info("ChatWithParrot: Agent execution completed", "agent_type", agentTypeStr)
+	executionDuration := time.Since(executionStart)
+	slog.Info("ChatWithParrot: Agent execution completed",
+		"agent_type", agentTypeStr,
+		"agent_name", parrotAgent.Name(),
+		"total_duration_ms", executionDuration.Milliseconds(),
+		"total_chunks", totalChunks,
+		"event_counts", fmt.Sprintf("%v", eventCount),
+	)
 
 	// Send done marker
 	streamMu.Lock()

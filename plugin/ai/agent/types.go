@@ -232,3 +232,14 @@ func GenerateCacheKey(agentName string, userID int32, userInput string) string {
 	// Use first 16 chars of hash for brevity (still provides good collision resistance)
 	return fmt.Sprintf("%s:%d:%s", agentName, userID, hashStr[:16])
 }
+
+// Compile-time interface compliance checks.
+// 编译时接口合规性检查。
+// These ensure that all parrot types correctly implement the ParrotAgent interface.
+// 如果任何类型未正确实现接口，编译将失败。
+var (
+	_ ParrotAgent = (*CreativeParrot)(nil) // 灵灵 (Creative)
+	_ ParrotAgent = (*MemoParrot)(nil)     // 灰灰 (Memo)
+	_ ParrotAgent = (*AmazingParrot)(nil)  // 惊奇 (Amazing)
+	_ ParrotAgent = (*ScheduleParrot)(nil) // 金刚 (Schedule)
+)

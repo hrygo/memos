@@ -115,11 +115,16 @@ func (p *MemoParrot) ExecuteWithCallback(
 		{Role: "system", Content: systemPrompt},
 	}
 
-	// Add history
+	// Add history (skip empty messages to avoid LLM API errors)
 	for i := 0; i < len(history)-1; i += 2 {
 		if i+1 < len(history) {
-			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+			userMsg := history[i]
+			assistantMsg := history[i+1]
+			// Only add non-empty messages
+			if userMsg != "" && assistantMsg != "" {
+				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
+				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
+			}
 		}
 	}
 

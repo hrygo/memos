@@ -204,8 +204,13 @@ func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, his
 	// Add history for context (even in planning)
 	for i := 0; i < len(history)-1; i += 2 {
 		if i+1 < len(history) {
-			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+			userMsg := history[i]
+			assistantMsg := history[i+1]
+			// Only add non-empty messages
+			if userMsg != "" && assistantMsg != "" {
+				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
+				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
+			}
 		}
 	}
 
@@ -321,11 +326,16 @@ func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, 
 		{Role: "system", Content: synthesisPrompt},
 	}
 
-	// Add history
+	// Add history (skip empty messages)
 	for i := 0; i < len(history)-1; i += 2 {
 		if i+1 < len(history) {
-			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+			userMsg := history[i]
+			assistantMsg := history[i+1]
+			// Only add non-empty messages
+			if userMsg != "" && assistantMsg != "" {
+				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
+				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
+			}
 		}
 	}
 

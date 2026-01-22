@@ -482,11 +482,16 @@ func (s *ConnectServiceHandler) buildOptimizedMessagesForConnect(
 		{Role: "system", Content: systemPrompt},
 	}
 
-	// 添加历史对话
+	// 添加历史对话（跳过空消息以避免 LLM API 错误）
 	for i := 0; i < len(history)-1; i += 2 {
 		if i+1 < len(history) {
-			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
-			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+			userMsg := history[i]
+			assistantMsg := history[i+1]
+			// 只添加非空消息
+			if userMsg != "" && assistantMsg != "" {
+				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
+				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
+			}
 		}
 	}
 
