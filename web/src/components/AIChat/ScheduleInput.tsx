@@ -442,13 +442,10 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                     )}
                   </div>
 
-                  <div className="space-y-3 text-sm">
+                  <div className="grid gap-3 text-sm">
                     {/* Title */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground">标题</span>
-                      </div>
+                      <label className="text-xs text-muted-foreground">标题</label>
                       <Input
                         value={parsedSchedule.title}
                         onChange={(e) => setParsedSchedule({ ...parsedSchedule, title: e.target.value })}
@@ -458,53 +455,42 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                     </div>
 
                     {/* Time */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground">开始时间</span>
-                      </div>
-                      <div className="pl-6">
-                        <Input
-                          type="datetime-local"
-                          value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
-                            "YYYY-MM-DDTHH:mm",
-                          )}
-                          onChange={(e) => {
-                            const ts = BigInt(dayjs(e.target.value).unix());
-                            setParsedSchedule({ ...parsedSchedule, startTs: ts });
-                          }}
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground shrink-0 opacity-0" />
-                        <span className="text-xs text-muted-foreground">结束时间</span>
-                      </div>
-                      <div className="pl-6">
-                        <Input
-                          type="datetime-local"
-                          value={
-                            parsedSchedule.endTs > 0
-                              ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                                  "YYYY-MM-DDTHH:mm",
-                                )
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const ts = BigInt(dayjs(e.target.value).unix());
-                            setParsedSchedule({ ...parsedSchedule, endTs: ts });
-                          }}
-                          className="h-9"
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">开始时间</label>
+                      <Input
+                        type="datetime-local"
+                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
+                          "YYYY-MM-DDTHH:mm",
+                        )}
+                        onChange={(e) => {
+                          const ts = BigInt(dayjs(e.target.value).unix());
+                          setParsedSchedule({ ...parsedSchedule, startTs: ts });
+                        }}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">结束时间</label>
+                      <Input
+                        type="datetime-local"
+                        value={
+                          parsedSchedule.endTs > 0
+                            ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
+                                "YYYY-MM-DDTHH:mm",
+                              )
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const ts = BigInt(dayjs(e.target.value).unix());
+                          setParsedSchedule({ ...parsedSchedule, endTs: ts });
+                        }}
+                        className="h-9"
+                      />
                     </div>
 
                     {/* Location */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground">地点</span>
-                      </div>
+                      <label className="text-xs text-muted-foreground">地点</label>
                       <Input
                         value={parsedSchedule.location || ""}
                         onChange={(e) => setParsedSchedule({ ...parsedSchedule, location: e.target.value })}
@@ -513,12 +499,9 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                       />
                     </div>
 
-                    {/* Description - Always show in edit mode or when present */}
+                    {/* Description */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="h-4 w-4 text-muted-foreground shrink-0 opacity-0">📝</span>
-                        <span className="text-xs text-muted-foreground">描述</span>
-                      </div>
+                      <label className="text-xs text-muted-foreground">描述</label>
                       <Textarea
                         value={parsedSchedule.description || ""}
                         onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
@@ -528,7 +511,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                     </div>
 
                     {parsedSchedule.reminders.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2 pl-6">
+                      <div className="flex flex-wrap gap-1">
                         {parsedSchedule.reminders.map((reminder, idx) => (
                           <span key={idx} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
                             {reminder.type === "before" && (t("schedule.reminders") as string)}: {reminder.value} {reminder.unit}
