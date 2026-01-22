@@ -255,3 +255,78 @@ func (d *DB) FindMemosWithoutEmbedding(ctx context.Context, find *store.FindMemo
 
 	return list, nil
 }
+
+// BM25Search performs full-text search using PostgreSQL's ts_vector with BM25 ranking.
+// Uses the 'simple' text search configuration for better multilingual support.
+func (d *DB) BM25Search(ctx context.Context, opts *store.BM25SearchOptions) ([]*store.BM25Result, error) {
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	// Use PostgreSQL's full-text search with ts_rank for BM25-like ranking
+	// The 'simple' configuration works well for Chinese and English mixed content
+	query := `
+		SELECT
+			m.id, m.uid, m.creator_id, m.created_ts, m.updated_ts, m.row_status,
+			m.visibility, m.pinned, m.content, m.payload,
+			ts_rank(to_tsvector('simple', COALESCE(m.content, '')), plainto_tsquery('simple', ` + placeholder(1) + `)) AS score
+		FROM memo m
+		WHERE m.creator_id = ` + placeholder(2) + `
+			AND m.row_status = 'NORMAL'
+			AND to_tsvector('simple', COALESCE(m.content, '')) @@ plainto_tsquery('simple', ` + placeholder(3) + `)
+		ORDER BY score DESC, m.updated_ts DESC
+		LIMIT ` + placeholder(4)
+
+	rows, err := d.db.QueryContext(ctx, query, opts.Query, opts.UserID, opts.Query, limit)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to BM25 search")
+	}
+	defer rows.Close()
+
+	results := []*store.BM25Result{}
+	for rows.Next() {
+		var result store.BM25Result
+		var memo store.Memo
+		var payloadBytes []byte
+
+		err := rows.Scan(
+			&memo.ID,
+			&memo.UID,
+			&memo.CreatorID,
+			&memo.CreatedTs,
+			&memo.UpdatedTs,
+			&memo.RowStatus,
+			&memo.Visibility,
+			&memo.Pinned,
+			&memo.Content,
+			&payloadBytes,
+			&result.Score,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan BM25 result")
+		}
+
+		// Parse payload
+		if len(payloadBytes) > 0 {
+			payload := &storepb.MemoPayload{}
+			if err := protojsonUnmarshaler.Unmarshal(payloadBytes, payload); err != nil {
+				return nil, errors.Wrap(err, "failed to unmarshal payload")
+			}
+			memo.Payload = payload
+		}
+
+		result.Memo = &memo
+
+		// Apply minimum score filter
+		if result.Score >= opts.MinScore {
+			results = append(results, &result)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

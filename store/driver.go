@@ -81,6 +81,7 @@ type Driver interface {
 	DeleteMemoEmbedding(ctx context.Context, memoID int32) error
 	FindMemosWithoutEmbedding(ctx context.Context, find *FindMemosWithoutEmbedding) ([]*Memo, error)
 	VectorSearch(ctx context.Context, opts *VectorSearchOptions) ([]*MemoWithScore, error)
+	BM25Search(ctx context.Context, opts *BM25SearchOptions) ([]*BM25Result, error)
 
 	// Schedule model related methods.
 	CreateSchedule(ctx context.Context, create *Schedule) (*Schedule, error)

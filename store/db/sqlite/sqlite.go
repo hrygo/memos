@@ -13,6 +13,28 @@ import (
 	"github.com/usememos/memos/store"
 )
 
+// ============================================================================
+// SQLITE SUPPORT POLICY
+// ============================================================================
+// SQLite is supported on a BEST-EFFORT basis for development and testing only.
+//
+// Supported Features (High ROI):
+// - Basic CRUD operations
+// - Simple queries
+// - Single-user instances
+//
+// NOT Supported (Low ROI / High Complexity):
+// - Concurrent writes (SQLite limitation)
+// - Full-text search (BM25, hybrid search)
+// - Advanced AI features (reranking)
+// - Complex migrations
+//
+// When adding new features to SQLite:
+// 1. Only implement if the ROI is high (low complexity, high value)
+// 2. Prefer returning a clear error over partial/broken implementation
+// 3. Add a comment explaining what is NOT supported
+// ============================================================================
+
 type DB struct {
 	db      *sql.DB
 	profile *profile.Profile

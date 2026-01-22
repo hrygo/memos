@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // MemoEmbedding represents the vector embedding of a memo.
 type MemoEmbedding struct {
@@ -35,6 +38,68 @@ type VectorSearchOptions struct {
 	UserID int32     // Required, only search memos of this user
 	Vector []float32 // Query vector
 	Limit  int       // Number of results to return, default 10
+}
+
+// Validate validates the VectorSearchOptions.
+func (o *VectorSearchOptions) Validate() error {
+	if o.UserID <= 0 {
+		return fmt.Errorf("invalid UserID: %d", o.UserID)
+	}
+	if len(o.Vector) == 0 {
+		return fmt.Errorf("vector cannot be empty")
+	}
+	if o.Limit < 0 {
+		return fmt.Errorf("limit cannot be negative: %d", o.Limit)
+	}
+	if o.Limit == 0 {
+		o.Limit = 10 // Default limit
+	}
+	if o.Limit > 1000 {
+		return fmt.Errorf("limit too large (max 1000): %d", o.Limit)
+	}
+	return nil
+}
+
+// BM25SearchOptions represents the options for BM25 full-text search.
+type BM25SearchOptions struct {
+	UserID   int32  // Required, only search memos of this user
+	Query    string // Search query
+	Limit    int    // Number of results to return, default 10
+	MinScore float32 // Minimum relevance score (default 0)
+}
+
+// Validate validates the BM25SearchOptions.
+func (o *BM25SearchOptions) Validate() error {
+	if o.UserID <= 0 {
+		return fmt.Errorf("invalid UserID: %d", o.UserID)
+	}
+	if o.Query == "" {
+		return fmt.Errorf("query cannot be empty")
+	}
+	// Limit query length to prevent DoS and performance issues
+	// PostgreSQL plainto_tsquery handles special characters safely
+	if len(o.Query) > 500 {
+		return fmt.Errorf("query too long (max 500 characters): %d", len(o.Query))
+	}
+	if o.Limit < 0 {
+		return fmt.Errorf("limit cannot be negative: %d", o.Limit)
+	}
+	if o.Limit == 0 {
+		o.Limit = 10 // Default limit
+	}
+	if o.Limit > 1000 {
+		return fmt.Errorf("limit too large (max 1000): %d", o.Limit)
+	}
+	if o.MinScore < 0 || o.MinScore > 1 {
+		return fmt.Errorf("MinScore must be between 0 and 1: %f", o.MinScore)
+	}
+	return nil
+}
+
+// BM25Result represents a BM25 search result with relevance score.
+type BM25Result struct {
+	Memo  *Memo
+	Score float32 // BM25 relevance score
 }
 
 // UpsertMemoEmbedding inserts or updates a memo embedding.
@@ -74,5 +139,16 @@ func (s *Store) FindMemosWithoutEmbedding(ctx context.Context, find *FindMemosWi
 
 // VectorSearch performs vector similarity search.
 func (s *Store) VectorSearch(ctx context.Context, opts *VectorSearchOptions) ([]*MemoWithScore, error) {
+	if err := opts.Validate(); err != nil {
+		return nil, err
+	}
 	return s.driver.VectorSearch(ctx, opts)
+}
+
+// BM25Search performs full-text search using BM25 ranking.
+func (s *Store) BM25Search(ctx context.Context, opts *BM25SearchOptions) ([]*BM25Result, error) {
+	if err := opts.Validate(); err != nil {
+		return nil, err
+	}
+	return s.driver.BM25Search(ctx, opts)
 }
