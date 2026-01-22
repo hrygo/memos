@@ -39,11 +39,17 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={onPrevWeek}>
-        <ChevronLeft className="h-4 w-4" />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 rounded-full min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+        onClick={onPrevWeek}
+        aria-label="上一周"
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </Button>
 
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-1">
+      <div className="flex items-center gap-1 sm:gap-1.5 flex-1" role="tablist" aria-label="选择日期">
         {Array.from({ length: 7 }, (_, i) => {
           const date = startOfWeek.add(i, "day");
           const dateStr = date.format("YYYY-MM-DD");
@@ -52,14 +58,19 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
           const scheduleCount = getScheduleCount(date);
           const dayName = date.format("dd");
           const dayNum = date.format("D");
+          const fullDate = date.format("YYYY年M月D日");
 
           return (
             <button
               key={i}
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={`${fullDate}${isToday ? "，今天" : ""}${scheduleCount > 0 ? `，${scheduleCount} 个日程` : ""}`}
               onClick={() => onDateSelect(date)}
               className={cn(
                 "flex-1 min-w-[2.5rem] sm:min-w-[3rem] max-w-[4rem] sm:max-w-[4.5rem] aspect-square flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all duration-200 relative group",
                 "hover:scale-105 active:scale-95",
+                "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2",
                 isSelected && "bg-primary text-primary-foreground shadow-md",
                 !isSelected && isToday && "bg-primary/10 text-primary border border-primary/20",
                 !isSelected && !isToday && "hover:bg-muted/50",
@@ -71,14 +82,15 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
                   "text-[9px] sm:text-[10px] font-medium uppercase tracking-wide",
                   isSelected ? "text-primary-foreground/70" : "text-muted-foreground",
                 )}
+                aria-hidden="true"
               >
                 {dayName}
               </span>
-              <span className={cn("text-base sm:text-lg font-semibold leading-none", isToday && !isSelected && "text-primary")}>
+              <span className={cn("text-base sm:text-lg font-semibold leading-none", isToday && !isSelected && "text-primary")} aria-hidden="true">
                 {dayNum}
               </span>
               {scheduleCount > 0 && (
-                <div className="flex gap-0.5 mt-0.5">
+                <div className="flex gap-0.5 mt-0.5" aria-hidden="true">
                   {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, j) => (
                     <span key={j} className={cn("w-1 h-1 rounded-full", isSelected ? "bg-primary-foreground/80" : "bg-primary")} />
                   ))}
@@ -89,8 +101,14 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
         })}
       </div>
 
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={onNextWeek}>
-        <ChevronRight className="h-4 w-4" />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 rounded-full min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+        onClick={onNextWeek}
+        aria-label="下一周"
+      >
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </Button>
     </div>
   );
@@ -146,7 +164,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       </div>
 
       {/* Schedule Count Banner */}
-      <div className="mb-3 sm:mb-4">
+      <div className="mb-3 sm:mb-4" role="status" aria-live="polite">
         <div
           className={cn(
             "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm",
@@ -155,13 +173,13 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
         >
           {daySchedules.length > 0 ? (
             <>
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="font-medium">{daySchedules.length}</span>
               <span className="text-muted-foreground">{t("schedule.schedules")}</span>
             </>
           ) : (
             <>
-              <Coffee className="h-3.5 w-3.5" />
+              <Coffee className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{t("schedule.no-schedules")}</span>
             </>
           )}
@@ -169,10 +187,10 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       </div>
 
       {/* Timeline Content */}
-      <div className="flex-1 overflow-y-auto -mx-1 px-1">
+      <div className="flex-1 overflow-y-auto -mx-1 px-1" role="list" aria-label="日程列表">
         {daySchedules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-muted-foreground">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-muted-foreground" role="status">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4" aria-hidden="true">
               <Coffee className="w-5 h-5 sm:w-6 sm:h-6 opacity-50" />
             </div>
             <p className="text-sm font-medium">{t("schedule.no-schedules")}</p>
@@ -192,20 +210,25 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
               ];
               const baseColor = colors[idx % colors.length];
               const conflictStyle = conflict ? "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300" : baseColor;
+              const ariaLabel = `${schedule.title || t("schedule.untitled")}，${startTime.format("HH:mm")} 到 ${endTime.format("HH:mm")}${conflict ? "，有冲突" : ""}`;
 
               return (
-                <div
+                <button
                   key={idx}
+                  type="button"
+                  role="listitem"
                   onClick={() => onScheduleEdit?.(schedule)}
+                  aria-label={ariaLabel}
                   className={cn(
-                    "group relative rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer",
+                    "group relative rounded-xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer w-full text-left",
                     "hover:shadow-md active:scale-[0.99]",
+                    "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:outline-none",
                     conflictStyle,
                   )}
                 >
                   <div className="flex items-start gap-3 sm:gap-4">
                     {/* Time Column */}
-                    <div className="shrink-0 w-14 sm:w-16 text-right">
+                    <div className="shrink-0 w-14 sm:w-16 text-right" aria-hidden="true">
                       <div className="text-sm font-semibold">{startTime.format("HH:mm")}</div>
                       <div className="text-xs opacity-70">{endTime.format("HH:mm")}</div>
                     </div>
@@ -219,7 +242,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm opacity-80">
                         {schedule.location && (
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" aria-hidden="true" />
                             <span className="truncate">{schedule.location}</span>
                           </span>
                         )}
@@ -230,13 +253,13 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
 
                   {/* Conflict Indicator */}
                   {conflict && (
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2" aria-label="日程冲突">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/20 text-red-600 dark:text-red-400">
                         {t("schedule.conflict")}
                       </span>
                     </div>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
