@@ -1,7 +1,10 @@
-import { Calendar, Check, Clock } from "lucide-react";
+import { Check, Feather } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
+
+// Parrot emoji for schedule assistant
+const PARROT_ICON = "🦜";
 
 // Screen reader announcement for selection changes
 const announceSelection = (message: string) => {
@@ -62,7 +65,7 @@ export function parseSuggestions(aiResponse: string, todayStr = "今天", tomorr
   }
 
   // Also check for numbered list items like "1. 明天3点开会"
-  const listPattern = /^\d+[\.\、]\s*(.+)/;
+  const listPattern = /^\d+[.、]\s*(.+)/;
   for (const line of lines) {
     const listMatch = line.match(listPattern);
     if (listMatch) {
@@ -93,7 +96,7 @@ function parseMatchToSuggestion(
   titlePart: string | undefined,
   rawText: string,
   todayStr: string,
-  tomorrowStr: string
+  tomorrowStr: string,
 ): ScheduleSuggestion | null {
   // Parse date
   let date = todayStr;
@@ -220,9 +223,7 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
       // First click: select the card
       setSelectedId(suggestion.id);
       const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
-      announceSelection(
-        `已选择：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}`
-      );
+      announceSelection(`已选择：${suggestion.title || defaultTitle}，${suggestion.date} ${suggestion.startTime}`);
     }
 
     setLastClickTime(now);
@@ -241,14 +242,20 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
 
   return (
     <div className={cn("w-full", className)}>
-      {/* Header */}
-      <div className="flex items-center gap-1.5 px-1 mb-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+      {/* Header with parrot */}
+      <div className="flex items-center gap-2 px-1 mb-2">
+        <span className="text-base" role="img" aria-label="金刚鹦鹉">
+          {PARROT_ICON}
+        </span>
         <span className="text-xs text-muted-foreground">{t("schedule.quick-input.ai-suggestions") as string}</span>
       </div>
 
       {/* Desktop: horizontal row | Mobile: vertical stack */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3" role="listbox" aria-label={t("schedule.quick-input.ai-suggestions") || "AI 建议"}>
+      <div
+        className="flex flex-col sm:flex-row gap-2 sm:gap-3"
+        role="listbox"
+        aria-label={t("schedule.quick-input.ai-suggestions") || "AI 建议"}
+      >
         {suggestions.map((suggestion) => {
           const isSelected = selectedId === suggestion.id;
           const defaultTitle = t("schedule.quick-input.default-title") || "新日程";
@@ -271,31 +278,41 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
                 // Focus visible styles for keyboard navigation
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
                 // Normal state
-                !isSelected && "border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-500/40 hover:bg-blue-50/80 dark:hover:bg-blue-950/30",
-                // Selected state - improved contrast
-                isSelected && "border-blue-600 bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-500/40 shadow-md",
+                !isSelected &&
+                  "border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/20 hover:border-amber-500/40 hover:bg-amber-50/80 dark:hover:bg-amber-950/30",
+                // Selected state - improved contrast with amber theme for parrot
+                isSelected && "border-amber-600 bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-500/40 shadow-md",
               )}
             >
               {/* Selected indicator */}
               {isSelected && (
-                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center animate-in zoom-in-50">
+                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center animate-in zoom-in-50">
                   <Check className="w-3 h-3 text-white" />
                 </div>
               )}
 
+              {/* Parrot icon badge */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xs shadow-sm">
+                  {PARROT_ICON}
+                </div>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">金刚</span>
+              </div>
+
               {/* Title */}
-              <div className={cn(
-                "font-medium text-sm truncate mb-2 pr-6",
-                !isSelected && "group-hover:text-blue-600 dark:group-hover:text-blue-400"
-              )}>
+              <div
+                className={cn(
+                  "font-medium text-sm truncate mb-2 pr-6",
+                  !isSelected && "group-hover:text-amber-700 dark:group-hover:text-amber-300",
+                )}
+              >
                 {suggestion.title || (t("schedule.quick-input.default-title") as string)}
               </div>
 
               {/* Time */}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Calendar className="w-3 h-3 flex-shrink-0" />
+                <Feather className="w-3 h-3 flex-shrink-0" />
                 <span>{suggestion.date}</span>
-                <Clock className="w-3 h-3 flex-shrink-0 ml-1" />
                 <span className="font-medium text-foreground">
                   {suggestion.startTime}
                   {suggestion.endTime && ` - ${suggestion.endTime}`}
@@ -305,9 +322,11 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
               {/* Hint text */}
               <div className="mt-2 text-[10px]">
                 {isSelected ? (
-                  <span className="text-blue-700 dark:text-blue-300 font-semibold">{t("schedule.quick-input.click-again-create") as string}</span>
+                  <span className="text-amber-700 dark:text-amber-300 font-semibold">
+                    {t("schedule.quick-input.click-again-create") as string}
+                  </span>
                 ) : (
-                  <span className="text-blue-600/80 hidden sm:inline">{t("schedule.quick-input.double-click-create") as string}</span>
+                  <span className="text-amber-600/80 hidden sm:inline">{t("schedule.quick-input.double-click-create") as string}</span>
                 )}
               </div>
             </button>

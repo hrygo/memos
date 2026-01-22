@@ -2,8 +2,8 @@ import { AlertTriangle, Calendar, Clock, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ConflictInfo, SuggestedTimeSlot } from "./types";
 import { useTranslate } from "@/utils/i18n";
+import type { ConflictInfo, SuggestedTimeSlot } from "./types";
 
 interface ConflictSuggestionsProps {
   /** List of conflicting schedules */
@@ -111,7 +111,7 @@ export function ConflictSuggestions({
             className={cn(
               "text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300 transition-colors",
               "min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full hover:bg-red-100/50 dark:hover:bg-red-900/20",
-              "focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+              "focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2",
             )}
           >
             <X className="h-4 w-4" />
@@ -150,7 +150,11 @@ export function ConflictSuggestions({
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div className="space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="listbox" aria-label={t("schedule.quick-input.suggested-times") as string || "建议时段"}>
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+            role="listbox"
+            aria-label={(t("schedule.quick-input.suggested-times") as string) || "建议时段"}
+          >
             {suggestions.map((slot, index) => (
               <button
                 key={index}
@@ -163,7 +167,7 @@ export function ConflictSuggestions({
                   "border-2 border-emerald-200 dark:border-emerald-500/30",
                   "hover:border-emerald-400 hover:bg-emerald-50 min-h-[44px] sm:min-h-0",
                   "dark:hover:border-emerald-400 dark:hover:bg-emerald-950/30",
-                  "focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  "focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                 )}
               >
                 <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -192,7 +196,7 @@ export function ConflictSuggestions({
           className={cn(
             "h-9 text-xs min-h-[44px] sm:min-h-0 px-4",
             "border-red-200 text-red-600 hover:bg-red-50",
-            "dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-950/30"
+            "dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-950/30",
           )}
         >
           {t("schedule.create-anyway") as string}

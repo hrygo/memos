@@ -13,10 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCheckConflict, useCreateSchedule, useScheduleAgentChat } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
-import { ResizablePanel } from "./ResizablePanel";
-import type { ConflictInfo, ParsedSchedule } from "./types";
 import { useTranslate } from "@/utils/i18n";
 import { generateUUID } from "@/utils/uuid";
+import { ResizablePanel } from "./ResizablePanel";
+import type { ConflictInfo, ParsedSchedule } from "./types";
 
 interface ScheduleInputPanelProps {
   /** Whether panel is open */
@@ -159,7 +159,10 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
         return false;
       }
       if (scheduleData.endTs <= scheduleData.startTs) {
-        console.error("[ScheduleInputPanel] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
+        console.error("[ScheduleInputPanel] Invalid time range (endTs <= startTs):", {
+          startTs: scheduleData.startTs,
+          endTs: scheduleData.endTs,
+        });
         toast.error(t("schedule.error.invalid-time-range") as string);
         return false;
       }
@@ -248,20 +251,10 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
     <ResizablePanel open={open} onOpenChange={onOpenChange} position="bottom" initialSize={30} minSize={20} maxSize={30}>
       <div className="h-full flex flex-col relative">
         {/* Scrollable content area */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-4 py-3 space-y-4"
-          role="log"
-          aria-live="polite"
-          aria-label="对话历史"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4" role="log" aria-live="polite" aria-label="对话历史">
           {/* Conversation History */}
           {conversationHistory.map((msg, idx) => (
-            <div
-              key={idx}
-              className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")}
-              role="row"
-            >
+            <div key={idx} className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")} role="row">
               {msg.role === "assistant" && (
                 <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
                   <Bot className="h-3.5 w-3.5 text-primary" />
@@ -323,7 +316,8 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                 <Bot className="h-4 w-4 text-amber-500 mt-0.5" aria-hidden="true" />
                 <div className="flex-1">
                   <p className="font-medium text-amber-700 dark:text-amber-400" id="conflict-description">
-                    {t("schedule.quick-input.conflicts-detected") as string} {conflicts.length} {t("schedule.schedule-count", { count: conflicts.length }) as string}
+                    {t("schedule.quick-input.conflicts-detected") as string} {conflicts.length}{" "}
+                    {t("schedule.schedule-count", { count: conflicts.length }) as string}
                   </p>
                   <div className="mt-2 space-y-1" role="list" aria-label="冲突日程列表">
                     {conflicts.map((conflict, idx) => (
@@ -372,7 +366,13 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                 </Button>
               </div>
 
-              <form className="space-y-3 text-sm" onSubmit={(e) => { e.preventDefault(); handleCreate(); }}>
+              <form
+                className="space-y-3 text-sm"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCreate();
+                }}
+              >
                 {/* Title */}
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
@@ -416,7 +416,9 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                       aria-label="开始时间"
                       id="schedule-start-time"
                     />
-                    <span className="text-muted-foreground" aria-hidden="true">-</span>
+                    <span className="text-muted-foreground" aria-hidden="true">
+                      -
+                    </span>
                     <Input
                       type="datetime-local"
                       value={

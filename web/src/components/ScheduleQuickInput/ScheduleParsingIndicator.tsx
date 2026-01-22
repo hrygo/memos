@@ -58,7 +58,9 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
         aria-label={parseSource === "ai" ? "AI 正在解析" : "正在解析"}
       >
         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-        <span>{parseSource === "ai" ? (t("schedule.quick-input.ai-parsing") as string) : (t("schedule.quick-input.parsing") as string)}</span>
+        <span>
+          {parseSource === "ai" ? (t("schedule.quick-input.ai-parsing") as string) : (t("schedule.quick-input.parsing") as string)}
+        </span>
       </div>
     );
   }
@@ -79,33 +81,38 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
       : null;
 
     return (
-      <div
-        className={cn("flex items-center gap-2 text-xs", className)}
-        role="status"
-        aria-live="polite"
-        aria-label={`解析成功：${title}`}
-      >
+      <div className={cn("flex items-center gap-2 text-xs", className)} role="status" aria-live="polite" aria-label={`解析成功：${title}`}>
         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <span className="font-medium text-emerald-700 dark:text-emerald-400">{title}</span>
-          <span className="text-muted-foreground mx-1" aria-hidden="true">·</span>
+          <span className="text-muted-foreground mx-1" aria-hidden="true">
+            ·
+          </span>
           <span className="text-muted-foreground">
             {allDay ? (t("schedule.all-day") as string) : formatTime(startTs)}
             {!allDay && endTimeStr && (
               <>
-                <span className="mx-0.5" aria-hidden="true">-</span>
+                <span className="mx-0.5" aria-hidden="true">
+                  -
+                </span>
                 <span>{endTimeStr}</span>
               </>
             )}
           </span>
           {location && (
             <>
-              <span className="text-muted-foreground mx-1" aria-hidden="true">·</span>
+              <span className="text-muted-foreground mx-1" aria-hidden="true">
+                ·
+              </span>
               <span className="text-muted-foreground">@{location}</span>
             </>
           )}
         </div>
-        {parseSource === "local" && <span className="text-[10px] px-1 py-0.5 rounded bg-primary/10 text-primary">{t("schedule.quick-input.local-parse") as string}</span>}
+        {parseSource === "local" && (
+          <span className="text-[10px] px-1 py-0.5 rounded bg-primary/10 text-primary">
+            {t("schedule.quick-input.local-parse") as string}
+          </span>
+        )}
       </div>
     );
   }
@@ -113,14 +120,11 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Partial state - needs more info
   if (parseResult.state === "partial") {
     return (
-      <div
-        className={cn("flex items-center gap-2 text-xs", className)}
-        role="status"
-        aria-live="polite"
-        aria-label="需要更多信息"
-      >
+      <div className={cn("flex items-center gap-2 text-xs", className)} role="status" aria-live="polite" aria-label="需要更多信息">
         <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
-        <span className="text-amber-700 dark:text-amber-400">{parseResult.message || (t("schedule.quick-input.parse-partial") as string)}</span>
+        <span className="text-amber-700 dark:text-amber-400">
+          {parseResult.message || (t("schedule.quick-input.parse-partial") as string)}
+        </span>
       </div>
     );
   }
@@ -128,12 +132,7 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Error state
   if (parseResult.state === "error") {
     return (
-      <div
-        className={cn("flex items-center gap-2 text-xs", className)}
-        role="alert"
-        aria-live="assertive"
-        aria-label="解析失败"
-      >
+      <div className={cn("flex items-center gap-2 text-xs", className)} role="alert" aria-live="assertive" aria-label="解析失败">
         <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" aria-hidden="true" />
         <span className="text-destructive">{parseResult.message || (t("schedule.quick-input.parse-error") as string)}</span>
       </div>

@@ -20,9 +20,7 @@ function useFocusTrap(isActive: boolean, containerRef: RefObject<HTMLElement>) {
     if (!container) return;
 
     // Find all focusable elements within the container
-    const focusableElements = container.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    const focusableElements = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     const firstFocusable = focusableElements[0] as HTMLElement;
     const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
 
@@ -173,11 +171,14 @@ export function ResizablePanel({
   };
 
   // Handle Escape key to close panel
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onOpenChange(false);
-    }
-  }, [onOpenChange]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onOpenChange(false);
+      }
+    },
+    [onOpenChange],
+  );
 
   // Focus trap
   useFocusTrap(open, panelRef);
@@ -211,11 +212,7 @@ export function ResizablePanel({
     return (
       <div className="absolute inset-0 z-50 pointer-events-none">
         {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/20 pointer-events-auto"
-          onClick={() => onOpenChange(false)}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} aria-hidden="true" />
 
         {/* Resizable Panel */}
         <div
@@ -266,11 +263,7 @@ export function ResizablePanel({
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/20 pointer-events-auto"
-        onClick={() => onOpenChange(false)}
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} aria-hidden="true" />
 
       {/* Resizable Panel */}
       <div

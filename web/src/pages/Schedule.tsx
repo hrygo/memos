@@ -1,16 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Calendar, LayoutList } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
 import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
 import { ScheduleSearchBar } from "@/components/AIChat/ScheduleSearchBar";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
-import { ScheduleChatInput } from "@/components/AIChat/ScheduleChatInput";
+import { ScheduleQuickInput } from "@/components/ScheduleQuickInput/ScheduleQuickInput";
 import { Button } from "@/components/ui/button";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useSchedulesOptimized } from "@/hooks/useScheduleQueries";
-import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
@@ -50,11 +48,8 @@ const Schedule = () => {
     setViewTab("timeline");
   };
 
-  const handleAIResponse = (content: string) => {
+  const handleScheduleCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    if (content?.trim()) {
-      toast.success("日程已处理");
-    }
   };
 
   return (
@@ -135,9 +130,7 @@ const Schedule = () => {
       </div>
 
       {/* Content */}
-      <div
-        className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden"
-      >
+      <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
         {effectiveViewTab === "calendar" ? (
           <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
         ) : (
@@ -150,9 +143,9 @@ const Schedule = () => {
         )}
       </div>
 
-      {/* AI Chat Input - always uses Schedule Parrot agent */}
+      {/* Quick Input with Templates */}
       <div className="flex-none p-4 bg-background/95 backdrop-blur-sm border-t border-border/50">
-        <ScheduleChatInput onResponse={handleAIResponse} />
+        <ScheduleQuickInput initialDate={selectedDate} onScheduleCreated={handleScheduleCreated} />
       </div>
 
       {/* Schedule Input Dialog */}

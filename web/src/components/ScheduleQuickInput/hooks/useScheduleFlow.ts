@@ -187,7 +187,11 @@ export function determineNextStep(parsedSchedule: Partial<ParsedSchedule>): Flow
 /**
  * Generate prompt for missing information
  */
-export function generatePromptForStep(step: FlowStep, scheduleData: Partial<ParsedSchedule>, t?: (key: string) => string | unknown): string {
+export function generatePromptForStep(
+  step: FlowStep,
+  scheduleData: Partial<ParsedSchedule>,
+  t?: (key: string) => string | unknown,
+): string {
   switch (step) {
     case "initial":
       return (t?.("schedule.flow.ask-title-time") as string) || "您想创建什么日程？请描述标题和时间。";

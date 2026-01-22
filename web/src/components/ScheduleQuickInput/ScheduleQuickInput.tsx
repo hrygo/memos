@@ -1,104 +1,41 @@
-import { Loader2, Plus, Send, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronRight, Loader2, Send, Sparkles, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
-import { useCheckConflict, useCreateSchedule, useSchedulesOptimized, useSchedulesForDate } from "@/hooks/useScheduleQueries";
+import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
-import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import { generateUUID } from "@/utils/uuid";
 import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
-import { ConflictSuggestions } from "./ConflictSuggestions";
-import { useConflictDetection } from "./hooks/useConflictDetection";
-import { extractScheduleFromParse, useScheduleParse } from "./hooks/useScheduleParse";
 import { QuickTemplateDropdown } from "./QuickTemplates";
-import { ScheduleParsingCard } from "./ScheduleParsingCard";
-import type { ConflictInfo, ParsedSchedule, ScheduleTemplate, SuggestedTimeSlot } from "./types";
+import type { ScheduleTemplate } from "./types";
 
 interface ScheduleQuickInputProps {
-  /** Optional initial date from calendar click */
   initialDate?: string;
-  /** Called when schedule is created */
   onScheduleCreated?: () => void;
-  /** Optional className */
   className?: string;
 }
 
-/** Max input height before scrolling */
 const MAX_INPUT_HEIGHT = 120;
-/** Line height for auto-resize calculation */
 const LINE_HEIGHT = 24;
 
-export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }: ScheduleQuickInputProps) {
+export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreated, className }: ScheduleQuickInputProps) {
   const { selectedDate } = useScheduleContext();
-  const createSchedule = useCreateSchedule();
-  const checkConflict = useCheckConflict();
+  const agentChat = useScheduleAgentChat();
   const t = useTranslate();
 
-  // Input state
+  // State
   const [input, setInput] = useState("");
   const [inputHeight, setInputHeight] = useState(LINE_HEIGHT);
+  const [lastInput, setLastInput] = useState(""); // Keep last input for display during processing
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // UI state
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showConflictPanel, setShowConflictPanel] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [conflicts, setConflicts] = useState<ConflictInfo[]>([]);
-  const [pendingSchedule, setPendingSchedule] = useState<Partial<ParsedSchedule> | null>(null);
-  const [showParsingCard, setShowParsingCard] = useState(false);
-  const [skipParse, setSkipParse] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState<ScheduleSuggestion[]>([]);
-
-  // Reference date for parsing
-  const referenceDate = useMemo(() => {
-    const dateStr = initialDate || selectedDate;
-    return dateStr ? new Date(dateStr + "T00:00:00") : new Date();
-  }, [initialDate, selectedDate]);
-
-  // Get the target date for fetching fresh backend data
-  const targetDate = useMemo(() => {
-    if (!pendingSchedule?.startTs) return undefined;
-    return new Date(Number(pendingSchedule.startTs) * 1000);
-  }, [pendingSchedule?.startTs]);
-
-  // Get fresh backend data for the target date (source of truth for conflict detection)
-  // This ensures all conflict detection and suggestions are based on latest server data
-  const { data: targetDateData } = useSchedulesForDate(targetDate);
-  const targetDateSchedules = targetDateData?.schedules || [];
-
-  // Use ONLY backend data for conflict detection and suggestions
-  // Don't mix with frontend cache to ensure data consistency
-  const allKnownSchedules = targetDateSchedules;
-
-  // Parse hook - disabled auto parse, require manual trigger
-  const { parseResult, isParsing, parse, reset } = useScheduleParse({
-    debounceMs: 600,
-    minLength: 2,
-    enableAI: true,
-    referenceDate,
-    autoParse: false,
-  });
-
-  // Conflict detection - use all known schedules (frontend cache + backend conflicts)
-  const { suggestions } = useConflictDetection({
-    startTs: pendingSchedule?.startTs,
-    endTs: pendingSchedule?.endTs,
-    existingSchedules: allKnownSchedules,
-    t: t as (key: string) => string | unknown,
-  });
-
-  // Store latest parse/reset in refs for useEffect
-  const parseRef = useRef(parse);
-  const resetRef = useRef(reset);
-
-  // Update refs when functions change
-  useEffect(() => {
-    parseRef.current = parse;
-    resetRef.current = reset;
-  }, [parse, reset]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -118,462 +55,274 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
     return () => window.removeEventListener("resize", resize);
   }, [input]);
 
-  // Show/hide parsing card based on parse result
+  // Reset success after delay
   useEffect(() => {
-    if (parseResult?.state === "success" && parseResult.parsedSchedule) {
-      setShowParsingCard(true);
-      setAiSuggestions([]); // Clear suggestions when parsed successfully
-    } else if (parseResult?.state === "error" || parseResult?.state === "partial") {
-      setShowParsingCard(false);
-      // Extract suggestions from AI response when partial
-      if (parseResult?.state === "partial" && parseResult?.message) {
-        // Import parseSuggestions dynamically to avoid circular dependency
-        import("./AISuggestionCards").then(({ parseSuggestions: parse }) => {
-          const todayStr = t("schedule.quick-input.today") as string;
-          const tomorrowStr = t("schedule.quick-input.tomorrow") as string;
-          const suggestions = parse(parseResult.message || "", todayStr, tomorrowStr);
-          setAiSuggestions(suggestions);
-        });
-      } else {
-        setAiSuggestions([]);
-      }
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 2000);
+      return () => clearTimeout(timer);
     }
-  }, [parseResult, t]);
+  }, [showSuccess]);
 
-  // Parse input on change
-  useEffect(() => {
-    if (skipParse) {
-      setSkipParse(false);
-      return;
+  const handleScheduleCreated = () => {
+    setShowSuccess(true);
+    toast.success(t("schedule.schedule-created") || (t("schedule.quick.input.schedule-created-fallback") as string));
+    setInput("");
+    setLastInput("");
+    setAiMessage("");
+    setAiSuggestions([]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = `${LINE_HEIGHT}px`;
+      setInputHeight(LINE_HEIGHT);
     }
-    if (input.trim()) {
-      parseRef.current(input);
-    } else {
-      resetRef.current();
-      setPendingSchedule(null);
-      setShowParsingCard(false);
-      setShowConflictPanel(false);
-    }
-  }, [input, skipParse]);
-
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    onScheduleCreated?.();
   };
 
-  // Handle keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendOrParse();
-    }
-    if (e.key === "Escape" && input) {
-      e.preventDefault();
-      handleClear();
-    }
-  };
+  const handleSend = async () => {
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isProcessing) return;
 
-  // Handle send button click - parse first if not parsed, otherwise create
-  const handleSendOrParse = async () => {
-    if (!input.trim()) return;
+    setIsProcessing(true);
+    setLastInput(trimmedInput);
+    setAiMessage("");
 
-    // If already has successful parse result, create directly
-    if (parseResult?.state === "success" || pendingSchedule) {
-      await handleCreateSchedule();
-      return;
-    }
-
-    // Otherwise, trigger AI parsing with forceAI=true
-    await parse(input, true);
-  };
-
-  // Handle template selection
-  const handleTemplateSelect = (template: ScheduleTemplate) => {
-    const durationSeconds = template.duration * 60;
-    const now = new Date();
-
-    // Calculate start time based on referenceDate (calendar selection)
-    let startDate = new Date(referenceDate);
-
-    // Check if reference date is today
-    const isToday =
-      startDate.getFullYear() === now.getFullYear() &&
-      startDate.getMonth() === now.getMonth() &&
-      startDate.getDate() === now.getDate();
-
-    if (isToday) {
-      // Today: use current time rounded up to next 30min slot
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const roundedUpMinutes = Math.ceil(currentMinutes / 30) * 30;
-      const startMinutes = roundedUpMinutes === currentMinutes ? roundedUpMinutes + 30 : roundedUpMinutes;
-      startDate.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
-    } else {
-      // Future date: default to 9:00 AM
-      startDate.setHours(9, 0, 0, 0);
-    }
-
-    const startTs = Math.floor(startDate.getTime() / 1000);
-
-    const scheduleData: Partial<ParsedSchedule> = {
-      title: template.defaultTitle || template.title,
-      startTs: BigInt(startTs),
-      endTs: BigInt(startTs + durationSeconds),
-      confidence: 1,
-      source: "local",
-    };
-
-    // Skip parsing when setting input from template
-    setSkipParse(true);
-    setPendingSchedule(scheduleData);
-    setInput(template.title);
-    setShowParsingCard(true);
-    setAiSuggestions([]); // Clear AI suggestions when template is selected
-  };
-
-  // Handle AI suggestion selection
-  const handleAISuggestionSelect = (suggestion: ScheduleSuggestion) => {
-    let startDate = new Date(referenceDate);
-
-    // Parse the suggestion date and time
-    const todayStr = t("schedule.quick-input.today") as string;
-    const tomorrowStr = t("schedule.quick-input.tomorrow") as string;
-    const isToday = suggestion.date === todayStr;
-    const isTomorrow = suggestion.date === tomorrowStr;
-
-    if (isToday) {
-      // Use today's date with suggested time
-      startDate = new Date();
-    } else if (isTomorrow) {
-      // Use tomorrow's date
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() + 1);
-    } else {
-      // Use the reference date (already set to calendar selection)
-      startDate = new Date(referenceDate);
-    }
-
-    // Parse the start time (format: "HH:mm")
-    const [hours, minutes] = suggestion.startTime.split(":").map(Number);
-    startDate.setHours(hours, minutes, 0, 0);
-
-    const startTs = Math.floor(startDate.getTime() / 1000);
-
-    // Calculate end time
-    let endTs = startTs + 3600; // Default 1 hour
-    if (suggestion.endTime) {
-      const [endHours, endMinutes] = suggestion.endTime.split(":").map(Number);
-      const endDate = new Date(startDate);
-      endDate.setHours(endHours, endMinutes, 0, 0);
-      endTs = Math.floor(endDate.getTime() / 1000);
-    }
-
-    const scheduleData: Partial<ParsedSchedule> = {
-      title: suggestion.title,
-      startTs: BigInt(startTs),
-      endTs: BigInt(endTs),
-      confidence: 0.8,
-      source: "ai",
-    };
-
-    setSkipParse(true);
-    setPendingSchedule(scheduleData);
-    setInput(suggestion.title);
-    setShowParsingCard(true);
-    setAiSuggestions([]); // Clear suggestions after selection
-  };
-
-  // Check for conflicts
-  const checkForConflicts = async (scheduleData: Partial<ParsedSchedule>): Promise<boolean> => {
-    // Validate timestamps before API call
-    if (!scheduleData.startTs || !scheduleData.endTs) {
-      console.error("[ScheduleQuickInput] Missing timestamps:", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
-      return false;
-    }
-    if (scheduleData.startTs <= 0) {
-      console.error("[ScheduleQuickInput] Invalid startTs (must be positive):", scheduleData.startTs);
-      toast.error(t("schedule.error.invalid-time") as string);
-      return false;
-    }
-    if (scheduleData.endTs <= scheduleData.startTs) {
-      console.error("[ScheduleQuickInput] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
-      toast.error(t("schedule.error.invalid-time-range") as string);
-      return false;
-    }
-
-    // Extract validated timestamps for type safety (no non-null assertion needed)
-    const validatedStartTs = scheduleData.startTs;
-    const validatedEndTs = scheduleData.endTs;
+    const messageWithDate = selectedDate
+      ? t("schedule.quick.input.date-context", { date: selectedDate }) + `\n${trimmedInput}`
+      : trimmedInput;
 
     try {
-      const result = await checkConflict.mutateAsync({
-        startTs: validatedStartTs,
-        endTs: validatedEndTs,
+      const response = await agentChat.mutateAsync({
+        message: messageWithDate,
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
-      if (result.conflicts.length > 0) {
-        const conflictInfos: ConflictInfo[] = result.conflicts.map((s) => ({
-          conflictingSchedule: s,
-          type: "partial" as const,
-          overlapStartTs: validatedStartTs,
-          overlapEndTs: validatedEndTs,
-        }));
-        setConflicts(conflictInfos);
-        setShowConflictPanel(true);
-        return true;
-      } else {
-        setConflicts([]);
-        setShowConflictPanel(false);
-        return false;
-      }
-    } catch (error) {
-      console.error("[ScheduleQuickInput] Conflict check error:", error);
-      return false;
-    }
-  };
-
-  // Handle create schedule
-  const handleCreateSchedule = async (overrideScheduleData?: Partial<ParsedSchedule>) => {
-    if (isCreating) return;
-
-    let scheduleData = overrideScheduleData || pendingSchedule;
-    if (!scheduleData && parseResult?.parsedSchedule) {
-      scheduleData = extractScheduleFromParse(parseResult);
-    }
-
-    if (!scheduleData) {
-      const now = Math.floor(Date.now() / 1000);
-      scheduleData = {
-        title: input.trim() || t("schedule.untitled") || "Untitled Schedule",
-        startTs: BigInt(now),
-        endTs: BigInt(now + 3600),
-        confidence: 0.5,
-        source: "manual",
-      };
-    }
-
-    setIsCreating(true);
-
-    try {
-      // Always check conflicts before creating (backend is source of truth)
-      const hasConflict = await checkForConflicts(scheduleData);
-      if (hasConflict) {
-        setIsCreating(false);
-        return;
-      }
-
-      const createRequest: Partial<Schedule> = {
-        name: `schedules/${generateUUID()}`,
-        title: scheduleData.title || t("schedule.untitled") || "Untitled Schedule",
-        startTs: scheduleData.startTs,
-        endTs: scheduleData.endTs,
-        allDay: scheduleData.allDay || false,
-        location: scheduleData.location || "",
-        description: scheduleData.description || "",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      };
-
-      if (scheduleData.reminders && scheduleData.reminders.length > 0) {
-        (createRequest as any).reminders = scheduleData.reminders;
-      }
-
-      const createdSchedule = await createSchedule.mutateAsync(createRequest);
+      const aiResponse = response.response || "";
+      const createdSchedule =
+        aiResponse.includes("已成功创建") ||
+        aiResponse.includes("成功创建日程") ||
+        aiResponse.includes("successfully created") ||
+        aiResponse.includes("已安排") ||
+        aiResponse.includes("已为您创建");
 
       if (createdSchedule) {
-        toast.success(t("schedule.schedule-created") || "Schedule created successfully");
-        handleClear();
-        onScheduleCreated?.();
+        handleScheduleCreated();
+      } else {
+        setAiMessage(aiResponse);
+        const todayStr = t("schedule.quick-input.today") as string;
+        const tomorrowStr = t("schedule.quick-input.tomorrow") as string;
+        import("./AISuggestionCards").then(({ parseSuggestions: parse }) => {
+          const suggestions = parse(aiResponse, todayStr, tomorrowStr);
+          setAiSuggestions(suggestions);
+        });
       }
-    } catch (error: unknown) {
-      console.error("[ScheduleQuickInput] Create error:", error);
-
-      // Check if it's a conflict error from backend
-      if (error && typeof error === "object" && "message" in error) {
-        const errorMessage = String(error.message);
-        if (errorMessage.includes("conflicts detected") || errorMessage.includes("AlreadyExists")) {
-          // Backend detected a conflict - show user-friendly message
-          toast.error((t("schedule.conflict.slot-unavailable") as string) || "仍然存在时间冲突，请选择其他时间");
-          // Don't clear state so user can try a different suggestion
-          setIsCreating(false);
-          return;
-        }
-      }
-
-      toast.error((t("schedule.parse-error") as string) || "Failed to create, please try again");
+    } catch (error) {
+      console.error("[ScheduleQuickInput] AI error:", error);
+      toast.error(t("schedule.parse-error") || (t("schedule.quick.input.parse-error-fallback") as string));
     } finally {
-      setIsCreating(false);
+      setIsProcessing(false);
     }
   };
 
-  // Handle clear
+  const handleTemplateSelect = (template: ScheduleTemplate) => {
+    // Get natural language prompt for input display
+    const promptText = template.promptI18nKey
+      ? (t(template.promptI18nKey as any) as string) || template.prompt || template.title
+      : template.prompt || template.title;
+
+    // Only fill the input, let user edit before sending
+    setInput(promptText);
+    // Focus the textarea for editing
+    textareaRef.current?.focus();
+  };
+
+  const handleAISuggestionSelect = (suggestion: ScheduleSuggestion) => {
+    const message = t("schedule.quick.input.suggestion-message", {
+      date: suggestion.date,
+      title: suggestion.title,
+      startTime: suggestion.startTime,
+      endTime: suggestion.endTime || "",
+    }) as string;
+    setIsProcessing(true);
+
+    agentChat
+      .mutateAsync({
+        message,
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
+      })
+      .then((response) => {
+        const aiResponse = response.response || "";
+        if (aiResponse.includes("已成功创建") || aiResponse.includes("已安排") || aiResponse.includes("已为您创建")) {
+          handleScheduleCreated();
+        } else {
+          setAiMessage(aiResponse);
+        }
+      })
+      .catch((error) => {
+        console.error("[ScheduleQuickInput] Suggestion error:", error);
+        toast.error(t("schedule.quick.input.create-failed") as string);
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  };
+
   const handleClear = () => {
     setInput("");
-    setPendingSchedule(null);
-    reset();
-    setShowParsingCard(false);
-    setShowConflictPanel(false);
-    setConflicts([]);
+    setLastInput("");
+    setAiMessage("");
+    setAiSuggestions([]);
+    setShowSuccess(false);
     if (textareaRef.current) {
       textareaRef.current.style.height = `${LINE_HEIGHT}px`;
       setInputHeight(LINE_HEIGHT);
     }
   };
 
-  // Handle dismiss parsing card
-  const handleDismissCard = () => {
-    setShowParsingCard(false);
+  const getPlaceholder = () => {
+    if (selectedDate) {
+      return t("schedule.quick.input.placeholder-with-date", { date: selectedDate }) as string;
+    }
+    return t("schedule.quick.input.placeholder") as string;
   };
 
-  // Handle conflict resolution
-  // Handle conflict time slot suggestion
-  const handleSuggestionSelect = async (slot: SuggestedTimeSlot) => {
-    if (!pendingSchedule) return;
-
-    const updatedSchedule: Partial<ParsedSchedule> = {
-      ...pendingSchedule,
-      startTs: slot.startTs,
-      endTs: slot.endTs,
-    };
-
-    // Update state and proceed to create
-    // Backend validation will catch any remaining conflicts
-    setShowConflictPanel(false);
-    setShowParsingCard(false);
-    await handleCreateSchedule(updatedSchedule, false);
-  };
-
-  const handleForceCreate = async () => {
-    setShowConflictPanel(false);
-    await handleCreateSchedule();
-  };
-
-  const canCreate = parseResult?.state === "success" || pendingSchedule !== null;
+  // Display text: show last input while processing, otherwise current input
+  const displayText = isProcessing ? lastInput : input;
 
   return (
-    <div className={cn("w-full flex flex-col gap-3", className)}>
-      {/* Conflict Panel */}
-      {showConflictPanel && (
-        <ConflictSuggestions
-          conflicts={conflicts}
-          suggestions={suggestions}
-          onSuggestionSelect={handleSuggestionSelect}
-          onForceCreate={handleForceCreate}
-          onCancel={() => setShowConflictPanel(false)}
-        />
-      )}
-
-      {/* AI Parsing Card - shown above input when parsing succeeds */}
-      {showParsingCard && (parseResult || pendingSchedule) && (
-        <ScheduleParsingCard
-          parseResult={parseResult}
-          pendingSchedule={pendingSchedule}
-          isParsing={isParsing}
-          onConfirm={handleCreateSchedule}
-          onDismiss={handleDismissCard}
-        />
-      )}
-
-      {/* AI Suggestions Cards - shown when AI returns partial result with suggestions */}
-      {aiSuggestions.length > 0 && !showParsingCard && (
-        <AISuggestionCards
-          suggestions={aiSuggestions}
-          onConfirmSuggestion={handleAISuggestionSelect}
-        />
-      )}
-
-      {/* Loading indicator - shown inline when parsing */}
-      {isParsing && !showParsingCard && (
-        <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground bg-primary/5 rounded-lg border border-primary/10">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span className="">{t("schedule.quick-input.ai-parsing") || "AI 正在理解您的需求..."}</span>
+    <div className={cn("w-full flex flex-col gap-2", className)}>
+      {/* Processing Status Bar - prominent and animated */}
+      {isProcessing && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-pulse">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">{t("schedule.quick.input.creating") as string}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">"{lastInput}"</p>
+          </div>
+          <div className="flex gap-1">
+            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.3s]" />
+            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.15s]" />
+            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce" />
+          </div>
         </div>
       )}
+
+      {/* Success Message - animated slide in */}
+      {showSuccess && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl border border-green-500/20 animate-in slide-in-from-top-2">
+          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
+            <Check className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-green-600 dark:text-green-400">{t("schedule.quick.input.created-success") as string}</p>
+          </div>
+        </div>
+      )}
+
+      {/* AI Response Message */}
+      {aiMessage && !isProcessing && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-muted/50 rounded-xl border border-border/50">
+          <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-foreground/90">{aiMessage}</p>
+            {aiSuggestions.length > 0 && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <ChevronRight className="h-3 w-3" />
+                <span>{t("schedule.quick.input.select-suggestion") as string}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* AI Suggestions Cards */}
+      {aiSuggestions.length > 0 && <AISuggestionCards suggestions={aiSuggestions} onConfirmSuggestion={handleAISuggestionSelect} />}
 
       {/* Input Bar */}
       <div
         className={cn(
-          "flex items-center gap-2 p-2 rounded-xl border-2 transition-all duration-200",
-          isParsing && "border-primary/30 bg-primary/5",
-          showParsingCard && "border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20",
-          !isParsing && !showParsingCard && "border-border bg-background",
+          "flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-300",
+          isProcessing && "border-primary/40 bg-primary/5",
+          showSuccess && "border-green-500/40 bg-green-500/5",
+          !isProcessing && !showSuccess && "border-border bg-background",
         )}
       >
-        {/* Templates Dropdown */}
+        {/* Templates */}
         <div className="flex-shrink-0">
-          <QuickTemplateDropdown open={showTemplates} onToggle={() => setShowTemplates(!showTemplates)} onSelect={handleTemplateSelect} />
+          <QuickTemplateDropdown
+            open={showTemplates}
+            onToggle={() => setShowTemplates(!showTemplates)}
+            onSelect={handleTemplateSelect}
+            disabled={isProcessing}
+          />
         </div>
 
         {/* Text Input */}
         <div className="flex-1 min-w-0">
           <Textarea
             ref={textareaRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={t("schedule.quick-input.placeholder") || "例：明天下午3点开会"}
+            value={displayText}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+              if (e.key === "Escape" && input) {
+                e.preventDefault();
+                handleClear();
+              }
+            }}
+            placeholder={getPlaceholder()}
             className={cn(
-              "min-h-[24px] max-h-[120px] py-1.5 px-3 resize-none",
+              "min-h-[24px] max-h-[120px] py-2 px-3 resize-none",
               "border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0",
               "text-sm",
+              isProcessing && "opacity-70",
             )}
             style={{ height: `${inputHeight}px` }}
             rows={1}
+            disabled={isProcessing}
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {isCreating ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
-              aria-label="创建中"
-            >
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </Button>
-          ) : canCreate ? (
-            <Button
-              size="sm"
-              onClick={handleSendOrParse}
-              className="h-9 px-3 gap-1.5 min-h-[44px] sm:min-h-0"
-              aria-label="确认创建"
-            >
-              <Send className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t("schedule.quick-input.confirm") || "确认"}</span>
-            </Button>
-          ) : input.length > 0 ? (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {isProcessing ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            </div>
+          ) : (
             <>
+              {input.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={handleClear} className="h-8 w-8 rounded-full p-0">
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={handleClear}
-                className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
-                aria-label="清除"
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className={cn(
+                  // Golden ratio: width ≈ height * 1.618, using 36x58 to match template button
+                  "h-9 w-[52px] rounded-lg p-0 transition-all duration-200",
+                  input.trim()
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                    : "bg-transparent text-muted-foreground hover:bg-muted/50",
+                )}
               >
-                <X className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSendOrParse}
-                className="h-8 px-2 gap-1.5 min-h-[44px] sm:min-h-0"
-                aria-label="AI 解析"
-              >
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-4 w-4" />
               </Button>
             </>
-          ) : (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowTemplates(true)}
-              className="h-8 w-8 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
-              aria-label="显示模板"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
           )}
         </div>
       </div>
+
+      {/* Hint text */}
+      {!input && !isProcessing && !showSuccess && (
+        <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+          <Sparkles className="h-3 w-3 text-primary/60" />
+          <span>{t("schedule.quick.input.ai-hint") as string}</span>
+        </div>
+      )}
     </div>
   );
 }

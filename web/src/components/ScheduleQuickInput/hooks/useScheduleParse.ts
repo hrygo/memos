@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
-import { localParser } from "../services/localParser";
 import type { Confidence, ParsedSchedule, ParseResult, ParseSource } from "../types";
 
 interface UseScheduleParseOptions {
@@ -8,12 +7,14 @@ interface UseScheduleParseOptions {
   debounceMs?: number;
   /** Minimum input length before parsing */
   minLength?: number;
-  /** Whether to enable AI parsing as fallback */
+  /** Whether to enable AI parsing */
   enableAI?: boolean;
   /** Reference date for relative time calculations */
   referenceDate?: Date;
   /** Whether to automatically parse on input changes (default: true) */
   autoParse?: boolean;
+  /** Callback when AI successfully creates a schedule */
+  onScheduleCreated?: () => void;
 }
 
 interface UseScheduleParseReturn {
@@ -25,18 +26,18 @@ interface UseScheduleParseReturn {
   parseSource: ParseSource | null;
   /** Confidence of the last successful parse */
   confidence: Confidence | null;
-  /** Parse input manually (ignores debounce) */
+  /** Parse input with AI agent (creates schedule directly) */
   parse: (input: string, forceAI?: boolean) => Promise<void>;
   /** Reset parse state */
   reset: () => void;
 }
 
 /**
- * Hook for parsing schedule input with local-first strategy and AI fallback.
- * Implements debouncing to reduce API calls.
+ * Hook for parsing schedule input using AI Agent.
+ * The Agent directly creates the schedule - no separate creation step needed.
  */
 export function useScheduleParse(options: UseScheduleParseOptions = {}): UseScheduleParseReturn {
-  const { debounceMs = 800, minLength = 2, enableAI = true, referenceDate = new Date(), autoParse = true } = options;
+  const { debounceMs = 800, minLength = 2, enableAI = true, autoParse = true, onScheduleCreated } = options;
 
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [isParsing, setIsParsing] = useState(false);
@@ -47,10 +48,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Store reference date as timestamp for stable dependency
-  const referenceDateTs = useMemo(() => referenceDate.getTime(), [referenceDate]);
-
-  // Cleanup debounce timer on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -63,18 +61,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
   }, []);
 
   /**
-   * Attempt local parsing first
-   */
-  const parseLocally = useCallback(
-    (input: string): ParseResult => {
-      const refDate = new Date(referenceDateTs);
-      return localParser.parse(input, refDate);
-    },
-    [referenceDateTs],
-  );
-
-  /**
-   * Attempt AI parsing as fallback
+   * Parse input using AI Agent - Agent directly creates the schedule
    */
   const parseWithAI = useCallback(
     async (input: string): Promise<ParseResult> => {
@@ -88,17 +75,24 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
           userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
         });
 
-        // Check if AI successfully parsed and created a schedule
+        // Check if AI successfully created the schedule
         const createdSchedule =
           response.response?.includes("已成功创建") ||
           response.response?.includes("成功创建日程") ||
-          response.response?.includes("successfully created");
+          response.response?.includes("successfully created") ||
+          response.response?.includes("已安排") ||
+          response.response?.includes("已为您创建");
 
         if (createdSchedule) {
-          return { state: "success", message: response.response };
+          // AI already created the schedule - notify parent to refresh
+          onScheduleCreated?.();
+          return {
+            state: "created",
+            message: response.response || "日程已创建",
+          };
         }
 
-        // AI is asking for clarification
+        // AI is asking for clarification or suggesting options
         return {
           state: "partial",
           message: response.response || "需要更多信息",
@@ -107,16 +101,15 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
         console.error("[useScheduleParse] AI parse error:", error);
         return {
           state: "error",
-          message: "智能解析失败，请重试或手动输入",
+          message: "智能解析失败，请重试",
         };
       }
     },
-    [enableAI, agentChat],
+    [enableAI, agentChat, onScheduleCreated],
   );
 
   /**
    * Parse input with debouncing
-   * When autoParse is false, only does local parsing without AI fallback
    */
   const parse = useCallback(
     async (input: string, forceAI = false) => {
@@ -136,74 +129,38 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
 
       setIsParsing(true);
 
-      // When not autoParse, skip debounce and parse immediately
+      // When forceAI or !autoParse, skip debounce
       const delay = autoParse || forceAI ? debounceMs : 0;
 
       const executeParse = async () => {
-        // Cancel any pending AI request
+        // Cancel any pending request
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
         }
         abortControllerRef.current = new AbortController();
 
         try {
-          // Try local parsing first
-          const localResult = parseLocally(input);
-
-          if (localResult.state === "success" && localResult.parsedSchedule) {
-            const localConfidence = localParser.getConfidence(input, localResult.parsedSchedule);
-
-            // High confidence local result - use it directly
-            if (localConfidence >= 0.8) {
-              setParseResult(localResult);
-              setParseSource("local");
-              setConfidence(localConfidence);
-              setIsParsing(false);
-              return;
-            }
-
-            // Medium confidence - still use local, but flag as partial
-            if (localConfidence >= 0.5) {
-              setParseResult({
-                ...localResult,
-                state: "partial",
-              });
-              setParseSource("local");
-              setConfidence(localConfidence);
-              setIsParsing(false);
-              return;
-            }
-          }
-
-          // Low confidence or failed local parse - try AI if enabled and (autoParse or forceAI)
+          // Always use AI for schedule creation
           if (enableAI && (autoParse || forceAI)) {
             const aiResult = await parseWithAI(input);
             setParseResult(aiResult);
             setParseSource("ai");
-            setConfidence(aiResult.parsedSchedule?.confidence || null);
+            setConfidence(null);
           } else {
-            // AI disabled or manual mode - use local result even with low confidence
-            setParseResult(
-              localResult.state === "idle"
-                ? {
-                    state: "partial",
-                    parsedSchedule: localResult.parsedSchedule,
-                    message: "请确认时间信息",
-                  }
-                : localResult,
-            );
-            setParseSource("local");
-            setConfidence(localResult.parsedSchedule?.confidence || 0.3);
+            setParseResult({
+              state: "idle",
+              message: "请输入日程内容",
+            });
+            setParseSource(null);
+            setConfidence(null);
           }
         } catch (error) {
-          // Final fallback - show manual input option
           if (error instanceof Error && error.name === "AbortError") {
-            return; // Request was cancelled, ignore
+            return; // Request was cancelled
           }
-
           setParseResult({
             state: "error",
-            message: "解析失败，请手动输入",
+            message: "解析失败，请重试",
           });
           setParseSource(null);
           setConfidence(null);
@@ -218,7 +175,7 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
         debounceTimerRef.current = setTimeout(executeParse, delay);
       }
     },
-    [debounceMs, minLength, enableAI, autoParse, parseLocally, parseWithAI],
+    [debounceMs, minLength, enableAI, autoParse, parseWithAI],
   );
 
   /**
@@ -248,36 +205,8 @@ export function useScheduleParse(options: UseScheduleParseOptions = {}): UseSche
 }
 
 /**
- * Extract schedule from parse result for creating
+ * @deprecated No longer needed - AI creates schedules directly
  */
-export function extractScheduleFromParse(parseResult: ParseResult | null, defaultTitle?: string): Partial<ParsedSchedule> | null {
-  if (!parseResult?.parsedSchedule) {
-    return null;
-  }
-
-  const parsed = parseResult.parsedSchedule;
-
-  // Validate timestamps before returning
-  if (!parsed.startTs || parsed.startTs <= 0) {
-    console.error("[extractScheduleFromParse] Invalid startTs:", parsed.startTs);
-    return null;
-  }
-  if (!parsed.endTs || parsed.endTs <= 0) {
-    console.error("[extractScheduleFromParse] Invalid endTs:", parsed.endTs);
-    return null;
-  }
-  if (parsed.endTs <= parsed.startTs) {
-    console.error("[extractScheduleFromParse] Invalid time range (endTs <= startTs):", { startTs: parsed.startTs, endTs: parsed.endTs });
-    return null;
-  }
-
-  return {
-    title: parsed.title || defaultTitle || "新日程",
-    startTs: parsed.startTs,
-    endTs: parsed.endTs,
-    allDay: parsed.allDay || false,
-    location: parsed.location,
-    description: parsed.description,
-    reminders: parsed.reminders,
-  };
+export function extractScheduleFromParse(_parseResult: ParseResult | null, _defaultTitle?: string): Partial<ParsedSchedule> | null {
+  return null;
 }

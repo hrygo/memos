@@ -172,9 +172,10 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
           startTs: BigInt(Math.floor(currentStart.unix())),
           endTs: BigInt(Math.floor(slotEnd.unix())),
           label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
-          reason: remainingMinutes === durationMinutes
-            ? (t?.("schedule.conflict.end-slot") as string || "末尾时段")
-            : (t?.("schedule.conflict.no-conflict-slot") as string || "无冲突时段"),
+          reason:
+            remainingMinutes === durationMinutes
+              ? (t?.("schedule.conflict.end-slot") as string) || "末尾时段"
+              : (t?.("schedule.conflict.no-conflict-slot") as string) || "无冲突时段",
         });
       }
 

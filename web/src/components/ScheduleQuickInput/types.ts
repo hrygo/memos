@@ -8,6 +8,7 @@ export type ParseState =
   | "success" // Successfully parsed
   | "partial" // Partially parsed, needs more info
   | "conflict" // Parsed but has conflicts
+  | "created" // AI Agent already created the schedule
   | "error"; // Parsing failed
 
 /** Source of parsing result */
@@ -56,6 +57,10 @@ export interface ScheduleTemplate {
   color?: string;
   /** i18n key for translating the title */
   i18nKey?: string;
+  /** Natural language prompt example (shown in input when selected) */
+  prompt?: string;
+  /** i18n key for the prompt */
+  promptI18nKey?: string;
 }
 
 /** Flow step for progressive schedule creation */

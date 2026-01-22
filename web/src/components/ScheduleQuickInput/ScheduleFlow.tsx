@@ -6,9 +6,9 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
 import { generatePromptForStep } from "./hooks/useScheduleFlow";
 import type { FlowMessage, FlowStep, ParsedSchedule } from "./types";
-import { useTranslate } from "@/utils/i18n";
 
 interface ScheduleFlowProps {
   /** Current flow step */
@@ -101,11 +101,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
       >
         {/* Conversation Messages */}
         {conversation.map((msg, idx) => (
-          <div
-            key={idx}
-            className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")}
-            role="row"
-          >
+          <div key={idx} className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")} role="row">
             {msg.role === "assistant" && (
               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
                 <Bot className="h-3.5 w-3.5 text-primary" />
@@ -292,11 +288,7 @@ export function CompactScheduleFlow({ scheduleData, onEdit, className }: Compact
   };
 
   return (
-    <div
-      className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)}
-      role="region"
-      aria-label="日程预览"
-    >
+    <div className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)} role="region" aria-label="日程预览">
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm truncate" aria-label="日程标题">
           {scheduleData.title || (t("schedule.quick-input.default-title") as string)}

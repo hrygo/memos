@@ -42,6 +42,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "meeting-15",
     title: "15分钟会议",
     i18nKey: "schedule.quick-input.template-meeting-15",
+    promptI18nKey: "schedule.quick-input.prompt-meeting-15",
     icon: "users",
     duration: 15,
     defaultTitle: "快速会议",
@@ -51,6 +52,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "meeting-30",
     title: "30分钟会议",
     i18nKey: "schedule.quick-input.template-meeting-30",
+    promptI18nKey: "schedule.quick-input.prompt-meeting-30",
     icon: "users",
     duration: 30,
     defaultTitle: "会议",
@@ -60,6 +62,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "call",
     title: "电话",
     i18nKey: "schedule.quick-input.template-call",
+    promptI18nKey: "schedule.quick-input.prompt-call",
     icon: "phone",
     duration: 30,
     defaultTitle: "电话会议",
@@ -69,6 +72,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "video-call",
     title: "视频会议",
     i18nKey: "schedule.quick-input.template-video",
+    promptI18nKey: "schedule.quick-input.prompt-video",
     icon: "video",
     duration: 45,
     defaultTitle: "视频会议",
@@ -78,6 +82,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "lunch",
     title: "午餐",
     i18nKey: "schedule.quick-input.template-lunch",
+    promptI18nKey: "schedule.quick-input.prompt-lunch",
     icon: "lunch",
     duration: 60,
     defaultTitle: "午餐",
@@ -87,6 +92,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "coffee",
     title: "咖啡",
     i18nKey: "schedule.quick-input.template-coffee",
+    promptI18nKey: "schedule.quick-input.prompt-coffee",
     icon: "coffee",
     duration: 30,
     defaultTitle: "咖啡聊天",
@@ -96,6 +102,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "workout",
     title: "运动",
     i18nKey: "schedule.quick-input.template-workout",
+    promptI18nKey: "schedule.quick-input.prompt-workout",
     icon: "dumbbell",
     duration: 60,
     defaultTitle: "锻炼",
@@ -105,6 +112,7 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     id: "focus-60",
     title: "专注时间",
     i18nKey: "schedule.quick-input.template-focus",
+    promptI18nKey: "schedule.quick-input.prompt-focus",
     icon: "focus",
     duration: 60,
     defaultTitle: "专注时间",
@@ -196,12 +204,14 @@ interface QuickTemplateDropdownProps {
   open?: boolean;
   /** Toggle dropdown open state */
   onToggle?: () => void;
+  /** Whether the dropdown is disabled */
+  disabled?: boolean;
 }
 
 /**
  * Dropdown version of quick templates
  */
-export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: QuickTemplateDropdownProps) {
+export function QuickTemplateDropdown({ onSelect, className, open, onToggle, disabled = false }: QuickTemplateDropdownProps) {
   const t = useTranslate();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -275,16 +285,20 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
               className={cn(
                 "flex items-center gap-2 px-2 py-2 rounded-md text-xs min-h-[44px]",
                 "hover:bg-muted transition-colors",
-                "text-left w-full focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1"
+                "text-left w-full focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1",
               )}
               aria-label={`${displayTitle}，${template.duration}分钟`}
             >
-              <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", template.color, "text-white")} aria-hidden="true">
+              <div
+                className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", template.color, "text-white")}
+                aria-hidden="true"
+              >
                 <IconComponent className="h-3 w-3" />
               </div>
               <span className="font-medium truncate flex-1">{displayTitle}</span>
               <span className="text-[10px] text-muted-foreground shrink-0">
-                {template.duration}{t("schedule.quick-input.minutes-abbr") || "分"}
+                {template.duration}
+                {t("schedule.quick-input.minutes-abbr") || "分"}
               </span>
             </button>
           );
@@ -299,10 +313,18 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
         ref={triggerRef}
         type="button"
         onClick={onToggle}
+        disabled={disabled}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={t("schedule.quick-input.templates") || "模板"}
-        className="flex items-center justify-center p-2 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors min-h-[36px] min-w-[36px] focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1"
+        className={cn(
+          "flex items-center justify-center text-xs font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-1",
+          // Golden ratio: width ≈ height * 1.618, using 32x52 for compact square
+          "h-9 w-[52px] rounded-lg",
+          disabled
+            ? "text-muted-foreground/40 cursor-not-allowed opacity-50"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+        )}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -314,7 +336,7 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-3.5 w-3.5"
+          className="h-4 w-4"
           aria-hidden="true"
         >
           <rect x="3" y="3" width="7" height="7" />
@@ -322,7 +344,6 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
           <rect x="14" y="14" width="7" height="7" />
           <rect x="3" y="14" width="7" height="7" />
         </svg>
-        <span className="ml-1">{t("schedule.quick-input.templates") || "模板"}</span>
       </button>
 
       {dropdownContent && createPortal(dropdownContent, document.body)}

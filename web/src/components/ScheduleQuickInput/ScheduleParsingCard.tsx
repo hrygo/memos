@@ -1,8 +1,8 @@
 import { Clock, LayoutTemplate, MapPin, Sparkles, X } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import type { ParsedSchedule, ParseResult } from "./types";
 import { useTranslate } from "@/utils/i18n";
+import type { ParsedSchedule, ParseResult } from "./types";
 
 interface ScheduleParsingCardProps {
   /** Current parse result */
@@ -52,7 +52,12 @@ export function ScheduleParsingCard({
   // Loading state
   if (isParsing) {
     return (
-      <div className={cn("flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground bg-primary/5 rounded-lg border border-primary/10", className)}>
+      <div
+        className={cn(
+          "flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground bg-primary/5 rounded-lg border border-primary/10",
+          className,
+        )}
+      >
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.3s]" />
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.15s]" />
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
@@ -124,7 +129,9 @@ export function ScheduleParsingCard({
           {/* Message Text + Close in header */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <p className="text-sm text-foreground/90 leading-snug">
-              {isTemplateMode ? (t("schedule.quick-input.template-confirm-hint") as string) : (t("schedule.quick-input.ai-confirm-hint") as string)}
+              {isTemplateMode
+                ? (t("schedule.quick-input.template-confirm-hint") as string)
+                : (t("schedule.quick-input.ai-confirm-hint") as string)}
             </p>
             {onDismiss && (
               <button
@@ -157,7 +164,9 @@ export function ScheduleParsingCard({
               <span>{startTime.date}</span>
               {endTime && (
                 <>
-                  <span className="text-muted-foreground/30" aria-hidden="true">→</span>
+                  <span className="text-muted-foreground/30" aria-hidden="true">
+                    →
+                  </span>
                   <span>
                     {endTime.date !== startTime.date ? `${endTime.date} ` : ""}
                     {endTime.time}
