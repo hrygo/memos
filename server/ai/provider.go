@@ -8,35 +8,34 @@ import (
 	"os"
 	"time"
 
-	"github.com/tmc/langchaingo/llms"
-	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/sashabaranov/go-openai"
 )
 
 // Config holds the AI provider configuration.
 type Config struct {
-	BaseURL         string
-	APIKey          string
-	EmbeddingModel  string
-	ChatModel       string
-	MaxRetries      int
-	Timeout         time.Duration
+	BaseURL        string
+	APIKey         string
+	EmbeddingModel string
+	ChatModel      string
+	MaxRetries     int
+	Timeout        time.Duration
 }
 
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
-		BaseURL:         "https://api.openai.com/v1",
-		APIKey:          "",
-		EmbeddingModel:  "text-embedding-3-small",
-		ChatModel:       "gpt-4o-mini",
-		MaxRetries:      3,
-		Timeout:         30 * time.Second,
+		BaseURL:        "https://api.openai.com/v1",
+		APIKey:         "",
+		EmbeddingModel: "text-embedding-3-small",
+		ChatModel:      "gpt-4o-mini",
+		MaxRetries:     3,
+		Timeout:        30 * time.Second,
 	}
 }
 
 // Provider provides AI capabilities including LLM and Embedding.
 type Provider struct {
-	llm    *openai.LLM
+	client *openai.Client
 	config *Config
 }
 
@@ -60,20 +59,15 @@ func NewProvider(cfg *Config) (*Provider, error) {
 		cfg.ChatModel = "gpt-4o-mini"
 	}
 
-	opts := []openai.Option{
-		openai.WithToken(cfg.APIKey),
-	}
+	clientConfig := openai.DefaultConfig(cfg.APIKey)
 	if cfg.BaseURL != "" {
-		opts = append(opts, openai.WithBaseURL(cfg.BaseURL))
+		clientConfig.BaseURL = cfg.BaseURL
 	}
 
-	llm, err := openai.New(opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create openai client: %w", err)
-	}
+	client := openai.NewClientWithConfig(clientConfig)
 
 	return &Provider{
-		llm:    llm,
+		client: client,
 		config: cfg,
 	}, nil
 }
@@ -82,14 +76,19 @@ func NewProvider(cfg *Config) (*Provider, error) {
 func (p *Provider) Embedding(ctx context.Context, text string) ([]float32, error) {
 	var result []float32
 	err := p.doWithRetry(ctx, func() error {
-		embeddings, err := p.llm.CreateEmbedding(ctx, []string{text})
+		req := openai.EmbeddingRequest{
+			Input: []string{text},
+			Model: openai.EmbeddingModel(p.config.EmbeddingModel),
+		}
+
+		resp, err := p.client.CreateEmbeddings(ctx, req)
 		if err != nil {
 			return err
 		}
-		if len(embeddings) == 0 || len(embeddings[0]) == 0 {
+		if len(resp.Data) == 0 {
 			return fmt.Errorf("empty embedding response")
 		}
-		result = embeddings[0]
+		result = resp.Data[0].Embedding
 		return nil
 	})
 
@@ -101,24 +100,31 @@ func (p *Provider) Embedding(ctx context.Context, text string) ([]float32, error
 }
 
 // Chat performs a chat completion.
-func (p *Provider) Chat(ctx context.Context, messages []llms.MessageContent) (string, error) {
+func (p *Provider) Chat(ctx context.Context, messages []Message) (string, error) {
 	var result string
 	err := p.doWithRetry(ctx, func() error {
-		// Build content string from messages
-		var content string
-		for _, msg := range messages {
-			for _, part := range msg.Parts {
-				if text, ok := part.(llms.TextContent); ok {
-					content += text.Text
-				}
+		// Convert messages to openai format
+		llmMessages := make([]openai.ChatCompletionMessage, len(messages))
+		for i, msg := range messages {
+			llmMessages[i] = openai.ChatCompletionMessage{
+				Role:    msg.Role,
+				Content: msg.Content,
 			}
 		}
 
-		response, err := llms.GenerateFromSinglePrompt(ctx, p.llm, content, llms.WithModel(p.config.ChatModel))
+		req := openai.ChatCompletionRequest{
+			Model:    p.config.ChatModel,
+			Messages: llmMessages,
+		}
+
+		resp, err := p.client.CreateChatCompletion(ctx, req)
 		if err != nil {
 			return err
 		}
-		result = response
+		if len(resp.Choices) == 0 {
+			return fmt.Errorf("empty chat response")
+		}
+		result = resp.Choices[0].Message.Content
 		return nil
 	})
 
@@ -129,10 +135,15 @@ func (p *Provider) Chat(ctx context.Context, messages []llms.MessageContent) (st
 	return result, nil
 }
 
+// Message represents a chat message.
+type Message struct {
+	Role    string
+	Content string
+}
+
 // ChatStream performs a streaming chat completion.
-// TODO: Implement proper streaming support with langchaingo.
-// For now, this returns a non-streaming response.
-func (p *Provider) ChatStream(ctx context.Context, messages []llms.MessageContent) (string, error) {
+func (p *Provider) ChatStream(ctx context.Context, messages []Message) (string, error) {
+	// For simplicity, fall back to non-streaming for now
 	return p.Chat(ctx, messages)
 }
 
@@ -191,12 +202,12 @@ func (p *Provider) doWithRetry(ctx context.Context, fn func() error) error {
 // NewProviderFromEnv creates a provider from environment variables.
 func NewProviderFromEnv() (*Provider, error) {
 	return NewProvider(&Config{
-		BaseURL:         getEnv("MEMOS_AI_BASE_URL", "https://api.openai.com/v1"),
-		APIKey:          getEnv("MEMOS_AI_API_KEY", ""),
-		EmbeddingModel:  getEnv("MEMOS_AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-		ChatModel:       getEnv("MEMOS_AI_CHAT_MODEL", "gpt-4o-mini"),
-		MaxRetries:      3,
-		Timeout:         30 * time.Second,
+		BaseURL:        getEnv("MEMOS_AI_BASE_URL", "https://api.openai.com/v1"),
+		APIKey:         getEnv("MEMOS_AI_API_KEY", ""),
+		EmbeddingModel: getEnv("MEMOS_AI_EMBEDDING_MODEL", "text-embedding-3-small"),
+		ChatModel:      getEnv("MEMOS_AI_CHAT_MODEL", "gpt-4o-mini"),
+		MaxRetries:     3,
+		Timeout:        30 * time.Second,
 	})
 }
 

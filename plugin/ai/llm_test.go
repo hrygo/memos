@@ -38,11 +38,14 @@ func TestNewLLMService(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Ollama config",
+			name: "SiliconFlow config",
 			cfg: &LLMConfig{
-				Provider: "ollama",
-				Model:    "llama2",
-				BaseURL:  "http://localhost:11434",
+				Provider:    "siliconflow",
+				Model:       "Qwen/Qwen2.5-7B-Instruct",
+				APIKey:      "test-key",
+				BaseURL:     "https://api.siliconflow.cn/v1",
+				MaxTokens:   2048,
+				Temperature: 0.7,
 			},
 			expectError: false,
 		},

@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tmc/langchaingo/embeddings"
-	"github.com/tmc/langchaingo/llms/ollama"
-	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/sashabaranov/go-openai"
 )
 
 // EmbeddingService is the vector embedding service interface.
@@ -23,70 +21,44 @@ type EmbeddingService interface {
 }
 
 type embeddingService struct {
-	embedder   embeddings.Embedder
+	client     *openai.Client
+	model      string
 	dimensions int
 }
 
 // NewEmbeddingService creates a new EmbeddingService.
 func NewEmbeddingService(cfg *EmbeddingConfig) (EmbeddingService, error) {
-	var embedder embeddings.Embedder
-	var err error
+	var clientConfig openai.ClientConfig
 
 	switch cfg.Provider {
 	case "siliconflow":
 		// SiliconFlow is compatible with OpenAI API
-		llm, createErr := openai.New(
-			openai.WithToken(cfg.APIKey),
-			openai.WithBaseURL(cfg.BaseURL),
-			openai.WithEmbeddingModel(cfg.Model),
-		)
-		if createErr != nil {
-			return nil, createErr
-		}
-		embedder, err = embeddings.NewEmbedder(llm)
-		if err != nil {
-			return nil, err
+		clientConfig = openai.DefaultConfig(cfg.APIKey)
+		if cfg.BaseURL != "" {
+			clientConfig.BaseURL = cfg.BaseURL
 		}
 
 	case "openai":
-		llm, createErr := openai.New(
-			openai.WithToken(cfg.APIKey),
-			openai.WithBaseURL(cfg.BaseURL),
-			openai.WithEmbeddingModel(cfg.Model),
-		)
-		if createErr != nil {
-			return nil, createErr
-		}
-		embedder, err = embeddings.NewEmbedder(llm)
-		if err != nil {
-			return nil, err
-		}
-
-	case "ollama":
-		llm, createErr := ollama.New(
-			ollama.WithModel(cfg.Model),
-			ollama.WithServerURL(cfg.BaseURL),
-		)
-		if createErr != nil {
-			return nil, createErr
-		}
-		embedder, err = embeddings.NewEmbedder(llm)
-		if err != nil {
-			return nil, err
+		clientConfig = openai.DefaultConfig(cfg.APIKey)
+		if cfg.BaseURL != "" {
+			clientConfig.BaseURL = cfg.BaseURL
 		}
 
 	default:
 		return nil, fmt.Errorf("unsupported embedding provider: %s", cfg.Provider)
 	}
 
+	client := openai.NewClientWithConfig(clientConfig)
+
 	return &embeddingService{
-		embedder:   embedder,
+		client:     client,
+		model:      cfg.Model,
 		dimensions: cfg.Dimensions,
 	}, nil
 }
 
 func (s *embeddingService) Embed(ctx context.Context, text string) ([]float32, error) {
-	vectors, err := s.embedder.EmbedDocuments(ctx, []string{text})
+	vectors, err := s.EmbedBatch(ctx, []string{text})
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +69,31 @@ func (s *embeddingService) Embed(ctx context.Context, text string) ([]float32, e
 }
 
 func (s *embeddingService) EmbedBatch(ctx context.Context, texts []string) ([][]float32, error) {
-	vectors, err := s.embedder.EmbedDocuments(ctx, texts)
-	if err != nil {
-		return nil, err
+	if len(texts) == 0 {
+		return nil, errors.New("no texts provided for embedding")
 	}
+
+	req := openai.EmbeddingRequest{
+		Input:     texts,
+		Model:     openai.EmbeddingModel(s.model),
+		Dimensions: s.dimensions,
+	}
+
+	resp, err := s.client.CreateEmbeddings(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("create embeddings failed: %w", err)
+	}
+
+	if len(resp.Data) == 0 {
+		return nil, errors.New("empty embedding response")
+	}
+
+	// Extract vectors from response
+	vectors := make([][]float32, len(resp.Data))
+	for i, data := range resp.Data {
+		vectors[i] = data.Embedding
+	}
+
 	return vectors, nil
 }
 

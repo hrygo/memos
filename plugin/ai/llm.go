@@ -3,11 +3,10 @@ package ai
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/tmc/langchaingo/llms"
-	"github.com/tmc/langchaingo/llms/ollama"
-	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/sashabaranov/go-openai"
 )
 
 // Message represents a chat message.
@@ -26,72 +25,78 @@ type LLMService interface {
 }
 
 type llmService struct {
-	model       llms.Model
+	client      *openai.Client
+	model       string
 	maxTokens   int
 	temperature float32
 }
 
 // NewLLMService creates a new LLMService.
 func NewLLMService(cfg *LLMConfig) (LLMService, error) {
-	var model llms.Model
-	var err error
+	var clientConfig openai.ClientConfig
 
 	switch cfg.Provider {
 	case "deepseek":
-		// DeepSeek is compatible with OpenAI API
-		model, err = openai.New(
-			openai.WithToken(cfg.APIKey),
-			openai.WithBaseURL(cfg.BaseURL),
-			openai.WithModel(cfg.Model),
-		)
+		baseURL := cfg.BaseURL
+		if baseURL == "" {
+			baseURL = "https://api.deepseek.com"
+		}
+		clientConfig = openai.DefaultConfig(cfg.APIKey)
+		clientConfig.BaseURL = baseURL
 
 	case "openai":
-		model, err = openai.New(
-			openai.WithToken(cfg.APIKey),
-			openai.WithModel(cfg.Model),
-		)
+		clientConfig = openai.DefaultConfig(cfg.APIKey)
+		if cfg.BaseURL != "" {
+			clientConfig.BaseURL = cfg.BaseURL
+		}
 
-	case "ollama":
-		model, err = ollama.New(
-			ollama.WithModel(cfg.Model),
-			ollama.WithServerURL(cfg.BaseURL),
-		)
+	case "siliconflow":
+		baseURL := cfg.BaseURL
+		if baseURL == "" {
+			baseURL = "https://api.siliconflow.cn/v1"
+		}
+		clientConfig = openai.DefaultConfig(cfg.APIKey)
+		clientConfig.BaseURL = baseURL
 
 	default:
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
 
-	if err != nil {
-		return nil, err
-	}
+	client := openai.NewClientWithConfig(clientConfig)
 
 	return &llmService{
-		model:       model,
+		client:      client,
+		model:       cfg.Model,
 		maxTokens:   cfg.MaxTokens,
 		temperature: cfg.Temperature,
 	}, nil
 }
 
 func (s *llmService) Chat(ctx context.Context, messages []Message) (string, error) {
-	llmMessages := convertMessages(messages)
+	// Add timeout protection
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 
-	resp, err := s.model.GenerateContent(ctx, llmMessages,
-		llms.WithMaxTokens(s.maxTokens),
-		llms.WithTemperature(float64(s.temperature)),
-	)
+	req := openai.ChatCompletionRequest{
+		Model:       s.model,
+		MaxTokens:   s.maxTokens,
+		Temperature: s.temperature,
+		Messages:    convertMessages(messages),
+	}
+
+	resp, err := s.client.CreateChatCompletion(ctx, req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("LLM chat failed: %w", err)
 	}
 
 	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("empty response")
+		return "", fmt.Errorf("empty response from LLM")
 	}
 
-	return resp.Choices[0].Content, nil
+	return resp.Choices[0].Message.Content, nil
 }
 
 func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan string, <-chan error) {
-	// Add buffer to prevent blocking if receiver exits early
 	contentChan := make(chan string, 10)
 	errChan := make(chan error, 1)
 
@@ -99,31 +104,57 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 		defer close(contentChan)
 		defer close(errChan)
 
-		llmMessages := convertMessages(messages)
-
-		// Add timeout protection to prevent goroutine leak
+		// Add timeout protection
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
-		_, err := s.model.GenerateContent(ctx, llmMessages,
-			llms.WithMaxTokens(s.maxTokens),
-			llms.WithTemperature(float64(s.temperature)),
-			llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
-				select {
-				case contentChan <- string(chunk):
-					return nil
-				case <-ctx.Done():
-					return ctx.Err()
-				}
-			}),
-		)
+		req := openai.ChatCompletionRequest{
+			Model:       s.model,
+			MaxTokens:   s.maxTokens,
+			Temperature: s.temperature,
+			Messages:    convertMessages(messages),
+		}
 
+		stream, err := s.client.CreateChatCompletionStream(ctx, req)
 		if err != nil {
-			// Check if context is still valid before sending error
 			select {
-			case errChan <- err:
+			case errChan <- fmt.Errorf("create stream failed: %w", err):
 			case <-ctx.Done():
-				// Context cancelled, unable to send error
+			}
+			return
+		}
+		defer stream.Close()
+
+		for {
+			response, err := stream.Recv()
+			if err != nil {
+				if strings.Contains(err.Error(), "EOF") || err.Error() == "EOF" {
+					// Normal stream termination
+					return
+				}
+				select {
+				case errChan <- fmt.Errorf("stream recv failed: %w", err):
+				case <-ctx.Done():
+				}
+				return
+			}
+
+			if len(response.Choices) == 0 {
+				continue
+			}
+
+			delta := response.Choices[0].Delta.Content
+			if delta != "" {
+				select {
+				case contentChan <- delta:
+				case <-ctx.Done():
+					return
+				}
+			}
+
+			// Check if stream is finished
+			if response.Choices[0].FinishReason != "" {
+				return
 			}
 		}
 	}()
@@ -131,22 +162,31 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 	return contentChan, errChan
 }
 
-func convertMessages(messages []Message) []llms.MessageContent {
-	llmMessages := make([]llms.MessageContent, len(messages))
+func convertMessages(messages []Message) []openai.ChatCompletionMessage {
+	llmMessages := make([]openai.ChatCompletionMessage, len(messages))
 	for i, m := range messages {
-		role := llms.ChatMessageTypeHuman
 		switch m.Role {
 		case "system":
-			role = llms.ChatMessageTypeSystem
+			llmMessages[i] = openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: m.Content,
+			}
 		case "user":
-			role = llms.ChatMessageTypeHuman
+			llmMessages[i] = openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: m.Content,
+			}
 		case "assistant":
-			role = llms.ChatMessageTypeAI
-		}
-
-		llmMessages[i] = llms.MessageContent{
-			Role:  role,
-			Parts: []llms.ContentPart{llms.TextPart(m.Content)},
+			llmMessages[i] = openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleAssistant,
+				Content: m.Content,
+			}
+		default:
+			// Default to user for unknown roles
+			llmMessages[i] = openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleUser,
+				Content: m.Content,
+			}
 		}
 	}
 	return llmMessages
