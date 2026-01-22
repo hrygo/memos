@@ -451,36 +451,35 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                       placeholder={t("common.title")}
                     />
 
-                    {/* Time Range - on one row */}
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="datetime-local"
-                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
-                          "YYYY-MM-DDTHH:mm",
-                        )}
-                        onChange={(e) => {
-                          const ts = BigInt(dayjs(e.target.value).unix());
-                          setParsedSchedule({ ...parsedSchedule, startTs: ts });
-                        }}
-                        className="h-9 flex-1"
-                      />
-                      <span className="text-muted-foreground">–</span>
-                      <Input
-                        type="datetime-local"
-                        value={
-                          parsedSchedule.endTs > 0
-                            ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                                "YYYY-MM-DDTHH:mm",
-                              )
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const ts = BigInt(dayjs(e.target.value).unix());
-                          setParsedSchedule({ ...parsedSchedule, endTs: ts });
-                        }}
-                        className="h-9 flex-1"
-                      />
-                    </div>
+                    {/* Start Time */}
+                    <Input
+                      type="datetime-local"
+                      value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
+                        "YYYY-MM-DDTHH:mm",
+                      )}
+                      onChange={(e) => {
+                        const ts = BigInt(dayjs(e.target.value).unix());
+                        setParsedSchedule({ ...parsedSchedule, startTs: ts });
+                      }}
+                      className="h-9"
+                    />
+
+                    {/* End Time */}
+                    <Input
+                      type="datetime-local"
+                      value={
+                        parsedSchedule.endTs > 0
+                          ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
+                              "YYYY-MM-DDTHH:mm",
+                            )
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const ts = BigInt(dayjs(e.target.value).unix());
+                        setParsedSchedule({ ...parsedSchedule, endTs: ts });
+                      }}
+                      className="h-9"
+                    />
 
                     {/* Location */}
                     <Input
