@@ -144,6 +144,57 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/parrots:
+        get:
+            tags:
+                - AIService
+            description: ListParrots returns all available parrot agents with their metacognitive information.
+            operationId: AIService_ListParrots
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListParrotsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/parrots/{agentType}/self-cognition:
+        get:
+            tags:
+                - AIService
+            description: GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+            operationId: AIService_GetParrotSelfCognition
+            parameters:
+                - name: agentType
+                  in: path
+                  required: true
+                  schema:
+                    enum:
+                        - AGENT_TYPE_DEFAULT
+                        - AGENT_TYPE_MEMO
+                        - AGENT_TYPE_SCHEDULE
+                        - AGENT_TYPE_AMAZING
+                        - AGENT_TYPE_CREATIVE
+                    type: string
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetParrotSelfCognitionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/search:
         post:
             tags:
@@ -2573,6 +2624,12 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/User'
                     description: The authenticated user's information.
+        GetParrotSelfCognitionResponse:
+            type: object
+            properties:
+                selfCognition:
+                    $ref: '#/components/schemas/ParrotSelfCognition'
+            description: GetParrotSelfCognitionResponse is the response for GetParrotSelfCognition.
         GetRelatedMemosResponse:
             type: object
             properties:
@@ -2848,6 +2905,14 @@ components:
                     description: |-
                         A token that can be sent as `page_token` to retrieve the next page.
                          If this field is omitted, there are no subsequent pages.
+        ListParrotsResponse:
+            type: object
+            properties:
+                parrots:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ParrotInfo'
+            description: ListParrotsResponse is the response for ListParrots.
         ListPersonalAccessTokensResponse:
             type: object
             properties:
@@ -3116,6 +3181,55 @@ components:
                         type: string
                 fieldMapping:
                     $ref: '#/components/schemas/FieldMapping'
+        ParrotInfo:
+            type: object
+            properties:
+                agentType:
+                    enum:
+                        - AGENT_TYPE_DEFAULT
+                        - AGENT_TYPE_MEMO
+                        - AGENT_TYPE_SCHEDULE
+                        - AGENT_TYPE_AMAZING
+                        - AGENT_TYPE_CREATIVE
+                    type: string
+                    format: enum
+                name:
+                    type: string
+                selfCognition:
+                    $ref: '#/components/schemas/ParrotSelfCognition'
+            description: ParrotInfo represents basic information about a parrot.
+        ParrotSelfCognition:
+            type: object
+            properties:
+                name:
+                    type: string
+                emoji:
+                    type: string
+                title:
+                    type: string
+                personality:
+                    type: array
+                    items:
+                        type: string
+                capabilities:
+                    type: array
+                    items:
+                        type: string
+                limitations:
+                    type: array
+                    items:
+                        type: string
+                workingStyle:
+                    type: string
+                favoriteTools:
+                    type: array
+                    items:
+                        type: string
+                selfIntroduction:
+                    type: string
+                funFact:
+                    type: string
+            description: ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
         ParseAndCreateScheduleRequest:
             required:
                 - text

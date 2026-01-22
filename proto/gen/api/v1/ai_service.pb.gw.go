@@ -211,6 +211,70 @@ func request_AIService_ChatWithMemosIntegrated_0(ctx context.Context, marshaler 
 	return stream, metadata, nil
 }
 
+func request_AIService_GetParrotSelfCognition_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetParrotSelfCognitionRequest
+		metadata runtime.ServerMetadata
+		e        int32
+		err      error
+	)
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	val, ok := pathParams["agent_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "agent_type")
+	}
+	e, err = runtime.Enum(val, AgentType_value)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "agent_type", err)
+	}
+	protoReq.AgentType = AgentType(e)
+	msg, err := client.GetParrotSelfCognition(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_AIService_GetParrotSelfCognition_0(ctx context.Context, marshaler runtime.Marshaler, server AIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetParrotSelfCognitionRequest
+		metadata runtime.ServerMetadata
+		e        int32
+		err      error
+	)
+	val, ok := pathParams["agent_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "agent_type")
+	}
+	e, err = runtime.Enum(val, AgentType_value)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "agent_type", err)
+	}
+	protoReq.AgentType = AgentType(e)
+	msg, err := server.GetParrotSelfCognition(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_AIService_ListParrots_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ListParrotsRequest
+		metadata runtime.ServerMetadata
+	)
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	msg, err := client.ListParrots(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_AIService_ListParrots_0(ctx context.Context, marshaler runtime.Marshaler, server AIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ListParrotsRequest
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.ListParrots(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 func request_ScheduleAgentService_Chat_0(ctx context.Context, marshaler runtime.Marshaler, client ScheduleAgentServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ScheduleAgentChatRequest
@@ -347,6 +411,46 @@ func RegisterAIServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
+	})
+	mux.Handle(http.MethodGet, pattern_AIService_GetParrotSelfCognition_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/memos.api.v1.AIService/GetParrotSelfCognition", runtime.WithHTTPPathPattern("/api/v1/ai/parrots/{agent_type}/self-cognition"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_AIService_GetParrotSelfCognition_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_AIService_GetParrotSelfCognition_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_AIService_ListParrots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/memos.api.v1.AIService/ListParrots", runtime.WithHTTPPathPattern("/api/v1/ai/parrots"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_AIService_ListParrots_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_AIService_ListParrots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -527,6 +631,40 @@ func RegisterAIServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 		}
 		forward_AIService_ChatWithMemosIntegrated_0(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_AIService_GetParrotSelfCognition_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.AIService/GetParrotSelfCognition", runtime.WithHTTPPathPattern("/api/v1/ai/parrots/{agent_type}/self-cognition"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_AIService_GetParrotSelfCognition_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_AIService_GetParrotSelfCognition_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_AIService_ListParrots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.AIService/ListParrots", runtime.WithHTTPPathPattern("/api/v1/ai/parrots"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_AIService_ListParrots_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_AIService_ListParrots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
@@ -537,6 +675,8 @@ var (
 	pattern_AIService_GetRelatedMemos_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3, 2, 4}, []string{"api", "v1", "memos", "name", "related"}, ""))
 	pattern_AIService_ChatWithScheduleAgent_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "ai", "chat", "schedule"}, ""))
 	pattern_AIService_ChatWithMemosIntegrated_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "ai", "chat", "integrated"}, ""))
+	pattern_AIService_GetParrotSelfCognition_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "ai", "parrots", "agent_type", "self-cognition"}, ""))
+	pattern_AIService_ListParrots_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "parrots"}, ""))
 )
 
 var (
@@ -546,6 +686,8 @@ var (
 	forward_AIService_GetRelatedMemos_0         = runtime.ForwardResponseMessage
 	forward_AIService_ChatWithScheduleAgent_0   = runtime.ForwardResponseStream
 	forward_AIService_ChatWithMemosIntegrated_0 = runtime.ForwardResponseStream
+	forward_AIService_GetParrotSelfCognition_0  = runtime.ForwardResponseMessage
+	forward_AIService_ListParrots_0             = runtime.ForwardResponseMessage
 )
 
 // RegisterScheduleAgentServiceHandlerFromEndpoint is same as RegisterScheduleAgentServiceHandler but

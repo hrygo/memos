@@ -51,6 +51,11 @@ const (
 	// AIServiceChatWithMemosIntegratedProcedure is the fully-qualified name of the AIService's
 	// ChatWithMemosIntegrated RPC.
 	AIServiceChatWithMemosIntegratedProcedure = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
+	// AIServiceGetParrotSelfCognitionProcedure is the fully-qualified name of the AIService's
+	// GetParrotSelfCognition RPC.
+	AIServiceGetParrotSelfCognitionProcedure = "/memos.api.v1.AIService/GetParrotSelfCognition"
+	// AIServiceListParrotsProcedure is the fully-qualified name of the AIService's ListParrots RPC.
+	AIServiceListParrotsProcedure = "/memos.api.v1.AIService/ListParrots"
 	// ScheduleAgentServiceChatProcedure is the fully-qualified name of the ScheduleAgentService's Chat
 	// RPC.
 	ScheduleAgentServiceChatProcedure = "/memos.api.v1.ScheduleAgentService/Chat"
@@ -73,6 +78,10 @@ type AIServiceClient interface {
 	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
 	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
 	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
+	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
+	// ListParrots returns all available parrot agents with their metacognitive information.
+	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
 }
 
 // NewAIServiceClient constructs a client for the memos.api.v1.AIService service. By default, it
@@ -122,6 +131,18 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
 			connect.WithClientOptions(opts...),
 		),
+		getParrotSelfCognition: connect.NewClient[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse](
+			httpClient,
+			baseURL+AIServiceGetParrotSelfCognitionProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetParrotSelfCognition")),
+			connect.WithClientOptions(opts...),
+		),
+		listParrots: connect.NewClient[v1.ListParrotsRequest, v1.ListParrotsResponse](
+			httpClient,
+			baseURL+AIServiceListParrotsProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -133,6 +154,8 @@ type aIServiceClient struct {
 	getRelatedMemos         *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
 	chatWithScheduleAgent   *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
 	chatWithMemosIntegrated *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
+	getParrotSelfCognition  *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
+	listParrots             *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
 }
 
 // SemanticSearch calls memos.api.v1.AIService.SemanticSearch.
@@ -165,6 +188,16 @@ func (c *aIServiceClient) ChatWithMemosIntegrated(ctx context.Context, req *conn
 	return c.chatWithMemosIntegrated.CallServerStream(ctx, req)
 }
 
+// GetParrotSelfCognition calls memos.api.v1.AIService.GetParrotSelfCognition.
+func (c *aIServiceClient) GetParrotSelfCognition(ctx context.Context, req *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error) {
+	return c.getParrotSelfCognition.CallUnary(ctx, req)
+}
+
+// ListParrots calls memos.api.v1.AIService.ListParrots.
+func (c *aIServiceClient) ListParrots(ctx context.Context, req *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error) {
+	return c.listParrots.CallUnary(ctx, req)
+}
+
 // AIServiceHandler is an implementation of the memos.api.v1.AIService service.
 type AIServiceHandler interface {
 	// SemanticSearch performs semantic search on memos.
@@ -179,6 +212,10 @@ type AIServiceHandler interface {
 	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
 	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
 	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
+	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
+	// ListParrots returns all available parrot agents with their metacognitive information.
+	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
 }
 
 // NewAIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -224,6 +261,18 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceGetParrotSelfCognitionHandler := connect.NewUnaryHandler(
+		AIServiceGetParrotSelfCognitionProcedure,
+		svc.GetParrotSelfCognition,
+		connect.WithSchema(aIServiceMethods.ByName("GetParrotSelfCognition")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceListParrotsHandler := connect.NewUnaryHandler(
+		AIServiceListParrotsProcedure,
+		svc.ListParrots,
+		connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AIServiceSemanticSearchProcedure:
@@ -238,6 +287,10 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceChatWithScheduleAgentHandler.ServeHTTP(w, r)
 		case AIServiceChatWithMemosIntegratedProcedure:
 			aIServiceChatWithMemosIntegratedHandler.ServeHTTP(w, r)
+		case AIServiceGetParrotSelfCognitionProcedure:
+			aIServiceGetParrotSelfCognitionHandler.ServeHTTP(w, r)
+		case AIServiceListParrotsProcedure:
+			aIServiceListParrotsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -269,6 +322,14 @@ func (UnimplementedAIServiceHandler) ChatWithScheduleAgent(context.Context, *con
 
 func (UnimplementedAIServiceHandler) ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithMemosIntegrated is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetParrotSelfCognition is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListParrots is not implemented"))
 }
 
 // ScheduleAgentServiceClient is a client for the memos.api.v1.ScheduleAgentService service.

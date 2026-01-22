@@ -55,6 +55,20 @@ service AIService {
       body: "*"
     };
   }
+
+  // GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+  rpc GetParrotSelfCognition(GetParrotSelfCognitionRequest) returns (GetParrotSelfCognitionResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/parrots/{agent_type}/self-cognition"
+    };
+  }
+
+  // ListParrots returns all available parrot agents with their metacognitive information.
+  rpc ListParrots(ListParrotsRequest) returns (ListParrotsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/parrots"
+    };
+  }
 }
 
 // ScheduleAgentService provides schedule-specific AI agent functionality.
@@ -198,4 +212,43 @@ message GetRelatedMemosRequest {
 // GetRelatedMemosResponse is the response for GetRelatedMemos.
 message GetRelatedMemosResponse {
   repeated SearchResult memos = 1;
+}
+
+// ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
+message ParrotSelfCognition {
+  string name = 1;                       // Parrot name (e.g., "schedule", "memo", "creative", "amazing")
+  string emoji = 2;                      // Visual representation (e.g., "🦜")
+  string title = 3;                      // Formal title (e.g., "金刚 - 日程助手鹦鹉")
+  repeated string personality = 4;       // Character traits
+  repeated string capabilities = 5;      // What the parrot can do
+  repeated string limitations = 6;       // What the parrot cannot do
+  string working_style = 7;              // How the parrot approaches tasks
+  repeated string favorite_tools = 8;    // Tools the parrot frequently uses
+  string self_introduction = 9;          // First-person introduction
+  string fun_fact = 10;                  // Interesting fact about the parrot
+}
+
+// GetParrotSelfCognitionRequest is the request for GetParrotSelfCognition.
+message GetParrotSelfCognitionRequest {
+  AgentType agent_type = 1 [(google.api.field_behavior) = REQUIRED];  // Agent type
+}
+
+// GetParrotSelfCognitionResponse is the response for GetParrotSelfCognition.
+message GetParrotSelfCognitionResponse {
+  ParrotSelfCognition self_cognition = 1;  // Parrot's metacognitive information
+}
+
+// ListParrotsRequest is the request for ListParrots.
+message ListParrotsRequest {}
+
+// ListParrotsResponse is the response for ListParrots.
+message ListParrotsResponse {
+  repeated ParrotInfo parrots = 1;  // All available parrots
+}
+
+// ParrotInfo represents basic information about a parrot.
+message ParrotInfo {
+  AgentType agent_type = 1;            // Agent type enum
+  string name = 2;                     // Parrot name
+  ParrotSelfCognition self_cognition = 3;  // Full metacognitive information
 }

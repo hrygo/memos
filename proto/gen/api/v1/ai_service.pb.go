@@ -1045,6 +1045,356 @@ func (x *GetRelatedMemosResponse) GetMemos() []*SearchResult {
 	return nil
 }
 
+// ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
+type ParrotSelfCognition struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                                                 // Parrot name (e.g., "schedule", "memo", "creative", "amazing")
+	Emoji            string                 `protobuf:"bytes,2,opt,name=emoji,proto3" json:"emoji,omitempty"`                                               // Visual representation (e.g., "🦜")
+	Title            string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`                                               // Formal title (e.g., "金刚 - 日程助手鹦鹉")
+	Personality      []string               `protobuf:"bytes,4,rep,name=personality,proto3" json:"personality,omitempty"`                                   // Character traits
+	Capabilities     []string               `protobuf:"bytes,5,rep,name=capabilities,proto3" json:"capabilities,omitempty"`                                 // What the parrot can do
+	Limitations      []string               `protobuf:"bytes,6,rep,name=limitations,proto3" json:"limitations,omitempty"`                                   // What the parrot cannot do
+	WorkingStyle     string                 `protobuf:"bytes,7,opt,name=working_style,json=workingStyle,proto3" json:"working_style,omitempty"`             // How the parrot approaches tasks
+	FavoriteTools    []string               `protobuf:"bytes,8,rep,name=favorite_tools,json=favoriteTools,proto3" json:"favorite_tools,omitempty"`          // Tools the parrot frequently uses
+	SelfIntroduction string                 `protobuf:"bytes,9,opt,name=self_introduction,json=selfIntroduction,proto3" json:"self_introduction,omitempty"` // First-person introduction
+	FunFact          string                 `protobuf:"bytes,10,opt,name=fun_fact,json=funFact,proto3" json:"fun_fact,omitempty"`                           // Interesting fact about the parrot
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ParrotSelfCognition) Reset() {
+	*x = ParrotSelfCognition{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ParrotSelfCognition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ParrotSelfCognition) ProtoMessage() {}
+
+func (x *ParrotSelfCognition) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ParrotSelfCognition.ProtoReflect.Descriptor instead.
+func (*ParrotSelfCognition) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ParrotSelfCognition) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ParrotSelfCognition) GetEmoji() string {
+	if x != nil {
+		return x.Emoji
+	}
+	return ""
+}
+
+func (x *ParrotSelfCognition) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ParrotSelfCognition) GetPersonality() []string {
+	if x != nil {
+		return x.Personality
+	}
+	return nil
+}
+
+func (x *ParrotSelfCognition) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
+func (x *ParrotSelfCognition) GetLimitations() []string {
+	if x != nil {
+		return x.Limitations
+	}
+	return nil
+}
+
+func (x *ParrotSelfCognition) GetWorkingStyle() string {
+	if x != nil {
+		return x.WorkingStyle
+	}
+	return ""
+}
+
+func (x *ParrotSelfCognition) GetFavoriteTools() []string {
+	if x != nil {
+		return x.FavoriteTools
+	}
+	return nil
+}
+
+func (x *ParrotSelfCognition) GetSelfIntroduction() string {
+	if x != nil {
+		return x.SelfIntroduction
+	}
+	return ""
+}
+
+func (x *ParrotSelfCognition) GetFunFact() string {
+	if x != nil {
+		return x.FunFact
+	}
+	return ""
+}
+
+// GetParrotSelfCognitionRequest is the request for GetParrotSelfCognition.
+type GetParrotSelfCognitionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentType     AgentType              `protobuf:"varint,1,opt,name=agent_type,json=agentType,proto3,enum=memos.api.v1.AgentType" json:"agent_type,omitempty"` // Agent type
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetParrotSelfCognitionRequest) Reset() {
+	*x = GetParrotSelfCognitionRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetParrotSelfCognitionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetParrotSelfCognitionRequest) ProtoMessage() {}
+
+func (x *GetParrotSelfCognitionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetParrotSelfCognitionRequest.ProtoReflect.Descriptor instead.
+func (*GetParrotSelfCognitionRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetParrotSelfCognitionRequest) GetAgentType() AgentType {
+	if x != nil {
+		return x.AgentType
+	}
+	return AgentType_AGENT_TYPE_DEFAULT
+}
+
+// GetParrotSelfCognitionResponse is the response for GetParrotSelfCognition.
+type GetParrotSelfCognitionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SelfCognition *ParrotSelfCognition   `protobuf:"bytes,1,opt,name=self_cognition,json=selfCognition,proto3" json:"self_cognition,omitempty"` // Parrot's metacognitive information
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetParrotSelfCognitionResponse) Reset() {
+	*x = GetParrotSelfCognitionResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetParrotSelfCognitionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetParrotSelfCognitionResponse) ProtoMessage() {}
+
+func (x *GetParrotSelfCognitionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetParrotSelfCognitionResponse.ProtoReflect.Descriptor instead.
+func (*GetParrotSelfCognitionResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetParrotSelfCognitionResponse) GetSelfCognition() *ParrotSelfCognition {
+	if x != nil {
+		return x.SelfCognition
+	}
+	return nil
+}
+
+// ListParrotsRequest is the request for ListParrots.
+type ListParrotsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListParrotsRequest) Reset() {
+	*x = ListParrotsRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListParrotsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListParrotsRequest) ProtoMessage() {}
+
+func (x *ListParrotsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListParrotsRequest.ProtoReflect.Descriptor instead.
+func (*ListParrotsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{18}
+}
+
+// ListParrotsResponse is the response for ListParrots.
+type ListParrotsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Parrots       []*ParrotInfo          `protobuf:"bytes,1,rep,name=parrots,proto3" json:"parrots,omitempty"` // All available parrots
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListParrotsResponse) Reset() {
+	*x = ListParrotsResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListParrotsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListParrotsResponse) ProtoMessage() {}
+
+func (x *ListParrotsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListParrotsResponse.ProtoReflect.Descriptor instead.
+func (*ListParrotsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListParrotsResponse) GetParrots() []*ParrotInfo {
+	if x != nil {
+		return x.Parrots
+	}
+	return nil
+}
+
+// ParrotInfo represents basic information about a parrot.
+type ParrotInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentType     AgentType              `protobuf:"varint,1,opt,name=agent_type,json=agentType,proto3,enum=memos.api.v1.AgentType" json:"agent_type,omitempty"` // Agent type enum
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                                         // Parrot name
+	SelfCognition *ParrotSelfCognition   `protobuf:"bytes,3,opt,name=self_cognition,json=selfCognition,proto3" json:"self_cognition,omitempty"`                  // Full metacognitive information
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ParrotInfo) Reset() {
+	*x = ParrotInfo{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ParrotInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ParrotInfo) ProtoMessage() {}
+
+func (x *ParrotInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ParrotInfo.ProtoReflect.Descriptor instead.
+func (*ParrotInfo) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ParrotInfo) GetAgentType() AgentType {
+	if x != nil {
+		return x.AgentType
+	}
+	return AgentType_AGENT_TYPE_DEFAULT
+}
+
+func (x *ParrotInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ParrotInfo) GetSelfCognition() *ParrotSelfCognition {
+	if x != nil {
+		return x.SelfCognition
+	}
+	return nil
+}
+
 var File_api_v1_ai_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_ai_service_proto_rawDesc = "" +
@@ -1113,7 +1463,33 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"K\n" +
 	"\x17GetRelatedMemosResponse\x120\n" +
-	"\x05memos\x18\x01 \x03(\v2\x1a.memos.api.v1.SearchResultR\x05memos*7\n" +
+	"\x05memos\x18\x01 \x03(\v2\x1a.memos.api.v1.SearchResultR\x05memos\"\xd1\x02\n" +
+	"\x13ParrotSelfCognition\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05emoji\x18\x02 \x01(\tR\x05emoji\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12 \n" +
+	"\vpersonality\x18\x04 \x03(\tR\vpersonality\x12\"\n" +
+	"\fcapabilities\x18\x05 \x03(\tR\fcapabilities\x12 \n" +
+	"\vlimitations\x18\x06 \x03(\tR\vlimitations\x12#\n" +
+	"\rworking_style\x18\a \x01(\tR\fworkingStyle\x12%\n" +
+	"\x0efavorite_tools\x18\b \x03(\tR\rfavoriteTools\x12+\n" +
+	"\x11self_introduction\x18\t \x01(\tR\x10selfIntroduction\x12\x19\n" +
+	"\bfun_fact\x18\n" +
+	" \x01(\tR\afunFact\"\\\n" +
+	"\x1dGetParrotSelfCognitionRequest\x12;\n" +
+	"\n" +
+	"agent_type\x18\x01 \x01(\x0e2\x17.memos.api.v1.AgentTypeB\x03\xe0A\x02R\tagentType\"j\n" +
+	"\x1eGetParrotSelfCognitionResponse\x12H\n" +
+	"\x0eself_cognition\x18\x01 \x01(\v2!.memos.api.v1.ParrotSelfCognitionR\rselfCognition\"\x14\n" +
+	"\x12ListParrotsRequest\"I\n" +
+	"\x13ListParrotsResponse\x122\n" +
+	"\aparrots\x18\x01 \x03(\v2\x18.memos.api.v1.ParrotInfoR\aparrots\"\xa2\x01\n" +
+	"\n" +
+	"ParrotInfo\x126\n" +
+	"\n" +
+	"agent_type\x18\x01 \x01(\x0e2\x17.memos.api.v1.AgentTypeR\tagentType\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12H\n" +
+	"\x0eself_cognition\x18\x03 \x01(\v2!.memos.api.v1.ParrotSelfCognitionR\rselfCognition*7\n" +
 	"\x11ScheduleQueryMode\x12\b\n" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
@@ -1124,14 +1500,16 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\x97\x06\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x042\xb5\b\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12v\n" +
 	"\rChatWithMemos\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/ai/chat0\x01\x12\x86\x01\n" +
 	"\x0fGetRelatedMemos\x12$.memos.api.v1.GetRelatedMemosRequest\x1a%.memos.api.v1.GetRelatedMemosResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/{name=memos/*}/related\x12\x87\x01\n" +
 	"\x15ChatWithScheduleAgent\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/ai/chat/schedule0\x01\x12\x8b\x01\n" +
-	"\x17ChatWithMemosIntegrated\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/ai/chat/integrated0\x012\xaa\x02\n" +
+	"\x17ChatWithMemosIntegrated\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/ai/chat/integrated0\x01\x12\xab\x01\n" +
+	"\x16GetParrotSelfCognition\x12+.memos.api.v1.GetParrotSelfCognitionRequest\x1a,.memos.api.v1.GetParrotSelfCognitionResponse\"6\x82\xd3\xe4\x93\x020\x12./api/v1/ai/parrots/{agent_type}/self-cognition\x12n\n" +
+	"\vListParrots\x12 .memos.api.v1.ListParrotsRequest\x1a!.memos.api.v1.ListParrotsResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/v1/ai/parrots2\xaa\x02\n" +
 	"\x14ScheduleAgentService\x12\x7f\n" +
 	"\x04Chat\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a'.memos.api.v1.ScheduleAgentChatResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/schedule-agent/chat\x12\x90\x01\n" +
 	"\n" +
@@ -1151,25 +1529,31 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_api_v1_ai_service_proto_goTypes = []any{
-	(ScheduleQueryMode)(0),              // 0: memos.api.v1.ScheduleQueryMode
-	(AgentType)(0),                      // 1: memos.api.v1.AgentType
-	(*ScheduleAgentChatRequest)(nil),    // 2: memos.api.v1.ScheduleAgentChatRequest
-	(*ScheduleAgentChatResponse)(nil),   // 3: memos.api.v1.ScheduleAgentChatResponse
-	(*ScheduleAgentStreamResponse)(nil), // 4: memos.api.v1.ScheduleAgentStreamResponse
-	(*SemanticSearchRequest)(nil),       // 5: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),      // 6: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),                // 7: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),          // 8: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),         // 9: memos.api.v1.SuggestTagsResponse
-	(*ChatWithMemosRequest)(nil),        // 10: memos.api.v1.ChatWithMemosRequest
-	(*ChatWithMemosResponse)(nil),       // 11: memos.api.v1.ChatWithMemosResponse
-	(*ScheduleCreationIntent)(nil),      // 12: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),         // 13: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),             // 14: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),      // 15: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil),     // 16: memos.api.v1.GetRelatedMemosResponse
+	(ScheduleQueryMode)(0),                 // 0: memos.api.v1.ScheduleQueryMode
+	(AgentType)(0),                         // 1: memos.api.v1.AgentType
+	(*ScheduleAgentChatRequest)(nil),       // 2: memos.api.v1.ScheduleAgentChatRequest
+	(*ScheduleAgentChatResponse)(nil),      // 3: memos.api.v1.ScheduleAgentChatResponse
+	(*ScheduleAgentStreamResponse)(nil),    // 4: memos.api.v1.ScheduleAgentStreamResponse
+	(*SemanticSearchRequest)(nil),          // 5: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),         // 6: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),                   // 7: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),             // 8: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),            // 9: memos.api.v1.SuggestTagsResponse
+	(*ChatWithMemosRequest)(nil),           // 10: memos.api.v1.ChatWithMemosRequest
+	(*ChatWithMemosResponse)(nil),          // 11: memos.api.v1.ChatWithMemosResponse
+	(*ScheduleCreationIntent)(nil),         // 12: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),            // 13: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),                // 14: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),         // 15: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil),        // 16: memos.api.v1.GetRelatedMemosResponse
+	(*ParrotSelfCognition)(nil),            // 17: memos.api.v1.ParrotSelfCognition
+	(*GetParrotSelfCognitionRequest)(nil),  // 18: memos.api.v1.GetParrotSelfCognitionRequest
+	(*GetParrotSelfCognitionResponse)(nil), // 19: memos.api.v1.GetParrotSelfCognitionResponse
+	(*ListParrotsRequest)(nil),             // 20: memos.api.v1.ListParrotsRequest
+	(*ListParrotsResponse)(nil),            // 21: memos.api.v1.ListParrotsResponse
+	(*ParrotInfo)(nil),                     // 22: memos.api.v1.ParrotInfo
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
 	7,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
@@ -1179,27 +1563,36 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	13, // 4: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
 	14, // 5: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
 	7,  // 6: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
-	5,  // 7: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	8,  // 8: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	10, // 9: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
-	15, // 10: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	10, // 11: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
-	10, // 12: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
-	2,  // 13: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	2,  // 14: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	6,  // 15: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	9,  // 16: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	11, // 17: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
-	16, // 18: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	11, // 19: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
-	11, // 20: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse
-	3,  // 21: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
-	4,  // 22: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
-	15, // [15:23] is the sub-list for method output_type
-	7,  // [7:15] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1,  // 7: memos.api.v1.GetParrotSelfCognitionRequest.agent_type:type_name -> memos.api.v1.AgentType
+	17, // 8: memos.api.v1.GetParrotSelfCognitionResponse.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	22, // 9: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
+	1,  // 10: memos.api.v1.ParrotInfo.agent_type:type_name -> memos.api.v1.AgentType
+	17, // 11: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	5,  // 12: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	8,  // 13: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	10, // 14: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	15, // 15: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	10, // 16: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
+	10, // 17: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
+	18, // 18: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
+	20, // 19: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
+	2,  // 20: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	2,  // 21: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	6,  // 22: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	9,  // 23: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	11, // 24: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	16, // 25: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	11, // 26: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
+	11, // 27: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse
+	19, // 28: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
+	21, // 29: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
+	3,  // 30: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	4,  // 31: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	22, // [22:32] is the sub-list for method output_type
+	12, // [12:22] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -1213,7 +1606,7 @@ func file_api_v1_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

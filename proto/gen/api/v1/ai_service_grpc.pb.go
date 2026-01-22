@@ -25,6 +25,8 @@ const (
 	AIService_GetRelatedMemos_FullMethodName         = "/memos.api.v1.AIService/GetRelatedMemos"
 	AIService_ChatWithScheduleAgent_FullMethodName   = "/memos.api.v1.AIService/ChatWithScheduleAgent"
 	AIService_ChatWithMemosIntegrated_FullMethodName = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
+	AIService_GetParrotSelfCognition_FullMethodName  = "/memos.api.v1.AIService/GetParrotSelfCognition"
+	AIService_ListParrots_FullMethodName             = "/memos.api.v1.AIService/ListParrots"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -45,6 +47,10 @@ type AIServiceClient interface {
 	ChatWithScheduleAgent(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error)
 	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
 	ChatWithMemosIntegrated(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error)
+	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+	GetParrotSelfCognition(ctx context.Context, in *GetParrotSelfCognitionRequest, opts ...grpc.CallOption) (*GetParrotSelfCognitionResponse, error)
+	// ListParrots returns all available parrot agents with their metacognitive information.
+	ListParrots(ctx context.Context, in *ListParrotsRequest, opts ...grpc.CallOption) (*ListParrotsResponse, error)
 }
 
 type aIServiceClient struct {
@@ -142,6 +148,26 @@ func (c *aIServiceClient) ChatWithMemosIntegrated(ctx context.Context, in *ChatW
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_ChatWithMemosIntegratedClient = grpc.ServerStreamingClient[ChatWithMemosResponse]
 
+func (c *aIServiceClient) GetParrotSelfCognition(ctx context.Context, in *GetParrotSelfCognitionRequest, opts ...grpc.CallOption) (*GetParrotSelfCognitionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetParrotSelfCognitionResponse)
+	err := c.cc.Invoke(ctx, AIService_GetParrotSelfCognition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) ListParrots(ctx context.Context, in *ListParrotsRequest, opts ...grpc.CallOption) (*ListParrotsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListParrotsResponse)
+	err := c.cc.Invoke(ctx, AIService_ListParrots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
@@ -160,6 +186,10 @@ type AIServiceServer interface {
 	ChatWithScheduleAgent(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error
 	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
 	ChatWithMemosIntegrated(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error
+	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+	GetParrotSelfCognition(context.Context, *GetParrotSelfCognitionRequest) (*GetParrotSelfCognitionResponse, error)
+	// ListParrots returns all available parrot agents with their metacognitive information.
+	ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -187,6 +217,12 @@ func (UnimplementedAIServiceServer) ChatWithScheduleAgent(*ChatWithMemosRequest,
 }
 func (UnimplementedAIServiceServer) ChatWithMemosIntegrated(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error {
 	return status.Error(codes.Unimplemented, "method ChatWithMemosIntegrated not implemented")
+}
+func (UnimplementedAIServiceServer) GetParrotSelfCognition(context.Context, *GetParrotSelfCognitionRequest) (*GetParrotSelfCognitionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetParrotSelfCognition not implemented")
+}
+func (UnimplementedAIServiceServer) ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListParrots not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -296,6 +332,42 @@ func _AIService_ChatWithMemosIntegrated_Handler(srv interface{}, stream grpc.Ser
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_ChatWithMemosIntegratedServer = grpc.ServerStreamingServer[ChatWithMemosResponse]
 
+func _AIService_GetParrotSelfCognition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetParrotSelfCognitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetParrotSelfCognition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetParrotSelfCognition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetParrotSelfCognition(ctx, req.(*GetParrotSelfCognitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_ListParrots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListParrotsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).ListParrots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_ListParrots_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).ListParrots(ctx, req.(*ListParrotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,6 +386,14 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRelatedMemos",
 			Handler:    _AIService_GetRelatedMemos_Handler,
+		},
+		{
+			MethodName: "GetParrotSelfCognition",
+			Handler:    _AIService_GetParrotSelfCognition_Handler,
+		},
+		{
+			MethodName: "ListParrots",
+			Handler:    _AIService_ListParrots_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

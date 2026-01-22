@@ -325,7 +325,7 @@ type InstanceGeneralSetting struct {
 	CustomProfile *InstanceCustomProfile `protobuf:"bytes,6,opt,name=custom_profile,json=customProfile,proto3" json:"custom_profile,omitempty"`
 	// week_start_day_offset is the week start day offset from Sunday.
 	// 0: Sunday, 1: Monday, 2: Tuesday, 3: Wednesday, 4: Thursday, 5: Friday, 6: Saturday
-	// Default is Sunday.
+	// Default is Monday.
 	WeekStartDayOffset int32 `protobuf:"varint,7,opt,name=week_start_day_offset,json=weekStartDayOffset,proto3" json:"week_start_day_offset,omitempty"`
 	// disallow_change_username disallows changing username.
 	DisallowChangeUsername bool `protobuf:"varint,8,opt,name=disallow_change_username,json=disallowChangeUsername,proto3" json:"disallow_change_username,omitempty"`
