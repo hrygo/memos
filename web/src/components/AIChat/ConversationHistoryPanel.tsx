@@ -18,7 +18,7 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     conversations,
     state,
     createConversation,
-    deleteConversation,
+    addContextSeparator,
     selectConversation,
     updateConversationTitle,
     pinConversation,
@@ -43,8 +43,8 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     onSelectConversation?.("");
   };
 
-  const handleDelete = (id: string) => {
-    deleteConversation(id);
+  const handleResetContext = (id: string) => {
+    addContextSeparator(id);
   };
 
   const handleRename = (id: string, newTitle: string) => {
@@ -82,7 +82,7 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
                 conversation={conversation}
                 isActive={conversation.id === state.currentConversationId}
                 onSelect={handleSelectConversation}
-                onDelete={handleDelete}
+                onResetContext={handleResetContext}
                 onRename={handleRename}
                 onTogglePin={handleTogglePin}
               />

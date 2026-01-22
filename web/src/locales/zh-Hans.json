@@ -530,6 +530,7 @@
       "close": "关闭",
       "select-agent": "选择 AI 助手",
       "select-agent-desc": "点击下方卡片选择一个 AI 助手开始对话",
+      "mention-hint": "选择一个助手...",
       "memo-tagline": "搜索与问答",
       "schedule-tagline": "规划与管理",
       "amazing-tagline": "全能助手",

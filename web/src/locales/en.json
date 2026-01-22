@@ -530,6 +530,7 @@
       "close": "Close",
       "select-agent": "Select AI Assistant",
       "select-agent-desc": "Click a card below to select an AI assistant and start chatting",
+      "mention-hint": "Select an agent...",
       "memo-tagline": "Search & Ask",
       "schedule-tagline": "Plan & Manage",
       "amazing-tagline": "All-in-One",

@@ -1,4 +1,4 @@
-import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
+import { Eraser, MoreHorizontal, Pencil, Pin, PinOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -9,13 +9,13 @@ interface ConversationItemProps {
   conversation: ConversationSummary;
   isActive: boolean;
   onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
+  onResetContext: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
   onTogglePin: (id: string) => void;
   className?: string;
 }
 
-export function ConversationItem({ conversation, isActive, onSelect, onDelete, onRename, onTogglePin, className }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, onSelect, onResetContext, onRename, onTogglePin, className }: ConversationItemProps) {
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
   const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.DEFAULT;
@@ -62,7 +62,7 @@ export function ConversationItem({ conversation, isActive, onSelect, onDelete, o
           conversationId={conversation.id}
           conversationTitle={conversation.title}
           isPinned={conversation.pinned}
-          onDelete={onDelete}
+          onResetContext={onResetContext}
           onRename={onRename}
           onTogglePin={onTogglePin}
         />
@@ -75,12 +75,12 @@ interface ActionMenuProps {
   conversationId: string;
   conversationTitle: string;
   isPinned: boolean;
-  onDelete: (id: string) => void;
+  onResetContext: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
   onTogglePin: (id: string) => void;
 }
 
-function ActionMenu({ conversationId, conversationTitle, isPinned, onDelete, onRename, onTogglePin }: ActionMenuProps) {
+function ActionMenu({ conversationId, conversationTitle, isPinned, onResetContext, onRename, onTogglePin }: ActionMenuProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -165,14 +165,14 @@ function ActionMenu({ conversationId, conversationTitle, isPinned, onDelete, onR
             <div className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
             <button
               onClick={() => {
-                onDelete(conversationId);
+                onResetContext(conversationId);
                 setIsOpen(false);
               }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-              aria-label="Delete conversation"
+              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              aria-label="Reset context"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
+              <Eraser className="w-3.5 h-3.5" />
+              {t("ai.clear-context")}
             </button>
           </div>
         </>

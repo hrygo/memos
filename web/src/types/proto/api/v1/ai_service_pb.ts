@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIr8BChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUi+QEKFUNoYXRXaXRoTWVtb3NSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg8KB3NvdXJjZXMYAiADKAkSDAoEZG9uZRgDIAEoCBJGChhzY2hlZHVsZV9jcmVhdGlvbl9pbnRlbnQYBCABKAsyJC5tZW1vcy5hcGkudjEuU2NoZWR1bGVDcmVhdGlvbkludGVudBJAChVzY2hlZHVsZV9xdWVyeV9yZXN1bHQYBSABKAsyIS5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeVJlc3VsdBISCgpldmVudF90eXBlGAYgASgJEhIKCmV2ZW50X2RhdGEYByABKAkiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQqNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIqggEKCUFnZW50VHlwZRIWChJBR0VOVF9UWVBFX0RFRkFVTFQQABITCg9BR0VOVF9UWVBFX01FTU8QARIXChNBR0VOVF9UWVBFX1NDSEVEVUxFEAISFgoSQUdFTlRfVFlQRV9BTUFaSU5HEAMSFwoTQUdFTlRfVFlQRV9DUkVBVElWRRAEMpcGCglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSdgoNQ2hhdFdpdGhNZW1vcxIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZBKHAQoVQ2hhdFdpdGhTY2hlZHVsZUFnZW50EiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NoYXQvc2NoZWR1bGUwARKLAQoXQ2hhdFdpdGhNZW1vc0ludGVncmF0ZWQSIi5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlIiWC0+STAh86ASoiGi9hcGkvdjEvYWkvY2hhdC9pbnRlZ3JhdGVkMAEyqgIKFFNjaGVkdWxlQWdlbnRTZXJ2aWNlEn8KBENoYXQSJi5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXF1ZXN0GicubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVzcG9uc2UiJoLT5JMCIDoBKiIbL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0EpABCgpDaGF0U3RyZWFtEiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBopLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50U3RyZWFtUmVzcG9uc2UiLYLT5JMCJzoBKiIiL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0L3N0cmVhbTABQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIr8BChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUi+QEKFUNoYXRXaXRoTWVtb3NSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg8KB3NvdXJjZXMYAiADKAkSDAoEZG9uZRgDIAEoCBJGChhzY2hlZHVsZV9jcmVhdGlvbl9pbnRlbnQYBCABKAsyJC5tZW1vcy5hcGkudjEuU2NoZWR1bGVDcmVhdGlvbkludGVudBJAChVzY2hlZHVsZV9xdWVyeV9yZXN1bHQYBSABKAsyIS5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeVJlc3VsdBISCgpldmVudF90eXBlGAYgASgJEhIKCmV2ZW50X2RhdGEYByABKAkiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQi3QEKE1BhcnJvdFNlbGZDb2duaXRpb24SDAoEbmFtZRgBIAEoCRINCgVlbW9qaRgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtwZXJzb25hbGl0eRgEIAMoCRIUCgxjYXBhYmlsaXRpZXMYBSADKAkSEwoLbGltaXRhdGlvbnMYBiADKAkSFQoNd29ya2luZ19zdHlsZRgHIAEoCRIWCg5mYXZvcml0ZV90b29scxgIIAMoCRIZChFzZWxmX2ludHJvZHVjdGlvbhgJIAEoCRIQCghmdW5fZmFjdBgKIAEoCSJRCh1HZXRQYXJyb3RTZWxmQ29nbml0aW9uUmVxdWVzdBIwCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZUID4EECIlsKHkdldFBhcnJvdFNlbGZDb2duaXRpb25SZXNwb25zZRI5Cg5zZWxmX2NvZ25pdGlvbhgBIAEoCzIhLm1lbW9zLmFwaS52MS5QYXJyb3RTZWxmQ29nbml0aW9uIhQKEkxpc3RQYXJyb3RzUmVxdWVzdCJAChNMaXN0UGFycm90c1Jlc3BvbnNlEikKB3BhcnJvdHMYASADKAsyGC5tZW1vcy5hcGkudjEuUGFycm90SW5mbyKCAQoKUGFycm90SW5mbxIrCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZRIMCgRuYW1lGAIgASgJEjkKDnNlbGZfY29nbml0aW9uGAMgASgLMiEubWVtb3MuYXBpLnYxLlBhcnJvdFNlbGZDb2duaXRpb24qNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIqggEKCUFnZW50VHlwZRIWChJBR0VOVF9UWVBFX0RFRkFVTFQQABITCg9BR0VOVF9UWVBFX01FTU8QARIXChNBR0VOVF9UWVBFX1NDSEVEVUxFEAISFgoSQUdFTlRfVFlQRV9BTUFaSU5HEAMSFwoTQUdFTlRfVFlQRV9DUkVBVElWRRAEMrUICglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSdgoNQ2hhdFdpdGhNZW1vcxIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZBKHAQoVQ2hhdFdpdGhTY2hlZHVsZUFnZW50EiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NoYXQvc2NoZWR1bGUwARKLAQoXQ2hhdFdpdGhNZW1vc0ludGVncmF0ZWQSIi5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlIiWC0+STAh86ASoiGi9hcGkvdjEvYWkvY2hhdC9pbnRlZ3JhdGVkMAESqwEKFkdldFBhcnJvdFNlbGZDb2duaXRpb24SKy5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlcXVlc3QaLC5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlIjaC0+STAjASLi9hcGkvdjEvYWkvcGFycm90cy97YWdlbnRfdHlwZX0vc2VsZi1jb2duaXRpb24SbgoLTGlzdFBhcnJvdHMSIC5tZW1vcy5hcGkudjEuTGlzdFBhcnJvdHNSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLkxpc3RQYXJyb3RzUmVzcG9uc2UiGoLT5JMCFBISL2FwaS92MS9haS9wYXJyb3RzMqoCChRTY2hlZHVsZUFnZW50U2VydmljZRJ/CgRDaGF0EiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBonLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlIiaC0+STAiA6ASoiGy9hcGkvdjEvc2NoZWR1bGUtYWdlbnQvY2hhdBKQAQoKQ2hhdFN0cmVhbRImLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50Q2hhdFJlcXVlc3QaKS5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudFN0cmVhbVJlc3BvbnNlIi2C0+STAic6ASoiIi9hcGkvdjEvc2NoZWR1bGUtYWdlbnQvY2hhdC9zdHJlYW0wAUKmAQoQY29tLm1lbW9zLmFwaS52MUIOQWlTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior]);
 
 /**
  * ScheduleAgentChatRequest is the request for schedule agent chat.
@@ -531,6 +531,203 @@ export const GetRelatedMemosResponseSchema: GenMessage<GetRelatedMemosResponse> 
   messageDesc(file_api_v1_ai_service, 14);
 
 /**
+ * ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
+ *
+ * @generated from message memos.api.v1.ParrotSelfCognition
+ */
+export type ParrotSelfCognition = Message<"memos.api.v1.ParrotSelfCognition"> & {
+  /**
+   * Parrot name (e.g., "schedule", "memo", "creative", "amazing")
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * Visual representation (e.g., "🦜")
+   *
+   * @generated from field: string emoji = 2;
+   */
+  emoji: string;
+
+  /**
+   * Formal title (e.g., "金刚 - 日程助手鹦鹉")
+   *
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * Character traits
+   *
+   * @generated from field: repeated string personality = 4;
+   */
+  personality: string[];
+
+  /**
+   * What the parrot can do
+   *
+   * @generated from field: repeated string capabilities = 5;
+   */
+  capabilities: string[];
+
+  /**
+   * What the parrot cannot do
+   *
+   * @generated from field: repeated string limitations = 6;
+   */
+  limitations: string[];
+
+  /**
+   * How the parrot approaches tasks
+   *
+   * @generated from field: string working_style = 7;
+   */
+  workingStyle: string;
+
+  /**
+   * Tools the parrot frequently uses
+   *
+   * @generated from field: repeated string favorite_tools = 8;
+   */
+  favoriteTools: string[];
+
+  /**
+   * First-person introduction
+   *
+   * @generated from field: string self_introduction = 9;
+   */
+  selfIntroduction: string;
+
+  /**
+   * Interesting fact about the parrot
+   *
+   * @generated from field: string fun_fact = 10;
+   */
+  funFact: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ParrotSelfCognition.
+ * Use `create(ParrotSelfCognitionSchema)` to create a new message.
+ */
+export const ParrotSelfCognitionSchema: GenMessage<ParrotSelfCognition> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 15);
+
+/**
+ * GetParrotSelfCognitionRequest is the request for GetParrotSelfCognition.
+ *
+ * @generated from message memos.api.v1.GetParrotSelfCognitionRequest
+ */
+export type GetParrotSelfCognitionRequest = Message<"memos.api.v1.GetParrotSelfCognitionRequest"> & {
+  /**
+   * Agent type
+   *
+   * @generated from field: memos.api.v1.AgentType agent_type = 1;
+   */
+  agentType: AgentType;
+};
+
+/**
+ * Describes the message memos.api.v1.GetParrotSelfCognitionRequest.
+ * Use `create(GetParrotSelfCognitionRequestSchema)` to create a new message.
+ */
+export const GetParrotSelfCognitionRequestSchema: GenMessage<GetParrotSelfCognitionRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 16);
+
+/**
+ * GetParrotSelfCognitionResponse is the response for GetParrotSelfCognition.
+ *
+ * @generated from message memos.api.v1.GetParrotSelfCognitionResponse
+ */
+export type GetParrotSelfCognitionResponse = Message<"memos.api.v1.GetParrotSelfCognitionResponse"> & {
+  /**
+   * Parrot's metacognitive information
+   *
+   * @generated from field: memos.api.v1.ParrotSelfCognition self_cognition = 1;
+   */
+  selfCognition?: ParrotSelfCognition;
+};
+
+/**
+ * Describes the message memos.api.v1.GetParrotSelfCognitionResponse.
+ * Use `create(GetParrotSelfCognitionResponseSchema)` to create a new message.
+ */
+export const GetParrotSelfCognitionResponseSchema: GenMessage<GetParrotSelfCognitionResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 17);
+
+/**
+ * ListParrotsRequest is the request for ListParrots.
+ *
+ * @generated from message memos.api.v1.ListParrotsRequest
+ */
+export type ListParrotsRequest = Message<"memos.api.v1.ListParrotsRequest"> & {
+};
+
+/**
+ * Describes the message memos.api.v1.ListParrotsRequest.
+ * Use `create(ListParrotsRequestSchema)` to create a new message.
+ */
+export const ListParrotsRequestSchema: GenMessage<ListParrotsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 18);
+
+/**
+ * ListParrotsResponse is the response for ListParrots.
+ *
+ * @generated from message memos.api.v1.ListParrotsResponse
+ */
+export type ListParrotsResponse = Message<"memos.api.v1.ListParrotsResponse"> & {
+  /**
+   * All available parrots
+   *
+   * @generated from field: repeated memos.api.v1.ParrotInfo parrots = 1;
+   */
+  parrots: ParrotInfo[];
+};
+
+/**
+ * Describes the message memos.api.v1.ListParrotsResponse.
+ * Use `create(ListParrotsResponseSchema)` to create a new message.
+ */
+export const ListParrotsResponseSchema: GenMessage<ListParrotsResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 19);
+
+/**
+ * ParrotInfo represents basic information about a parrot.
+ *
+ * @generated from message memos.api.v1.ParrotInfo
+ */
+export type ParrotInfo = Message<"memos.api.v1.ParrotInfo"> & {
+  /**
+   * Agent type enum
+   *
+   * @generated from field: memos.api.v1.AgentType agent_type = 1;
+   */
+  agentType: AgentType;
+
+  /**
+   * Parrot name
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * Full metacognitive information
+   *
+   * @generated from field: memos.api.v1.ParrotSelfCognition self_cognition = 3;
+   */
+  selfCognition?: ParrotSelfCognition;
+};
+
+/**
+ * Describes the message memos.api.v1.ParrotInfo.
+ * Use `create(ParrotInfoSchema)` to create a new message.
+ */
+export const ParrotInfoSchema: GenMessage<ParrotInfo> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 20);
+
+/**
  * ScheduleQueryMode specifies the query mode for schedule filtering.
  *
  * @generated from enum memos.api.v1.ScheduleQueryMode
@@ -677,6 +874,26 @@ export const AIService: GenService<{
     methodKind: "server_streaming";
     input: typeof ChatWithMemosRequestSchema;
     output: typeof ChatWithMemosResponseSchema;
+  },
+  /**
+   * GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+   *
+   * @generated from rpc memos.api.v1.AIService.GetParrotSelfCognition
+   */
+  getParrotSelfCognition: {
+    methodKind: "unary";
+    input: typeof GetParrotSelfCognitionRequestSchema;
+    output: typeof GetParrotSelfCognitionResponseSchema;
+  },
+  /**
+   * ListParrots returns all available parrot agents with their metacognitive information.
+   *
+   * @generated from rpc memos.api.v1.AIService.ListParrots
+   */
+  listParrots: {
+    methodKind: "unary";
+    input: typeof ListParrotsRequestSchema;
+    output: typeof ListParrotsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_ai_service, 0);

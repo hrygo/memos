@@ -1,11 +1,12 @@
 import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { aiServiceClient } from "@/connect";
+import { aiServiceClient, scheduleAgentServiceClient } from "@/connect";
 import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 import {
   ChatWithMemosRequestSchema,
   GetRelatedMemosRequestSchema,
   SemanticSearchRequestSchema,
+  ScheduleAgentChatRequestSchema,
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
 
