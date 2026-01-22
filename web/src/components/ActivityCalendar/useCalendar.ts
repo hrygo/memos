@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { useMemo } from "react";
 import { DAYS_IN_WEEK, MIN_COUNT, WEEKEND_DAYS } from "./constants";
-import type { CalendarDayCell, CalendarMatrixResult } from "./types";
+import type { CalendarDayCell, CalendarMatrixResult, ScheduleSummary } from "./types";
 
 export interface UseCalendarMatrixParams {
   month: string;
@@ -10,6 +10,7 @@ export interface UseCalendarMatrixParams {
   weekStartDayOffset: number;
   today: string;
   selectedDate: string;
+  schedulesByDate?: Record<string, ScheduleSummary[]>;
 }
 
 const createCalendarDayCell = (
@@ -18,10 +19,13 @@ const createCalendarDayCell = (
   data: Record<string, number>,
   today: string,
   selectedDate: string,
+  schedulesByDate?: Record<string, ScheduleSummary[]>,
 ): CalendarDayCell => {
   const isoDate = current.format("YYYY-MM-DD");
   const isCurrentMonth = current.format("YYYY-MM") === monthKey;
   const count = data[isoDate] ?? 0;
+  const schedules = schedulesByDate?.[isoDate] ?? [];
+  const scheduleCount = schedules.length;
 
   return {
     date: isoDate,
@@ -31,6 +35,8 @@ const createCalendarDayCell = (
     isToday: isoDate === today,
     isSelected: isoDate === selectedDate,
     isWeekend: WEEKEND_DAYS.includes(current.day() as 0 | 6),
+    scheduleCount,
+    hasSchedule: scheduleCount > 0,
   };
 };
 
@@ -55,6 +61,7 @@ export const useCalendarMatrix = ({
   weekStartDayOffset,
   today,
   selectedDate,
+  schedulesByDate,
 }: UseCalendarMatrixParams): CalendarMatrixResult => {
   return useMemo(() => {
     // Determine the start of the month and its formatted key (YYYY-MM)
@@ -80,7 +87,7 @@ export const useCalendarMatrix = ({
       }
 
       // Create the day cell object with data and status flags
-      const dayCell = createCalendarDayCell(current, monthKey, data, today, selectedDate);
+      const dayCell = createCalendarDayCell(current, monthKey, data, today, selectedDate, schedulesByDate);
       weeks[weekIndex].days.push(dayCell);
       maxCount = Math.max(maxCount, dayCell.count);
     }
@@ -90,5 +97,5 @@ export const useCalendarMatrix = ({
       weekDays: rotatedWeekDays,
       maxCount: Math.max(maxCount, MIN_COUNT),
     };
-  }, [month, data, weekDays, weekStartDayOffset, today, selectedDate]);
+  }, [month, data, weekDays, weekStartDayOffset, today, selectedDate, schedulesByDate]);
 };

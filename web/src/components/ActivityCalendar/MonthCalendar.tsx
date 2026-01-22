@@ -10,7 +10,7 @@ import { useCalendarMatrix } from "./useCalendar";
 import { getTooltipText } from "./utils";
 
 export const MonthCalendar = memo((props: MonthCalendarProps) => {
-  const { month, data, maxCount, size = "default", onClick, className } = props;
+  const { month, data, maxCount, size = "default", onClick, className, schedulesByDate } = props;
   const t = useTranslate();
   const { generalSetting } = useInstance();
 
@@ -26,6 +26,7 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
     weekStartDayOffset,
     today,
     selectedDate: "",
+    schedulesByDate,
   });
 
   const sizeConfig = size === "small" ? SMALL_CELL_SIZE : DEFAULT_CELL_SIZE;
@@ -44,6 +45,7 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
         {weeks.map((week, weekIndex) =>
           week.days.map((day, dayIndex) => {
             const tooltipText = getTooltipText(day.count, day.date, t);
+            const scheduleCount = schedulesByDate?.[day.date]?.length ?? 0;
 
             return (
               <CalendarCell
@@ -53,6 +55,7 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
                 tooltipText={tooltipText}
                 onClick={onClick}
                 size={size}
+                scheduleCount={scheduleCount}
               />
             );
           }),
