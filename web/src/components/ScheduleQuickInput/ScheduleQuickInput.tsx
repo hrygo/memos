@@ -8,6 +8,7 @@ import { useCheckConflict, useCreateSchedule, useSchedulesOptimized } from "@/ho
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { generateUUID } from "@/utils/uuid";
 import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
 import { ConflictSuggestions } from "./ConflictSuggestions";
 import { useConflictDetection } from "./hooks/useConflictDetection";
@@ -29,24 +30,6 @@ interface ScheduleQuickInputProps {
 const MAX_INPUT_HEIGHT = 120;
 /** Line height for auto-resize calculation */
 const LINE_HEIGHT = 24;
-
-/**
- * Generate a UUID with fallback for environments where crypto.randomUUID() is unavailable.
- */
-function generateUUID(): string {
-  try {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-  } catch {
-    // Fall through to manual generation
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }: ScheduleQuickInputProps) {
   const { selectedDate } = useScheduleContext();
@@ -297,27 +280,31 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
     }
     if (scheduleData.startTs <= 0) {
       console.error("[ScheduleQuickInput] Invalid startTs (must be positive):", scheduleData.startTs);
-      toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+      toast.error(t("schedule.error.invalid-time") as string);
       return false;
     }
     if (scheduleData.endTs <= scheduleData.startTs) {
       console.error("[ScheduleQuickInput] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
-      toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
+      toast.error(t("schedule.error.invalid-time-range") as string);
       return false;
     }
 
+    // Extract validated timestamps for type safety (no non-null assertion needed)
+    const validatedStartTs = scheduleData.startTs;
+    const validatedEndTs = scheduleData.endTs;
+
     try {
       const result = await checkConflict.mutateAsync({
-        startTs: scheduleData.startTs,
-        endTs: scheduleData.endTs,
+        startTs: validatedStartTs,
+        endTs: validatedEndTs,
       });
 
       if (result.conflicts.length > 0) {
         const conflictInfos: ConflictInfo[] = result.conflicts.map((s) => ({
           conflictingSchedule: s,
           type: "partial" as const,
-          overlapStartTs: scheduleData.startTs!,
-          overlapEndTs: scheduleData.endTs!,
+          overlapStartTs: validatedStartTs,
+          overlapEndTs: validatedEndTs,
         }));
         setConflicts(conflictInfos);
         setShowConflictPanel(true);
