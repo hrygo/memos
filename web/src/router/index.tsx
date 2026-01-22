@@ -5,10 +5,10 @@ import App from "@/App";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Spinner from "@/components/Spinner";
 import { ScheduleProvider } from "@/contexts/ScheduleContext";
+import AIChatLayout from "@/layouts/AIChatLayout";
 import MainLayout from "@/layouts/MainLayout";
 import RootLayout from "@/layouts/RootLayout";
 import ScheduleLayout from "@/layouts/ScheduleLayout";
-import AIChatLayout from "@/layouts/AIChatLayout";
 import Home from "@/pages/Home";
 
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));

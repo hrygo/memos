@@ -477,6 +477,7 @@
     "thinking": "Thinking...",
     "regenerate": "Regenerate",
     "clear": "Clear",
+    "more-options": "More options",
     "clear-chat": "Clear chat",
     "clear-chat-confirm": "Are you sure you want to clear all conversation history?",
     "clear-chat-desc": "Delete all conversation content",
@@ -504,7 +505,16 @@
         "search-memos-hint": "Chat with the Memo parrot to search and reference your notes",
         "search-placeholder": "Search memos...",
         "no-results": "No results found",
-        "try-different-search": "Try a different search term"
+        "try-different-search": "Try a different search term",
+        "conversation-count_one": "{{count}} conversation",
+        "conversation-count_other": "{{count}} conversations"
+      },
+      "memo-query": {
+        "no-results": "No related memos found",
+        "query-label": "Query",
+        "results-title": "Memo Query Results",
+        "found-count": "Found {{count}} related memos",
+        "sorted": "Sorted"
       }
     },
     "parrot": {
@@ -528,23 +538,33 @@
       "agents": {
         "default": {
           "name": "Default Assistant",
-          "description": "Default AI assistant with RAG system"
+          "nameAlt": "默认助手",
+          "description": "Default AI assistant with RAG system",
+          "examples": ["Summarize recent memos", "Search for Python content", "What's on my schedule today"]
         },
         "memo": {
           "name": "Memo",
-          "description": "Note assistant for searching, summarizing, and managing memos"
+          "nameAlt": "灰灰",
+          "description": "Note assistant for searching, summarizing, and managing memos",
+          "examples": ["Search for programming notes", "Summarize recent work memos", "Find project management notes"]
         },
         "schedule": {
           "name": "Schedule",
-          "description": "Schedule assistant for creating, querying, and managing schedules"
+          "nameAlt": "金刚",
+          "description": "Schedule assistant for creating, querying, and managing schedules",
+          "examples": ["What's on my schedule today", "Am I free tomorrow afternoon", "Create a meeting reminder for next week"]
         },
         "amazing": {
           "name": "Amazing",
-          "description": "Comprehensive assistant combining memo and schedule features"
+          "nameAlt": "惊奇",
+          "description": "Comprehensive assistant combining memo and schedule features",
+          "examples": ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"]
         },
         "creative": {
           "name": "Creative",
-          "description": "Creative writing assistant for brainstorming and content creation"
+          "nameAlt": "灵灵",
+          "description": "Creative writing assistant for brainstorming and content creation",
+          "examples": ["Brainstorm product promotion ideas", "Write a project progress email", "Improve this text expression"]
         }
       }
     }
@@ -644,13 +664,21 @@
       "hours": "hours",
       "template-meeting": "Meeting",
       "template-meeting-15": "15min Meeting",
+      "prompt-meeting-15": "Have a 15min meeting with colleagues to discuss progress",
       "template-meeting-30": "30min Meeting",
+      "prompt-meeting-30": "Meeting at 3pm to discuss project",
       "template-call": "Call",
+      "prompt-call": "Call the client to discuss requirements",
       "template-video": "Video Call",
+      "prompt-video": "Video meeting with product team to review requirements",
       "template-lunch": "Lunch",
+      "prompt-lunch": "Lunch with client at noon",
       "template-coffee": "Coffee",
+      "prompt-coffee": "Go to café for coffee and chat",
       "template-workout": "Workout",
+      "prompt-workout": "Go to gym for an hour workout",
       "template-focus": "Focus Time",
+      "prompt-focus": "Focus work for two hours without interruption",
       "confirm-create": "Confirm",
       "edit": "Edit",
       "cancel": "Cancel",
@@ -693,6 +721,21 @@
       "source-type-ai": "AI",
       "template-applied": "From template: {title}",
       "template-applied-message": "Applied \"{title}\" template, duration {duration} minutes"
+    },
+    "quick": {
+      "input": {
+        "placeholder": "e.g. Go home at 5 o'clock",
+        "placeholder-with-date": "{{date}}, e.g. Go home at 5 o'clock",
+        "ai-hint": "AI agent will automatically create schedules",
+        "creating": "AI is creating your schedule...",
+        "created-success": "Schedule created successfully",
+        "select-suggestion": "Please select a suggestion below",
+        "date-context": "Currently selected: {{date}} (for reference only, user input takes priority)",
+        "suggestion-message": "Selected date: {{date}}\nCreate: {{title}} {{startTime}}-{{endTime}}",
+        "create-failed": "Creation failed, please try again",
+        "parse-error-fallback": "Processing failed, please try again",
+        "schedule-created-fallback": "Schedule created"
+      }
     },
     "time": {
       "tbd": "Time TBD",

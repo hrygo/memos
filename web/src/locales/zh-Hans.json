@@ -477,6 +477,7 @@
     "thinking": "思考中...",
     "regenerate": "重新生成",
     "clear": "清除",
+    "more-options": "更多选项",
     "clear-chat": "清空对话",
     "clear-chat-confirm": "确定要清空所有对话记录吗？",
     "clear-chat-desc": "删除所有会话内容",
@@ -504,7 +505,16 @@
         "search-memos-hint": "与笔记鹦鹉对话以搜索和引用您的笔记",
         "search-placeholder": "搜索笔记...",
         "no-results": "未找到结果",
-        "try-different-search": "尝试不同的搜索词"
+        "try-different-search": "尝试不同的搜索词",
+        "conversation-count_one": "{{count}} 个对话",
+        "conversation-count_other": "{{count}} 个对话"
+      },
+      "memo-query": {
+        "no-results": "未找到相关笔记",
+        "query-label": "查询",
+        "results-title": "笔记查询结果",
+        "found-count": "找到 {{count}} 条相关笔记",
+        "sorted": "已排序"
       }
     },
     "parrot": {
@@ -528,23 +538,33 @@
       "agents": {
         "default": {
           "name": "默认助手",
-          "description": "默认 AI 助手，使用 RAG 系统回答问题"
+          "nameAlt": "Default Assistant",
+          "description": "默认 AI 助手，使用 RAG 系统回答问题",
+          "examples": ["总结最近的笔记", "帮我搜索关于 Python 的内容", "今天有什么安排"]
         },
         "memo": {
           "name": "灰灰",
-          "description": "笔记助手，专注于检索、总结和管理笔记"
+          "nameAlt": "Memo",
+          "description": "笔记助手，专注于检索、总结和管理笔记",
+          "examples": ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"]
         },
         "schedule": {
           "name": "金刚",
-          "description": "日程助手，帮助创建、查询和管理日程"
+          "nameAlt": "Schedule",
+          "description": "日程助手，帮助创建、查询和管理日程",
+          "examples": ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"]
         },
         "amazing": {
           "name": "惊奇",
-          "description": "综合助手，结合笔记和日程功能"
+          "nameAlt": "Amazing",
+          "description": "综合助手，结合笔记和日程功能",
+          "examples": ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"]
         },
         "creative": {
           "name": "灵灵",
-          "description": "创意助手，提供创意写作和头脑风暴"
+          "nameAlt": "Creative",
+          "description": "创意助手，提供创意写作和头脑风暴",
+          "examples": ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"]
         }
       }
     }
@@ -644,13 +664,21 @@
       "hours": "小时",
       "template-meeting": "会议",
       "template-meeting-15": "15分钟会议",
+      "prompt-meeting-15": "和同事开15分钟短会讨论进度",
       "template-meeting-30": "30分钟会议",
+      "prompt-meeting-30": "下午3点开会讨论项目",
       "template-call": "电话",
+      "prompt-call": "给客户打个电话沟通需求",
       "template-video": "视频会议",
+      "prompt-video": "和产品组开视频会议过需求",
       "template-lunch": "午餐",
+      "prompt-lunch": "中午和客户一起吃饭",
       "template-coffee": "咖啡",
+      "prompt-coffee": "下午去咖啡馆边喝咖啡边聊",
       "template-workout": "运动",
+      "prompt-workout": "去健身房锻炼一小时",
       "template-focus": "专注时间",
+      "prompt-focus": "下午专注工作两小时不做打扰",
       "confirm-create": "确认创建",
       "edit": "编辑",
       "cancel": "取消",
@@ -693,6 +721,21 @@
       "source-type-ai": "AI",
       "template-applied": "来自模板：{title}",
       "template-applied-message": "已应用\"{title}\"模板，时长 {duration} 分钟"
+    },
+    "quick": {
+      "input": {
+        "placeholder": "例如：五点钟回家",
+        "placeholder-with-date": "{{date}}，例如：五点钟回家",
+        "ai-hint": "AI 智能体会自动创建日程",
+        "creating": "AI 正在为您创建日程...",
+        "created-success": "日程已创建成功",
+        "select-suggestion": "请选择下方建议",
+        "date-context": "当前选中: {{date}}（仅供参考，用户输入的日期优先）",
+        "suggestion-message": "选中日期: {{date}}\n创建: {{title}} {{startTime}}-{{endTime}}",
+        "create-failed": "创建失败，请重试",
+        "parse-error-fallback": "处理失败，请重试",
+        "schedule-created-fallback": "日程已创建"
+      }
     },
     "time": {
       "tbd": "时间待定",

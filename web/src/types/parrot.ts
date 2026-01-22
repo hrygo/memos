@@ -65,6 +65,7 @@ export interface ParrotAgent {
   color: string;
   available: boolean; // Whether this parrot is available in current milestone
   examplePrompts?: string[]; // Suggested prompts for this parrot
+  backgroundImage?: string; // Background image for the agent card
 }
 
 /**
@@ -91,6 +92,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     color: "blue",
     available: true,
     examplePrompts: ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"],
+    backgroundImage: "/images/parrots/memo_parrot_bg.webp",
   },
   [ParrotAgentType.SCHEDULE]: {
     id: ParrotAgentType.SCHEDULE,
@@ -101,6 +103,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     color: "orange",
     available: true,
     examplePrompts: ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"],
+    backgroundImage: "/images/parrots/schedule_bg.webp",
   },
   [ParrotAgentType.AMAZING]: {
     id: ParrotAgentType.AMAZING,
@@ -111,6 +114,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     color: "purple",
     available: true,
     examplePrompts: ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"],
+    backgroundImage: "/images/parrots/amazing_bg.webp",
   },
   [ParrotAgentType.CREATIVE]: {
     id: ParrotAgentType.CREATIVE,
@@ -121,6 +125,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     color: "pink",
     available: true,
     examplePrompts: ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"],
+    backgroundImage: "/images/parrots/creative_bg.webp",
   },
 };
 
@@ -229,83 +234,103 @@ export enum ParrotEventType {
 
 /**
  * Parrot theme configuration
- * 鹦鹉主题配置
+ * 鹦鹉主题配置 - 信息清晰优先设计
+ *
+ * 设计原则:
+ * - 信息清晰优先于视觉效果
+ * - 高对比度确保可读性
+ * - 简洁干净的视觉
+ * - 每个鹦鹉独立且协调的色系
  */
 export const PARROT_THEMES = {
   DEFAULT: {
-    bgLight: "bg-zinc-50",
-    bgDark: "dark:bg-zinc-900",
-    bubbleUser: "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900",
+    // 默认助手 - 中性灰
+    bubbleUser: "bg-zinc-900 dark:bg-zinc-200 text-white dark:text-zinc-900",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-zinc-200 dark:border-zinc-700",
-    text: "text-zinc-800 dark:text-zinc-200",
-    iconBg: "bg-zinc-100 dark:bg-zinc-800",
-    iconText: "text-zinc-600 dark:text-zinc-400",
+    text: "text-zinc-900 dark:text-zinc-100",
+    textSecondary: "text-zinc-600 dark:text-zinc-400",
+    iconBg: "bg-zinc-100 dark:bg-zinc-700",
+    iconText: "text-zinc-700 dark:text-zinc-300",
     inputBg: "bg-zinc-50 dark:bg-zinc-900",
     inputBorder: "border-zinc-200 dark:border-zinc-700",
-    inputFocus: "focus:ring-zinc-500",
+    inputFocus: "focus:ring-zinc-500 focus:border-zinc-500",
     cardBg: "bg-white dark:bg-zinc-800",
     cardBorder: "border-zinc-200 dark:border-zinc-700",
+    accent: "bg-zinc-500",
+    accentText: "text-white",
   },
+  // 灰灰 - 非洲灰鹦鹉 (African Grey Parrot)
+  // DNA: 银灰羽毛 + 红色点缀 (subtle)
   MEMO: {
-    bgLight: "bg-[#E6F2FF]",
-    bgDark: "dark:bg-blue-900/20",
-    bubbleUser: "bg-[#B3D9FF] text-zinc-900",
+    bubbleUser: "bg-slate-700 dark:bg-slate-300 text-white dark:text-slate-900",
     bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-blue-200 dark:border-blue-800",
-    text: "text-zinc-800 dark:text-zinc-200",
-    iconBg: "bg-blue-100 dark:bg-blue-900/40",
-    iconText: "text-[#2E86C1] dark:text-blue-400",
-    inputBg: "bg-blue-50 dark:bg-blue-900/20",
-    inputBorder: "border-blue-200 dark:border-blue-800",
-    inputFocus: "focus:ring-blue-500",
-    cardBg: "bg-[#E6F0FA] dark:bg-blue-900/10",
-    cardBorder: "border-blue-200 dark:border-blue-800",
+    bubbleBorder: "border-slate-200 dark:border-slate-700",
+    text: "text-slate-900 dark:text-slate-100",
+    textSecondary: "text-slate-600 dark:text-slate-400",
+    iconBg: "bg-slate-100 dark:bg-slate-700",
+    iconText: "text-slate-700 dark:text-slate-300",
+    inputBg: "bg-slate-50 dark:bg-slate-900",
+    inputBorder: "border-slate-200 dark:border-slate-700",
+    inputFocus: "focus:ring-slate-500 focus:border-slate-500",
+    cardBg: "bg-white dark:bg-zinc-800",
+    cardBorder: "border-slate-200 dark:border-slate-700",
+    accent: "bg-red-500",
+    accentText: "text-white",
   },
+  // 金刚 - 蓝黄金刚鹦鹉 (Blue-and-yellow Macaw)
+  // DNA: 蓝黄 (simplified, high contrast)
   SCHEDULE: {
-    bgLight: "bg-[#FFF7ED]",
-    bgDark: "dark:bg-orange-900/20",
-    bubbleUser: "bg-[#FFDAB9] text-zinc-900",
+    bubbleUser: "bg-cyan-600 dark:bg-cyan-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-orange-200 dark:border-orange-800",
-    text: "text-zinc-800 dark:text-zinc-200",
-    iconBg: "bg-orange-100 dark:bg-orange-900/40",
-    iconText: "text-[#F5A623] dark:text-orange-400",
-    inputBg: "bg-orange-50 dark:bg-orange-900/20",
-    inputBorder: "border-orange-200 dark:border-orange-800",
-    inputFocus: "focus:ring-orange-500",
-    cardBg: "bg-[#FFF5E6] dark:bg-orange-900/10",
-    cardBorder: "border-orange-200 dark:border-orange-800",
+    bubbleBorder: "border-cyan-200 dark:border-cyan-700",
+    text: "text-slate-900 dark:text-cyan-50",
+    textSecondary: "text-slate-600 dark:text-cyan-200",
+    iconBg: "bg-cyan-100 dark:bg-cyan-900",
+    iconText: "text-cyan-700 dark:text-cyan-300",
+    inputBg: "bg-cyan-50 dark:bg-cyan-950",
+    inputBorder: "border-cyan-200 dark:border-cyan-700",
+    inputFocus: "focus:ring-cyan-500 focus:border-cyan-500",
+    cardBg: "bg-white dark:bg-zinc-800",
+    cardBorder: "border-cyan-200 dark:border-cyan-700",
+    accent: "bg-cyan-500",
+    accentText: "text-white",
   },
+  // 惊奇 - 亚马逊鹦鹉 (Amazon Parrot)
+  // DNA: 绿色 (simplified, high contrast)
   AMAZING: {
-    bgLight: "bg-[#F3E6FF]",
-    bgDark: "dark:bg-purple-900/20",
-    bubbleUser: "bg-[#D1C4E9] text-zinc-900",
+    bubbleUser: "bg-emerald-600 dark:bg-emerald-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-purple-200 dark:border-purple-800",
-    text: "text-zinc-800 dark:text-zinc-200",
-    iconBg: "bg-purple-100 dark:bg-purple-900/40",
-    iconText: "text-[#9B59B6] dark:text-purple-400",
-    inputBg: "bg-purple-50 dark:bg-purple-900/20",
-    inputBorder: "border-purple-200 dark:border-purple-800",
-    inputFocus: "focus:ring-purple-500",
-    cardBg: "bg-[#F5E6FF] dark:bg-purple-900/10",
-    cardBorder: "border-purple-200 dark:border-purple-800",
+    bubbleBorder: "border-emerald-200 dark:border-emerald-700",
+    text: "text-slate-900 dark:text-emerald-50",
+    textSecondary: "text-slate-600 dark:text-emerald-200",
+    iconBg: "bg-emerald-100 dark:bg-emerald-900",
+    iconText: "text-emerald-700 dark:text-emerald-300",
+    inputBg: "bg-emerald-50 dark:bg-emerald-950",
+    inputBorder: "border-emerald-200 dark:border-emerald-700",
+    inputFocus: "focus:ring-emerald-500 focus:border-emerald-500",
+    cardBg: "bg-white dark:bg-zinc-800",
+    cardBorder: "border-emerald-200 dark:border-emerald-700",
+    accent: "bg-emerald-500",
+    accentText: "text-white",
   },
+  // 灵灵 - 虎皮鹦鹉 (Budgerigar)
+  // DNA: 绿色 (simplified, high contrast)
   CREATIVE: {
-    bgLight: "bg-[#FFFBEB]",
-    bgDark: "dark:bg-amber-900/20",
-    bubbleUser: "bg-[#FFECB3] text-zinc-900",
+    bubbleUser: "bg-lime-600 dark:bg-lime-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-[#F1C40F]/30 dark:border-amber-800/50",
-    text: "text-zinc-800 dark:text-zinc-200",
-    iconBg: "bg-amber-100 dark:bg-amber-900/40",
-    iconText: "text-[#F1C40F] dark:text-amber-400",
-    inputBg: "bg-amber-50 dark:bg-amber-900/20",
-    inputBorder: "border-amber-200 dark:border-amber-800",
-    inputFocus: "focus:ring-amber-500",
-    cardBg: "bg-[#FFFFE6] dark:bg-amber-900/10",
-    cardBorder: "border-amber-200 dark:border-amber-800",
+    bubbleBorder: "border-lime-200 dark:border-lime-700",
+    text: "text-slate-900 dark:text-lime-50",
+    textSecondary: "text-slate-600 dark:text-lime-200",
+    iconBg: "bg-lime-100 dark:bg-lime-900",
+    iconText: "text-lime-700 dark:text-lime-300",
+    inputBg: "bg-lime-50 dark:bg-lime-950",
+    inputBorder: "border-lime-200 dark:border-lime-700",
+    inputFocus: "focus:ring-lime-500 focus:border-lime-500",
+    cardBg: "bg-white dark:bg-zinc-800",
+    cardBorder: "border-lime-200 dark:border-lime-700",
+    accent: "bg-lime-500",
+    accentText: "text-white",
   },
 } as const;
 
@@ -315,8 +340,8 @@ export const PARROT_THEMES = {
  */
 export const PARROT_ICONS: Record<string, string> = {
   DEFAULT: "🤖",
-  MEMO: "🦜",
-  SCHEDULE: "📅",
-  AMAZING: "⭐",
-  CREATIVE: "💡",
+  MEMO: "/images/parrots/icons/memo_icon.webp",
+  SCHEDULE: "/images/parrots/icons/schedule_icon.webp",
+  AMAZING: "/images/parrots/icons/amazing_icon.webp",
+  CREATIVE: "/images/parrots/icons/creative_icon.webp",
 };
