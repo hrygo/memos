@@ -10,6 +10,7 @@ import (
 	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/store"
+	storepb "github.com/usememos/memos/proto/gen/store"
 )
 
 // MockEmbeddingService is a mock for EmbeddingService
@@ -434,15 +435,15 @@ func TestQualityLevel_String(t *testing.T) {
 		level    QualityLevel
 		expected string
 	}{
-		{LowQuality, "LowQuality"},
-		{MediumQuality, "MediumQuality"},
-		{HighQuality, "HighQuality"},
+		{LowQuality, "low"},
+		{MediumQuality, "medium"},
+		{HighQuality, "high"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			// QualityLevel is an int, so we just verify the values
-			assert.Equal(t, int(tt.level), int(tt.level))
+			result := tt.level.String()
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -463,4 +464,188 @@ func BenchmarkQueryRouter_Route(b *testing.B) {
 			router.Route(ctx, query, nil)
 		}
 	}
+}
+
+// TestRRFFusion tests the RRF (Reciprocal Rank Fusion) algorithm
+func TestRRFFusion(t *testing.T) {
+	tests := []struct {
+		name           string
+		vectorResults  []*store.MemoWithScore
+		bm25Results    []*store.BM25Result
+		semanticWeight float32
+		wantTopID      int64 // Expected top result ID
+	}{
+		{
+			name: "Both rankings agree - same top result",
+			vectorResults: createMockVectorResults([]int64{1, 2, 3, 4, 5}),
+			bm25Results:   createMockBM25Results([]int64{1, 2, 3, 4, 5}),
+			semanticWeight: 0.5,
+			wantTopID:      1,
+		},
+		{
+			name: "Rankings disagree - reciprocal fusion favors consistency",
+			vectorResults: createMockVectorResults([]int64{1, 2, 3, 4, 5}),
+			bm25Results:   createMockBM25Results([]int64{5, 4, 3, 2, 1}),
+			semanticWeight: 0.5,
+			wantTopID:      3, // ID 3 is rank 3 in both, should get highest combined score
+		},
+		{
+			name: "Vector only - BM25 empty",
+			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:   createMockBM25Results([]int64{}),
+			semanticWeight: 1.0,
+			wantTopID:      1,
+		},
+		{
+			name: "BM25 only - vector empty",
+			vectorResults:  createMockVectorResults([]int64{}),
+			bm25Results:    createMockBM25Results([]int64{1, 2, 3}),
+			semanticWeight: 0.0,
+			wantTopID:      1,
+		},
+		{
+			name: "High semantic weight",
+			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:   createMockBM25Results([]int64{3, 2, 1}),
+			semanticWeight: 0.9,
+			wantTopID:      1, // Vector rank 1 should win with high weight
+		},
+		{
+			name: "High BM25 weight",
+			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:   createMockBM25Results([]int64{3, 2, 1}),
+			semanticWeight: 0.1,
+			wantTopID:      3, // BM25 rank 1 should win with high BM25 weight
+		},
+		{
+			name:           "Partial overlap - some unique results",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3, 4, 5}),
+			bm25Results:    createMockBM25Results([]int64{3, 6, 7, 8, 9}),
+			semanticWeight: 0.5,
+			wantTopID:      3, // ID 3 appears in both (rank 3 in vector, rank 1 in BM25)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			retriever := &AdaptiveRetriever{} // Minimal setup, only needs rrfFusion method
+
+			results := retriever.rrfFusion(tt.vectorResults, tt.bm25Results, tt.semanticWeight)
+
+			if len(results) == 0 {
+				t.Fatal("rrfFusion returned empty results")
+			}
+
+			// Check that results are sorted by score (descending)
+			for i := 1; i < len(results); i++ {
+				if results[i-1].Score < results[i].Score {
+					t.Errorf("Results not sorted by score: results[%d].Score=%f < results[%d].Score=%f",
+						i-1, results[i-1].Score, i, results[i].Score)
+				}
+			}
+
+			// Check top result
+			if results[0].ID != tt.wantTopID {
+				t.Errorf("Top result ID = %d, want %d", results[0].ID, tt.wantTopID)
+			}
+
+			// All scores should be positive
+			for i, r := range results {
+				if r.Score <= 0 {
+					t.Errorf("Result %d has non-positive score: %f", i, r.Score)
+				}
+			}
+		})
+	}
+}
+
+// TestRRFScoreCalculation tests the RRF score calculation
+func TestRRFScoreCalculation(t *testing.T) {
+	// RRF formula: RRF(d) = weight / (k + rank)
+	// where k = 60
+
+	// Single result at rank 1 in both lists
+	vectorResults := createMockVectorResults([]int64{1})
+	bm25Results := createMockBM25Results([]int64{1})
+
+	retriever := &AdaptiveRetriever{}
+	results := retriever.rrfFusion(vectorResults, bm25Results, 0.5)
+
+	if len(results) != 1 {
+		t.Fatalf("Expected 1 result, got %d", len(results))
+	}
+
+	// Expected score: 0.5/(60+1) + 0.5/(60+1) = 1/(61) ≈ 0.01639
+	expectedScore := 1.0 / (float32(RRFK) + 1.0)
+	if results[0].Score < expectedScore-0.0001 || results[0].Score > expectedScore+0.0001 {
+		t.Errorf("Score = %f, want approximately %f", results[0].Score, expectedScore)
+	}
+}
+
+// TestRRFEmptyResults tests RRF with empty inputs
+func TestRRFEmptyResults(t *testing.T) {
+	retriever := &AdaptiveRetriever{}
+
+	results := retriever.rrfFusion([]*store.MemoWithScore{}, []*store.BM25Result{}, 0.5)
+	if len(results) != 0 {
+		t.Errorf("Expected 0 results for empty inputs, got %d", len(results))
+	}
+}
+
+// TestRRFUniqueResults tests RRF when all results are unique (no overlap)
+func TestRRFUniqueResults(t *testing.T) {
+	vectorResults := createMockVectorResults([]int64{1, 2, 3})
+	bm25Results := createMockBM25Results([]int64{4, 5, 6})
+
+	retriever := &AdaptiveRetriever{}
+	results := retriever.rrfFusion(vectorResults, bm25Results, 0.5)
+
+	if len(results) != 6 {
+		t.Fatalf("Expected 6 results, got %d", len(results))
+	}
+
+	// With equal weights and rank 1 for each list, vector's rank 1 should be slightly higher
+	// The important thing is all 6 results are present
+	ids := make(map[int64]bool)
+	for _, r := range results {
+		ids[r.ID] = true
+	}
+
+	for _, id := range []int64{1, 2, 3, 4, 5, 6} {
+		if !ids[id] {
+			t.Errorf("Expected ID %d in results", id)
+		}
+	}
+}
+
+// Helper functions for RRF tests
+
+func createMockMemo(id int64) *store.Memo {
+	return &store.Memo{
+		ID:      int32(id),
+		Content: "",
+		Payload: &storepb.MemoPayload{},
+	}
+}
+
+func createMockVectorResults(ids []int64) []*store.MemoWithScore {
+	results := make([]*store.MemoWithScore, len(ids))
+	for i, id := range ids {
+		results[i] = &store.MemoWithScore{
+			Memo:  createMockMemo(id),
+			Score: 1.0 - float32(i)*0.1, // Decreasing scores
+		}
+	}
+	return results
+}
+
+func createMockBM25Results(ids []int64) []*store.BM25Result {
+	results := make([]*store.BM25Result, len(ids))
+	for i, id := range ids {
+		results[i] = &store.BM25Result{
+			Memo:  createMockMemo(id),
+			Score: 1.0 - float32(i)*0.1, // Decreasing scores
+		}
+	}
+	return results
 }

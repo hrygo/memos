@@ -14,6 +14,13 @@ import (
 	"github.com/usememos/memos/store"
 )
 
+// RRF constants
+const (
+	// RRFK is the damping factor for Reciprocal Rank Fusion
+	// A value of 60 is commonly used in information retrieval
+	RRFK = 60
+)
+
 // AdaptiveRetriever 自适应检索器
 // 根据查询复杂度和结果质量动态调整检索策略
 type AdaptiveRetriever struct {
@@ -400,30 +407,85 @@ func (r *AdaptiveRetriever) fullPipelineWithReranker(ctx context.Context, opts *
 }
 
 // hybridSearch 混合检索实现
+// 使用 RRF (Reciprocal Rank Fusion) 融合 BM25 和向量检索结果
 func (r *AdaptiveRetriever) hybridSearch(ctx context.Context, opts *RetrievalOptions, semanticWeight float32) ([]*SearchResult, error) {
-	// 语义检索
-	queryVector, err := r.embeddingService.Embed(ctx, opts.Query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to embed query: %w", err)
+	// 并行执行 BM25 和向量检索
+	type vectorResult struct {
+		results []*store.MemoWithScore
+		err     error
+	}
+	type bm25Result struct {
+		results []*store.BM25Result
+		err     error
 	}
 
-	vectorResults, err := r.store.VectorSearch(ctx, &store.VectorSearchOptions{
-		UserID: opts.UserID,
-		Vector: queryVector,
-		Limit:  20,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to vector search: %w", err)
+	vectorCh := make(chan vectorResult, 1)
+	bm25Ch := make(chan bm25Result, 1)
+
+	// 并行执行向量检索
+	go func() {
+		queryVector, err := r.embeddingService.Embed(ctx, opts.Query)
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			case vectorCh <- vectorResult{nil, fmt.Errorf("failed to embed query: %w", err)}:
+			}
+			return
+		}
+
+		results, err := r.store.VectorSearch(ctx, &store.VectorSearchOptions{
+			UserID: opts.UserID,
+			Vector: queryVector,
+			Limit:  20,
+		})
+		select {
+		case <-ctx.Done():
+		case vectorCh <- vectorResult{results, err}:
+		}
+	}()
+
+	// 并行执行 BM25 检索
+	go func() {
+		results, err := r.store.BM25Search(ctx, &store.BM25SearchOptions{
+			UserID:   opts.UserID,
+			Query:    opts.Query,
+			Limit:    20,
+			MinScore: 0.1,
+		})
+		select {
+		case <-ctx.Done():
+		case bm25Ch <- bm25Result{results, err}:
+		}
+	}()
+
+	// 等待两个检索完成
+	vectorRes := <-vectorCh
+	bm25Res := <-bm25Ch
+
+	// 处理错误
+	if vectorRes.err != nil && bm25Res.err != nil {
+		return nil, fmt.Errorf("both vector and BM25 search failed: vector=%v, bm25=%v", vectorRes.err, bm25Res.err)
 	}
 
-	// 转换并融合
-	results := r.convertVectorResults(vectorResults)
-
-	// 简化实现：只使用语义检索结果（BM25 需要全文检索支持）
-	// 在实际生产环境中，应该结合 BM25 分数
-	for _, result := range results {
-		result.Score = result.Score * semanticWeight
+	// 如果其中一个失败，使用另一个的结果
+	if vectorRes.err != nil {
+		opts.Logger.WarnContext(ctx, "Vector search failed, using BM25 only",
+			"request_id", opts.RequestID,
+			"error", vectorRes.err,
+		)
+		return r.convertBM25Results(bm25Res.results), nil
 	}
+	if bm25Res.err != nil {
+		opts.Logger.WarnContext(ctx, "BM25 search failed, using vector only",
+			"request_id", opts.RequestID,
+			"error", bm25Res.err,
+		)
+		return r.convertVectorResults(vectorRes.results), nil
+	}
+
+	// 使用 RRF 融合两个结果列表
+	results := r.rrfFusion(vectorRes.results, bm25Res.results, semanticWeight)
 
 	return results, nil
 }
@@ -441,6 +503,102 @@ func (r *AdaptiveRetriever) convertVectorResults(results []*store.MemoWithScore)
 		}
 	}
 	return searchResults
+}
+
+// convertBM25Results 转换 BM25 检索结果
+func (r *AdaptiveRetriever) convertBM25Results(results []*store.BM25Result) []*SearchResult {
+	searchResults := make([]*SearchResult, len(results))
+	for i, r := range results {
+		searchResults[i] = &SearchResult{
+			ID:      int64(r.Memo.ID),
+			Type:    "memo",
+			Score:   r.Score,
+			Content: r.Memo.Content,
+			Memo:    r.Memo,
+		}
+	}
+	return searchResults
+}
+
+// rrfFusion 使用 Reciprocal Rank Fusion 算法融合向量检索和 BM25 检索结果
+// RRF 公式: RRF(d) = Σ weight_i / (k + rank_i(d))
+// 其中 k 是常数 (通常取 60)，rank_i(d) 是文档在第 i 个列表中的排名
+func (r *AdaptiveRetriever) rrfFusion(vectorResults []*store.MemoWithScore, bm25Results []*store.BM25Result, semanticWeight float32) []*SearchResult {
+	// 用于存储每个文档的 RRF 分数
+	type rrfScore struct {
+		id        int64
+		score     float32
+		memo      *store.Memo
+		vectorRank int    // 向量检索中的排名
+		bm25Rank   int    // BM25 检索中的排名
+	}
+
+	scores := make(map[int64]*rrfScore)
+
+	// 处理向量检索结果 (排名从 1 开始)
+	for i, v := range vectorResults {
+		rank := i + 1
+		if existing, ok := scores[int64(v.Memo.ID)]; ok {
+			existing.vectorRank = rank
+		} else {
+			scores[int64(v.Memo.ID)] = &rrfScore{
+				id:         int64(v.Memo.ID),
+				memo:       v.Memo,
+				vectorRank: rank,
+				bm25Rank:   -1, // 不在 BM25 结果中
+			}
+		}
+	}
+
+	// 处理 BM25 检索结果
+	for i, b := range bm25Results {
+		rank := i + 1
+		if existing, ok := scores[int64(b.Memo.ID)]; ok {
+			existing.bm25Rank = rank
+		} else {
+			scores[int64(b.Memo.ID)] = &rrfScore{
+				id:         int64(b.Memo.ID),
+				memo:       b.Memo,
+				vectorRank: -1, // 不在向量结果中
+				bm25Rank:   rank,
+			}
+		}
+	}
+
+	// 计算 RRF 分数
+	// semanticWeight 控制 BM25 和向量检索的权重平衡
+	// semanticWeight = 0.5 表示两者权重相等
+	bm25Weight := 1.0 - semanticWeight
+
+	for _, s := range scores {
+		// 向量检索贡献
+		if s.vectorRank > 0 {
+			s.score += semanticWeight / (float32(RRFK) + float32(s.vectorRank))
+		}
+		// BM25 检索贡献
+		if s.bm25Rank > 0 {
+			s.score += bm25Weight / (float32(RRFK) + float32(s.bm25Rank))
+		}
+	}
+
+	// 转换为 SearchResult 列表并按 RRF 分数排序
+	results := make([]*SearchResult, 0, len(scores))
+	for _, s := range scores {
+		results = append(results, &SearchResult{
+			ID:      s.id,
+			Type:    "memo",
+			Score:   s.score,
+			Content: s.memo.Content,
+			Memo:    s.memo,
+		})
+	}
+
+	// 按分数降序排序
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
+
+	return results
 }
 
 // QualityLevel 结果质量等级
