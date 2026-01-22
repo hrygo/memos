@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,12 +13,31 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	"github.com/usememos/memos/plugin/ai"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/finops"
 	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/store"
+)
+
+// Constants for AI chat configuration
+const (
+	// MaxContextLength is the maximum length of context to include in LLM prompt
+	MaxContextLength = 3000
+
+	// MaxAgentIterations is the maximum number of iterations for agent ReAct loop
+	MaxAgentIterations = 5
+
+	// StreamTimeout is the timeout for streaming responses
+	StreamTimeout = 60 * time.Second
+
+	// AsyncRecordTimeout is the timeout for async cost recording
+	// A simple INSERT should complete in <100ms normally.
+	// Using 500ms provides 5x buffer for abnormal conditions (high load, network latency)
+	// If it takes longer than 500ms, there's likely a systemic issue that should be investigated.
+	AsyncRecordTimeout = 500 * time.Millisecond
 )
 
 // Pre-compiled regex patterns for schedule query intent detection
@@ -140,15 +160,26 @@ var scheduleQueryPatterns = []struct {
 func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_ChatWithMemosServer) error {
 	ctx := stream.Context()
 
-	// Debug: Log every AI chat request
-	fmt.Printf("\n======== [ChatWithMemos] NEW REQUEST (Optimized) ========\n")
-	fmt.Printf("[ChatWithMemos] User message: '%s'\n", req.Message)
-	fmt.Printf("[ChatWithMemos] History items: %d\n", len(req.History))
-	fmt.Printf("=========================================================\n\n")
-
 	if !s.IsEnabled() {
 		return status.Errorf(codes.Unavailable, "AI features are disabled")
 	}
+
+	// Log request info with structured logging
+	slog.Debug("ChatWithMemos new request",
+		"message", req.Message,
+		"history_count", len(req.History),
+		"agent_type", req.AgentType.String(),
+	)
+
+	// ============================================================
+	// 鹦鹉路由（Milestone 1 - NEW）
+	// ============================================================
+	// 检查是否需要路由到鹦鹉代理
+	if req.AgentType != v1pb.AgentType_AGENT_TYPE_DEFAULT {
+		return s.chatWithParrot(ctx, req, stream)
+	}
+
+	// 原有逻辑继续...
 
 	// 1. 获取当前用户
 	user, err := getCurrentUser(ctx, s.Store)
@@ -179,7 +210,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 		var err error
 		userTimezone, err = time.LoadLocation(req.UserTimezone)
 		if err != nil {
-			fmt.Printf("[ChatWithMemos] Invalid timezone %q, using UTC: %v\n", req.UserTimezone, err)
+			slog.Warn("Invalid timezone, using UTC", "timezone", req.UserTimezone, "error", err)
 			userTimezone = time.UTC
 		}
 	} else {
@@ -188,8 +219,11 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 
 	if s.QueryRouter != nil {
 		routeDecision = s.QueryRouter.Route(ctx, req.Message, userTimezone)
-		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f, Timezone: %v\n",
-			routeDecision.Strategy, routeDecision.Confidence, userTimezone)
+		slog.Debug("Query routing decision",
+			"strategy", routeDecision.Strategy,
+			"confidence", routeDecision.Confidence,
+			"timezone", userTimezone,
+		)
 	} else {
 		// 降级：默认策略
 		routeDecision = &queryengine.RouteDecision{
@@ -218,7 +252,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 			Limit:            10,
 		})
 		if err != nil {
-			fmt.Printf("[AdaptiveRetriever] Error: %v, using fallback\n", err)
+			slog.Warn("AdaptiveRetriever error, using fallback", "error", err)
 			// 降级到旧逻辑
 			searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Message)
 			if err != nil {
@@ -234,8 +268,10 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	}
 
 	retrievalDuration := time.Since(retrievalStart)
-	fmt.Printf("[Retrieval] Completed in %dms, found %d results\n",
-		retrievalDuration.Milliseconds(), len(searchResults))
+	slog.Debug("Retrieval completed",
+		"duration_ms", retrievalDuration.Milliseconds(),
+		"results_count", len(searchResults),
+	)
 
 	// 分类结果：笔记和日程
 	var memoResults []*retrieval.SearchResult
@@ -255,7 +291,7 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	var contextBuilder strings.Builder
 	var sources []string
 	totalChars := 0
-	maxChars := 3000
+	maxChars := MaxContextLength
 
 	// 添加笔记到上下文
 	for i, r := range memoResults {
@@ -468,9 +504,12 @@ func (s *AIService) finalizeChatStreamOptimized(
 ) error {
 	totalDuration := retrievalDuration + llmDuration
 
-	fmt.Printf("[ChatWithMemos] Completed - Retrieval: %dms, LLM: %dms, Total: %dms, Strategy: %s\n",
-		retrievalDuration.Milliseconds(), llmDuration.Milliseconds(),
-		totalDuration.Milliseconds(), routeDecision.Strategy)
+	slog.Debug("ChatWithMemos completed",
+		"retrieval_ms", retrievalDuration.Milliseconds(),
+		"llm_ms", llmDuration.Milliseconds(),
+		"total_ms", totalDuration.Milliseconds(),
+		"strategy", routeDecision.Strategy,
+	)
 
 	// ============================================================
 	// Phase 5: FinOps 监控记录（⭐ 新增）
@@ -495,10 +534,18 @@ func (s *AIService) finalizeChatStreamOptimized(
 			len(scheduleResults),
 		)
 
-		// 异步记录成本（避免阻塞响应）
+		// 异步记录成本（避免阻塞响应，使用独立 goroutine 和超时控制）
 		go func() {
-			if err := s.CostMonitor.Record(context.Background(), record); err != nil {
-				fmt.Printf("[FinOps] Failed to record cost: %v\n", err)
+			// 使用带超时的 context，防止 goroutine 泄漏
+			ctx, cancel := context.WithTimeout(context.Background(), AsyncRecordTimeout)
+			defer cancel()
+
+			if err := s.CostMonitor.Record(ctx, record); err != nil {
+				slog.Warn("Failed to record cost",
+					"error", err,
+					"user_id", user.ID,
+					"strategy", routeDecision.Strategy,
+				)
 			}
 		}()
 	}
@@ -568,7 +615,7 @@ func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.S
 	// 查找结束标记 >>>（使用 LastIndex 避免描述中的 >>> 截断）
 	endIdx := strings.LastIndex(aiResponse[startIdx:], ">>>")
 	if endIdx == -1 {
-		fmt.Printf("[ScheduleIntent] Found marker but missing closing '>>>'\n")
+		slog.Debug("ScheduleIntent marker found but missing closing '>>>'")
 		return nil
 	}
 
@@ -588,7 +635,7 @@ func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.S
 
 	var intentJSON IntentJSON
 	if err := json.Unmarshal([]byte(cleanJSON), &intentJSON); err != nil {
-		fmt.Printf("[ScheduleIntent] Failed to parse intent JSON: %v, original: %s, cleaned: %s\n", err, jsonStr, cleanJSON)
+		slog.Debug("Failed to parse schedule intent JSON", "error", err, "original", jsonStr, "cleaned", cleanJSON)
 		return nil
 	}
 
@@ -605,7 +652,7 @@ func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.S
 
 	// 验证描述不为空
 	if strings.TrimSpace(description) == "" {
-		fmt.Printf("[ScheduleIntent] Intent detected but description is empty\n")
+		slog.Debug("ScheduleIntent detected but description is empty")
 		return nil
 	}
 
@@ -616,7 +663,7 @@ func (s *AIService) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.S
 	}
 
 	// 记录成功解析
-	fmt.Printf("[ScheduleIntent] Successfully parsed intent: description='%s'\n", description)
+	slog.Debug("ScheduleIntent successfully parsed", "description", description)
 
 	return intent
 }
@@ -687,3 +734,75 @@ func (s *AIService) formatSchedulesForContext(schedules []*v1pb.ScheduleSummary)
 
 	return builder.String()
 }
+
+// chatWithParrot handles chat requests routed to parrot agents.
+// chatWithParrot 处理路由到鹦鹉代理的聊天请求。
+func (s *AIService) chatWithParrot(
+	ctx context.Context,
+	req *v1pb.ChatWithMemosRequest,
+	stream v1pb.AIService_ChatWithMemosServer,
+) error {
+	// Check if ParrotRouter is initialized
+	if s.ParrotRouter == nil {
+		return status.Errorf(codes.Unavailable, "parrot system is not available")
+	}
+
+	// Get current user
+	user, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// Rate limiting check
+	userKey := strconv.FormatInt(int64(user.ID), 10)
+	if !globalAILimiter.Allow(userKey) {
+		return status.Errorf(codes.ResourceExhausted,
+			"rate limit exceeded: please wait before making another AI chat request")
+	}
+
+	// Get agent type string
+	agentTypeStr := req.AgentType.String()
+	slog.Debug("Routing to parrot agent", "agent_type", agentTypeStr, "user_id", user.ID)
+
+	// Create stream adapter
+	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData interface{}) error {
+		// Convert event data to string for streaming
+		var dataStr string
+		switch v := eventData.(type) {
+		case string:
+			dataStr = v
+		case error:
+			dataStr = v.Error()
+		default:
+			// Try to convert to JSON
+			jsonBytes, err := json.Marshal(v)
+			if err != nil {
+				dataStr = fmt.Sprintf("%v", v)
+			} else {
+				dataStr = string(jsonBytes)
+			}
+		}
+
+		// Send event through stream
+		return stream.Send(&v1pb.ChatWithMemosResponse{
+			EventType: eventType,
+			EventData: dataStr,
+		})
+	})
+
+	// Route to parrot agent
+	if err := s.ParrotRouter.Route(ctx, agentTypeStr, req.Message, streamAdapter); err != nil {
+		slog.Error("Parrot agent routing failed", "error", err, "agent_type", agentTypeStr)
+		return status.Errorf(codes.Internal, "parrot agent failed: %v", err)
+	}
+
+	// Send done marker
+	if err := stream.Send(&v1pb.ChatWithMemosResponse{
+		Done: true,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+

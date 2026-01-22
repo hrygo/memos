@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/usememos/memos/plugin/ai"
+	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/server/finops"
@@ -31,6 +32,9 @@ type AIService struct {
 	QueryRouter       *queryengine.QueryRouter
 	AdaptiveRetriever *retrieval.AdaptiveRetriever
 	CostMonitor       *finops.CostMonitor
+
+	// 鹦鹉系统（Milestone 1）
+	ParrotRouter *agentpkg.ParrotRouter
 }
 
 // IsEnabled returns whether AI features are enabled.
