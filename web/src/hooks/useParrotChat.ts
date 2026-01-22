@@ -2,17 +2,15 @@ import { create } from "@bufbuild/protobuf";
 import { useQueryClient } from "@tanstack/react-query";
 import { aiServiceClient } from "@/connect";
 import {
-  ChatWithMemosRequestSchema,
-} from "@/types/proto/api/v1/ai_service_pb";
-import {
+  MemoQueryResultData,
   ParrotAgentType,
   ParrotChatCallbacks,
   ParrotChatParams,
   ParrotEventType,
-  MemoQueryResultData,
-  ScheduleQueryResultData,
   parrotToProtoAgentType,
+  ScheduleQueryResultData,
 } from "@/types/parrot";
+import { ChatWithMemosRequestSchema } from "@/types/proto/api/v1/ai_service_pb";
 
 /**
  * useParrotChat provides a hook for chatting with parrot agents.
@@ -49,10 +47,7 @@ export function useParrotChat() {
      * @param callbacks - Optional callbacks for streaming events
      * @returns A promise that resolves when streaming completes
      */
-    streamChat: async (
-      params: ParrotChatParams,
-      callbacks?: ParrotChatCallbacks,
-    ) => {
+    streamChat: async (params: ParrotChatParams, callbacks?: ParrotChatCallbacks) => {
       const request = create(ChatWithMemosRequestSchema, {
         message: params.message,
         history: params.history ?? [],
@@ -118,11 +113,7 @@ export function useParrotChat() {
  * @param eventData - The event data (JSON string or plain text)
  * @param callbacks - Optional callbacks to handle events
  */
-function handleParrotEvent(
-  eventType: string,
-  eventData: string,
-  callbacks?: ParrotChatCallbacks,
-) {
+function handleParrotEvent(eventType: string, eventData: string, callbacks?: ParrotChatCallbacks) {
   try {
     switch (eventType) {
       case ParrotEventType.THINKING:
@@ -162,10 +153,11 @@ function handleParrotEvent(
         console.log("Schedule updated:", eventData);
         break;
 
-      case ParrotEventType.ERROR:
+      case ParrotEventType.ERROR: {
         const error = new Error(eventData);
         callbacks?.onError?.(error);
         break;
+      }
 
       case ParrotEventType.ANSWER:
         // Final answer (already handled by content chunks)
