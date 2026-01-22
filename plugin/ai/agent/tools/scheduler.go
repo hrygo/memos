@@ -14,6 +14,11 @@ import (
 const (
 	// DefaultTimezone is used when no timezone is specified
 	DefaultTimezone = "Asia/Shanghai"
+
+	// Audit log field length limits (for sensitive data sanitization)
+	maxTitleLengthForLog       = 50
+	maxDescriptionLengthForLog = 100
+	maxInputLengthForLog       = 200
 )
 
 // ScheduleQueryTool searches for schedule events within a specific time range.
@@ -288,6 +293,21 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		return "", fmt.Errorf("failed to create schedule: %w", err)
 	}
 
+	// Audit log for schedule creation
+	slog.Info("schedule created",
+		"user_id", userID,
+		"schedule_id", created.ID,
+		"title", sanitizeString(created.Title, maxTitleLengthForLog),
+		"description", sanitizeString(created.Description, maxDescriptionLengthForLog),
+		"start_ts", created.StartTs,
+		"end_ts", created.EndTs,
+		"has_end_time", created.EndTs != nil,
+		"location", created.Location,
+		"all_day", created.AllDay,
+		"timezone", created.Timezone,
+		"timestamp", time.Now().Unix(),
+	)
+
 	// Format response
 	startTimeFormatted := formatTime(created.StartTs, created.Timezone)
 	var endTimeFormatted string
@@ -343,6 +363,19 @@ func formatTime(ts int64, timezone string) string {
 	}
 
 	return t.In(loc).Format("2006-01-02 15:04 MST")
+}
+
+// sanitizeString sanitizes sensitive data for audit logging.
+// It limits the length and adds a suffix if truncated.
+func sanitizeString(s string, maxLen int) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(s) // Use runes to properly handle multi-byte characters
+	if len(runes) <= maxLen {
+		return s
+	}
+	return string(runes[:maxLen]) + "...[truncated]"
 }
 
 // FindFreeTimeTool finds available time slots for scheduling.
@@ -669,6 +702,43 @@ func (t *ScheduleUpdateTool) Run(ctx context.Context, inputJSON string) (string,
 	if err != nil {
 		return "", fmt.Errorf("failed to update schedule: %w", err)
 	}
+
+	// Build changed fields list for audit tracking
+	var changedFields []string
+	if updateReq.Title != nil {
+		changedFields = append(changedFields, "title")
+	}
+	if updateReq.Description != nil {
+		changedFields = append(changedFields, "description")
+	}
+	if updateReq.StartTs != nil {
+		changedFields = append(changedFields, "start_ts")
+	}
+	if updateReq.EndTs != nil {
+		changedFields = append(changedFields, "end_ts")
+	}
+	if updateReq.Location != nil {
+		changedFields = append(changedFields, "location")
+	}
+	if updateReq.AllDay != nil {
+		changedFields = append(changedFields, "all_day")
+	}
+
+	// Audit log for schedule update with change tracking
+	slog.Info("schedule updated",
+		"user_id", userID,
+		"schedule_id", updated.ID,
+		"title", sanitizeString(updated.Title, maxTitleLengthForLog),
+		"description", sanitizeString(updated.Description, maxDescriptionLengthForLog),
+		"start_ts", updated.StartTs,
+		"end_ts", updated.EndTs,
+		"has_end_time", updated.EndTs != nil,
+		"location", updated.Location,
+		"all_day", updated.AllDay,
+		"timezone", updated.Timezone,
+		"changed_fields", strings.Join(changedFields, ","),
+		"timestamp", time.Now().Unix(),
+	)
 
 	// Format response
 	startTimeFormatted := formatTime(updated.StartTs, updated.Timezone)

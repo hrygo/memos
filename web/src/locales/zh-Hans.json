@@ -482,7 +482,7 @@
     "clear-context-desc": "后续对话不携带上方内容",
     "context-cleared": "上下文已清空",
     "welcome-title": "欢迎使用 AI 助手",
-    "welcome-description": "我可以帮您搜索、总结和讨论您的备忘内容",
+    "welcome-description": "我可以帮您搜索、总结、讨论备忘内容，以及管理您的日程",
     "send-shortcut": "发送",
     "newline-shortcut": "换行",
     "prompt-summarize": "总结最近的备忘",

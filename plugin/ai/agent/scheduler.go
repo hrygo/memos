@@ -211,6 +211,15 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 			failCount := a.failureCount[toolCall]
 			a.failureMutex.Unlock()
 
+			// Log tool failure for monitoring
+			slog.Warn("tool execution failed",
+				"user_id", a.userID,
+				"tool", toolCall,
+				"failure_count", failCount,
+				"error", err,
+				"input", truncateString(toolInput, 200),
+			)
+
 			// If tool fails 3+ times in a row, abort to avoid wasting resources
 			if failCount >= 3 {
 				return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
@@ -234,17 +243,13 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", MaxIterations)
 	}
 
-	// Log execution metrics with cache statistics
+	// Log execution metrics
 	duration := time.Since(startTime)
 	cacheHits := atomic.LoadInt64(&a.cacheHits)
 	cacheMisses := atomic.LoadInt64(&a.cacheMisses)
-	totalCacheOps := cacheHits + cacheMisses
-	cacheHitRate := float64(0)
-	if totalCacheOps > 0 {
-		cacheHitRate = float64(cacheHits) / float64(totalCacheOps) * 100
-	}
+	cacheHitRate := float64(cacheHits) / float64(cacheHits+cacheMisses+1) * 100
 
-	slog.Info("agent execution completed",
+	slog.Debug("agent execution completed",
 		"user_id", a.userID,
 		"iterations", iteration+1,
 		"duration_ms", duration.Milliseconds(),
@@ -346,6 +351,15 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			failCount := a.failureCount[toolCall]
 			a.failureMutex.Unlock()
 
+			// Log tool failure for monitoring
+			slog.Warn("tool execution failed",
+				"user_id", a.userID,
+				"tool", toolCall,
+				"failure_count", failCount,
+				"error", err,
+				"input", truncateString(toolInput, 200),
+			)
+
 			// If tool fails 3+ times in a row, abort to avoid wasting resources
 			if failCount >= 3 {
 				errorMsg := fmt.Sprintf("tool %s failed repeatedly (%d times): %v", toolCall, failCount, err)
@@ -381,17 +395,13 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", MaxIterations)
 	}
 
-	// Log execution metrics with cache statistics
+	// Log execution metrics
 	duration := time.Since(startTime)
 	cacheHits := atomic.LoadInt64(&a.cacheHits)
 	cacheMisses := atomic.LoadInt64(&a.cacheMisses)
-	totalCacheOps := cacheHits + cacheMisses
-	cacheHitRate := float64(0)
-	if totalCacheOps > 0 {
-		cacheHitRate = float64(cacheHits) / float64(totalCacheOps) * 100
-	}
+	cacheHitRate := float64(cacheHits) / float64(cacheHits+cacheMisses+1) * 100
 
-	slog.Info("agent execution completed",
+	slog.Debug("agent execution completed",
 		"user_id", a.userID,
 		"iterations", iteration+1,
 		"duration_ms", duration.Milliseconds(),
@@ -645,4 +655,16 @@ func (a *SchedulerAgent) getToolNames() string {
 		names = append(names, name)
 	}
 	return strings.Join(names, ", ")
+}
+
+// truncateString truncates a string to a maximum length for logging.
+func truncateString(s string, maxLen int) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	return string(runes[:maxLen]) + "..."
 }

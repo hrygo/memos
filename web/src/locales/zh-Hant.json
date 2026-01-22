@@ -463,7 +463,7 @@
     "clear-context-desc": "後續對話不攜帶上方內容",
     "context-cleared": "上下文已清空",
     "welcome-title": "歡迎使用 AI 助手",
-    "welcome-description": "我可以幫您搜尋、總結和討論您的備忘內容",
+    "welcome-description": "我可以幫您搜尋、總結和討論您的備忘內容，以及管理您的日程",
     "send-shortcut": "發送",
     "newline-shortcut": "換行",
     "prompt-summarize": "總結最近的備忘",

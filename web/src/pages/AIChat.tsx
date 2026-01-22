@@ -94,21 +94,6 @@ const AIChat = () => {
 
   const schedules = schedulesData?.schedules || [];
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[AIChat Debug] Schedule Query Info:');
-    console.log('  selectedDate:', selectedDate);
-    console.log('  anchorDate:', anchorDate.toISOString());
-    console.log('  schedulesData:', schedulesData);
-    console.log('  schedules.length:', schedules.length);
-    if (schedules.length > 0) {
-      console.log('  First 3 schedules:');
-      schedules.slice(0, 3).forEach((s, i) => {
-        console.log(`    [${i}] ${s.title}: startTs=${s.startTs}, endTs=${s.endTs}`);
-      });
-    }
-  }, [schedulesData, selectedDate, anchorDate, schedules]);
-
   // Schedule suggestion state
   const [suggestedSchedule, setSuggestedSchedule] = useState<Schedule | null>(null);
   const [showScheduleSuggestion, setShowScheduleSuggestion] = useState(false);
@@ -293,7 +278,6 @@ const AIChat = () => {
                 return;
               }
 
-              console.log(`[ScheduleIntent] Detected with description: "${intent.scheduleDescription}"`);
               handleScheduleSuggestion(intent.scheduleDescription);
             }
           },
@@ -304,8 +288,6 @@ const AIChat = () => {
               console.warn(`[ScheduleQuery] Ignoring stale result for message ${messageId}, current is ${messageIdRef.current}`);
               return;
             }
-
-            console.log(`[ScheduleQuery] AI backend handled query with ${result.schedules.length} schedules: "${result.timeRangeDescription}"`);
 
             // 标记 AI 已处理日程查询
             setAiHandledScheduleQuery(true);
@@ -351,7 +333,6 @@ const AIChat = () => {
     // Check for schedule query intent after AI responds
     // 只有在 AI 没有处理日程查询时，才使用前端自动查询
     if (detectScheduleQueryIntent(userMessage) && !aiHandledScheduleQuery) {
-      console.log("[ScheduleQuery] AI did not handle query, using frontend fallback");
       handleScheduleQuery(userMessage);
     }
     // 注意：日程创建意图现在由 AI 在后端检测，不再需要前端检测
@@ -491,7 +472,6 @@ const AIChat = () => {
   const handleScheduleSuggestion = async (userMessage: string) => {
     // Prevent duplicate parsing
     if (isParsingSchedule) {
-      console.log("[ScheduleSuggestion] Already parsing, skipping");
       return;
     }
 
@@ -652,7 +632,6 @@ const AIChat = () => {
 
             // 如果 AI 回复与日程查询结果矛盾，则不显示（前端智能处理）
             if (msg.role === "assistant" && isScheduleResponseContradictory(msg.content)) {
-              console.log("[AIChat] Hiding contradictory AI response:", msg.content);
               return null;
             }
 
@@ -860,13 +839,10 @@ const AIChat = () => {
                       selectedDate={selectedDate}
                       onDateClick={(date) => {
                         setSelectedDate(date);
-                        // On mobile, automatically switch to timeline view to see the day's schedule
-                        // On desktop, stay in calendar view for better browsing experience
-                        if (!md) {
-                          setScheduleViewMode("timeline");
-                        }
+                        // Always switch to timeline view to show the day's schedule
+                        setScheduleViewMode("timeline");
                       }}
-                      showMobileHint={!md}
+                      showMobileHint={true}
                       className="p-4 bg-background/50 h-full overflow-y-auto"
                     />
                   )}
@@ -991,7 +967,6 @@ const AIChat = () => {
         initialText={scheduleInputText}
         editSchedule={editSchedule}
         onSuccess={(schedule) => {
-          console.log("Schedule saved:", schedule);
           setEditSchedule(null);
           // Refresh schedules by invalidating cache
           // The query will automatically refetch

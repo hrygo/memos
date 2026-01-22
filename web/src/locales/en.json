@@ -483,7 +483,7 @@
     "clear-context-desc": "Subsequent conversations won't include above content",
     "context-cleared": "Context cleared",
     "welcome-title": "Welcome to AI Assistant",
-    "welcome-description": "I can help you search, summarize and discuss your memos",
+    "welcome-description": "I can help you search, summarize, and discuss your memos, as well as manage your schedules",
     "send-shortcut": "Send",
     "newline-shortcut": "New line",
     "prompt-summarize": "Summarize recent memos",
