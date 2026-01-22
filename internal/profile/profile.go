@@ -25,8 +25,7 @@ type Profile struct {
 	Data string
 	// DSN points to where memos stores its own data
 	DSN string
-	// Driver is the database driver
-	// sqlite, mysql
+	// Driver is the database driver (sqlite or postgres)
 	Driver string
 	// Version is the current version of server
 	Version string
@@ -47,6 +46,14 @@ type Profile struct {
 	AIEmbeddingModel     string // MEMOS_AI_EMBEDDING_MODEL (default: BAAI/bge-m3)
 	AIRerankModel        string // MEMOS_AI_RERANK_MODEL (default: BAAI/bge-reranker-v2-m3)
 	AILLMModel           string // MEMOS_AI_LLM_MODEL (default: deepseek-chat)
+
+	// Attachment Processing Configuration
+	OCREnabled          bool   // MEMOS_OCR_ENABLED (default: false)
+	TextExtractEnabled  bool   // MEMOS_TEXTEXTRACT_ENABLED (default: false)
+	TesseractPath       string // MEMOS_OCR_TESSERACT_PATH (default: tesseract)
+	TessdataPath        string // MEMOS_OCR_TESSDATA_PATH (default: "")
+	OCRLanguages        string // MEMOS_OCR_LANGUAGES (default: chi_sim+eng)
+	TikaServerURL       string // MEMOS_TEXTEXTRACT_TIKA_URL (default: http://localhost:9998)
 }
 
 func (p *Profile) IsDev() bool {
@@ -81,6 +88,14 @@ func (p *Profile) FromEnv() {
 	p.AIEmbeddingModel = getEnvOrDefault("MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3")
 	p.AIRerankModel = getEnvOrDefault("MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
 	p.AILLMModel = getEnvOrDefault("MEMOS_AI_LLM_MODEL", "deepseek-chat")
+
+	// Attachment processing configuration
+	p.OCREnabled = os.Getenv("MEMOS_OCR_ENABLED") == "true"
+	p.TextExtractEnabled = os.Getenv("MEMOS_TEXTEXTRACT_ENABLED") == "true"
+	p.TesseractPath = getEnvOrDefault("MEMOS_OCR_TESSERACT_PATH", "tesseract")
+	p.TessdataPath = os.Getenv("MEMOS_OCR_TESSDATA_PATH")
+	p.OCRLanguages = getEnvOrDefault("MEMOS_OCR_LANGUAGES", "chi_sim+eng")
+	p.TikaServerURL = getEnvOrDefault("MEMOS_TEXTEXTRACT_TIKA_URL", "http://localhost:9998")
 }
 
 func checkDataDir(dataDir string) (string, error) {
