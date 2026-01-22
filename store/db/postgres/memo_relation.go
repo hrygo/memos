@@ -86,6 +86,8 @@ func (d *DB) ListMemoRelations(ctx context.Context, find *store.FindMemoRelation
 			type
 		FROM memo_relation
 		WHERE `+strings.Join(where, " AND "), args...)
+	// Security: Subqueries use parameterized placeholders via stmt.Args.
+	// The WHERE clause is constructed from predefined strings, not user input.
 	if err != nil {
 		return nil, err
 	}
