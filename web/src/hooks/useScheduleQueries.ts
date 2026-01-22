@@ -1,9 +1,11 @@
 import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { scheduleServiceClient } from "@/connect";
 import type {
   CheckConflictRequest,
   ListSchedulesRequest,
+  ListSchedulesResponse,
   ParseAndCreateScheduleRequest,
   Schedule,
 } from "@/types/proto/api/v1/schedule_service_pb";
@@ -14,13 +16,14 @@ import {
 } from "@/types/proto/api/v1/schedule_service_pb";
 
 // Re-export ScheduleAgent hooks for convenience
-export { useScheduleAgentChat, scheduleAgentChatStream } from "./useScheduleAgent";
+export { scheduleAgentChatStream, useScheduleAgentChat } from "./useScheduleAgent";
 
 // Type for query parameters with string timestamps (for React Query cache keys)
 // This avoids BigInt serialization issues in JSON.stringify()
-export type ListSchedulesRequestWithStringTs = Omit<ListSchedulesRequest, 'startTs' | 'endTs'> & {
+export type ListSchedulesRequestWithStringTs = Omit<ListSchedulesRequest, "startTs" | "endTs"> & {
   startTs?: string;
   endTs?: string;
+  month?: string; // For month-based grouping queries
 };
 
 // Query keys factory for consistent cache management
@@ -40,7 +43,6 @@ export function useSchedules(request: Partial<ListSchedulesRequestWithStringTs> 
   return useQuery({
     queryKey: scheduleKeys.list(request),
     queryFn: async () => {
-      console.log('[useSchedules] API Call request:', request);
       try {
         // Convert string timestamps to bigint for Protobuf serialization
         const requestWithBigint = {
@@ -48,13 +50,12 @@ export function useSchedules(request: Partial<ListSchedulesRequestWithStringTs> 
           startTs: request.startTs ? BigInt(request.startTs) : undefined,
           endTs: request.endTs ? BigInt(request.endTs) : undefined,
         };
-        const response = await scheduleServiceClient.listSchedules(create(ListSchedulesRequestSchema, requestWithBigint as Record<string, unknown>));
-        console.log('[useSchedules] API Response:', response);
-        console.log('[useSchedules] Response.schedules:', response.schedules);
-        console.log('[useSchedules] Response.schedules.length:', response.schedules?.length || 0);
+        const response = await scheduleServiceClient.listSchedules(
+          create(ListSchedulesRequestSchema, requestWithBigint as Record<string, unknown>),
+        );
         return response;
       } catch (error) {
-        console.error('[useSchedules] API Error:', error);
+        console.error("[useSchedules] API Error:", error);
         throw error;
       }
     },
@@ -80,15 +81,6 @@ export function useSchedulesOptimized(anchorDate?: Date) {
   // Will be converted to BigInt in useSchedules queryFn
   const startTs = Math.floor(startOfRange.getTime() / 1000).toString();
   const endTs = Math.floor(endOfRange.getTime() / 1000).toString();
-
-  // Debug logging
-  console.log('[useSchedulesOptimized] Query params:', {
-    anchorDate: anchorDate?.toISOString() || 'undefined',
-    startOfRange: startOfRange.toISOString(),
-    endOfRange: endOfRange.toISOString(),
-    startTs,
-    endTs,
-  });
 
   return useSchedules({
     startTs,
@@ -236,4 +228,159 @@ export function useParseAndCreateSchedule() {
       }
     },
   });
+}
+
+/**
+ * Hook to fetch schedules by month with buffer days for cross-month schedules
+ * Query range: month start - 7 days to month end + 7 days
+ * Handles pagination to ensure all schedules are fetched.
+ */
+export function useSchedulesByMonthGrouped(month: string) {
+  return useQuery({
+    queryKey: scheduleKeys.list({ month }),
+    queryFn: async () => {
+      // Calculate month range with buffer for cross-month schedules
+      const monthStart = dayjs(month).startOf("month");
+      const monthEnd = dayjs(month).endOf("month");
+      const startTs = monthStart.subtract(7, "day").unix().toString();
+      const endTs = monthEnd.add(7, "day").unix().toString();
+
+      // Set a large page size to minimize pagination
+      // A month can have at most 31 days, plus 14 days buffer = 45 days
+      // Even with multiple schedules per day, 1000 should be more than enough
+      const pageSize = 1000;
+
+      const allSchedules: Schedule[] = [];
+      let pageToken: string | undefined = undefined;
+      let lastResponse: ListSchedulesResponse | undefined = undefined;
+
+      do {
+        const response = await scheduleServiceClient.listSchedules(
+          create(ListSchedulesRequestSchema, {
+            startTs,
+            endTs,
+            pageSize,
+            pageToken,
+          } as Record<string, unknown>),
+        );
+
+        lastResponse = response;
+        allSchedules.push(...(response.schedules || []));
+        pageToken = response.nextPageToken;
+      } while (pageToken);
+
+      // Return combined response with all schedules
+      return {
+        ...lastResponse,
+        schedules: allSchedules,
+      } as ListSchedulesResponse;
+    },
+    enabled: !!month,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+  });
+}
+
+/**
+ * Hook to check availability and find free time slots
+ * Returns available time slots for a given date and duration
+ */
+export function useCheckAvailability() {
+  const { data: schedulesData } = useSchedulesOptimized();
+  const allSchedules = schedulesData?.schedules || [];
+
+  /**
+   * Find available time slots on a specific day
+   */
+  const findAvailableSlots = (
+    date: Date,
+    durationMinutes: number,
+    options?: {
+      startHour?: number;
+      endHour?: number;
+      excludeNames?: string[];
+    },
+  ) => {
+    const { startHour = 8, endHour = 22, excludeNames = [] } = options || {};
+    const slots: Array<{
+      startTs: bigint;
+      endTs: bigint;
+      label: string;
+    }> = [];
+
+    const dayStart = dayjs(date).hour(startHour).minute(0).second(0);
+    const dayEnd = dayjs(date).hour(endHour).minute(0).second(0);
+
+    // Get schedules for the day, excluding specified names
+    const daySchedules = allSchedules
+      .filter((s) => {
+        if (excludeNames.includes(s.name)) return false;
+        const sStart = dayjs(Number(s.startTs) * 1000);
+        return sStart.isSame(dayStart, "day");
+      })
+      .sort((a, b) => Number(a.startTs) - Number(b.startTs));
+
+    // Find gaps between schedules
+    let currentStart = dayStart;
+
+    for (const schedule of daySchedules) {
+      const sStart = dayjs(Number(schedule.startTs) * 1000);
+      const sEnd = dayjs(Number(schedule.endTs) * 1000);
+
+      // Skip schedules that end before our current start
+      if (sEnd.isBefore(currentStart)) continue;
+
+      // Skip schedules that start after our search end
+      if (sStart.isAfter(dayEnd)) continue;
+
+      // Check if there's a gap before this schedule
+      if (sStart.isAfter(currentStart)) {
+        const gapMinutes = sStart.diff(currentStart, "minute");
+        if (gapMinutes >= durationMinutes) {
+          const slotEnd = currentStart.add(durationMinutes, "minute");
+          slots.push({
+            startTs: BigInt(currentStart.unix()),
+            endTs: BigInt(slotEnd.unix()),
+            label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
+          });
+        }
+      }
+
+      // Move current start to after this schedule
+      currentStart = sEnd;
+    }
+
+    // Check if there's a gap after the last schedule
+    if (dayEnd.diff(currentStart, "minute") >= durationMinutes) {
+      const slotEnd = currentStart.add(durationMinutes, "minute");
+      slots.push({
+        startTs: BigInt(currentStart.unix()),
+        endTs: BigInt(slotEnd.unix()),
+        label: `${currentStart.format("HH:mm")} - ${slotEnd.format("HH:mm")}`,
+      });
+    }
+
+    return slots;
+  };
+
+  /**
+   * Check if a specific time slot is available
+   */
+  const isSlotAvailable = (startTs: bigint, endTs: bigint, excludeNames?: string[]): boolean => {
+    const start = Number(startTs);
+    const end = Number(endTs);
+
+    return !allSchedules.some((s) => {
+      if (excludeNames?.includes(s.name)) return false;
+      const sStart = Number(s.startTs);
+      const sEnd = Number(s.endTs);
+      return start < sEnd && end > sStart;
+    });
+  };
+
+  return {
+    findAvailableSlots,
+    isSlotAvailable,
+    schedules: allSchedules,
+  };
 }

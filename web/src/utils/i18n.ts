@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
+import "dayjs/locale/en";
 import "dayjs/locale/zh-cn";
+import "dayjs/locale/zh-tw";
 import { FallbackLngObjList } from "i18next";
 import { useTranslation } from "react-i18next";
 import i18n, { locales, TLocale } from "@/i18n";
@@ -102,6 +104,8 @@ export const loadLocale = (locale: string): Locale => {
   // Set dayjs locale
   if (validLocale === "zh-Hans") {
     dayjs.locale("zh-cn");
+  } else if (validLocale === "zh-Hant") {
+    dayjs.locale("zh-tw");
   } else {
     dayjs.locale("en");
   }

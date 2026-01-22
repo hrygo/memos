@@ -5,7 +5,6 @@ import type { StatisticsData } from "@/types/statistics";
 import StatisticsView from "../StatisticsView";
 import ShortcutsSection from "./ShortcutsSection";
 import TagsSection from "./TagsSection";
-import NavigationLinks from "./NavigationLinks";
 
 export type MemoExplorerContext = "home" | "explore" | "archived" | "profile";
 
@@ -78,7 +77,6 @@ const MemoExplorer = (props: Props) => {
       {features.search && <SearchBar />}
       <div className="mt-1 px-1 w-full">
         {features.statistics && <StatisticsView statisticsData={statisticsData} />}
-        <NavigationLinks />
         {features.shortcuts && currentUser && <ShortcutsSection />}
         {features.tags && <TagsSection readonly={context === "explore"} tagCount={tagCount} />}
       </div>

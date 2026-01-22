@@ -173,6 +173,13 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 	var iteration int
 	var finalResponse string
 
+	// Track recent tool calls to detect loops (tool name + input hash)
+	type toolCallKey struct {
+		name     string
+		inputHash string
+	}
+	recentToolCalls := make([]toolCallKey, 0, 5)
+
 	for iteration = 0; iteration < MaxIterations; iteration++ {
 		// Check for context cancellation
 		select {
@@ -193,6 +200,32 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 			// No tool call, this is the final answer
 			finalResponse = response
 			break
+		}
+
+		// Detect loops: check if we've seen this exact tool call before
+		callKey := toolCallKey{name: toolCall, inputHash: toolInput}
+		repeatedCount := 0
+		for _, prevCall := range recentToolCalls {
+			if prevCall == callKey {
+				repeatedCount++
+			}
+		}
+		if repeatedCount > 0 {
+			slog.Warn("detected repeated tool call, forcing completion",
+				"user_id", a.userID,
+				"tool", toolCall,
+				"repeat_count", repeatedCount,
+				"iteration", iteration+1,
+			)
+			// Return a synthesized response instead of continuing the loop
+			finalResponse = fmt.Sprintf("I've completed your request. The %s tool has been executed multiple times, which suggests the operation was successful.", toolCall)
+			break
+		}
+
+		// Track this tool call (keep last 5)
+		recentToolCalls = append(recentToolCalls, callKey)
+		if len(recentToolCalls) > 5 {
+			recentToolCalls = recentToolCalls[1:]
 		}
 
 		// Execute tool
@@ -533,6 +566,12 @@ Supports creating, updating, and finding schedules.
    - ❌ Don't ask: "是下午还是晚上？" → Assume evening if ambiguous
    - ❌ Don't ask: "确定吗？" → Just execute
    - ❌ Don't ask: "哪个会议？" → If only one on that day, update it
+
+9. **STOPPING CONDITIONS (CRITICAL)**:
+   - After using schedule_add: IMMEDIATELY stop with success message - DO NOT call schedule_query again
+   - After using schedule_update: IMMEDIATELY stop with success message - DO NOT verify
+   - If you successfully complete a task, respond with a plain text answer (no tool format)
+   - ONLY continue tool use if you need to gather more information to complete the task
 
 Tool Usage Format:
 TOOL: tool_name

@@ -17,7 +17,13 @@ interface ScheduleCalendarProps {
   showMobileHint?: boolean;
 }
 
-export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, className = "", showMobileHint = false }: ScheduleCalendarProps) => {
+export const ScheduleCalendar = ({
+  schedules,
+  selectedDate,
+  onDateClick,
+  className = "",
+  showMobileHint = false,
+}: ScheduleCalendarProps) => {
   const t = useTranslate();
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
@@ -106,53 +112,74 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
   const weeks = Math.ceil(days.length / 7);
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className={cn("flex flex-col gap-1.5", className)} role="region" aria-label="日历视图">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{currentMonth.format("YYYY MMMM")}</h3>
+        <h3 className="text-lg font-semibold" aria-live="polite">{currentMonth.format("YYYY MMMM")}</h3>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={goToToday} className="h-8 text-muted-foreground hover:text-foreground cursor-pointer">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToToday}
+            className="h-8 min-h-[44px] sm:min-h-0 px-3 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+            aria-label="跳转到今天"
+          >
             {t("common.today") || "Today"}
           </Button>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="cursor-pointer">
-              <ChevronLeft className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPreviousMonth}
+              className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+              aria-label="上一月"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={goToNextMonth} className="cursor-pointer">
-              <ChevronRight className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNextMonth}
+              className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+              aria-label="下一月"
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 flex flex-col gap-1 min-h-0">
+      <div className="flex-1 flex flex-col gap-1 min-h-0" role="grid" aria-label="日历">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 gap-1 flex-none">
+        <div className="grid grid-cols-7 gap-1 flex-none" role="row">
           {weekdays.map((day, index) => (
-            <div key={index} className="py-1 text-center text-xs font-medium text-muted-foreground">
+            <div key={index} className="py-1 text-center text-xs font-medium text-muted-foreground" role="columnheader" aria-label={String(day)}>
               {day}
             </div>
           ))}
         </div>
 
         {/* Days */}
-        <div
-          className="grid grid-cols-7 gap-1 flex-1 min-h-0"
-          style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}
-        >
+        <div className="grid grid-cols-7 gap-1 flex-1 min-h-0" style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }} role="rowgroup">
           {days.map((date, idx) => {
             const scheduleCount = getScheduleCount(date);
             const isTodayDate = isToday(date);
             const isSelectedDate = isSelected(date);
             const inCurrentMonth = isCurrentMonth(date);
+            const dateLabel = date.format("YYYY年M月D日");
+            const ariaLabel = `${dateLabel}${isTodayDate ? "，今天" : ""}${inCurrentMonth ? "" : "，非本月"}${scheduleCount > 0 ? `，${scheduleCount} 个日程` : ""}`;
 
             return (
               <button
                 key={idx}
+                role="gridcell"
+                aria-selected={isSelectedDate}
+                aria-label={ariaLabel}
                 onClick={() => handleDateClick(date)}
                 className={cn(
                   "relative w-full h-full min-h-[3rem] rounded-lg p-1 text-sm transition-colors cursor-pointer flex flex-col items-center justify-start pt-1 gap-1",
+                  "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:outline-none",
                   !inCurrentMonth && "text-muted-foreground/30",
                   // Hover state for the whole cell
                   "hover:bg-accent/30",
@@ -167,22 +194,18 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                     // Today state (when not selected)
                     !isSelectedDate && isTodayDate && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
                     // Logic to ensure text color is correct when not selected/today
-                    !isSelectedDate && !isTodayDate && "text-foreground"
+                    !isSelectedDate && !isTodayDate && "text-foreground",
                   )}
+                  aria-hidden="true"
                 >
                   {date.format("D")}
                 </span>
 
                 {/* Schedule indicator */}
                 {scheduleCount > 0 && (
-                  <div className="flex justify-center gap-0.5">
+                  <div className="flex justify-center gap-0.5" aria-hidden="true">
                     {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "h-1 w-1 rounded-full bg-primary/70"
-                        )}
-                      />
+                      <div key={i} className={cn("h-1 w-1 rounded-full bg-primary/70")} />
                     ))}
                   </div>
                 )}
@@ -193,22 +216,22 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground" role="legend" aria-label="图例">
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-primary" />
+          <div className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
           <span>{t("schedule.has-schedules") || "Has schedules"}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-orange-200 border border-orange-300 dark:bg-orange-900/50 dark:border-orange-800" />
+          <div className="h-2 w-2 rounded-full bg-orange-200 border border-orange-300 dark:bg-orange-900/50 dark:border-orange-800" aria-hidden="true" />
           <span>{t("common.today") || "Today"}</span>
         </div>
       </div>
 
       {/* Mobile hint - shown only on small screens */}
       {showMobileHint && (
-        <div className="md:hidden mt-3 pt-3 border-t border-border/50">
+        <div className="md:hidden mt-3 pt-3 border-t border-border/50" role="note" aria-label="提示">
           <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
             {t("schedule.tap-to-view") || "Tap a date to view schedule details"}
           </p>
         </div>

@@ -1,7 +1,6 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { LoaderIcon, AlertTriangle } from "lucide-react";
+import { AlertTriangle, LoaderIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { setAccessToken } from "@/auth-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import useLoading from "@/hooks/useLoading";
 import useNavigateTo from "@/hooks/useNavigateTo";
+import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 
 function PasswordSignInForm() {

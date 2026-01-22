@@ -4,8 +4,10 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "@/App";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Spinner from "@/components/Spinner";
+import { ScheduleProvider } from "@/contexts/ScheduleContext";
 import MainLayout from "@/layouts/MainLayout";
 import RootLayout from "@/layouts/RootLayout";
+import ScheduleLayout from "@/layouts/ScheduleLayout";
 import Home from "@/pages/Home";
 
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));
@@ -70,8 +72,17 @@ const router = createBrowserRouter([
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },
-              { path: Routes.SCHEDULE, element: <LazyRoute component={Schedule} /> },
             ],
+          },
+          // Schedule page with custom layout
+          {
+            path: Routes.SCHEDULE,
+            element: (
+              <ScheduleProvider>
+                <ScheduleLayout />
+              </ScheduleProvider>
+            ),
+            children: [{ index: true, element: <LazyRoute component={Schedule} /> }],
           },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
           { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },

@@ -1,5 +1,16 @@
 export type CalendarSize = "default" | "small";
 
+/** Summary of a schedule for calendar display */
+export interface ScheduleSummary {
+  /** Unique identifier (schedule.name from API) */
+  uid: string;
+  title: string;
+  startTs: bigint;
+  endTs: bigint;
+  allDay: boolean;
+  location?: string;
+}
+
 export interface CalendarDayCell {
   date: string;
   label: number;
@@ -8,6 +19,8 @@ export interface CalendarDayCell {
   isToday: boolean;
   isSelected: boolean;
   isWeekend: boolean;
+  scheduleCount?: number;
+  hasSchedule?: boolean;
 }
 
 export interface CalendarDayRow {
@@ -27,6 +40,7 @@ export interface MonthCalendarProps {
   size?: CalendarSize;
   onClick?: (date: string) => void;
   className?: string;
+  schedulesByDate?: Record<string, ScheduleSummary[]>;
 }
 
 export interface YearCalendarProps {

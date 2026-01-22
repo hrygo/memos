@@ -3,10 +3,10 @@ import i18n, { BackendModule, FallbackLng, FallbackLngObjList } from "i18next";
 import { initReactI18next } from "react-i18next";
 import { findNearestMatchedLanguage } from "./utils/i18n";
 
-export const locales = ["en", "zh-Hans"];
+export const locales = ["en", "zh-Hans", "zh-Hant"];
 
 const fallbacks = {
-  zh: ["zh-Hans", "en"],
+  zh: ["zh-Hans", "zh-Hant", "en"],
 } as FallbackLngObjList;
 
 const LazyImportPlugin: BackendModule = {

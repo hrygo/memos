@@ -1,13 +1,13 @@
 import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiServiceClient } from "@/connect";
+import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 import {
   ChatWithMemosRequestSchema,
   GetRelatedMemosRequestSchema,
   SemanticSearchRequestSchema,
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
-import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 
 // Query keys factory for consistent cache management
 export const aiKeys = {
@@ -117,7 +117,11 @@ export function useChatWithMemos() {
         onThinking?: (message: string) => void;
         onToolUse?: (toolName: string) => void;
         onToolResult?: (result: string) => void;
-        onMemoQueryResult?: (result: { memos: Array<{ uid: string; content: string; score: number }>; query: string; count: number }) => void;
+        onMemoQueryResult?: (result: {
+          memos: Array<{ uid: string; content: string; score: number }>;
+          query: string;
+          count: number;
+        }) => void;
       },
     ) => {
       const request = create(ChatWithMemosRequestSchema, {
@@ -161,8 +165,8 @@ export function useChatWithMemos() {
             const schedules = (response.scheduleQueryResult.schedules || []).map((sched) => ({
               uid: sched.uid || "",
               title: sched.title || "",
-              startTs: sched.startTs ? Number(sched.startTs) : 0,
-              endTs: sched.endTs ? Number(sched.endTs) : 0,
+              startTs: sched.startTs ? BigInt(sched.startTs) : BigInt(0),
+              endTs: sched.endTs ? BigInt(sched.endTs) : BigInt(0),
               allDay: sched.allDay || false,
               location: sched.location || "",
               recurrenceRule: sched.recurrenceRule || "",

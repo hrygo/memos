@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Calendar, Clock, MapPin, X, Repeat } from "lucide-react";
+import { Calendar, Clock, MapPin, Repeat, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ScheduleSummary } from "@/types/schedule";
@@ -77,7 +77,12 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             <p className="text-xs text-muted-foreground mt-0.5">找到 {schedules.length} 个日程</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/30 cursor-pointer">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/30 cursor-pointer"
+        >
           <X className="h-4 w-4 text-muted-foreground" />
         </Button>
       </div>
@@ -90,15 +95,13 @@ export const ScheduleQueryResult = ({ title, schedules, onClose, onScheduleClick
             onClick={() => onScheduleClick?.(schedule)}
             className={cn(
               "group flex items-start gap-3 rounded-lg border border-orange-200/50 dark:border-orange-800/50 bg-white/50 dark:bg-black/20 p-3 transition-all cursor-pointer hover:bg-orange-100/50 dark:hover:bg-orange-900/30",
-              onScheduleClick && "hover:border-orange-300 dark:hover:border-orange-700"
+              onScheduleClick && "hover:border-orange-300 dark:hover:border-orange-700",
             )}
           >
             {/* Date Badge */}
             <div className="flex-none">
               <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 px-2.5 py-1.5 text-center min-w-[3.5rem]">
-                <div className="text-[10px] font-medium text-orange-700 dark:text-orange-300">
-                  {formatDate(schedule)}
-                </div>
+                <div className="text-[10px] font-medium text-orange-700 dark:text-orange-300">{formatDate(schedule)}</div>
               </div>
             </div>
 

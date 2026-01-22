@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { AlertTriangle, Clock, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -110,26 +110,15 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
               onClick={() => onScheduleClick?.(schedule)}
               className={cn(
                 "group flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-accent",
-                conflict
-                  ? "border-red-500/50 bg-red-50/50 dark:bg-red-950/20 dark:border-red-500/70"
-                  : "border-border bg-card"
+                conflict ? "border-red-500/50 bg-red-50/50 dark:bg-red-950/20 dark:border-red-500/70" : "border-border bg-card",
               )}
             >
               <div className="flex flex-col items-center">
-                <div className={cn(
-                  "rounded-md px-2 py-1 text-center",
-                  conflict ? "bg-red-100 dark:bg-red-900/50" : "bg-primary/10"
-                )}>
-                  <div className={cn(
-                    "text-xs font-medium",
-                    conflict ? "text-red-700 dark:text-red-300" : "text-primary"
-                  )}>
+                <div className={cn("rounded-md px-2 py-1 text-center", conflict ? "bg-red-100 dark:bg-red-900/50" : "bg-primary/10")}>
+                  <div className={cn("text-xs font-medium", conflict ? "text-red-700 dark:text-red-300" : "text-primary")}>
                     {dayjs(toDate(schedule.startTs)).format("ddd")}
                   </div>
-                  <div className={cn(
-                    "text-lg font-bold",
-                    conflict ? "text-red-700 dark:text-red-300" : "text-primary"
-                  )}>
+                  <div className={cn("text-lg font-bold", conflict ? "text-red-700 dark:text-red-300" : "text-primary")}>
                     {dayjs(toDate(schedule.startTs)).format("D")}
                   </div>
                 </div>
@@ -138,10 +127,7 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
               <div className="flex-1 space-y-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <h4 className={cn(
-                      "font-medium text-sm leading-tight",
-                      conflict && "text-red-900 dark:text-red-100"
-                    )}>
+                    <h4 className={cn("font-medium text-sm leading-tight", conflict && "text-red-900 dark:text-red-100")}>
                       {schedule.title}
                     </h4>
                   </div>
@@ -173,7 +159,7 @@ export const ScheduleList = ({ schedules, selectedDate, onScheduleClick, classNa
                 {conflict && conflictingSchedules.length > 0 && (
                   <div className="mt-1 pt-1 border-t border-red-200 dark:border-red-800">
                     <p className="text-[10px] text-red-600 dark:text-red-400">
-                      {t("schedule.conflict-warning") || "Conflicts with"}: {conflictingSchedules.map(s => s.title).join(", ")}
+                      {t("schedule.conflict-warning") || "Conflicts with"}: {conflictingSchedules.map((s) => s.title).join(", ")}
                     </p>
                   </div>
                 )}

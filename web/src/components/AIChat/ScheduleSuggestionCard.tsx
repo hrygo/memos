@@ -73,11 +73,9 @@ export const ScheduleSuggestionCard = ({
           text = days.join(separator);
         }
       } else if (rule.type === "monthly" && rule.month_day) {
-        text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) ||
-          `每月${rule.month_day}号`;
+        text = t("schedule.recurrence.monthly-on", { day: rule.month_day }) || `每月${rule.month_day}号`;
       } else if (rule.interval && rule.interval > 1) {
-        const intervalText = t("schedule.recurrence.every-n", { n: rule.interval }) ||
-          `每${rule.interval}个`;
+        const intervalText = t("schedule.recurrence.every-n", { n: rule.interval }) || `每${rule.interval}个`;
         text = intervalText + " " + text;
       }
 
@@ -88,7 +86,12 @@ export const ScheduleSuggestionCard = ({
   };
 
   return (
-    <div className={cn("my-4 rounded-lg border p-4", hasConflicts ? "border-destructive/50 bg-destructive/5" : "border-primary/20 bg-primary/5")}>
+    <div
+      className={cn(
+        "my-4 rounded-lg border p-4",
+        hasConflicts ? "border-destructive/50 bg-destructive/5" : "border-primary/20 bg-primary/5",
+      )}
+    >
       <div className="mb-3 flex items-start gap-2">
         {hasConflicts ? (
           <AlertTriangle className="h-5 w-5 mt-0.5 text-destructive" />
@@ -97,7 +100,7 @@ export const ScheduleSuggestionCard = ({
         )}
         <div className="flex-1">
           <h4 className="font-medium text-sm">
-            {hasConflicts ? (t("schedule.conflict-detected") || "检测到时间冲突") : t("schedule.suggested-schedule")}
+            {hasConflicts ? t("schedule.conflict-detected") || "检测到时间冲突" : t("schedule.suggested-schedule")}
           </h4>
           <p className="text-xs text-muted-foreground">
             {hasConflicts
@@ -153,7 +156,9 @@ export const ScheduleSuggestionCard = ({
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-2 text-xs font-medium text-destructive">
               <AlertCircle className="h-3.5 w-3.5" />
-              <span>{t("schedule.conflicting-schedules") || "冲突的日程"} ({conflicts.length})</span>
+              <span>
+                {t("schedule.conflicting-schedules") || "冲突的日程"} ({conflicts.length})
+              </span>
             </div>
             <div className="space-y-1.5 pl-5">
               {conflicts.slice(0, 3).map((conflict) => (
@@ -191,11 +196,7 @@ export const ScheduleSuggestionCard = ({
           {t("common.edit")}
         </Button>
         {!hasConflicts && (
-          <Button
-            size="sm"
-            onClick={onConfirm}
-            className="cursor-pointer"
-          >
+          <Button size="sm" onClick={onConfirm} className="cursor-pointer">
             {t("schedule.create")}
           </Button>
         )}

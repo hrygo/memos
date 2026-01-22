@@ -29,7 +29,7 @@ export function useScheduleAgentChat() {
 export async function* scheduleAgentChatStream(
   message: string,
   userTimezone = "Asia/Shanghai",
-  onEvent?: (event: { type: string; data: string }) => void
+  onEvent?: (event: { type: string; data: string }) => void,
 ): AsyncGenerator<{ type: string; data: string; content?: string; done?: boolean }, void> {
   const response = await scheduleAgentServiceClient.chatStream({
     message,
