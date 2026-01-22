@@ -172,7 +172,7 @@ export function QuickTemplates({ onSelect, className, templates = DEFAULT_TEMPLA
     <div className={cn("flex flex-wrap gap-1.5", className)}>
       {templates.map((template) => {
         const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
-        const displayTitle = template.i18nKey ? (t(template.i18nKey as any) as string) || template.title : template.title;
+        const displayTitle = template.i18nKey ? (t(template.i18nKey) || template.title) : template.title;
 
         return (
           <button
@@ -264,13 +264,13 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle, dis
       style={dropdownStyle}
       className="p-1.5 bg-popover rounded-lg border shadow-lg z-[9999] max-h-[60vh] overflow-y-auto"
       role="menu"
-      aria-label={t("schedule.quick-input.quick-create") as string}
+      aria-label={t("schedule.quick-input.quick-create")}
     >
-      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create") as string}</div>
+      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create")}</div>
       <div className="flex flex-col gap-0.5" role="presentation">
         {DEFAULT_TEMPLATES.map((template) => {
           const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
-          const displayTitle = template.i18nKey ? (t(template.i18nKey as any) as string) || template.title : template.title;
+          const displayTitle = template.i18nKey ? (t(template.i18nKey) || template.title) : template.title;
 
           return (
             <button

@@ -55,7 +55,7 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
         className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}
         role="status"
         aria-live="polite"
-        aria-label={parseSource === "ai" ? "AI 正在解析" : "正在解析"}
+        aria-label={parseSource === "ai" ? (t("schedule.quick-input.ai-parsing") as string) : (t("schedule.parsing") as string)}
       >
         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
         <span>
