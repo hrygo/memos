@@ -1,3 +1,9 @@
+---
+allowed-tools: Bash, Read, Grep, Edit
+description: 执行原子化 Git 提交，将变更按功能模块分组提交
+disable-model-invocation: false
+---
+
 # 原子化提交技能
 
 执行原子化 Git 提交，将变更按功能模块分组提交。
