@@ -1,26 +1,17 @@
 import copy from "copy-to-clipboard";
-import {
-  BotIcon,
-  EraserIcon,
-  Loader2,
-  MoreHorizontalIcon,
-  SendIcon,
-  SparklesIcon,
-  UserIcon,
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
+import { BotIcon, EraserIcon, MoreHorizontalIcon, SendIcon, SparklesIcon, UserIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import EmptyState from "@/components/AIChat/EmptyState";
 import ErrorMessage from "@/components/AIChat/ErrorMessage";
-import MessageActions from "@/components/AIChat/MessageActions";
-import { ParrotSelector } from "@/components/AIChat/ParrotSelector";
-import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
-import { ParrotStatus } from "@/components/AIChat/ParrotStatus";
 import { MemoQueryResult } from "@/components/AIChat/MemoQueryResult";
+import MessageActions from "@/components/AIChat/MessageActions";
+import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
+import { ParrotSelector } from "@/components/AIChat/ParrotSelector";
+import { ParrotStatus } from "@/components/AIChat/ParrotStatus";
 import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
 
 import TypingCursor from "@/components/AIChat/TypingCursor";
@@ -33,8 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
-import { ParrotAgent } from "@/types/parrot";
 import type { MemoQueryResultData } from "@/types/parrot";
+import { ParrotAgent } from "@/types/parrot";
 
 const STREAM_TIMEOUT = 60000; // 60 seconds timeout
 
@@ -62,6 +53,7 @@ const AIChat = () => {
   const [contextStartIndex, setContextStartIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageIdRef = useRef(0);
   const chatHook = useChatWithMemos();
 
   // Parrot-related state (Milestone 1)
@@ -71,8 +63,6 @@ const AIChat = () => {
   const [isParrotThinking, setIsParrotThinking] = useState(false);
   const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Use ref to optimize frequent content updates
-  const currentParrotContentRef = useRef("");
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get actual messages (excluding separators) for API calls
@@ -151,7 +141,7 @@ const AIChat = () => {
 
     setIsParrotThinking(true);
     setMemoQueryResults([]);
-    const messageId = ++messageIdRef.current;
+    const _messageId = ++messageIdRef.current;
 
     try {
       await chatHook.stream(
@@ -173,7 +163,7 @@ const AIChat = () => {
           },
           onMemoQueryResult: (result) => {
             // Check if this result is for the current message
-            if (messageId === messageIdRef.current) {
+            if (_messageId === messageIdRef.current) {
               setMemoQueryResults((prev) => [...prev, result]);
             }
           },
@@ -198,7 +188,7 @@ const AIChat = () => {
             console.error("[Parrot Error]", error);
             setErrorMessage(error.message || t("ai.parrot.error-processing"));
           },
-        }
+        },
       );
     } catch (error) {
       setIsParrotThinking(false);
@@ -243,9 +233,6 @@ const AIChat = () => {
     // ============================================================
     // Default chat flow (original logic)
     // ============================================================
-
-    // 原子操作递增消息 ID，避免竞态条件
-    const messageId = ++messageIdRef.current;
 
     setInput("");
     setLastUserMessage(userMessage);
@@ -389,7 +376,10 @@ const AIChat = () => {
                       <EraserIcon className="w-4 h-4 mr-2" />
                       {t("ai.clear-context")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive cursor-pointer">
+                    <DropdownMenuItem
+                      onClick={() => setClearDialogOpen(true)}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
                       <EraserIcon className="w-4 h-4 mr-2" />
                       {t("ai.clear-chat")}
                     </DropdownMenuItem>
@@ -405,10 +395,7 @@ const AIChat = () => {
           {/* Current Parrot Status (Milestone 1) */}
           {currentParrot && (
             <div className="max-w-3xl mx-auto mb-4">
-              <ParrotStatus
-                parrot={currentParrot}
-                thinking={isParrotThinking}
-              />
+              <ParrotStatus parrot={currentParrot} thinking={isParrotThinking} />
             </div>
           )}
 
@@ -537,11 +524,7 @@ const AIChat = () => {
       <div className="shrink-0 p-4 border-t bg-background/80 backdrop-blur-md sticky bottom-0 z-10">
         {/* Parrot Quick Actions (Milestone 1) */}
         <div className="max-w-3xl mx-auto mb-3">
-          <ParrotQuickActions
-            currentParrot={currentParrot}
-            onParrotChange={setCurrentParrot}
-            disabled={isTyping}
-          />
+          <ParrotQuickActions currentParrot={currentParrot} onParrotChange={setCurrentParrot} disabled={isTyping} />
         </div>
 
         <div className="max-w-3xl mx-auto relative">
@@ -567,7 +550,10 @@ const AIChat = () => {
                     <div className="text-xs text-muted-foreground">{t("ai.clear-context-desc")}</div>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setClearDialogOpen(true)} className="text-destructive focus:text-destructive cursor-pointer">
+                <DropdownMenuItem
+                  onClick={() => setClearDialogOpen(true)}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
                   <EraserIcon className="w-4 h-4 mr-2" />
                   <div>
                     <div className="font-medium">{t("ai.clear-chat")}</div>
@@ -583,9 +569,11 @@ const AIChat = () => {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder={currentParrot
-                ? t("ai.parrot.chat-placeholder", { name: currentParrot.displayName })
-                : t("ai.parrot.chat-default-placeholder")}
+              placeholder={
+                currentParrot
+                  ? t("ai.parrot.chat-placeholder", { name: currentParrot.displayName })
+                  : t("ai.parrot.chat-default-placeholder")
+              }
               className="min-h-[44px] max-h-[150px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 px-3 py-2.5 shadow-none"
               rows={1}
               style={{ height: "auto" }}
@@ -621,11 +609,7 @@ const AIChat = () => {
 
       {/* Parrot Selector (Milestone 1) */}
       {showParrotSelector && parrotSelectorPosition && (
-        <ParrotSelector
-          onSelect={handleParrotSelect}
-          onClose={() => setShowParrotSelector(false)}
-          position={parrotSelectorPosition}
-        />
+        <ParrotSelector onSelect={handleParrotSelect} onClose={() => setShowParrotSelector(false)} position={parrotSelectorPosition} />
       )}
     </section>
   );
