@@ -318,10 +318,10 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
   };
 
   // Handle create schedule
-  const handleCreateSchedule = async () => {
+  const handleCreateSchedule = async (overrideScheduleData?: Partial<ParsedSchedule>) => {
     if (isCreating) return;
 
-    let scheduleData = pendingSchedule;
+    let scheduleData = overrideScheduleData || pendingSchedule;
     if (!scheduleData && parseResult?.parsedSchedule) {
       scheduleData = extractScheduleFromParse(parseResult);
     }
@@ -398,18 +398,21 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
   // Handle conflict resolution
   // Handle conflict time slot suggestion
   const handleSuggestionSelect = async (slot: SuggestedTimeSlot) => {
-    // Update pending schedule with new time
-    if (pendingSchedule) {
-      const updatedSchedule = {
-        ...pendingSchedule,
-        startTs: slot.startTs,
-        endTs: slot.endTs,
-      };
-      setPendingSchedule(updatedSchedule);
-    }
+    if (!pendingSchedule) return;
+
+    // Create updated schedule data immediately (not relying on state update)
+    const updatedSchedule: Partial<ParsedSchedule> = {
+      ...pendingSchedule,
+      startTs: slot.startTs,
+      endTs: slot.endTs,
+    };
+
+    // Update state for display purposes
+    setPendingSchedule(updatedSchedule);
     setShowConflictPanel(false);
-    // Create the schedule with the new time
-    await handleCreateSchedule();
+
+    // Create directly with updated data (avoiding async state timing issue)
+    await handleCreateSchedule(updatedSchedule);
   };
 
   const handleForceCreate = async () => {
