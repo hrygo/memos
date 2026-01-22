@@ -493,6 +493,20 @@
     "prompt-discuss": "开始讨论",
     "error-title": "出错了",
     "retry": "重试",
+    "aichat": {
+      "sidebar": {
+        "history": "历史记录",
+        "memos": "引用笔记",
+        "new-chat": "新建对话",
+        "no-conversations": "暂无对话记录",
+        "start-new-chat": "开始一个新对话",
+        "no-referenced-memos": "暂无引用笔记",
+        "search-memos-hint": "与笔记鹦鹉对话以搜索和引用您的笔记",
+        "search-placeholder": "搜索笔记...",
+        "no-results": "未找到结果",
+        "try-different-search": "尝试不同的搜索词"
+      }
+    },
     "parrot": {
       "chat-placeholder": "与 {{name}} 对话...",
       "chat-default-placeholder": "输入消息，输入 @ 选择鹦鹉助手...",
@@ -503,7 +517,36 @@
       "keyboard-shortcuts": "键盘快捷键",
       "select": "选择",
       "confirm": "确认",
-      "close": "关闭"
+      "close": "关闭",
+      "select-agent": "选择 AI 助手",
+      "select-agent-desc": "点击下方卡片选择一个 AI 助手开始对话",
+      "memo-tagline": "搜索与问答",
+      "schedule-tagline": "规划与管理",
+      "amazing-tagline": "全能助手",
+      "creative-tagline": "创意与写作",
+      "try-asking": "试着这样问",
+      "agents": {
+        "default": {
+          "name": "默认助手",
+          "description": "默认 AI 助手，使用 RAG 系统回答问题"
+        },
+        "memo": {
+          "name": "灰灰",
+          "description": "笔记助手，专注于检索、总结和管理笔记"
+        },
+        "schedule": {
+          "name": "金刚",
+          "description": "日程助手，帮助创建、查询和管理日程"
+        },
+        "amazing": {
+          "name": "惊奇",
+          "description": "综合助手，结合笔记和日程功能"
+        },
+        "creative": {
+          "name": "灵灵",
+          "description": "创意助手，提供创意写作和头脑风暴"
+        }
+      }
     }
   },
   "schedule": {
@@ -666,7 +709,8 @@
       "set-time-range": "请设置开始和结束时间",
       "invalid-time": "无效的时间，请重新输入",
       "invalid-time-range": "结束时间必须晚于开始时间",
-      "create-failed": "创建失败，请重试"
+      "create-failed": "创建失败，请重试",
+      "network": "网络错误，请重试"
     },
     "conflict": {
       "title": "时间冲突",
@@ -674,7 +718,8 @@
       "type-partial": "重叠",
       "no-conflict-slot": "无冲突时段",
       "end-slot": "末尾时段",
-      "next-day-available": "次日可用"
+      "next-day-available": "次日可用",
+      "slot-unavailable": "建议时段仍有冲突，请选择其他时间"
     }
   }
 }

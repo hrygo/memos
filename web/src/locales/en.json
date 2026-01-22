@@ -493,6 +493,20 @@
     "prompt-discuss": "Start a discussion",
     "error-title": "Something went wrong",
     "retry": "Retry",
+    "aichat": {
+      "sidebar": {
+        "history": "History",
+        "memos": "Referenced Memos",
+        "new-chat": "New Chat",
+        "no-conversations": "No conversations yet",
+        "start-new-chat": "Start a new chat to begin",
+        "no-referenced-memos": "No referenced memos yet",
+        "search-memos-hint": "Chat with the Memo parrot to search and reference your notes",
+        "search-placeholder": "Search memos...",
+        "no-results": "No results found",
+        "try-different-search": "Try a different search term"
+      }
+    },
     "parrot": {
       "chat-placeholder": "Chat with {{name}}...",
       "chat-default-placeholder": "Type a message, type @ to select a parrot assistant...",
@@ -503,7 +517,36 @@
       "keyboard-shortcuts": "Keyboard shortcuts",
       "select": "Select",
       "confirm": "Confirm",
-      "close": "Close"
+      "close": "Close",
+      "select-agent": "Select AI Assistant",
+      "select-agent-desc": "Click a card below to select an AI assistant and start chatting",
+      "memo-tagline": "Search & Ask",
+      "schedule-tagline": "Plan & Manage",
+      "amazing-tagline": "All-in-One",
+      "creative-tagline": "Create & Write",
+      "try-asking": "Try asking",
+      "agents": {
+        "default": {
+          "name": "Default Assistant",
+          "description": "Default AI assistant with RAG system"
+        },
+        "memo": {
+          "name": "Memo",
+          "description": "Note assistant for searching, summarizing, and managing memos"
+        },
+        "schedule": {
+          "name": "Schedule",
+          "description": "Schedule assistant for creating, querying, and managing schedules"
+        },
+        "amazing": {
+          "name": "Amazing",
+          "description": "Comprehensive assistant combining memo and schedule features"
+        },
+        "creative": {
+          "name": "Creative",
+          "description": "Creative writing assistant for brainstorming and content creation"
+        }
+      }
     }
   },
   "schedule": {
@@ -666,7 +709,8 @@
       "set-time-range": "Please set start and end time",
       "invalid-time": "Invalid time, please enter again",
       "invalid-time-range": "End time must be later than start time",
-      "create-failed": "Create failed, please try again"
+      "create-failed": "Create failed, please try again",
+      "network": "Network error, please try again"
     },
     "conflict": {
       "title": "Time Conflict",
@@ -674,7 +718,8 @@
       "type-partial": "Overlap",
       "no-conflict-slot": "No conflict",
       "end-slot": "End slot",
-      "next-day-available": "Next day available"
+      "next-day-available": "Next day available",
+      "slot-unavailable": "Suggested time slot still has conflicts, please select another"
     }
   }
 }
