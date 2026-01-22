@@ -21,6 +21,42 @@ const (
 	maxInputLengthForLog       = 200
 )
 
+// JSON field name mappings for camelCase to snake_case compatibility.
+// Some LLMs generate camelCase (startTime) while we expect snake_case (start_time).
+var fieldNameMappings = map[string]string{
+	"startTime":   "start_time",
+	"endTime":     "end_time",
+	"allDay":      "all_day",
+	"minScore":    "min_score",
+}
+
+// normalizeJSONFields converts camelCase keys to snake_case for LLM compatibility.
+// This allows the tool to accept both startTime and start_time formats.
+func normalizeJSONFields(inputJSON string) string {
+	// Parse into a generic map
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(inputJSON), &raw); err != nil {
+		return inputJSON // Return original if parsing fails
+	}
+
+	// Convert keys to snake_case
+	normalized := make(map[string]interface{})
+	for key, value := range raw {
+		newKey := key
+		if mapped, ok := fieldNameMappings[key]; ok {
+			newKey = mapped
+		}
+		normalized[newKey] = value
+	}
+
+	// Marshal back to JSON
+	result, err := json.Marshal(normalized)
+	if err != nil {
+		return inputJSON // Return original if marshaling fails
+	}
+	return string(result)
+}
+
 // ScheduleQueryTool searches for schedule events within a specific time range.
 type ScheduleQueryTool struct {
 	service     schedule.Service
@@ -67,13 +103,16 @@ func (t *ScheduleQueryTool) InputType() map[string]interface{} {
 
 // Run executes the tool.
 func (t *ScheduleQueryTool) Run(ctx context.Context, inputJSON string) (string, error) {
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedJSON := normalizeJSONFields(inputJSON)
+
 	// Parse input
 	var input struct {
 		StartTime string `json:"start_time"`
 		EndTime   string `json:"end_time"`
 	}
 
-	if err := json.Unmarshal([]byte(inputJSON), &input); err != nil {
+	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {
 		return "", fmt.Errorf("invalid JSON input: %w", err)
 	}
 
@@ -227,6 +266,9 @@ func (t *ScheduleAddTool) InputType() map[string]interface{} {
 
 // Run executes the tool.
 func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, error) {
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedJSON := normalizeJSONFields(inputJSON)
+
 	// Parse input
 	var input struct {
 		Title       string `json:"title"`
@@ -237,7 +279,7 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		AllDay      bool   `json:"all_day,omitempty"`
 	}
 
-	if err := json.Unmarshal([]byte(inputJSON), &input); err != nil {
+	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {
 		return "", fmt.Errorf("invalid JSON input: %w", err)
 	}
 
@@ -408,10 +450,15 @@ func (t *FindFreeTimeTool) SetTimezone(timezone string) {
 
 // Description returns the tool description for the LLM.
 func (t *FindFreeTimeTool) Description() string {
-	return `Find an available time slot for scheduling.
-Searches for free 1-hour slots between 8 AM - 10 PM (inclusive) within a specified date.
-Inputs: {"date": "2026-01-22"} (the date to search, in YYYY-MM-DD format, user's local timezone)
-Returns: ISO8601 format time string if available, or error message if no slots found.`
+	return `Find an available 1-hour time slot on a specific date.
+Searches for free slots between 8 AM - 10 PM within the specified date.
+
+Input: {"date": "2026-01-23"} (date in YYYY-MM-DD format)
+
+Returns: ISO8601 format START time if available (e.g., "2026-01-23T10:00:00+08:00")
+Important: You must add 1 hour to get the end time (e.g., if it returns "10:00", the slot is 10:00-11:00)
+
+Error: "no available time slots on [date] (all slots from 8 AM to 10 PM are occupied)"`
 }
 
 // InputType returns the expected input type schema.
@@ -587,6 +634,9 @@ func (t *ScheduleUpdateTool) InputType() map[string]interface{} {
 
 // Run executes the tool.
 func (t *ScheduleUpdateTool) Run(ctx context.Context, inputJSON string) (string, error) {
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedJSON := normalizeJSONFields(inputJSON)
+
 	// Parse input
 	var input struct {
 		ID          int32   `json:"id,omitempty"`
@@ -598,7 +648,7 @@ func (t *ScheduleUpdateTool) Run(ctx context.Context, inputJSON string) (string,
 		Location    string  `json:"location,omitempty"`
 	}
 
-	if err := json.Unmarshal([]byte(inputJSON), &input); err != nil {
+	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {
 		return "", fmt.Errorf("invalid JSON input: %w", err)
 	}
 

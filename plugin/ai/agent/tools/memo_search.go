@@ -21,6 +21,35 @@ const (
 	defaultMinScore = 0.5
 )
 
+// JSON field name mappings for camelCase to snake_case compatibility.
+// Some LLMs generate camelCase (minScore) while we expect snake_case (min_score).
+var memoFieldNameMappings = map[string]string{
+	"minScore": "min_score",
+}
+
+// normalizeMemoJSONFields converts camelCase keys to snake_case for LLM compatibility.
+func normalizeMemoJSONFields(inputJSON string) string {
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(inputJSON), &raw); err != nil {
+		return inputJSON
+	}
+
+	normalized := make(map[string]interface{})
+	for key, value := range raw {
+		newKey := key
+		if mapped, ok := memoFieldNameMappings[key]; ok {
+			newKey = mapped
+		}
+		normalized[newKey] = value
+	}
+
+	result, err := json.Marshal(normalized)
+	if err != nil {
+		return inputJSON
+	}
+	return string(result)
+}
+
 // MemoSearchTool searches for memos using semantic and keyword search.
 // MemoSearchTool 使用语义和关键词搜索来查找笔记。
 type MemoSearchTool struct {
@@ -84,9 +113,12 @@ func (t *MemoSearchTool) Run(ctx context.Context, input string) (string, error) 
 	ctx, cancel := context.WithTimeout(ctx, timeout.ToolExecutionTimeout)
 	defer cancel()
 
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedInput := normalizeMemoJSONFields(input)
+
 	// Parse input
 	var searchInput MemoSearchInput
-	if err := json.Unmarshal([]byte(input), &searchInput); err != nil {
+	if err := json.Unmarshal([]byte(normalizedInput), &searchInput); err != nil {
 		return "", fmt.Errorf("invalid JSON input: %w", err)
 	}
 
@@ -144,17 +176,17 @@ func (t *MemoSearchTool) Run(ctx context.Context, input string) (string, error) 
 
 	// Build response
 	var response strings.Builder
-	response.WriteString(fmt.Sprintf("Found %d memo(s) matching query: %s\n\n", len(memoResults), searchInput.Query))
+	fmt.Fprintf(&response, "Found %d memo(s) matching query: %s\n\n", len(memoResults), searchInput.Query)
 
 	for i, result := range memoResults {
-		response.WriteString(fmt.Sprintf("%d. [Score: %.2f] %s\n", i+1, result.Score, result.Content))
+		fmt.Fprintf(&response, "%d. [Score: %.2f] %s\n", i+1, result.Score, result.Content)
 
 		// Add memo UID if available
 		if result.Memo != nil && result.Memo.UID != "" {
-			response.WriteString(fmt.Sprintf("   UID: %s\n", result.Memo.UID))
+			fmt.Fprintf(&response, "   UID: %s\n", result.Memo.UID)
 		}
 
-		response.WriteString("\n")
+		fmt.Fprintf(&response, "\n")
 	}
 
 	return response.String(), nil
@@ -182,9 +214,12 @@ func (t *MemoSearchTool) RunWithStructuredResult(ctx context.Context, input stri
 	ctx, cancel := context.WithTimeout(ctx, timeout.ToolExecutionTimeout)
 	defer cancel()
 
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedInput := normalizeMemoJSONFields(input)
+
 	// Parse input
 	var searchInput MemoSearchInput
-	if err := json.Unmarshal([]byte(input), &searchInput); err != nil {
+	if err := json.Unmarshal([]byte(normalizedInput), &searchInput); err != nil {
 		return nil, fmt.Errorf("invalid JSON input: %w", err)
 	}
 
@@ -193,15 +228,15 @@ func (t *MemoSearchTool) RunWithStructuredResult(ctx context.Context, input stri
 		return nil, fmt.Errorf("query cannot be empty")
 	}
 
-	// Set defaults
+	// Set defaults using defined constants
 	if searchInput.Limit <= 0 {
-		searchInput.Limit = 10
+		searchInput.Limit = defaultSearchLimit
 	}
-	if searchInput.Limit > 50 {
-		searchInput.Limit = 50
+	if searchInput.Limit > maxSearchLimit {
+		searchInput.Limit = maxSearchLimit
 	}
 	if searchInput.MinScore <= 0 {
-		searchInput.MinScore = 0.5
+		searchInput.MinScore = defaultMinScore
 	}
 
 	// Get user ID
