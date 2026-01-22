@@ -8,6 +8,7 @@ import { ScheduleProvider } from "@/contexts/ScheduleContext";
 import MainLayout from "@/layouts/MainLayout";
 import RootLayout from "@/layouts/RootLayout";
 import ScheduleLayout from "@/layouts/ScheduleLayout";
+import AIChatLayout from "@/layouts/AIChatLayout";
 import Home from "@/pages/Home";
 
 const AdminSignIn = lazy(() => import("@/pages/AdminSignIn"));
@@ -67,7 +68,6 @@ const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              { path: "", element: <LazyRoute component={AIChat} /> },
               { path: Routes.HOME, element: <Home /> },
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
@@ -84,16 +84,18 @@ const router = createBrowserRouter([
             ),
             children: [{ index: true, element: <LazyRoute component={Schedule} /> }],
           },
-          { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
-          { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
+          // AI Chat page with custom layout
           {
             path: Routes.CHAT,
             element: (
               <ErrorBoundary>
-                <LazyRoute component={AIChat} />
+                <AIChatLayout />
               </ErrorBoundary>
             ),
+            children: [{ index: true, element: <LazyRoute component={AIChat} /> }],
           },
+          { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
+          { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
           { path: Routes.SETTING, element: <LazyRoute component={Setting} /> },
           { path: "memos/:uid", element: <LazyRoute component={MemoDetail} /> },
           // Redirect old path to new path
