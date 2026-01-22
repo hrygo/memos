@@ -72,6 +72,62 @@ func (ScheduleQueryMode) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{0}
 }
 
+// AgentType specifies the type of AI agent to use for the request.
+type AgentType int32
+
+const (
+	AgentType_AGENT_TYPE_DEFAULT  AgentType = 0 // Default behavior (existing logic)
+	AgentType_AGENT_TYPE_MEMO     AgentType = 1 // 🦜 Memo Parrot - Note assistant
+	AgentType_AGENT_TYPE_SCHEDULE AgentType = 2 // 🦜 Schedule Parrot - Schedule assistant
+	AgentType_AGENT_TYPE_AMAZING  AgentType = 3 // 🦜 Amazing Parrot - Comprehensive assistant (Milestone 2)
+	AgentType_AGENT_TYPE_CREATIVE AgentType = 4 // 🦜 Creative Parrot - Creative assistant (Milestone 4)
+)
+
+// Enum value maps for AgentType.
+var (
+	AgentType_name = map[int32]string{
+		0: "AGENT_TYPE_DEFAULT",
+		1: "AGENT_TYPE_MEMO",
+		2: "AGENT_TYPE_SCHEDULE",
+		3: "AGENT_TYPE_AMAZING",
+		4: "AGENT_TYPE_CREATIVE",
+	}
+	AgentType_value = map[string]int32{
+		"AGENT_TYPE_DEFAULT":  0,
+		"AGENT_TYPE_MEMO":     1,
+		"AGENT_TYPE_SCHEDULE": 2,
+		"AGENT_TYPE_AMAZING":  3,
+		"AGENT_TYPE_CREATIVE": 4,
+	}
+)
+
+func (x AgentType) Enum() *AgentType {
+	p := new(AgentType)
+	*p = x
+	return p
+}
+
+func (x AgentType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AgentType) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_ai_service_proto_enumTypes[1].Descriptor()
+}
+
+func (AgentType) Type() protoreflect.EnumType {
+	return &file_api_v1_ai_service_proto_enumTypes[1]
+}
+
+func (x AgentType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AgentType.Descriptor instead.
+func (AgentType) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{1}
+}
+
 // ScheduleAgentChatRequest is the request for schedule agent chat.
 type ScheduleAgentChatRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -495,6 +551,7 @@ type ChatWithMemosRequest struct {
 	History           []string               `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`                                                                                     // conversation history
 	UserTimezone      string                 `protobuf:"bytes,3,opt,name=user_timezone,json=userTimezone,proto3" json:"user_timezone,omitempty"`                                                       // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
 	ScheduleQueryMode ScheduleQueryMode      `protobuf:"varint,4,opt,name=schedule_query_mode,json=scheduleQueryMode,proto3,enum=memos.api.v1.ScheduleQueryMode" json:"schedule_query_mode,omitempty"` // Schedule query mode (optional, defaults to AUTO)
+	AgentType         AgentType              `protobuf:"varint,5,opt,name=agent_type,json=agentType,proto3,enum=memos.api.v1.AgentType" json:"agent_type,omitempty"`                                   // Agent type (optional, defaults to DEFAULT)
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -555,6 +612,13 @@ func (x *ChatWithMemosRequest) GetScheduleQueryMode() ScheduleQueryMode {
 		return x.ScheduleQueryMode
 	}
 	return ScheduleQueryMode_AUTO
+}
+
+func (x *ChatWithMemosRequest) GetAgentType() AgentType {
+	if x != nil {
+		return x.AgentType
+	}
+	return AgentType_AGENT_TYPE_DEFAULT
 }
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
@@ -1008,12 +1072,14 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\acontent\x18\x01 \x01(\tB\x03\xe0A\x02R\acontent\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\")\n" +
 	"\x13SuggestTagsResponse\x12\x12\n" +
-	"\x04tags\x18\x01 \x03(\tR\x04tags\"\xc5\x01\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tags\"\xfd\x01\n" +
 	"\x14ChatWithMemosRequest\x12\x1d\n" +
 	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12\x18\n" +
 	"\ahistory\x18\x02 \x03(\tR\ahistory\x12#\n" +
 	"\ruser_timezone\x18\x03 \x01(\tR\fuserTimezone\x12O\n" +
-	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\"\xd4\x02\n" +
+	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\x126\n" +
+	"\n" +
+	"agent_type\x18\x05 \x01(\x0e2\x17.memos.api.v1.AgentTypeR\tagentType\"\xd4\x02\n" +
 	"\x15ChatWithMemosResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\x12\x12\n" +
@@ -1052,7 +1118,13 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
 	"\n" +
-	"\x06STRICT\x10\x022\x97\x06\n" +
+	"\x06STRICT\x10\x02*\x82\x01\n" +
+	"\tAgentType\x12\x16\n" +
+	"\x12AGENT_TYPE_DEFAULT\x10\x00\x12\x13\n" +
+	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
+	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
+	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x042\x97\x06\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12v\n" +
@@ -1078,54 +1150,56 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_ai_service_proto_rawDescData
 }
 
-var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_api_v1_ai_service_proto_goTypes = []any{
 	(ScheduleQueryMode)(0),              // 0: memos.api.v1.ScheduleQueryMode
-	(*ScheduleAgentChatRequest)(nil),    // 1: memos.api.v1.ScheduleAgentChatRequest
-	(*ScheduleAgentChatResponse)(nil),   // 2: memos.api.v1.ScheduleAgentChatResponse
-	(*ScheduleAgentStreamResponse)(nil), // 3: memos.api.v1.ScheduleAgentStreamResponse
-	(*SemanticSearchRequest)(nil),       // 4: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),      // 5: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),                // 6: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),          // 7: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),         // 8: memos.api.v1.SuggestTagsResponse
-	(*ChatWithMemosRequest)(nil),        // 9: memos.api.v1.ChatWithMemosRequest
-	(*ChatWithMemosResponse)(nil),       // 10: memos.api.v1.ChatWithMemosResponse
-	(*ScheduleCreationIntent)(nil),      // 11: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),         // 12: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),             // 13: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),      // 14: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil),     // 15: memos.api.v1.GetRelatedMemosResponse
+	(AgentType)(0),                      // 1: memos.api.v1.AgentType
+	(*ScheduleAgentChatRequest)(nil),    // 2: memos.api.v1.ScheduleAgentChatRequest
+	(*ScheduleAgentChatResponse)(nil),   // 3: memos.api.v1.ScheduleAgentChatResponse
+	(*ScheduleAgentStreamResponse)(nil), // 4: memos.api.v1.ScheduleAgentStreamResponse
+	(*SemanticSearchRequest)(nil),       // 5: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),      // 6: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),                // 7: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),          // 8: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),         // 9: memos.api.v1.SuggestTagsResponse
+	(*ChatWithMemosRequest)(nil),        // 10: memos.api.v1.ChatWithMemosRequest
+	(*ChatWithMemosResponse)(nil),       // 11: memos.api.v1.ChatWithMemosResponse
+	(*ScheduleCreationIntent)(nil),      // 12: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),         // 13: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),             // 14: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),      // 15: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil),     // 16: memos.api.v1.GetRelatedMemosResponse
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
-	6,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
+	7,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
 	0,  // 1: memos.api.v1.ChatWithMemosRequest.schedule_query_mode:type_name -> memos.api.v1.ScheduleQueryMode
-	11, // 2: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
-	12, // 3: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
-	13, // 4: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
-	6,  // 5: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
-	4,  // 6: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	7,  // 7: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	9,  // 8: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
-	14, // 9: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	9,  // 10: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
-	9,  // 11: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
-	1,  // 12: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	1,  // 13: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	5,  // 14: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	8,  // 15: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	10, // 16: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
-	15, // 17: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	10, // 18: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
-	10, // 19: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse
-	2,  // 20: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
-	3,  // 21: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
-	14, // [14:22] is the sub-list for method output_type
-	6,  // [6:14] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	1,  // 2: memos.api.v1.ChatWithMemosRequest.agent_type:type_name -> memos.api.v1.AgentType
+	12, // 3: memos.api.v1.ChatWithMemosResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	13, // 4: memos.api.v1.ChatWithMemosResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	14, // 5: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	7,  // 6: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
+	5,  // 7: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	8,  // 8: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	10, // 9: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	15, // 10: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	10, // 11: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
+	10, // 12: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
+	2,  // 13: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	2,  // 14: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	6,  // 15: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	9,  // 16: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	11, // 17: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	16, // 18: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	11, // 19: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
+	11, // 20: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse
+	3,  // 21: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	4,  // 22: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	15, // [15:23] is the sub-list for method output_type
+	7,  // [7:15] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -1138,7 +1212,7 @@ func file_api_v1_ai_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   2,

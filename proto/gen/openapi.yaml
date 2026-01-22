@@ -2455,6 +2455,15 @@ components:
                         - STRICT
                     type: string
                     format: enum
+                agentType:
+                    enum:
+                        - AGENT_TYPE_DEFAULT
+                        - AGENT_TYPE_MEMO
+                        - AGENT_TYPE_SCHEDULE
+                        - AGENT_TYPE_AMAZING
+                        - AGENT_TYPE_CREATIVE
+                    type: string
+                    format: enum
             description: ChatWithMemosRequest is the request for ChatWithMemos.
         ChatWithMemosResponse:
             type: object

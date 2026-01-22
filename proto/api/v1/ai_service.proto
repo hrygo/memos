@@ -130,12 +130,22 @@ enum ScheduleQueryMode {
   STRICT = 2;     // Strict mode: return only schedules completely within the query range
 }
 
+// AgentType specifies the type of AI agent to use for the request.
+enum AgentType {
+  AGENT_TYPE_DEFAULT = 0;   // Default behavior (existing logic)
+  AGENT_TYPE_MEMO = 1;      // 🦜 Memo Parrot - Note assistant
+  AGENT_TYPE_SCHEDULE = 2;  // 🦜 Schedule Parrot - Schedule assistant
+  AGENT_TYPE_AMAZING = 3;   // 🦜 Amazing Parrot - Comprehensive assistant (Milestone 2)
+  AGENT_TYPE_CREATIVE = 4;  // 🦜 Creative Parrot - Creative assistant (Milestone 4)
+}
+
 // ChatWithMemosRequest is the request for ChatWithMemos.
 message ChatWithMemosRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;  // conversation history
   string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
   ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
+  AgentType agent_type = 5;     // Agent type (optional, defaults to DEFAULT)
 }
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
