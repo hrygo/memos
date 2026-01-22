@@ -130,6 +130,10 @@ func (s *Store) GetInstanceGeneralSetting(ctx context.Context) (*storepb.Instanc
 	if instanceSetting != nil {
 		instanceGeneralSetting = instanceSetting.GetGeneralSetting()
 	}
+	// Default to Monday (1) as the first day of the week
+	if instanceGeneralSetting.WeekStartDayOffset == 0 {
+		instanceGeneralSetting.WeekStartDayOffset = 1
+	}
 	s.instanceSettingCache.Set(ctx, storepb.InstanceSettingKey_GENERAL.String(), &storepb.InstanceSetting{
 		Key:   storepb.InstanceSettingKey_GENERAL,
 		Value: &storepb.InstanceSetting_GeneralSetting{GeneralSetting: instanceGeneralSetting},
