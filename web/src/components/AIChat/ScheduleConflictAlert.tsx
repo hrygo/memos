@@ -37,12 +37,9 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust,
             <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
           </div>
           <div className="flex-1">
-            <DialogTitle className="text-lg">{t("schedule.conflict-detected") as string}</DialogTitle>
+            <DialogTitle className="text-lg">{t("schedule.conflict-detected")}</DialogTitle>
             <DialogDescription className="mt-1 text-sm">
-              {
-                // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing translation key
-                t("schedule.conflict-warning-desc" as any, { count: conflicts.length }) as string
-              }
+              {t("schedule.conflict-warning-desc", { count: conflicts.length })}
             </DialogDescription>
           </div>
         </div>
@@ -79,22 +76,19 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust,
           {/* Cancel - Secondary */}
           <Button variant="outline" onClick={onDiscard} className="w-full sm:w-auto">
             <X className="h-4 w-4 mr-2" />
-            {t("schedule.cancel-create") as string}
+            {t("schedule.cancel-create")}
           </Button>
 
           {/* Modify/Adjust - Primary Action */}
           <Button variant="default" onClick={onAdjust} className="w-full sm:w-auto cursor-pointer">
             <Pencil className="h-4 w-4 mr-2" />
-            {t("schedule.modify-schedule") as string}
+            {t("schedule.modify-schedule")}
           </Button>
         </div>
 
         {/* Hint Text */}
         <p className="mt-3 text-xs text-center text-muted-foreground">
-          {
-            // biome-ignore lint/suspicious/noExplicitAny: Temporary fix for missing translation key
-            t("schedule.conflict-hint" as any) as string
-          }
+          {t("schedule.conflict-hint")}
         </p>
       </DialogContent>
     </Dialog>
