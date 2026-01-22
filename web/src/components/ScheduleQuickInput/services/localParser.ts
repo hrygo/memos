@@ -84,12 +84,17 @@ class LocalParser {
 
     // Check for title-only input (no time detected)
     if (trimmedInput.length > 0 && trimmedInput.length < 50) {
+      // Use current time rounded to the hour for default timestamps
+      const now = new Date();
+      const startTs = Math.floor(now.getTime() / 1000);
+      const endTs = startTs + DEFAULT_DURATION_MINUTES * 60;
+
       return {
         state: "partial",
         parsedSchedule: {
           title: input,
-          startTs: BigInt(Math.floor(new Date().setMinutes(0, 0) / 1000)),
-          endTs: BigInt(Math.floor(new Date().setMinutes(0, 0) / 1000) + DEFAULT_DURATION_MINUTES * 60),
+          startTs: BigInt(startTs),
+          endTs: BigInt(endTs),
           confidence: 0.5,
           source: "local",
           missingFields: ["startTime", "duration"],
