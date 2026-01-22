@@ -67,7 +67,13 @@
       "Bash(do sed -i '' 's/router\\\\.Route\\(\\\\\\([^,]*\\\\\\), \\\\\\([^\\)]*\\\\\\)\\)/router.Route\\(\\\\1, \\\\2, nil\\)/g' \"$file\" echo \"Updated: $file\" done)",
       "Bash(echo:*)",
       "Bash(git rm:*)",
-      "Bash(pnpm lint)"
+      "Bash(pnpm lint)",
+      "Bash(git push)",
+      "Bash(git --version:*)",
+      "mcp__web-reader__webReader",
+      "mcp__zread__get_repo_structure",
+      "Skill(code-review:code-review)",
+      "Bash(gh api:*)"
     ]
   }
 }
