@@ -17,7 +17,13 @@ interface ScheduleCalendarProps {
   showMobileHint?: boolean;
 }
 
-export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, className = "", showMobileHint = false }: ScheduleCalendarProps) => {
+export const ScheduleCalendar = ({
+  schedules,
+  selectedDate,
+  onDateClick,
+  className = "",
+  showMobileHint = false,
+}: ScheduleCalendarProps) => {
   const t = useTranslate();
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
@@ -137,10 +143,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
         </div>
 
         {/* Days */}
-        <div
-          className="grid grid-cols-7 gap-1 flex-1 min-h-0"
-          style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}
-        >
+        <div className="grid grid-cols-7 gap-1 flex-1 min-h-0" style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}>
           {days.map((date, idx) => {
             const scheduleCount = getScheduleCount(date);
             const isTodayDate = isToday(date);
@@ -167,7 +170,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                     // Today state (when not selected)
                     !isSelectedDate && isTodayDate && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
                     // Logic to ensure text color is correct when not selected/today
-                    !isSelectedDate && !isTodayDate && "text-foreground"
+                    !isSelectedDate && !isTodayDate && "text-foreground",
                   )}
                 >
                   {date.format("D")}
@@ -177,12 +180,7 @@ export const ScheduleCalendar = ({ schedules, selectedDate, onDateClick, classNa
                 {scheduleCount > 0 && (
                   <div className="flex justify-center gap-0.5">
                     {Array.from({ length: Math.min(scheduleCount, 3) }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "h-1 w-1 rounded-full bg-primary/70"
-                        )}
-                      />
+                      <div key={i} className={cn("h-1 w-1 rounded-full bg-primary/70")} />
                     ))}
                   </div>
                 )}
