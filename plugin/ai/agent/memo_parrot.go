@@ -1,0 +1,304 @@
+package agent
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/usememos/memos/plugin/ai"
+	"github.com/usememos/memos/plugin/ai/agent/tools"
+	"github.com/usememos/memos/server/retrieval"
+)
+
+// Constants for MemoParrot configuration
+const (
+	// DefaultCacheEntries is the default maximum number of cache entries
+	DefaultCacheEntries = 100
+
+	// DefaultCacheTTL is the default time-to-live for cache entries
+	DefaultCacheTTL = 5 * time.Minute
+
+	// AgentTimeout is the timeout for agent execution
+	AgentTimeout = 2 * time.Minute
+
+	// MaxToolIterations is the maximum number of ReAct loop iterations
+	MaxToolIterations = 5
+)
+
+// MemoParrot is the note-taking assistant parrot (🦜 灰灰).
+// MemoParrot 是笔记助手鹦鹉（🦜 灰灰）。
+type MemoParrot struct {
+	router         *ParrotRouter
+	retriever      *retrieval.AdaptiveRetriever
+	llm            ai.LLMService
+	cache          *LRUCache
+	userID         int32
+	memoSearchTool *tools.MemoSearchTool
+}
+
+// NewMemoParrot creates a new memo parrot agent.
+// NewMemoParrot 创建一个新的笔记助手鹦鹉。
+func NewMemoParrot(
+	router *ParrotRouter,
+	retriever *retrieval.AdaptiveRetriever,
+	llm ai.LLMService,
+	userID int32,
+) (*MemoParrot, error) {
+	if router == nil {
+		return nil, fmt.Errorf("router cannot be nil")
+	}
+	if retriever == nil {
+		return nil, fmt.Errorf("retriever cannot be nil")
+	}
+	if llm == nil {
+		return nil, fmt.Errorf("llm cannot be nil")
+	}
+
+	// Create memo search tool
+	userIDGetter := func(ctx context.Context) int32 {
+		return userID
+	}
+	memoSearchTool := tools.NewMemoSearchTool(retriever, userIDGetter)
+
+	return &MemoParrot{
+		router:         router,
+		retriever:      retriever,
+		llm:            llm,
+		cache:          NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
+		userID:         userID,
+		memoSearchTool: memoSearchTool,
+	}, nil
+}
+
+// Name returns the name of the parrot.
+// Name 返回鹦鹉名称。
+func (p *MemoParrot) Name() string {
+	return "memo" // ParrotAgentType AGENT_TYPE_MEMO
+}
+
+// ExecuteWithCallback executes the memo parrot with callback support.
+// ExecuteWithCallback 执行笔记助手鹦鹉并支持回调。
+func (p *MemoParrot) ExecuteWithCallback(
+	ctx context.Context,
+	userInput string,
+	callback EventCallback,
+) error {
+	// Add timeout protection
+	ctx, cancel := context.WithTimeout(ctx, AgentTimeout)
+	defer cancel()
+
+	// Step 1: Check cache (include userID to prevent cross-user cache pollution)
+	// Use hashed cache key to prevent memory issues from long inputs
+	cacheKey := p.generateCacheKey(p.userID, userInput)
+	if cachedResult, found := p.cache.Get(cacheKey); found {
+		if result, ok := cachedResult.(string); ok {
+			// Send cached answer
+			if callback != nil {
+				callback(EventTypeAnswer, result)
+			}
+			return nil
+		}
+	}
+
+	// Step 2: Build system prompt
+	systemPrompt := p.buildSystemPrompt()
+
+	// Step 3: ReAct loop
+	messages := []ai.Message{
+		{Role: "system", Content: systemPrompt},
+		{Role: "user", Content: userInput},
+	}
+
+	var iteration int
+
+	for iteration = 0; iteration < MaxToolIterations; iteration++ {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
+		default:
+		}
+
+		// Notify thinking
+		if callback != nil {
+			callback(EventTypeThinking, "正在思考...")
+		}
+
+		// Get LLM response
+		response, err := p.llm.Chat(ctx, messages)
+		if err != nil {
+			return NewParrotError(p.Name(), "Chat", err)
+		}
+
+		// Try to parse tool call
+		toolCall, toolInput, err := p.parseToolCall(response)
+		if err != nil {
+			// No tool call, this is the final answer
+			// Cache the result
+			p.cache.Set(cacheKey, response)
+
+			if callback != nil {
+				callback(EventTypeAnswer, response)
+			}
+			return nil
+		}
+
+		// Execute tool
+		if callback != nil {
+			callback(EventTypeToolUse, fmt.Sprintf("正在使用工具: %s", toolCall))
+		}
+
+		var toolResult string
+		switch toolCall {
+		case "memo_search":
+			toolResult, err = p.memoSearchTool.Run(ctx, toolInput)
+			if err != nil {
+				return NewParrotError(p.Name(), "memo_search", err)
+			}
+		default:
+			errorMsg := fmt.Sprintf("未知工具: %s", toolCall)
+			messages = append(messages, ai.Message{Role: "assistant", Content: response})
+			messages = append(messages, ai.Message{Role: "user", Content: errorMsg})
+			continue
+		}
+
+		// Send tool result
+		if callback != nil {
+			callback(EventTypeToolResult, toolResult)
+		}
+
+		// Add to conversation
+		messages = append(messages, ai.Message{Role: "assistant", Content: response})
+		messages = append(messages, ai.Message{Role: "user", Content: fmt.Sprintf("工具结果: %s", toolResult)})
+	}
+
+	// Exceeded max iterations
+	return NewParrotError(p.Name(), "ExecuteWithCallback",
+		fmt.Errorf("exceeded maximum iterations (%d)", MaxToolIterations))
+}
+
+// buildSystemPrompt builds the system prompt for the memo parrot.
+func (p *MemoParrot) buildSystemPrompt() string {
+	now := time.Now()
+	return fmt.Sprintf(`你是 Memos 的笔记助手 🦜 灰灰，专注于帮助用户检索、总结和管理笔记。
+
+当前时间: %s
+
+## 核心能力
+1. **笔记检索**: 使用 memo_search 工具搜索相关笔记
+2. **内容总结**: 总结和整理笔记内容
+3. **问答**: 基于笔记内容回答用户问题
+
+## 工作流程 (ReAct 模式)
+1. **思考**: 分析用户需求，确定是否需要检索笔记
+2. **工具**: 使用 memo_search 工具搜索相关笔记
+3. **观察**: 分析搜索结果
+4. **回答**: 基于搜索结果生成准确的回答
+
+## 工具使用规范
+
+### memo_search 工具
+用途: 搜索笔记
+输入格式: JSON
+- query (必需): 搜索关键词
+- limit (可选): 返回结果数量，默认 10，最大 50
+- min_score (可选): 最小相关度分数，默认 0.5
+
+示例:
+- 搜索 Python 笔记: {"query": "Python 编程", "limit": 5}
+- 搜索重要内容: {"query": "重要", "min_score": 0.7}
+
+## 回答原则
+1. **准确优先**: 仅基于搜索到的笔记内容回答，不编造信息
+2. **结构清晰**: 使用列表、分段组织内容
+3. **简洁明了**: 直接给出答案，避免冗余
+4. **无结果时说明**: 如果没有找到相关笔记，明确告知用户
+
+## 示例对话
+
+用户: "帮我找关于 Python 的笔记"
+思考: 用户想搜索 Python 相关笔记
+工具: {"query": "Python", "limit": 10}
+观察: 找到 5 条相关笔记
+回答: 我为您找到了 5 条关于 Python 的笔记...
+
+用户: "总结一下会议纪要"
+思考: 需要搜索会议相关笔记并总结
+工具: {"query": "会议", "limit": 5}
+观察: 找到 3 条会议笔记
+回答: 根据搜索到的笔记，最近的会议内容如下...
+
+## 重要提醒
+- 总是先使用工具搜索笔记，再给出答案
+- 如果搜索结果为空，告知用户并建议换个关键词
+- 保持回答简洁但信息完整
+工具调用格式:
+TOOL: memo_search
+INPUT: {"query": "搜索关键词"}`,
+		now.Format("2006-01-02 15:04:05"))
+}
+
+// parseToolCall attempts to parse a tool call from LLM response.
+// Returns tool name, input JSON, and error if no tool call is found.
+func (p *MemoParrot) parseToolCall(response string) (string, string, error) {
+	lines := strings.Split(response, "\n")
+
+	var toolName string
+	var inputJSON string
+	foundTool := false
+	foundInput := false
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "TOOL:") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				toolName = strings.TrimSpace(parts[1])
+				foundTool = true
+			}
+		}
+
+		if strings.HasPrefix(line, "INPUT:") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				inputStr := strings.TrimSpace(parts[1])
+				// Validate JSON - reject invalid JSON to prevent tool execution errors
+				var jsonObj map[string]any
+				if err := json.Unmarshal([]byte(inputStr), &jsonObj); err != nil {
+					return "", "", fmt.Errorf("invalid JSON in INPUT: %w", err)
+				}
+				inputJSON = inputStr
+				foundInput = true
+			}
+		}
+	}
+
+	if !foundTool || !foundInput {
+		return "", "", fmt.Errorf("no tool call in response")
+	}
+
+	return toolName, inputJSON, nil
+}
+
+// GetStats returns the cache statistics for the memo parrot.
+// GetStats 返回笔记助手鹦鹉的缓存统计信息。
+func (p *MemoParrot) GetStats() CacheStats {
+	return p.cache.Stats()
+}
+
+// generateCacheKey creates a cache key from userID and userInput using SHA256 hash.
+// generateCacheKey 使用 SHA256 哈希从 userID 和 userInput 创建缓存键。
+// This prevents memory issues from long inputs and provides consistent key length.
+func (p *MemoParrot) generateCacheKey(userID int32, userInput string) string {
+	// Create hash of user input to avoid memory issues with long inputs
+	hash := sha256.Sum256([]byte(userInput))
+	hashStr := hex.EncodeToString(hash[:])
+
+	// Use first 16 chars of hash for brevity (still provides good collision resistance)
+	return fmt.Sprintf("memo:%d:%s", userID, hashStr[:16])
+}
