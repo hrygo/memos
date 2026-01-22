@@ -111,7 +111,7 @@ func main() {
 
 		// 使用带回调的执行模式
 		startTime := time.Now()
-		response, err := agent.ExecuteWithCallback(ctx, test.input, func(eventType, eventData string) {
+		response, err := agent.ExecuteWithCallback(ctx, test.input, nil, func(eventType, eventData string) {
 			switch eventType {
 			case "thinking":
 				fmt.Println("  [思考中]", eventData)
