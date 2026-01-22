@@ -19,6 +19,7 @@ import (
 	"github.com/usememos/memos/server/finops"
 	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/server/retrieval"
+	"github.com/usememos/memos/server/service/schedule"
 	"github.com/usememos/memos/store"
 )
 
@@ -742,9 +743,9 @@ func (s *AIService) chatWithParrot(
 	req *v1pb.ChatWithMemosRequest,
 	stream v1pb.AIService_ChatWithMemosServer,
 ) error {
-	// Check if ParrotRouter is initialized
-	if s.ParrotRouter == nil {
-		return status.Errorf(codes.Unavailable, "parrot system is not available")
+	// Check if LLM service is initialized
+	if s.LLMService == nil {
+		return status.Errorf(codes.Unavailable, "AI service is not available")
 	}
 
 	// Get current user
@@ -760,9 +761,16 @@ func (s *AIService) chatWithParrot(
 			"rate limit exceeded: please wait before making another AI chat request")
 	}
 
-	// Get agent type string
-	agentTypeStr := req.AgentType.String()
+	// Get agent type
+	agentType := req.AgentType
+	agentTypeStr := agentType.String()
 	slog.Debug("Routing to parrot agent", "agent_type", agentTypeStr, "user_id", user.ID)
+
+	// Get user timezone from request
+	userTimezone := req.UserTimezone
+	if userTimezone == "" {
+		userTimezone = "Asia/Shanghai" // Default timezone
+	}
 
 	// Create stream adapter
 	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData interface{}) error {
@@ -790,10 +798,64 @@ func (s *AIService) chatWithParrot(
 		})
 	})
 
-	// Route to parrot agent
-	if err := s.ParrotRouter.Route(ctx, agentTypeStr, req.Message, streamAdapter); err != nil {
-		slog.Error("Parrot agent routing failed", "error", err, "agent_type", agentTypeStr)
-		return status.Errorf(codes.Internal, "parrot agent failed: %v", err)
+	// Create appropriate agent based on type
+	var parrotAgent agentpkg.ParrotAgent
+	scheduleSvc := schedule.NewService(s.Store)
+
+	switch agentType {
+	case v1pb.AgentType_AGENT_TYPE_MEMO:
+		// Memo Parrot (灰灰)
+		parrotAgent, err = agentpkg.NewMemoParrot(
+			nil, // router
+			s.AdaptiveRetriever,
+			s.LLMService,
+			user.ID,
+		)
+	case v1pb.AgentType_AGENT_TYPE_SCHEDULE:
+		// Schedule Parrot (金刚) - wrap existing SchedulerAgent
+		schedulerAgent, agentErr := agentpkg.NewSchedulerAgent(
+			s.LLMService,
+			scheduleSvc,
+			user.ID,
+			userTimezone,
+		)
+		if agentErr != nil {
+			return status.Errorf(codes.Internal, "failed to create scheduler agent: %v", agentErr)
+		}
+		parrotAgent, err = agentpkg.NewScheduleParrot(schedulerAgent)
+	case v1pb.AgentType_AGENT_TYPE_AMAZING:
+		// Amazing Parrot (惊奇) - comprehensive assistant
+		parrotAgent, err = agentpkg.NewAmazingParrot(
+			s.LLMService,
+			s.AdaptiveRetriever,
+			scheduleSvc,
+			user.ID,
+		)
+	case v1pb.AgentType_AGENT_TYPE_CREATIVE:
+		// Creative Parrot (灵灵) - creative writing assistant
+		parrotAgent, err = agentpkg.NewCreativeParrot(
+			s.LLMService,
+			user.ID,
+		)
+	default:
+		// For DEFAULT or unknown types, fall back to standard RAG chat
+		return s.chatWithStandardRAG(ctx, req, stream, user)
+	}
+
+	if err != nil {
+		slog.Error("Failed to create parrot agent", "error", err, "agent_type", agentTypeStr)
+		return status.Errorf(codes.Internal, "failed to create agent: %v", err)
+	}
+
+	// Create callback wrapper
+	callback := func(eventType string, eventData interface{}) error {
+		return streamAdapter.Send(eventType, eventData)
+	}
+
+	// Execute agent
+	if err := parrotAgent.ExecuteWithCallback(ctx, req.Message, callback); err != nil {
+		slog.Error("Parrot agent execution failed", "error", err, "agent_type", agentTypeStr)
+		return status.Errorf(codes.Internal, "agent execution failed: %v", err)
 	}
 
 	// Send done marker
@@ -804,5 +866,134 @@ func (s *AIService) chatWithParrot(
 	}
 
 	return nil
+}
+
+// chatWithStandardRAG handles standard RAG-based chat (fallback for DEFAULT agent type).
+func (s *AIService) chatWithStandardRAG(
+	ctx context.Context,
+	req *v1pb.ChatWithMemosRequest,
+	stream v1pb.AIService_ChatWithMemosServer,
+	user *store.User,
+) error {
+	// Get user timezone from request
+	userTimezone := req.UserTimezone
+	if userTimezone == "" {
+		userTimezone = "Asia/Shanghai"
+	}
+
+	// Parse timezone
+	loc, err := time.LoadLocation(userTimezone)
+	if err != nil {
+		slog.Warn("Invalid timezone, using default", "timezone", userTimezone, "error", err)
+		loc = time.FixedZone("UTC", 0)
+	}
+
+	// Create context for standard RAG chat
+	ragCtx := &chatContext{
+		userID:       user.ID,
+		username:     user.Username,
+		userEmail:    user.Email,
+		userTimezone: userTimezone,
+		messageCount: 0,
+	}
+
+	// Use query router to determine query type
+	decision := s.QueryRouter.Route(ctx, req.Message, loc)
+	queryType := decision.Strategy
+
+	// Execute the appropriate query strategy
+	results, err := s.executeRetrieval(ctx, req.Message, ragCtx.userID, queryType)
+	if err != nil {
+		slog.Error("Failed to execute retrieval", "error", err)
+		return err
+	}
+
+	// Build prompt and stream response
+	return s.streamChatResponse(ctx, req, stream, ragCtx, results, &queryengine.RouteDecision{Strategy: queryType})
+}
+
+// chatContext holds the context for a chat session.
+type chatContext struct {
+	userID       int32
+	username     string
+	userEmail    string
+	userTimezone string
+	messageCount int
+}
+
+// executeRetrieval executes the retrieval strategy based on query type.
+func (s *AIService) executeRetrieval(
+	ctx context.Context,
+	query string,
+	userID int32,
+	queryType string,
+) ([]*retrieval.SearchResult, error) {
+	opts := &retrieval.RetrievalOptions{
+		Query:    query,
+		UserID:   userID,
+		Strategy: queryType,
+		Limit:    10,
+		MinScore: 0.5,
+	}
+
+	return s.AdaptiveRetriever.Retrieve(ctx, opts)
+}
+
+// streamChatResponse streams the chat response based on retrieval results.
+func (s *AIService) streamChatResponse(
+	ctx context.Context,
+	req *v1pb.ChatWithMemosRequest,
+	stream v1pb.AIService_ChatWithMemosServer,
+	chatCtx *chatContext,
+	results []*retrieval.SearchResult,
+	decision *queryengine.RouteDecision,
+) error {
+	// Build context from retrieval results
+	var context strings.Builder
+	if len(results) > 0 {
+		context.WriteString("相关笔记:\n")
+		for i, r := range results {
+			context.WriteString(fmt.Sprintf("%d. %s\n", i+1, r.Content))
+		}
+	}
+
+	// Build system prompt based on decision type
+	systemPrompt := "You are a helpful assistant for Memos, a note-taking app. Answer questions based on the provided context."
+	if decision != nil && decision.Strategy == "schedule_semantic" {
+		systemPrompt = "You are a helpful schedule assistant for Memos. Help users manage their schedules based on the provided context."
+	}
+
+	// Build messages for LLM
+	messages := []ai.Message{
+		{Role: "system", Content: systemPrompt},
+		{Role: "user", Content: fmt.Sprintf("Context:\n%s\n\nQuestion: %s", context.String(), req.Message)},
+	}
+
+	// Use LLM to generate response
+	response, err := s.LLMService.Chat(ctx, messages)
+	if err != nil {
+		return err
+	}
+
+	// Send content in chunks
+	chunkSize := 100
+	for i := 0; i < len(response); i += chunkSize {
+		end := i + chunkSize
+		if end > len(response) {
+			end = len(response)
+		}
+		chunk := response[i:end]
+
+		if err := stream.Send(&v1pb.ChatWithMemosResponse{
+			Content: chunk,
+		}); err != nil {
+			return err
+		}
+	}
+
+	// Send done marker
+	return stream.Send(&v1pb.ChatWithMemosResponse{
+		Done: true,
+	})
 }
 

@@ -260,17 +260,6 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 		return nil, status.Errorf(codes.Internal, "failed to list schedules: %v", err)
 	}
 
-	// Debug logging
-	fmt.Printf("[DEBUG] ListSchedules API: returning %d schedules\n", len(list))
-	for i, sched := range list {
-		endTs := "null"
-		if sched.EndTs != nil {
-			endTs = fmt.Sprintf("%d", *sched.EndTs)
-		}
-		fmt.Printf("[DEBUG]   [%d] %s: start_ts=%d, end_ts=%s\n",
-			i, sched.Title, sched.StartTs, endTs)
-	}
-
 	// Expand recurring schedules
 	var expandedSchedules []*v1pb.Schedule
 	queryStartTs := req.StartTs
@@ -646,17 +635,7 @@ func (s *ScheduleService) CheckConflict(ctx context.Context, req *v1pb.CheckConf
 	for _, schedule := range list {
 		name := fmt.Sprintf("schedules/%s", schedule.UID)
 		if !excludeSet[name] {
-			// Check if time ranges actually overlap
-			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
-			scheduleEnd := schedule.EndTs
-			if scheduleEnd == nil {
-				// For schedules without end time, treat as a point event at start_ts
-				// It conflicts if it falls within the query window
-				scheduleEnd = &schedule.StartTs
-			}
-
-			// Check overlap: query window [req.StartTs, endTs] vs schedule [schedule.StartTs, *scheduleEnd]
-			if req.StartTs <= *scheduleEnd && endTs >= schedule.StartTs {
+			if checkTimeOverlap(req.StartTs, endTs, schedule.StartTs, schedule.EndTs) {
 				conflicts = append(conflicts, schedule)
 			}
 		}
@@ -745,6 +724,19 @@ func (s *ScheduleService) ParseAndCreateSchedule(ctx context.Context, req *v1pb.
 
 // Helper functions
 
+// checkTimeOverlap checks if two time ranges overlap.
+// 区间约定 Convention: [start, end) 左闭右开
+// Two intervals [s1, e1) and [s2, e2) overlap if: s1 < e2 AND s2 < e1
+func checkTimeOverlap(start1, end1, start2 int64, end2 *int64) bool {
+	scheduleEnd := end2
+	if scheduleEnd == nil {
+		// For schedules without end time, treat as a point event at start_ts
+		scheduleEnd = &start2
+	}
+	// Using [start, end) convention: overlap when new.start < existing.end AND new.end > existing.start
+	return start1 < *scheduleEnd && end1 > start2
+}
+
 func pointerOf[T any](v T) *T {
 	return &v
 }
@@ -788,26 +780,10 @@ func (s *ScheduleService) checkScheduleConflicts(ctx context.Context, userID int
 		excludeSet[name] = true
 	}
 
-	fmt.Printf("[DEBUG] Checking conflicts for new schedule [%d, %d]\n", startTs, checkEndTs)
-
 	for _, schedule := range list {
 		name := fmt.Sprintf("schedules/%s", schedule.UID)
 		if !excludeSet[name] {
-			// Check if time ranges actually overlap
-			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
-			scheduleEnd := schedule.EndTs
-			if scheduleEnd == nil {
-				// For schedules without end time, treat as a point event at start_ts
-				scheduleEnd = &schedule.StartTs
-			}
-
-			// Check overlap: query window [startTs, checkEndTs] vs schedule [schedule.StartTs, *scheduleEnd]
-			overlaps := startTs <= *scheduleEnd && checkEndTs >= schedule.StartTs
-
-			fmt.Printf("[DEBUG]   Existing schedule [%d, %d] overlaps=%v\n",
-				schedule.StartTs, *scheduleEnd, overlaps)
-
-			if overlaps {
+			if checkTimeOverlap(startTs, checkEndTs, schedule.StartTs, schedule.EndTs) {
 				conflicts = append(conflicts, schedule)
 			}
 		}
