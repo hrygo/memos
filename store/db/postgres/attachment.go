@@ -15,7 +15,7 @@ import (
 )
 
 func (d *DB) CreateAttachment(ctx context.Context, create *store.Attachment) (*store.Attachment, error) {
-	fields := []string{"uid", "filename", "blob", "type", "size", "creator_id", "memo_id", "storage_type", "reference", "payload"}
+	fields := []string{"uid", "filename", "blob", "type", "size", "creator_id", "memo_id", "storage_type", "reference", "payload", "row_status"}
 	storageType := ""
 	if create.StorageType != storepb.AttachmentStorageType_ATTACHMENT_STORAGE_TYPE_UNSPECIFIED {
 		storageType = create.StorageType.String()
@@ -28,12 +28,18 @@ func (d *DB) CreateAttachment(ctx context.Context, create *store.Attachment) (*s
 		}
 		payloadString = string(bytes)
 	}
-	args := []any{create.UID, create.Filename, create.Blob, create.Type, create.Size, create.CreatorID, create.MemoID, storageType, create.Reference, payloadString}
+	rowStatus := create.RowStatus
+	if rowStatus == "" {
+		rowStatus = "NORMAL"
+	}
+
+	args := []any{create.UID, create.Filename, create.Blob, create.Type, create.Size, create.CreatorID, create.MemoID, storageType, create.Reference, payloadString, rowStatus}
 
 	stmt := "INSERT INTO attachment (" + strings.Join(fields, ", ") + ") VALUES (" + placeholders(len(args)) + ") RETURNING id, created_ts, updated_ts"
 	if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&create.ID, &create.CreatedTs, &create.UpdatedTs); err != nil {
 		return nil, err
 	}
+	create.RowStatus = rowStatus
 	return create, nil
 }
 
@@ -53,7 +59,9 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 		where, args = append(where, "attachment.filename = "+placeholder(len(args)+1)), append(args, *v)
 	}
 	if v := find.FilenameSearch; v != nil {
-		where, args = append(where, "attachment.filename LIKE "+placeholder(len(args)+1)), append(args, fmt.Sprintf("%%%s%%", *v))
+		// Escape special LIKE characters (% and _) to prevent pattern injection
+		escaped := strings.ReplaceAll(strings.ReplaceAll(*v, "%", "\\%"), "_", "\\_")
+		where, args = append(where, "attachment.filename LIKE "+placeholder(len(args)+1)), append(args, "%"+escaped+"%")
 	}
 	if v := find.MemoID; v != nil {
 		where, args = append(where, "attachment.memo_id = "+placeholder(len(args)+1)), append(args, *v)
@@ -92,9 +100,14 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 		"attachment.creator_id AS creator_id",
 		"attachment.created_ts AS created_ts",
 		"attachment.updated_ts AS updated_ts",
+		"attachment.row_status AS row_status",
 		"attachment.memo_id AS memo_id",
 		"attachment.storage_type AS storage_type",
 		"attachment.reference AS reference",
+		"attachment.file_path AS file_path",
+		"attachment.thumbnail_path AS thumbnail_path",
+		"attachment.extracted_text AS extracted_text",
+		"attachment.ocr_text AS ocr_text",
 		"attachment.payload AS payload",
 		"CASE WHEN memo.uid IS NOT NULL THEN memo.uid ELSE NULL END AS memo_uid",
 	}
@@ -111,9 +124,20 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 		ORDER BY attachment.updated_ts DESC
 	`, strings.Join(fields, ", "), strings.Join(where, " AND "))
 	if find.Limit != nil {
-		query = fmt.Sprintf("%s LIMIT %d", query, *find.Limit)
+		limit := *find.Limit
+		if limit < 0 {
+			limit = 0
+		}
+		if limit > 10000 {
+			limit = 10000 // Reasonable max limit
+		}
+		query = fmt.Sprintf("%s LIMIT %d", query, limit)
 		if find.Offset != nil {
-			query = fmt.Sprintf("%s OFFSET %d", query, *find.Offset)
+			offset := *find.Offset
+			if offset < 0 {
+				offset = 0
+			}
+			query = fmt.Sprintf("%s OFFSET %d", query, offset)
 		}
 	}
 
@@ -129,6 +153,12 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 		var memoID sql.NullInt32
 		var storageType string
 		var payloadBytes []byte
+		var rowStatus sql.NullString
+		var filePath sql.NullString
+		var thumbnailPath sql.NullString
+		var extractedText sql.NullString
+		var ocrText sql.NullString
+
 		dests := []any{
 			&attachment.ID,
 			&attachment.UID,
@@ -138,9 +168,14 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 			&attachment.CreatorID,
 			&attachment.CreatedTs,
 			&attachment.UpdatedTs,
+			&rowStatus,
 			&memoID,
 			&storageType,
 			&attachment.Reference,
+			&filePath,
+			&thumbnailPath,
+			&extractedText,
+			&ocrText,
 			&payloadBytes,
 			&attachment.MemoUID,
 		}
@@ -153,6 +188,23 @@ func (d *DB) ListAttachments(ctx context.Context, find *store.FindAttachment) ([
 
 		if memoID.Valid {
 			attachment.MemoID = &memoID.Int32
+		}
+		if rowStatus.Valid {
+			attachment.RowStatus = rowStatus.String
+		} else {
+			attachment.RowStatus = "NORMAL"
+		}
+		if filePath.Valid {
+			attachment.FilePath = filePath.String
+		}
+		if thumbnailPath.Valid {
+			attachment.ThumbnailPath = thumbnailPath.String
+		}
+		if extractedText.Valid {
+			attachment.ExtractedText = extractedText.String
+		}
+		if ocrText.Valid {
+			attachment.OCRText = ocrText.String
 		}
 		attachment.StorageType = storepb.AttachmentStorageType(storepb.AttachmentStorageType_value[storageType])
 		payload := &storepb.AttachmentPayload{}
@@ -194,6 +246,22 @@ func (d *DB) UpdateAttachment(ctx context.Context, update *store.UpdateAttachmen
 			return errors.Wrap(err, "failed to marshal attachment payload")
 		}
 		set, args = append(set, "payload = "+placeholder(len(args)+1)), append(args, string(bytes))
+	}
+	if v := update.RowStatus; v != nil {
+		set, args = append(set, "row_status = "+placeholder(len(args)+1)), append(args, *v)
+	}
+	if v := update.ExtractedText; v != nil {
+		set, args = append(set, "extracted_text = "+placeholder(len(args)+1)), append(args, *v)
+	}
+	if v := update.OCRText; v != nil {
+		set, args = append(set, "ocr_text = "+placeholder(len(args)+1)), append(args, *v)
+	}
+	if v := update.ThumbnailPath; v != nil {
+		set, args = append(set, "thumbnail_path = "+placeholder(len(args)+1)), append(args, *v)
+	}
+
+	if len(set) == 0 {
+		return nil
 	}
 
 	stmt := `UPDATE attachment SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)+1)

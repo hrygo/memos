@@ -23,6 +23,7 @@ type Attachment struct {
 	CreatorID int32
 	CreatedTs int64
 	UpdatedTs int64
+	RowStatus string
 
 	// Domain specific fields
 	Filename    string
@@ -32,6 +33,14 @@ type Attachment struct {
 	StorageType storepb.AttachmentStorageType
 	Reference   string
 	Payload     *storepb.AttachmentPayload
+
+	// File storage
+	FilePath string
+
+	// OCR and full-text extraction
+	ThumbnailPath  string
+	ExtractedText string // Text extracted from PDF/Office via Tika
+	OCRText       string // Text extracted from images via Tesseract
 
 	// The related memo ID.
 	MemoID *int32
@@ -57,13 +66,17 @@ type FindAttachment struct {
 }
 
 type UpdateAttachment struct {
-	ID        int32
-	UID       *string
-	UpdatedTs *int64
-	Filename  *string
-	MemoID    *int32
-	Reference *string
-	Payload   *storepb.AttachmentPayload
+	ID             int32
+	UID            *string
+	UpdatedTs      *int64
+	Filename       *string
+	MemoID         *int32
+	Reference      *string
+	Payload        *storepb.AttachmentPayload
+	RowStatus      *string
+	ExtractedText  *string
+	OCRText        *string
+	ThumbnailPath  *string
 }
 
 type DeleteAttachment struct {
