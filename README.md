@@ -71,7 +71,17 @@ docker run -d \
 
 - **Backend**: Go, Echo, gRPC-Gateway
 - **Frontend**: React, Vite, TailwindCSS
-- **Database**: SQLite (Default), PostgreSQL, MySQL
+- **Database**: PostgreSQL (Production), SQLite (Dev/Testing only)
+
+## Database Support
+
+| Database | Status | AI Features | Recommended Use |
+|----------|--------|-------------|-----------------|
+| PostgreSQL | ✅ Full Support | ✅ Vector, BM25, Hybrid, Reranking | Production |
+| SQLite | ⚠️ Limited | ❌ No vector search | Development, Single-user |
+| MySQL | ❌ Not Supported | ❌ | N/A (Removed) |
+
+**Note**: MySQL support has been removed due to lack of AI features and high maintenance cost.
 
 ## License
 

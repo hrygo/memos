@@ -6,8 +6,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Memos is a privacy-first, lightweight note-taking service with advanced AI capabilities.
 - **Core Architecture**: Go backend (Echo/Connect RPC) + React frontend (Vite/Tailwind)
-- **Data Storage**: PostgreSQL (recommended, full AI support), SQLite (AI supported), MySQL (basic features only)
+- **Data Storage**: PostgreSQL (production, full AI support), SQLite (limited, dev/testing only)
 - **Key Features**: Semantic search, AI chat integration, schedule assistant, self-hosted with no telemetry
+
+## Database Support Policy
+
+### PostgreSQL (Production - Full Support)
+- **Status**: Primary database for production use
+- **AI Features**: Full support (pgvector, hybrid search, reranking)
+- **Recommended for**: All production deployments
+- **Maintained**: Actively maintained and tested
+
+### SQLite (Limited Support)
+- **Status**: Development and testing only
+- **AI Features**: Limited support (basic vector search, no BM25 hybrid search)
+- **Recommended for**: Local development, single-user instances, testing
+- **Limitations**:
+  - No concurrent write support
+  - No advanced AI features (BM25, hybrid search, reranking)
+  - No full-text search (FTS5 not guaranteed)
+- **Maintained**: Best-effort basis only
+
+### MySQL (Deprecated - Unsupported)
+- **Status**: **NOT SUPPORTED** - All MySQL support has been removed
+- **Migration**: Use PostgreSQL for production or SQLite for development
+- **Historical**: MySQL support was removed due to lack of AI features and maintenance burden
 
 ## Quick Start
 
@@ -33,7 +56,7 @@ Services:
 |----------|--------------------------------------------------------------------|
 | Backend  | Go 1.25, Echo, Connect RPC, LangchainGo, pgvector                 |
 | Frontend | React 18, Vite 7, TypeScript, Tailwind CSS 4, Radix UI, React Query |
-| Database | PostgreSQL (production), SQLite (lightweight), MySQL (legacy)      |
+| Database | PostgreSQL (production), SQLite (dev/testing only)                |
 
 ## Common Development Commands
 
@@ -82,7 +105,7 @@ memos/
 │   ├── storage/         # Storage adapters (S3, local)
 │   └── idp/             # Identity providers
 ├── store/               # Data storage layer
-│   ├── db/              # Database implementations (PostgreSQL, SQLite, MySQL)
+│   ├── db/              # Database implementations (PostgreSQL, SQLite)
 │   └── [interfaces]     # Storage abstractions
 ├── proto/               # Protobuf definitions (API contracts)
 │   ├── api/             # API definitions
@@ -183,8 +206,7 @@ MEMOS_AI_DEEPSEEK_API_KEY=your_key
 
 ### AI Feature Support
 - **PostgreSQL**: Full AI support (pgvector, hybrid search, reranking)
-- **SQLite**: Basic AI support (vectors via sqlite-vec)
-- **MySQL**: No AI support (legacy only)
+- **SQLite**: Limited AI support (basic vector search only, no BM25/hybrid)
 
 ### Common Issues
 
@@ -193,9 +215,9 @@ MEMOS_AI_DEEPSEEK_API_KEY=your_key
    - Check DB connection: `make db-connect`
 
 2. **AI features unavailable:**
-   - MySQL doesn't support AI, switch to PG or SQLite
    - Confirm `MEMOS_AI_ENABLED=true`
    - Verify pgvector: `make db-vector`
+   - SQLite only supports basic vector search
 
 3. **Port conflicts:**
    - Frontend defaults to `25173`
