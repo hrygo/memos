@@ -34,3 +34,6 @@ dist
 
 # Git worktrees
 .worktrees/
+
+# Claude settings
+.claude/
