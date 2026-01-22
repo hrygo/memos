@@ -307,6 +307,7 @@ function ChatView({
         disabled={isTyping}
         isTyping={isTyping}
         currentParrotId={currentParrot.id}
+        onParrotChange={onParrotChange}
         showQuickActions={true}
         quickActions={
           <div className="mb-2 md:mb-3">
@@ -412,14 +413,6 @@ const AIChat = () => {
 
       // Check for existing conversation with same parrotId
       const existingConversation = conversations.find((c) => c.parrotId === parrot.id);
-      console.log(
-        "[handleParrotSelect] parrotId:",
-        parrot.id,
-        "existingConversation:",
-        existingConversation,
-        "all conversations:",
-        conversations,
-      );
       if (existingConversation) {
         selectConversation(existingConversation.id);
         return;
