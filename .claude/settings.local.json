@@ -73,7 +73,8 @@
       "mcp__web-reader__webReader",
       "mcp__zread__get_repo_structure",
       "Skill(code-review:code-review)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(git tag:*)"
     ]
   }
 }
