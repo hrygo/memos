@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ParrotAgent, getAvailableParrots } from "@/types/parrot";
+import { getAvailableParrots, ParrotAgent } from "@/types/parrot";
 
 interface ParrotQuickActionsProps {
   currentParrot: ParrotAgent | null;
@@ -32,23 +32,17 @@ export function ParrotQuickActions({ currentParrot, onParrotChange, disabled = f
               "hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
               isSelected
                 ? `${colorClass} border-current shadow-sm`
-                : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800"
+                : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800",
             )}
           >
             <span className="text-2xl" role="img" aria-label={parrot.displayName}>
               {parrot.icon}
             </span>
             <div className="text-left">
-              <div className={cn(
-                "font-semibold text-sm",
-                isSelected ? "text-current" : "text-zinc-900 dark:text-zinc-100"
-              )}>
+              <div className={cn("font-semibold text-sm", isSelected ? "text-current" : "text-zinc-900 dark:text-zinc-100")}>
                 {parrot.displayName}
               </div>
-              <div className={cn(
-                "text-xs",
-                isSelected ? "text-current opacity-80" : "text-zinc-500 dark:text-zinc-400"
-              )}>
+              <div className={cn("text-xs", isSelected ? "text-current opacity-80" : "text-zinc-500 dark:text-zinc-400")}>
                 {parrot.name}
               </div>
             </div>
