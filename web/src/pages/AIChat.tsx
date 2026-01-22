@@ -1,80 +1,334 @@
-import copy from "copy-to-clipboard";
-import { BotIcon, EraserIcon, MoreHorizontalIcon, SendIcon, SparklesIcon, UserIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
-import remarkBreaks from "remark-breaks";
-import remarkGfm from "remark-gfm";
-import EmptyState from "@/components/AIChat/EmptyState";
-import ErrorMessage from "@/components/AIChat/ErrorMessage";
-import { MemoQueryResult } from "@/components/AIChat/MemoQueryResult";
-import MessageActions from "@/components/AIChat/MessageActions";
-import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
-import { ParrotSelector } from "@/components/AIChat/ParrotSelector";
-import { ParrotStatus } from "@/components/AIChat/ParrotStatus";
-import ThinkingIndicator from "@/components/AIChat/ThinkingIndicator";
+import copy from "copy-to-clipboard";
 
-import TypingCursor from "@/components/AIChat/TypingCursor";
+import { MemoQueryResult } from "@/components/AIChat/MemoQueryResult";
+import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
+import { ChatHeader } from "@/components/AIChat/ChatHeader";
+import { ChatMessages } from "@/components/AIChat/ChatMessages";
+import { ChatInput } from "@/components/AIChat/ChatInput";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { CodeBlock } from "@/components/MemoContent/CodeBlock";
-import MobileHeader from "@/components/MobileHeader";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import { useAIChat } from "@/contexts/AIChatContext";
 import { cn } from "@/lib/utils";
 import type { MemoQueryResultData } from "@/types/parrot";
-import { ParrotAgent } from "@/types/parrot";
+import type { ChatItem, ConversationMessage, ContextSeparator } from "@/types/aichat";
+import { ParrotAgent, PARROT_AGENTS, PARROT_THEMES, PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
 
-const STREAM_TIMEOUT = 60000; // 60 seconds timeout
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  error?: boolean;
+// Helper function to check if item is ContextSeparator
+function isContextSeparator(item: ChatItem): item is ContextSeparator {
+  return "type" in item && item.type === "context-separator";
 }
 
-interface ContextSeparator {
-  type: "context-separator";
+// Helper function to check if item is ConversationMessage
+function isConversationMessage(item: ChatItem): item is ConversationMessage {
+  return !isContextSeparator(item);
 }
 
-type ChatItem = Message | ContextSeparator;
+// ============================================================
+// HUB VIEW - Agent Selection (Accessible when no conversation)
+// ============================================================
+function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => void }) {
+  const { t } = useTranslation();
+  const availableParrots = Object.values(PARROT_AGENTS).filter((p) => p.available);
 
+  const handleSuggestedPrompt = (query: string, parrot: ParrotAgent) => {
+    onSelectParrot(parrot);
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('aichat-send-message', { detail: query }));
+    }, 100);
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col bg-[#F8F5F0] dark:bg-zinc-900">
+      {/* Header */}
+      <div className="px-4 md:px-8 py-4 border-b border-zinc-200/50 dark:border-zinc-800">
+        <h1 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          {t("ai.parrot.select-agent")}
+        </h1>
+      </div>
+
+      {/* Agent Cards Grid */}
+      <div className="flex-1 overflow-auto p-3 md:p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {availableParrots.map((parrot) => {
+              const parrotTheme = PARROT_THEMES[parrot.id] || PARROT_THEMES.DEFAULT;
+              const icon = PARROT_ICONS[parrot.id] || parrot.icon;
+
+              return (
+                <button
+                  key={parrot.id}
+                  onClick={() => handleSuggestedPrompt("", parrot)}
+                  className={cn(
+                    "group relative w-full text-left rounded-xl border transition-all duration-200",
+                    "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                    parrotTheme.cardBg,
+                    parrotTheme.cardBorder
+                  )}
+                >
+                  <div className="p-3 md:p-4 flex items-start gap-3">
+                    {/* Icon */}
+                    <div className={cn(
+                      "w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-xl md:text-2xl shrink-0",
+                      parrotTheme.iconBg
+                    )}>
+                      <span>{icon}</span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                          {parrot.displayName}
+                        </h3>
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-md font-medium shrink-0",
+                          parrotTheme.iconBg,
+                          parrotTheme.iconText
+                        )}>
+                          {parrot.id === "MEMO" && t("ai.parrot.memo-tagline")}
+                          {parrot.id === "SCHEDULE" && t("ai.parrot.schedule-tagline")}
+                          {parrot.id === "AMAZING" && t("ai.parrot.amazing-tagline")}
+                          {parrot.id === "CREATIVE" && t("ai.parrot.creative-tagline")}
+                          {parrot.id === "DEFAULT" && "RAG"}
+                        </span>
+                      </div>
+
+                      <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                        {parrot.description}
+                      </p>
+
+                      {/* Suggested Prompts */}
+                      <div className="mt-2 space-y-1">
+                        {(parrot.examplePrompts || []).slice(0, 2).map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSuggestedPrompt(prompt, parrot);
+                            }}
+                            className="block w-full text-left px-2 py-1 rounded-lg text-xs border border-zinc-200/50 dark:border-zinc-700/50 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors truncate"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CHAT VIEW - Active Conversation
+// ============================================================
+interface ChatViewProps {
+  currentParrot: ParrotAgent;
+  input: string;
+  setInput: (value: string) => void;
+  onSend: () => void;
+  isTyping: boolean;
+  clearDialogOpen: boolean;
+  setClearDialogOpen: (open: boolean) => void;
+  onClearChat: () => void;
+  onClearContext: () => void;
+  onBackToHub: () => void;
+  memoQueryResults: MemoQueryResultData[];
+  items: ChatItem[];
+  onParrotChange: (parrot: ParrotAgent | null) => void;
+}
+
+function ChatView({
+  currentParrot,
+  input,
+  setInput,
+  onSend,
+  isTyping,
+  clearDialogOpen,
+  setClearDialogOpen,
+  onClearChat,
+  onClearContext,
+  onBackToHub,
+  memoQueryResults,
+  items,
+  onParrotChange,
+}: ChatViewProps) {
+  const { t } = useTranslation();
+  const md = useMediaQuery("md");
+  const theme = PARROT_THEMES[currentParrot.id] || PARROT_THEMES.DEFAULT;
+
+  const handleInputChange = (value: string) => {
+    setInput(value);
+  };
+
+  const handleCopyMessage = (content: string) => {
+    copy(content);
+  };
+
+  const handleDeleteMessage = () => {
+    // TODO: Implement message deletion
+  };
+
+  const getParrotIcon = (parrotId: string) => {
+    return PARROT_ICONS[parrotId] || "🤖";
+  };
+
+  const currentIcon = getParrotIcon(currentParrot.id);
+
+  // Welcome message when no messages
+  const welcomeMessage = (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+      <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3", theme.iconBg)}>
+        {currentIcon}
+      </div>
+      <h3 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+        Hi, I'm {currentParrot.displayName}
+      </h3>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-4">
+        {currentParrot.description}
+      </p>
+
+      {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-center">
+          {currentParrot.examplePrompts.slice(0, 3).map((prompt, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setInput(prompt);
+                setTimeout(() => {
+                  setInput("");
+                  onSend();
+                }, 100);
+              }}
+              className={cn(
+                "px-3 py-2 rounded-xl text-sm border transition-colors",
+                theme.inputBg,
+                theme.inputBorder,
+                theme.iconText,
+                "hover:opacity-80"
+              )}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={cn(
+      "w-full h-full flex flex-col relative",
+      theme.bgLight,
+      theme.bgDark
+    )}>
+      {/* Desktop Header */}
+      {md && (
+        <ChatHeader
+          parrot={currentParrot}
+          isThinking={false}
+          onBack={onBackToHub}
+        />
+      )}
+
+      {/* Messages Area */}
+      <ChatMessages
+        items={items}
+        isTyping={isTyping}
+        currentParrotId={currentParrot.id}
+        onCopyMessage={handleCopyMessage}
+        onDeleteMessage={handleDeleteMessage}
+      >
+        {/* Welcome message */}
+        {items.length === 0 && welcomeMessage}
+
+        {/* Memo Query Results */}
+        {memoQueryResults.map((result, index) => (
+          <div key={index} className="max-w-3xl mx-auto mb-4">
+            <MemoQueryResult result={result} />
+          </div>
+        ))}
+      </ChatMessages>
+
+      {/* Input Area */}
+      <ChatInput
+        value={input}
+        onChange={handleInputChange}
+        onSend={onSend}
+        onClearChat={onClearChat}
+        onClearContext={onClearContext}
+        disabled={isTyping}
+        isTyping={isTyping}
+        currentParrotId={currentParrot.id}
+        showQuickActions={true}
+        quickActions={
+          <div className="mb-2 md:mb-3">
+            <ParrotQuickActions
+              currentParrot={currentParrot}
+              onParrotChange={(parrot) => {
+                if (parrot) {
+                  onParrotChange(parrot);
+                } else {
+                  onBackToHub();
+                }
+              }}
+              disabled={isTyping}
+            />
+          </div>
+        }
+      />
+
+      {/* Clear Chat Confirmation Dialog */}
+      <ConfirmDialog
+        open={clearDialogOpen}
+        onOpenChange={setClearDialogOpen}
+        title={t("ai.clear-chat")}
+        confirmLabel={t("common.confirm")}
+        description={t("ai.clear-chat-confirm")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={onClearChat}
+        confirmVariant="destructive"
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN AI CHAT PAGE
+// ============================================================
 const AIChat = () => {
   const { t } = useTranslation();
   const md = useMediaQuery("md");
+  const chatHook = useChatWithMemos();
+  const aiChat = useAIChat();
+
+  // Local state
   const [input, setInput] = useState("");
-  const [items, setItems] = useState<ChatItem[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
-  const [, setErrorMessage] = useState<string | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState("");
-  const [contextStartIndex, setContextStartIndex] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
-  const chatHook = useChatWithMemos();
 
-  // Parrot-related state (Milestone 1)
-  const [currentParrot, setCurrentParrot] = useState<ParrotAgent | null>(null);
-  const [showParrotSelector, setShowParrotSelector] = useState(false);
-  const [parrotSelectorPosition, setParrotSelectorPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isParrotThinking, setIsParrotThinking] = useState(false);
-  const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Get current conversation from context
+  const { currentConversation, createConversation, addMessage, updateMessage, addReferencedMemos, addContextSeparator, clearMessages, setViewMode } = aiChat;
 
-  // Get actual messages (excluding separators) for API calls
-  const getMessagesForContext = useCallback(() => {
-    return items.filter((item): item is Message => "role" in item).slice(contextStartIndex) as Message[];
-  }, [items, contextStartIndex]);
+  // Determine current parrot from conversation or default
+  const currentParrot = currentConversation
+    ? (PARROT_AGENTS[currentConversation.parrotId] || PARROT_AGENTS[ParrotAgentType.DEFAULT])
+    : null;
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  };
+  // Get messages from current conversation
+  const items = currentConversation?.messages || [];
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -82,16 +336,8 @@ const AIChat = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      // Clear content update timer
-      if (updateTimerRef.current) {
-        clearTimeout(updateTimerRef.current);
-      }
     };
   }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [items, isTyping]);
 
   const resetTypingState = useCallback(() => {
     if (timeoutRef.current) {
@@ -101,45 +347,24 @@ const AIChat = () => {
     setIsTyping(false);
   }, []);
 
-  // ============================================================
-  // Parrot-related handlers (Milestone 1)
-  // ============================================================
+  // Handle starting a new chat with a parrot
+  const handleParrotSelect = useCallback((parrot: ParrotAgent) => {
+    createConversation(parrot.id, parrot.displayName);
+  }, [createConversation]);
 
-  // Handle @ symbol to trigger parrot selector
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInput(value);
-
-    // Only trigger if @ is at the start of the input (to avoid interfering with normal typing)
-    if (value === "@" && textareaRef.current) {
-      const rect = textareaRef.current.getBoundingClientRect();
-      const x = rect.left;
-      const y = rect.bottom + window.scrollY;
-      setParrotSelectorPosition({ x, y });
-      setShowParrotSelector(true);
-    } else if (value !== "@" && showParrotSelector) {
-      // Close selector if @ symbol is deleted or modified
-      setShowParrotSelector(false);
-    }
-  };
-
-  // Handle parrot selection
-  const handleParrotSelect = (parrot: ParrotAgent) => {
-    setCurrentParrot(parrot);
-    // Remove @ symbol from input
-    setInput((prev) => prev.slice(0, -1));
-    setShowParrotSelector(false);
-  };
+  // Handle back to hub
+  const handleBackToHub = useCallback(() => {
+    setViewMode("hub");
+  }, [setViewMode]);
 
   // Handle parrot chat with callbacks
-  const handleParrotChat = async (userMessage: string, history: string[]) => {
-    if (!currentParrot) {
-      // Should not happen, but fallback to default
-      console.warn("[Parrot] No parrot selected, using default chat");
-      return handleSend(userMessage);
+  const handleParrotChat = useCallback(async (userMessage: string, history: string[]) => {
+    if (!currentConversation || !currentParrot) {
+      console.warn("[Parrot] No active conversation or parrot");
+      return;
     }
 
-    setIsParrotThinking(true);
+    setIsTyping(true);
     setMemoQueryResults([]);
     const _messageId = ++messageIdRef.current;
 
@@ -162,456 +387,131 @@ const AIChat = () => {
             console.log("[Parrot Tool Result]", result);
           },
           onMemoQueryResult: (result) => {
-            // Check if this result is for the current message
             if (_messageId === messageIdRef.current) {
               setMemoQueryResults((prev) => [...prev, result]);
+              addReferencedMemos(currentConversation.id, result.memos);
             }
           },
           onContent: (content) => {
-            // Update message content
-            setItems((prev) => {
-              const newItems = [...prev];
-              const lastMessageIndex = newItems.findLastIndex((item) => "role" in item && item.role === "assistant");
-              if (lastMessageIndex !== -1 && "content" in newItems[lastMessageIndex]) {
-                (newItems[lastMessageIndex] as Message).content += content;
-              }
-              return newItems;
-            });
+            const lastItem = items[items.length - 1];
+            if (lastItem && isConversationMessage(lastItem) && lastItem.id) {
+              updateMessage(currentConversation.id, lastItem.id, {
+                content: (lastItem.content || "") + content,
+              });
+            }
           },
           onDone: () => {
-            setIsParrotThinking(false);
             setIsTyping(false);
           },
           onError: (error) => {
-            setIsParrotThinking(false);
             setIsTyping(false);
             console.error("[Parrot Error]", error);
-            setErrorMessage(error.message || t("ai.parrot.error-processing"));
           },
         },
       );
     } catch (error) {
-      setIsParrotThinking(false);
       setIsTyping(false);
       console.error("[Parrot Chat Error]", error);
-      setErrorMessage(t("ai.parrot.error-chat-failed"));
     }
-  };
+  }, [currentConversation, currentParrot, chatHook, items, updateMessage, addReferencedMemos]);
 
-  const handleSend = async (messageContent?: string) => {
+  const handleSend = useCallback(async (messageContent?: string) => {
     const userMessage = (messageContent || input).trim();
     if (!userMessage) return;
 
-    // If already typing, reset first
     if (isTyping) {
       resetTypingState();
     }
 
-    // ============================================================
-    // Parrot routing (Milestone 1)
-    // ============================================================
-    // Check if a parrot is selected and route to parrot chat
-    if (currentParrot) {
-      console.log("[Parrot] Routing to", currentParrot.displayName, "for message:", userMessage);
-      // Add user message to items
-      setItems((prev) => [...prev, { role: "user" as const, content: userMessage }]);
-      // Add placeholder for assistant response
-      setItems((prev) => [...prev, { role: "assistant" as const, content: "" }]);
-      setInput("");
-      setIsTyping(true);
-      setLastUserMessage(userMessage);
-
-      // Get context messages for history
-      const contextMessages = getMessagesForContext();
-      const history = contextMessages.map((m) => m.content);
-
-      // Handle with parrot
-      await handleParrotChat(userMessage, history);
+    // Ensure we have a conversation
+    if (!currentConversation) {
+      createConversation(ParrotAgentType.DEFAULT);
       return;
     }
 
-    // ============================================================
-    // Default chat flow (original logic)
-    // ============================================================
+    // Add user message
+    addMessage(currentConversation.id, {
+      role: "user",
+      content: userMessage,
+    });
+
+    // Add empty assistant message that will be filled during streaming
+    addMessage(currentConversation.id, {
+      role: "assistant",
+      content: "",
+    });
 
     setInput("");
-    setLastUserMessage(userMessage);
-    setErrorMessage(null);
-    setItems((prev) => [...prev, { role: "user" as const, content: userMessage }]);
-    setIsTyping(true);
 
-    // Track if stream has completed
-    let streamCompleted = false;
+    const contextMessages = items.filter(isConversationMessage);
+    const history = contextMessages.map((m) => m.content);
 
-    // Set timeout to auto-finish if stream doesn't complete
-    timeoutRef.current = setTimeout(() => {
-      if (!streamCompleted) {
-        console.warn("Stream timeout, forcing completion");
-        setIsTyping(false);
-      }
-    }, STREAM_TIMEOUT);
-
-    try {
-      const contextMessages = getMessagesForContext();
-      const history = contextMessages.map((m) => m.content);
-      let currentAssistantMessage = "";
-      setItems((prev) => [...prev, { role: "assistant" as const, content: "" }]);
-
-      await chatHook.stream(
-        { message: userMessage, history },
-        {
-          onContent: (content) => {
-            currentAssistantMessage += content;
-            setItems((prev) => {
-              const newItems = [...prev];
-              const lastMessageIndex = newItems.findLastIndex((item) => "role" in item && item.role === "assistant");
-              if (lastMessageIndex !== -1 && "content" in newItems[lastMessageIndex]) {
-                (newItems[lastMessageIndex] as Message).content = currentAssistantMessage;
-              }
-              return newItems;
-            });
-          },
-          onDone: () => {
-            streamCompleted = true;
-            resetTypingState();
-          },
-          onError: (err) => {
-            streamCompleted = true;
-            console.error("Chat error:", err);
-            resetTypingState();
-            setErrorMessage(err.message || t("ai.error-title"));
-            setItems((prev) => {
-              const newItems = [...prev];
-              const lastMessageIndex = newItems.findLastIndex((item) => "role" in item && item.role === "assistant");
-              if (lastMessageIndex !== -1) {
-                (newItems[lastMessageIndex] as Message).content = t("ai.error-title");
-                (newItems[lastMessageIndex] as Message).error = true;
-              }
-              return newItems;
-            });
-          },
-        },
-      );
-    } catch (_error) {
-      streamCompleted = true;
-      resetTypingState();
-      setErrorMessage(t("ai.error-title"));
+    if (currentParrot) {
+      await handleParrotChat(userMessage, history);
     }
-  };
+  }, [input, isTyping, currentConversation, currentParrot, addMessage, createConversation, handleParrotChat, items, resetTypingState]);
 
-  const handleRetry = () => {
-    if (lastUserMessage) {
-      setItems((prev) => prev.filter((item) => !("role" in item && item.role === "assistant" && item.error)));
-      setErrorMessage(null);
-      handleSend(lastUserMessage);
+  const handleClearChat = useCallback(() => {
+    if (currentConversation) {
+      clearMessages(currentConversation.id);
     }
-  };
-
-  const handleCopyMessage = (content: string) => {
-    copy(content);
-  };
-
-  const handleRegenerate = () => {
-    if (lastUserMessage) {
-      // Reset typing state before regenerating
-      resetTypingState();
-      setItems((prev) => prev.slice(0, -1));
-      handleSend(lastUserMessage);
-    }
-  };
-
-  const handleDeleteMessage = (index: number) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleClearChat = () => {
-    setItems([]);
-    setLastUserMessage("");
-    setContextStartIndex(0);
-    setErrorMessage(null);
     setClearDialogOpen(false);
-  };
+  }, [currentConversation, clearMessages]);
 
-  const handleClearContext = () => {
-    // Add a separator and update context start index
-    const messageCount = items.filter((item) => "role" in item).length;
-    setItems((prev) => [...prev, { type: "context-separator" }]);
-    setContextStartIndex(messageCount);
-  };
-
-  const handleSuggestedPrompt = (query: string) => {
-    setInput(query);
-    setTimeout(() => handleSend(query), 100);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  const handleClearContext = useCallback(() => {
+    if (currentConversation) {
+      addContextSeparator(currentConversation.id);
     }
-  };
+  }, [currentConversation, addContextSeparator]);
 
-  return (
-    <section className="w-full h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col relative">
-      {/* Schedule Panel Toggle */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {!md && (
-          <MobileHeader>
-            <div className="flex flex-row items-center w-full">
-              {/* Centered title - absolute positioned to visual center */}
-              <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 font-medium text-foreground">
-                <SparklesIcon className="w-5 h-5 text-blue-500" />
-                {t("common.ai-assistant")}
-              </div>
-              {/* Right action button - dropdown with clear options */}
-              {items.length > 0 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="ml-auto h-8 px-2 text-muted-foreground hover:text-foreground">
-                      <EraserIcon className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleClearContext} className="cursor-pointer">
-                      <EraserIcon className="w-4 h-4 mr-2" />
-                      {t("ai.clear-context")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setClearDialogOpen(true)}
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                    >
-                      <EraserIcon className="w-4 h-4 mr-2" />
-                      {t("ai.clear-chat")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </MobileHeader>
-        )}
+  const handleParrotChange = useCallback((parrot: ParrotAgent | null) => {
+    if (!parrot) {
+      handleBackToHub();
+      return;
+    }
+    createConversation(parrot.id, parrot.displayName);
+  }, [createConversation, handleBackToHub]);
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6" ref={scrollRef}>
-          {/* Current Parrot Status (Milestone 1) */}
-          {currentParrot && (
-            <div className="max-w-3xl mx-auto mb-4">
-              <ParrotStatus parrot={currentParrot} thinking={isParrotThinking} />
-            </div>
-          )}
+  // Handle custom event for sending messages (from suggested prompts)
+  useEffect(() => {
+    const handler = (e: CustomEvent<string>) => {
+      setInput(e.detail);
+      setTimeout(() => {
+        setInput("");
+        handleSend(e.detail);
+      }, 100);
+    };
 
-          {/* Memo Query Results (Milestone 1) */}
-          {memoQueryResults.map((result, index) => (
-            <div key={index} className="max-w-3xl mx-auto mb-4">
-              <MemoQueryResult result={result} />
-            </div>
-          ))}
+    window.addEventListener('aichat-send-message', handler as EventListener);
+    return () => {
+      window.removeEventListener('aichat-send-message', handler as EventListener);
+    };
+  }, [handleSend]);
 
-          {items.length === 0 && <EmptyState onSuggestedPrompt={handleSuggestedPrompt} />}
+  // View mode determination
+  const viewMode = currentConversation ? "chat" : "hub";
 
-          {items.map((item, index) => {
-            // Render context separator
-            if ("type" in item && item.type === "context-separator") {
-              return (
-                <div key={index} className="flex items-center gap-4 max-w-3xl mx-auto py-2">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t("ai.context-cleared")}</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              );
-            }
-
-            // Render regular message
-            const msg = item as Message;
-
-            return (
-              <div
-                key={index}
-                className={cn(
-                  "group flex gap-4 max-w-3xl mx-auto",
-                  msg.role === "user"
-                    ? "animate-in slide-in-from-right-4 fade-in-0 duration-300 flex-row-reverse"
-                    : "animate-in slide-in-from-left-4 fade-in-0 duration-300 flex-row",
-                )}
-              >
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300",
-                  )}
-                >
-                  {msg.role === "user" ? <UserIcon size={16} /> : <BotIcon size={16} />}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  {msg.role === "assistant" && !msg.error && index === items.length - 1 && (
-                    <div className="flex items-start gap-2">
-                      <MessageActions
-                        onCopy={() => handleCopyMessage(msg.content)}
-                        onRegenerate={handleRegenerate}
-                        onDelete={() => handleDeleteMessage(index)}
-                      />
-                    </div>
-                  )}
-
-                  {msg.error ? (
-                    <ErrorMessage error={msg.content} onRetry={handleRetry} />
-                  ) : (
-                    <div
-                      className={cn(
-                        "rounded-2xl p-4 text-sm leading-relaxed shadow-sm",
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-tr-sm"
-                          : "bg-white dark:bg-zinc-800 dark:text-zinc-100 border border-border/50 rounded-tl-sm",
-                      )}
-                    >
-                      {msg.role === "assistant" ? (
-                        <div className="prose dark:prose-invert prose-sm max-w-none break-words">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm, remarkBreaks]}
-                            components={{
-                              a: ({ node, ...props }) => (
-                                <a {...props} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" />
-                              ),
-                              p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
-                              pre: ({ node, ...props }) => <CodeBlock {...props} />,
-                              // biome-ignore lint/suspicious/noExplicitAny: complex react-markdown props
-                              code: ({ node, className, children, ...props }: any) =>
-                                props.inline ? (
-                                  <code className={cn("px-1.5 py-0.5 rounded bg-muted text-sm", className)} {...props}>
-                                    {children}
-                                  </code>
-                                ) : (
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
-                                ),
-                            }}
-                          >
-                            {msg.content || "..."}
-                          </ReactMarkdown>
-                          {isTyping && !msg.error && index === items.length - 1 && <TypingCursor active={true} />}
-                        </div>
-                      ) : (
-                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {isTyping &&
-            (() => {
-              const lastItem = items[items.length - 1] as ChatItem | undefined;
-              if (!lastItem) return true;
-              if ("type" in lastItem) return true; // ContextSeparator
-              return lastItem.role !== "assistant"; // Message
-            })() && (
-              <div className="flex gap-4 max-w-3xl mx-auto animate-in fade-in-0 duration-300">
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 flex items-center justify-center shrink-0 shadow-sm mt-1">
-                  <BotIcon size={16} />
-                </div>
-                <ThinkingIndicator />
-              </div>
-            )}
-        </div>
-      </div>
-
-      {/* Input Area */}
-      <div className="shrink-0 p-4 border-t bg-background/80 backdrop-blur-md sticky bottom-0 z-10">
-        {/* Parrot Quick Actions (Milestone 1) */}
-        <div className="max-w-3xl mx-auto mb-3">
-          <ParrotQuickActions currentParrot={currentParrot} onParrotChange={setCurrentParrot} disabled={isTyping} />
-        </div>
-
-        <div className="max-w-3xl mx-auto relative">
-          {/* Desktop clear button dropdown */}
-          {md && items.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute -top-11 right-0 h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <EraserIcon className="w-3.5 h-3.5 mr-1" />
-                  {t("ai.clear")}
-                  <MoreHorizontalIcon className="w-3 h-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleClearContext} className="cursor-pointer">
-                  <EraserIcon className="w-4 h-4 mr-2" />
-                  <div>
-                    <div className="font-medium">{t("ai.clear-context")}</div>
-                    <div className="text-xs text-muted-foreground">{t("ai.clear-context-desc")}</div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setClearDialogOpen(true)}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <EraserIcon className="w-4 h-4 mr-2" />
-                  <div>
-                    <div className="font-medium">{t("ai.clear-chat")}</div>
-                    <div className="text-xs text-muted-foreground">{t("ai.clear-chat-desc")}</div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl border focus-within:ring-1 focus-within:ring-ring focus-within:bg-background transition-all">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                currentParrot
-                  ? t("ai.parrot.chat-placeholder", { name: currentParrot.displayName })
-                  : t("ai.parrot.chat-default-placeholder")
-              }
-              className="min-h-[44px] max-h-[150px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 px-3 py-2.5 shadow-none"
-              rows={1}
-              style={{ height: "auto" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
-              }}
-            />
-            <Button
-              size="icon"
-              className="shrink-0 h-9 w-9 rounded-lg transition-all"
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isTyping}
-            >
-              <SendIcon className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Clear Chat Confirmation Dialog */}
-      <ConfirmDialog
-        open={clearDialogOpen}
-        onOpenChange={setClearDialogOpen}
-        title={t("ai.clear-chat")}
-        confirmLabel={t("common.confirm")}
-        description={t("ai.clear-chat-confirm")}
-        cancelLabel={t("common.cancel")}
-        onConfirm={handleClearChat}
-        confirmVariant="destructive"
-      />
-
-      {/* Parrot Selector (Milestone 1) */}
-      {showParrotSelector && parrotSelectorPosition && (
-        <ParrotSelector onSelect={handleParrotSelect} onClose={() => setShowParrotSelector(false)} position={parrotSelectorPosition} />
-      )}
-    </section>
+  // ============================================================
+  // RENDER
+  // ============================================================
+  return viewMode === "hub" || !currentParrot ? (
+    <HubView onSelectParrot={handleParrotSelect} />
+  ) : (
+    <ChatView
+      currentParrot={currentParrot}
+      input={input}
+      setInput={setInput}
+      onSend={handleSend}
+      isTyping={isTyping}
+      clearDialogOpen={clearDialogOpen}
+      setClearDialogOpen={setClearDialogOpen}
+      onClearChat={handleClearChat}
+      onClearContext={handleClearContext}
+      onBackToHub={handleBackToHub}
+      memoQueryResults={memoQueryResults}
+      items={items}
+      onParrotChange={handleParrotChange}
+    />
   );
 };
 

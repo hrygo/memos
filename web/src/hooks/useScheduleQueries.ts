@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { scheduleServiceClient } from "@/connect";
 import type {
   CheckConflictRequest,
+  CreateScheduleRequest,
   ListSchedulesRequest,
   ListSchedulesResponse,
   ParseAndCreateScheduleRequest,
@@ -11,12 +12,47 @@ import type {
 } from "@/types/proto/api/v1/schedule_service_pb";
 import {
   CheckConflictRequestSchema,
+  CreateScheduleRequestSchema,
   ListSchedulesRequestSchema,
   ParseAndCreateScheduleRequestSchema,
+  ScheduleSchema,
 } from "@/types/proto/api/v1/schedule_service_pb";
 
 // Re-export ScheduleAgent hooks for convenience
 export { scheduleAgentChatStream, useScheduleAgentChat } from "./useScheduleAgent";
+
+/**
+ * Hook to fetch schedules for a specific date range with buffer days
+ * Returns schedules for [targetDate-1, targetDate, targetDate+1] to cover cross-day schedules
+ * Ensures fresh data from backend for accurate conflict detection
+ */
+export function useSchedulesForDate(date: Date | undefined) {
+  return useQuery({
+    queryKey: scheduleKeys.list({ _date: date?.toISOString() }),
+    queryFn: async () => {
+      if (!date) {
+        return { schedules: [] };
+      }
+
+      // Get a larger range: [day-1 00:00, day+1 23:59:59] to cover cross-day schedules
+      // This ensures we don't miss schedules that start on previous day and end on target day,
+      // or start on target day and end on next day.
+      const dayStart = dayjs(date).startOf("day").subtract(1, "day");
+      const dayEnd = dayjs(date).endOf("day").add(1, "day");
+
+      const request = create(ListSchedulesRequestSchema, {
+        startTs: BigInt(Math.floor(dayStart.unix())),
+        endTs: BigInt(Math.floor(dayEnd.unix())),
+      } as Record<string, unknown>);
+
+      const response = await scheduleServiceClient.listSchedules(request);
+      return response;
+    },
+    enabled: !!date,
+    staleTime: 0, // Always fetch fresh data for conflict detection
+    gcTime: 1000 * 10, // Keep in cache for 10 seconds
+  });
+}
 
 // Type for query parameters with string timestamps (for React Query cache keys)
 // This avoids BigInt serialization issues in JSON.stringify()
@@ -111,10 +147,15 @@ export function useCreateSchedule() {
 
   return useMutation({
     mutationFn: async (scheduleToCreate: Partial<Schedule>) => {
-      // API expects a Schedule message, usually we should construct it properly if nested messages are involved
-      const response = await scheduleServiceClient.createSchedule({
-        schedule: scheduleToCreate as Schedule, // Cast is safe here as connect-web handles partials mostly, or we should use create(ScheduleSchema, ...)
-      });
+      // Create the Schedule message first using create()
+      const scheduleMessage = create(ScheduleSchema, scheduleToCreate as Record<string, unknown>);
+
+      // Then create the request with the properly constructed schedule message
+      const request = create(CreateScheduleRequestSchema, {
+        schedule: scheduleMessage,
+      } as Record<string, unknown>);
+
+      const response = await scheduleServiceClient.createSchedule(request);
       return response;
     },
     onSuccess: (newSchedule) => {

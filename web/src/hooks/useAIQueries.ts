@@ -193,6 +193,11 @@ export function useChatWithMemos() {
               case "tool_result":
                 callbacks?.onToolResult?.(response.eventData);
                 break;
+              case "answer":
+                // Handle final answer from agent (when no tool is used)
+                fullContent += response.eventData;
+                callbacks?.onContent?.(response.eventData);
+                break;
               case "memo_query_result":
                 try {
                   const result = JSON.parse(response.eventData);
