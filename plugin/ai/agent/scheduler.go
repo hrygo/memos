@@ -24,18 +24,18 @@ var toolCallRegex = regexp.MustCompile(`TOOL:\s*(\w+)\s+INPUT:\s*(\{.*?\})`)
 // SchedulerAgent is a simplified ReAct-style agent for schedule management.
 // It uses direct LLM calls with tool execution instead of complex agent frameworks.
 type SchedulerAgent struct {
-	llm               ai.LLMService
-	scheduleSvc       schedule.Service
-	userID            int32
-	timezone          string
-	timezoneLoc       *time.Location // Cached timezone location
-	tools             map[string]*AgentTool
+	llm         ai.LLMService
+	scheduleSvc schedule.Service
+	userID      int32
+	timezone    string
+	timezoneLoc *time.Location // Cached timezone location
+	tools       map[string]*AgentTool
 
 	// Cache management (protected by cacheMutex)
 	cacheMutex         sync.RWMutex
-	cachedSystemPrompt string   // Cached system prompt with current time
+	cachedSystemPrompt string    // Cached system prompt with current time
 	cachedPromptTime   time.Time // When the cached prompt was generated
-	cachedFullPrompt   string   // Cached full prompt (system + tools)
+	cachedFullPrompt   string    // Cached full prompt (system + tools)
 
 	// Performance monitoring
 	cacheHits   int64 // Cache hit counter (atomic)
@@ -43,7 +43,7 @@ type SchedulerAgent struct {
 
 	// Tool failure tracking
 	failureCount map[string]int // Tool failure counts
-	failureMutex  sync.Mutex    // Protects failureCount map
+	failureMutex sync.Mutex     // Protects failureCount map
 }
 
 // AgentTool wraps a tool with metadata.
@@ -171,7 +171,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 
 	// Track recent tool calls to detect loops (tool name + input hash)
 	type toolCallKey struct {
-		name     string
+		name      string
 		inputHash string
 	}
 	recentToolCalls := make([]toolCallKey, 0, 5)
@@ -291,7 +291,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 }
 
 // ExecuteWithCallback runs the agent with callback support for real-time feedback.
-func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput string, callback func(event string, data string)) (string, error) {
+func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput string, history []string, callback func(event string, data string)) (string, error) {
 	if strings.TrimSpace(userInput) == "" {
 		return "", fmt.Errorf("user input cannot be empty")
 	}
@@ -302,20 +302,39 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 
 	startTime := time.Now()
 
+	// Log execution start
+	truncatedInput := truncateString(userInput, 100)
+	slog.Info("SchedulerAgent: ExecuteWithCallback started",
+		"user_id", a.userID,
+		"timezone", a.timezone,
+		"input", truncatedInput,
+		"history_count", len(history),
+	)
+
 	// Get full system prompt (cached with thread-safe refresh)
 	fullPrompt := a.getFullSystemPrompt()
 
 	messages := []ai.Message{
 		ai.SystemPrompt(fullPrompt),
-		ai.UserMessage(userInput),
 	}
+
+	// Add history
+	for i := 0; i < len(history)-1; i += 2 {
+		if i+1 < len(history) {
+			messages = append(messages, ai.Message{Role: "user", Content: history[i]})
+			messages = append(messages, ai.Message{Role: "assistant", Content: history[i+1]})
+		}
+	}
+
+	// Add current user input
+	messages = append(messages, ai.Message{Role: "user", Content: userInput})
 
 	var iteration int
 	var finalResponse string
 
 	// Track recent tool calls to detect loops (tool name + input hash)
 	type toolCallKey struct {
-		name     string
+		name      string
 		inputHash string
 	}
 	recentToolCalls := make([]toolCallKey, 0, 5)
@@ -337,22 +356,80 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			callback("thinking", "Agent is thinking...")
 		}
 
+		// Log LLM call
+		slog.Debug("SchedulerAgent: Calling LLM",
+			"iteration", iteration+1,
+			"messages_count", len(messages),
+		)
+
 		// Get LLM response
 		response, err := a.llm.Chat(ctx, messages)
 		if err != nil {
+			slog.Error("SchedulerAgent: LLM chat failed",
+				"iteration", iteration+1,
+				"error", err,
+			)
 			return "", fmt.Errorf("LLM chat failed (iteration %d): %w", iteration+1, err)
 		}
 
+		slog.Debug("SchedulerAgent: LLM response received",
+			"iteration", iteration+1,
+			"response_length", len(response),
+			"response_preview", truncateString(response, 200),
+		)
+
 		// Check if LLM wants to use a tool
-		toolCall, toolInput, err := a.parseToolCall(response)
-		if err != nil {
-			// No tool call, this is the final answer
+		toolCall, toolInput, parseErr := a.parseToolCall(response)
+		if parseErr != nil {
+			// No tool call, this is the final answer.
+			// Optimize: Perform final answer with streaming for better UX.
+			// Note: We use the same message history including this turn's prompt.
 			finalResponse = response
+
+			// Notify streaming start
 			if callback != nil {
-				callback("answer", finalResponse)
+				// Clear "thinking" or "tool_use" status if needed and start answer
+				// (Frontend handles this via onContent)
 			}
-			break
+
+			// Note: We use the context with AgentTimeout
+			contentChan, errChan := a.llm.ChatStream(ctx, messages)
+			var fullContent strings.Builder
+
+			for {
+				select {
+				case chunk, ok := <-contentChan:
+					if !ok {
+						// Stream closed
+						if callback != nil {
+							// For scheduler, we might want to send the full accumulated response
+							// but here we send chunks as they come.
+						}
+						return fullContent.String(), nil
+					}
+					fullContent.WriteString(chunk)
+					if callback != nil {
+						callback("answer", chunk)
+					}
+				case err := <-errChan:
+					if err != nil {
+						if callback != nil {
+							callback("error", fmt.Sprintf("Streaming error: %v", err))
+						}
+						return fullContent.String(), err
+					}
+				case <-ctx.Done():
+					return fullContent.String(), ctx.Err()
+				}
+			}
 		}
+
+		// Log tool call
+		slog.Info("SchedulerAgent: Tool call parsed",
+			"iteration", iteration+1,
+			"tool", toolCall,
+			"input", truncateString(toolInput, 200),
+		)
 
 		// Notify tool use
 		if callback != nil {
@@ -425,8 +502,19 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			continue
 		}
 
+		slog.Debug("SchedulerAgent: Executing tool",
+			"iteration", iteration+1,
+			"tool", toolCall,
+			"input", truncateString(toolInput, 200),
+		)
+
 		toolResult, err := tool.Execute(ctx, toolInput)
 		if err != nil {
+			slog.Warn("SchedulerAgent: Tool execution failed",
+				"iteration", iteration+1,
+				"tool", toolCall,
+				"error", err,
+			)
 			// Check for repeated failures
 			a.failureMutex.Lock()
 			a.failureCount[toolCall]++
@@ -464,6 +552,13 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 		a.failureCount[toolCall] = 0
 		a.failureMutex.Unlock()
 
+		slog.Info("SchedulerAgent: Tool executed successfully",
+			"iteration", iteration+1,
+			"tool", toolCall,
+			"result_length", len(toolResult),
+			"result_preview", truncateString(toolResult, 150),
+		)
+
 		// Notify tool result
 		if callback != nil {
 			callback("tool_result", toolResult)
@@ -474,6 +569,10 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	}
 
 	if iteration >= timeout.MaxIterations {
+		slog.Error("SchedulerAgent: Max iterations exceeded",
+			"user_id", a.userID,
+			"max_iterations", timeout.MaxIterations,
+		)
 		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", timeout.MaxIterations)
 	}
 
@@ -483,11 +582,10 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	cacheMisses := atomic.LoadInt64(&a.cacheMisses)
 	cacheHitRate := float64(cacheHits) / float64(cacheHits+cacheMisses+1) * 100
 
-	slog.Debug("agent execution completed",
+	slog.Info("SchedulerAgent: Execution completed",
 		"user_id", a.userID,
 		"iterations", iteration+1,
 		"duration_ms", duration.Milliseconds(),
-		"had_callback", callback != nil,
 		"cache_hits", cacheHits,
 		"cache_misses", cacheMisses,
 		"cache_hit_rate", fmt.Sprintf("%.2f%%", cacheHitRate),
@@ -560,6 +658,11 @@ Supports creating, updating, and finding schedules.
 
 ## CRITICAL RULES (FinOps-Optimized):
 
+0. **TOOL INPUT FORMAT (CRITICAL)**:
+   - ALL tool inputs MUST use snake_case format: start_time, end_time, all_day, min_score
+   - NEVER use camelCase: startTime, endTime, allDay, minScore
+   - Example: {"start_time": "2026-01-21T09:00:00Z", "end_time": "2026-01-21T10:00:00Z"}
+
 1. **BE DIRECT, NOT INQUISITIVE**:
    - Extract date/time and title from user input
    - Default duration: 1 hour (NEVER ask "how long")
@@ -571,11 +674,15 @@ Supports creating, updating, and finding schedules.
    - "更新日程"/"修改日程"/"改" → Use schedule_update
    - "查询日程"/"查看日程"/"有没有空" → Use schedule_query or find_free_time
 
-3. **AUTO-RESOLVE CONFLICTS**:
-   - Check for conflicts using schedule_query tool
-   - If conflict exists, use find_free_time tool to find the nearest available slot
-   - Create the schedule at the free time automatically
-   - Inform user: "Found a conflict, scheduled you at [new time] instead"
+3. **AUTO-RESOLVE CONFLICTS (CRITICAL WORKFLOW)**:
+   When schedule_add reports a conflict:
+   a. Call find_free_time with the date (format: "2026-01-23")
+   b. Use the returned time as the NEW start_time for schedule_add
+   c. Calculate end_time as start_time + 1 hour
+   d. Call schedule_add with the NEW time
+   e. Example response: "Found a conflict, scheduled at 10:00-11:00 instead"
+   - NEVER retry with the same conflicting time!
+   - NEVER call find_free_time more than once for the same request
 
 4. **DEFAULT VALUES (NEVER ASK USER)**:
    - Duration: 1 hour (3600 seconds) - ALWAYS assume this unless explicitly specified

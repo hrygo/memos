@@ -178,18 +178,35 @@ func (p *MemoParrot) ExecuteWithCallback(
 		toolCall, toolInput, parseErr := p.parseToolCall(response)
 		if parseErr != nil {
 			// No tool call, this is the final reasoning/answer turn.
+			slog.Debug("MemoParrot: No tool call detected, streaming final answer",
+				"user_id", p.userID,
+				"iteration", iteration,
+			)
 			// Let's optimize: perform the final answer with streaming.
 			contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
 			var fullContent strings.Builder
+			var chunkCount int
 			for {
 				select {
 				case chunk, ok := <-contentChan:
 					if !ok {
+						slog.Debug("MemoParrot: Stream closed",
+							"user_id", p.userID,
+							"total_chunks", chunkCount,
+							"total_length", fullContent.Len(),
+						)
 						// Stream closed, cache final result and return
 						p.cache.Set(cacheKey, fullContent.String())
+						slog.Info("MemoParrot: Execution completed successfully",
+							"user_id", p.userID,
+							"duration_ms", time.Since(startTime).Milliseconds(),
+							"output_length", fullContent.Len(),
+							"iterations", iteration + 1,
+						)
 						return nil
 					}
+					chunkCount++
 					fullContent.WriteString(chunk)
 					if callback != nil {
 						if err := callback(EventTypeAnswer, chunk); err != nil {
@@ -202,6 +219,10 @@ func (p *MemoParrot) ExecuteWithCallback(
 						continue
 					}
 					if err != nil {
+						slog.Error("MemoParrot: Stream error",
+							"user_id", p.userID,
+							"error", err,
+						)
 						return NewParrotError(p.Name(), "ChatStream", err)
 					}
 				case <-ctx.Done():
@@ -211,6 +232,12 @@ func (p *MemoParrot) ExecuteWithCallback(
 		}
 
 		// Execute tool
+		slog.Info("MemoParrot: Tool call detected",
+			"user_id", p.userID,
+			"iteration", iteration,
+			"tool", toolCall,
+			"input", truncateString(toolInput, 100),
+		)
 		if callback != nil {
 			callback(EventTypeToolUse, fmt.Sprintf("正在使用工具: %s", toolCall))
 		}
@@ -220,8 +247,18 @@ func (p *MemoParrot) ExecuteWithCallback(
 		case "memo_search":
 			toolResult, err = p.memoSearchTool.Run(ctx, toolInput)
 			if err != nil {
+				slog.Error("MemoParrot: Tool execution failed",
+					"user_id", p.userID,
+					"tool", toolCall,
+					"error", err,
+				)
 				return NewParrotError(p.Name(), "memo_search", err)
 			}
+			slog.Debug("MemoParrot: Tool execution succeeded",
+				"user_id", p.userID,
+				"tool", toolCall,
+				"result_length", len(toolResult),
+			)
 			// Send structured memo_query_result event for frontend
 			if callback != nil {
 				// Try to parse the result as structured data
@@ -235,6 +272,10 @@ func (p *MemoParrot) ExecuteWithCallback(
 			}
 		default:
 			errorMsg := fmt.Sprintf("未知工具: %s", toolCall)
+			slog.Warn("MemoParrot: Unknown tool",
+				"user_id", p.userID,
+				"tool", toolCall,
+			)
 			messages = append(messages, ai.Message{Role: "assistant", Content: response})
 			messages = append(messages, ai.Message{Role: "user", Content: errorMsg})
 			continue
@@ -251,6 +292,10 @@ func (p *MemoParrot) ExecuteWithCallback(
 	}
 
 	// Exceeded max iterations
+	slog.Warn("MemoParrot: Exceeded max iterations",
+		"user_id", p.userID,
+		"max_iterations", timeout.MaxToolIterations,
+	)
 	return NewParrotError(p.Name(), "ExecuteWithCallback",
 		fmt.Errorf("exceeded maximum iterations (%d)", timeout.MaxToolIterations))
 }

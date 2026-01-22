@@ -15,7 +15,7 @@ type ParrotAgent interface {
 
 	// ExecuteWithCallback executes the agent with callback support for real-time feedback.
 	// ExecuteWithCallback 执行代理并支持回调以实现实时反馈。
-	ExecuteWithCallback(ctx context.Context, userInput string, callback EventCallback) error
+	ExecuteWithCallback(ctx context.Context, userInput string, history []string, callback EventCallback) error
 
 	// SelfDescribe returns the parrot's self-cognition (metacognition) information.
 	// SelfDescribe 返回鹦鹉的自我认知（元认知）信息。
@@ -92,11 +92,11 @@ type EventCallback func(eventType string, eventData interface{}) error
 // Common event types
 // 常用事件类型
 const (
-	EventTypeThinking   = "thinking"   // Agent is thinking
-	EventTypeToolUse    = "tool_use"   // Agent is using a tool
+	EventTypeThinking   = "thinking"    // Agent is thinking
+	EventTypeToolUse    = "tool_use"    // Agent is using a tool
 	EventTypeToolResult = "tool_result" // Tool execution result
-	EventTypeAnswer     = "answer"     // Final answer from agent
-	EventTypeError      = "error"      // Error occurred
+	EventTypeAnswer     = "answer"      // Final answer from agent
+	EventTypeError      = "error"       // Error occurred
 
 	// Memo-specific events
 	EventTypeMemoQueryResult = "memo_query_result" // Memo search results

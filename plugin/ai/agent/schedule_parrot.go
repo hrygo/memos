@@ -39,6 +39,7 @@ func (p *ScheduleParrot) Name() string {
 func (p *ScheduleParrot) ExecuteWithCallback(
 	ctx context.Context,
 	userInput string,
+	history []string,
 	callback EventCallback,
 ) error {
 	// Adapt the callback signature
@@ -53,7 +54,8 @@ func (p *ScheduleParrot) ExecuteWithCallback(
 	}
 
 	// Directly forward to the existing SchedulerAgent
-	_, err := p.agent.ExecuteWithCallback(ctx, userInput, adaptedCallback)
+	// Note: SchedulerAgent.ExecuteWithCallback now needs to support history as well
+	_, err := p.agent.ExecuteWithCallback(ctx, userInput, history, adaptedCallback)
 	if err != nil {
 		return NewParrotError(p.Name(), "ExecuteWithCallback", err)
 	}
@@ -72,21 +74,22 @@ func (p *ScheduleParrot) GetAgent() *SchedulerAgent {
 func (p *ScheduleParrot) StreamChat(
 	ctx context.Context,
 	userInput string,
+	history []string,
 	callback func(event string, data string),
 ) (string, error) {
-	return p.agent.ExecuteWithCallback(ctx, userInput, callback)
+	return p.agent.ExecuteWithCallback(ctx, userInput, history, callback)
 }
 
 // SelfDescribe returns the schedule parrot's metacognitive understanding of itself.
 // SelfDescribe 返回日程助手鹦鹉的元认知自我理解。
 func (p *ScheduleParrot) SelfDescribe() *ParrotSelfCognition {
 	return &ParrotSelfCognition{
-		Name:    "schedule",
-		Emoji:   "🦜",
-		Title:   "金刚 (King Kong) - 日程助手鹦鹉",
+		Name:  "schedule",
+		Emoji: "🦜",
+		Title: "金刚 (King Kong) - 日程助手鹦鹉",
 		AvianIdentity: &AvianIdentity{
 			Species: "金刚鹦鹉 (Macaw)",
-			Origin: "中美洲和南美洲热带雨林",
+			Origin:  "中美洲和南美洲热带雨林",
 			NaturalAbilities: []string{
 				"强大的喙部力量", "精准的时间感知", "复杂的社交组织",
 				"长期记忆能力", "响亮的鸣叫声",
@@ -116,6 +119,6 @@ func (p *ScheduleParrot) SelfDescribe() *ParrotSelfCognition {
 			"find_free_time",
 		},
 		SelfIntroduction: "我是金刚，你的日程管理专家。我会用最少的文字、最快的速度帮你安排时间。默认1小时，有冲突自动调整。",
-		FunFact: "我的名字'金刚'来自那只著名的 gorilla - 因为我像它一样强壮可靠，能扛起你所有的时间管理需求！",
+		FunFact:          "我的名字'金刚'来自那只著名的 gorilla - 因为我像它一样强壮可靠，能扛起你所有的时间管理需求！",
 	}
 }
