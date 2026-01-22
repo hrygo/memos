@@ -457,10 +457,18 @@ const AIChat = () => {
           },
           {
             onThinking: (msg) => {
-              console.log("[Parrot Thinking]", msg);
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                  content: msg,
+                });
+              }
             },
             onToolUse: (toolName) => {
-              console.log("[Parrot Tool Use]", toolName);
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                  content: toolName,
+                });
+              }
             },
             onToolResult: (result) => {
               console.log("[Parrot Tool Result]", result);
