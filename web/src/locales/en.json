@@ -491,7 +491,19 @@
     "prompt-explain": "Explain a concept",
     "prompt-discuss": "Start a discussion",
     "error-title": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "parrot": {
+      "chat-placeholder": "Chat with {{name}}...",
+      "chat-default-placeholder": "Type a message, type @ to select a parrot assistant...",
+      "error-processing": "Parrot processing error",
+      "error-chat-failed": "Parrot chat failed",
+      "selector-title": "Select Parrot Assistant",
+      "available": "Available",
+      "keyboard-shortcuts": "Keyboard shortcuts",
+      "select": "Select",
+      "confirm": "Confirm",
+      "close": "Close"
+    }
   },
   "schedule": {
     "title": "Schedule",

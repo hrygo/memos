@@ -23,6 +23,7 @@ const SignUp = lazy(() => import("@/pages/SignUp"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const MemoDetailRedirect = lazy(() => import("./MemoDetailRedirect"));
 const AIChat = lazy(() => import("@/pages/AIChat"));
+const Schedule = lazy(() => import("@/pages/Schedule"));
 
 import { ROUTES } from "./routes";
 
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
               { path: Routes.EXPLORE, element: <LazyRoute component={Explore} /> },
               { path: Routes.ARCHIVED, element: <LazyRoute component={Archived} /> },
               { path: "u/:username", element: <LazyRoute component={UserProfile} /> },
+              { path: Routes.SCHEDULE, element: <LazyRoute component={Schedule} /> },
             ],
           },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },

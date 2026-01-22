@@ -7,6 +7,7 @@ import {
   SemanticSearchRequestSchema,
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
+import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 
 // Query keys factory for consistent cache management
 export const aiKeys = {
@@ -90,7 +91,7 @@ export function useChatWithMemos() {
      * @returns A promise that resolves when streaming completes
      */
     stream: async (
-      params: { message: string; history?: string[] },
+      params: { message: string; history?: string[]; agentType?: ParrotAgentType; userTimezone?: string },
       callbacks?: {
         onContent?: (content: string) => void;
         onSources?: (sources: string[]) => void;
@@ -112,11 +113,18 @@ export function useChatWithMemos() {
           timeRangeDescription: string;
           queryType: string;
         }) => void;
+        // Parrot-specific callbacks
+        onThinking?: (message: string) => void;
+        onToolUse?: (toolName: string) => void;
+        onToolResult?: (result: string) => void;
+        onMemoQueryResult?: (result: { memos: Array<{ uid: string; content: string; score: number }>; query: string; count: number }) => void;
       },
     ) => {
       const request = create(ChatWithMemosRequestSchema, {
         message: params.message,
         history: params.history ?? [],
+        agentType: params.agentType !== undefined ? parrotToProtoAgentType(params.agentType) : undefined,
+        userTimezone: params.userTimezone,
       });
 
       try {
@@ -167,6 +175,29 @@ export function useChatWithMemos() {
               timeRangeDescription: response.scheduleQueryResult.timeRangeDescription || "",
               queryType: response.scheduleQueryResult.queryType || "",
             });
+          }
+
+          // Handle parrot-specific events
+          if (response.eventType && response.eventData) {
+            switch (response.eventType) {
+              case "thinking":
+                callbacks?.onThinking?.(response.eventData);
+                break;
+              case "tool_use":
+                callbacks?.onToolUse?.(response.eventData);
+                break;
+              case "tool_result":
+                callbacks?.onToolResult?.(response.eventData);
+                break;
+              case "memo_query_result":
+                try {
+                  const result = JSON.parse(response.eventData);
+                  callbacks?.onMemoQueryResult?.(result);
+                } catch (e) {
+                  console.error("Failed to parse memo_query_result:", e);
+                }
+                break;
+            }
           }
 
           // Handle completion

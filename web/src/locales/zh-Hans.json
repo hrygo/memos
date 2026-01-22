@@ -490,7 +490,19 @@
     "prompt-explain": "解释某个概念",
     "prompt-discuss": "开始讨论",
     "error-title": "出错了",
-    "retry": "重试"
+    "retry": "重试",
+    "parrot": {
+      "chat-placeholder": "与 {{name}} 对话...",
+      "chat-default-placeholder": "输入消息，输入 @ 选择鹦鹉助手...",
+      "error-processing": "鹦鹉处理出错",
+      "error-chat-failed": "鹦鹉聊天失败",
+      "selector-title": "选择鹦鹉助手",
+      "available": "可用",
+      "keyboard-shortcuts": "键盘快捷键",
+      "select": "选择",
+      "confirm": "确认",
+      "close": "关闭"
+    }
   },
   "schedule": {
     "title": "日程",
