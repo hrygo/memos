@@ -1,0 +1,93 @@
+# golangci-lint 配置文件
+# 使用方法: golangci-lint run
+
+linters:
+  enable:
+    - gofmt          # 代码格式化
+    - govet          # go vet 检查
+    - errcheck       # 检查未处理的错误
+    - staticcheck    # 静态分析
+    - unused         # 检查未使用的变量/函数
+    - gosimple       # 简化代码建议
+    - structcheck    # 检查未使用的结构体字段
+    - varcheck       # 检查未使用的全局变量/常量
+    - ineffassign    # 检查无效的赋值
+    - deadcode       # 检查未使用的代码
+    - typecheck      # 类型检查
+    - gosec          # 安全检查
+    - gocritic       # 代码风格检查
+    - printf         # printf 格式检查
+    - nilerr        # 检查 nil 错误返回
+    - errorlint      # 错误处理检查
+    - prealloc       # 预分配 slice 建议
+    - unconvert      # 移除不必要的类型转换
+    - unparam        # 检查未使用的函数参数
+
+  disable:
+    - exhaustive     # 过于严格
+    - exhaustivestruct # 过于严格
+    - funlen         # 函数长度限制（可选）
+    - lll            # 行长度限制（可选）
+    - gocyclo        # 圈复杂度（可选）
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - shadow      # 可选
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gosec:
+    excludes:
+      - G104  # 在测试文件中允许未检查的错误
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  # 排除特定问题
+  exclude-rules:
+    # 在测试文件中允许某些问题
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - noctx
+
+    # 在 main 包中允许未使用的参数
+    - path: cmd/
+      text: "unused-parameter"
+
+  exclude:
+    # 排除已知的误报
+    - "declaration of 'err' shadows declaration at"
+
+run:
+  timeout: 5m
+  go: "1.25"
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true

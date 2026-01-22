@@ -1,0 +1,64 @@
+# EditorConfig for Memos 项目
+# https://editorconfig.org
+
+root = true
+
+# 默认规则
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Go 文件
+[*.go]
+indent_style = tab
+indent_size = 4
+max_line_length = 120
+
+# Makefile
+[Makefile]
+indent_style = tab
+
+# YAML 文件
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON 文件
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown 文件
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# TypeScript/JavaScript
+[*.{ts,tsx,js,jsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# CSS/SCSS
+[*.{css,scss}]
+indent_style = space
+indent_size = 2
+
+# Shell 脚本
+[*.{sh,bash}]
+indent_style = space
+indent_size = 2
+
+# SQL
+[*.sql]
+indent_style = space
+indent_size = 2
+
+# Protobuf
+[*.proto]
+indent_style = space
+indent_size = 2

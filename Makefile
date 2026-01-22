@@ -11,6 +11,8 @@ endif
 .PHONY: db-connect db-reset db-vector
 .PHONY: start stop restart status logs
 .PHONY: logs-backend logs-frontend logs-postgres logs-follow-backend logs-follow-frontend logs-follow-postgres
+.PHONY: git-status git-diff git-log git-push
+.PHONY: check-branch check-build check-test
 
 .DEFAULT_GOAL := help
 
@@ -208,6 +210,48 @@ clean-all: clean ## 清理所有
 	@go clean -modcache
 
 # ===================================================================
+# Git 工作流
+# ===================================================================
+
+##@ Git 工作流
+
+git-status: ## 查看 Git 状态
+	@echo "Current Git status:"
+	@git status --short
+
+git-diff: ## 查看变更详情
+	@echo "Showing changes..."
+	@git diff --stat
+
+git-log: ## 查看最近提交
+	@echo "Recent commits:"
+	@git log --oneline -10
+
+git-push: ## 推送到远程 (需先检查)
+	@echo "Checking branch and pushing..."
+	@if [ "$$(git branch --show-current)" = "main" ]; then \
+		echo "ERROR: Cannot push to main directly. Create a feature branch first."; \
+		exit 1; \
+	fi
+	@git push origin "$$(git branch --show-current)"
+
+check-branch: ## 检查当前分支
+	@echo "Current branch: $$(git branch --show-current)"
+	@if [ "$$(git branch --show-current)" = "main" ]; then \
+		echo "⚠️  You are on main branch. Consider creating a feature branch."; \
+	fi
+
+check-build: ## 检查编译
+	@echo "Checking build..."
+	@go build ./... || { echo "❌ Build failed"; exit 1; }
+	@echo "✅ Build OK"
+
+check-test: ## 检查测试
+	@echo "Running tests..."
+	@go test ./... -short -timeout 30s || { echo "❌ Tests failed"; exit 1; }
+	@echo "✅ Tests OK"
+
+# ===================================================================
 # 帮助
 # ===================================================================
 
@@ -258,6 +302,14 @@ help: ## 显示此帮助信息
 	@printf "\n\033[1m清理:\033[0m\n"
 	@printf "  clean                清理构建文件\n"
 	@printf "  clean-all            清理所有\n"
+	@printf "\n\033[1mGit 工作流:\033[0m\n"
+	@printf "  git-status           查看当前状态\n"
+	@printf "  git-diff             查看变更统计\n"
+	@printf "  git-log              查看最近提交\n"
+	@printf "  git-push             推送到远程 (禁止直接推 main)\n"
+	@printf "  check-branch         检查当前分支\n"
+	@printf "  check-build          检查编译\n"
+	@printf "  check-test           检查测试\n"
 	@printf "\n\033[1mQuick Start:\033[0m\n"
 	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
 	@printf "  2. make start                   # 启动后端 + 前端\n"
