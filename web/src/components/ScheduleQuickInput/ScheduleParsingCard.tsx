@@ -1,6 +1,7 @@
 import { Clock, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ParsedSchedule, ParseResult } from "./types";
+import { useTranslate } from "@/utils/i18n";
 
 interface ScheduleParsingCardProps {
   /** Current parse result */
@@ -27,6 +28,8 @@ export function ScheduleParsingCard({
   onDismiss,
   className,
 }: ScheduleParsingCardProps) {
+  const t = useTranslate();
+
   if (!parseResult && !pendingSchedule && !isParsing) {
     return null;
   }
@@ -38,7 +41,7 @@ export function ScheduleParsingCard({
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.3s]" />
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.15s]" />
         <div className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
-        <span className="ml-1">AI 正在理解您的需求...</span>
+        <span className="ml-1">{t("schedule.quick-input.ai-thinking") as string}</span>
       </div>
     );
   }
@@ -53,6 +56,11 @@ export function ScheduleParsingCard({
 
   const { title, startTs, endTs, allDay, location } = scheduleData;
 
+  // Guard: ensure startTs exists before rendering
+  if (!startTs) {
+    return null;
+  }
+
   const formatDate = (ts: bigint) => {
     const date = new Date(Number(ts) * 1000);
     const today = new Date();
@@ -65,11 +73,11 @@ export function ScheduleParsingCard({
     });
 
     if (date.toDateString() === today.toDateString()) {
-      return { date: "今天", time: timeStr };
+      return { date: t("schedule.quick-input.today") as string, time: timeStr };
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return { date: "明天", time: timeStr };
+      return { date: t("schedule.quick-input.tomorrow") as string, time: timeStr };
     }
-    // 简化日期格式：月/日，如 "1/22"
+    // Simplified date format: month/day, e.g., "1/22"
     return {
       date: `${date.getMonth() + 1}/${date.getDate()}`,
       time: timeStr,
@@ -90,7 +98,7 @@ export function ScheduleParsingCard({
             isTemplateMode ? "bg-gradient-to-br from-blue-500 to-cyan-600" : "bg-gradient-to-br from-violet-500 to-purple-600",
           )}
         >
-          {isTemplateMode ? "模板" : "AI"}
+          {isTemplateMode ? (t("schedule.quick-input.source-type-template") as string) : (t("schedule.quick-input.source-type-ai") as string)}
         </div>
       </div>
 
@@ -101,7 +109,7 @@ export function ScheduleParsingCard({
           {/* Message Text + Close in header */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <p className="text-sm text-foreground/90 leading-snug">
-              {isTemplateMode ? "快速创建日程，请确认" : "为您识别到以下日程，请确认"}
+              {isTemplateMode ? (t("schedule.quick-input.template-confirm-hint") as string) : (t("schedule.quick-input.ai-confirm-hint") as string)}
             </p>
             {onDismiss && (
               <button
@@ -120,7 +128,7 @@ export function ScheduleParsingCard({
               {/* Time badge */}
               <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
                 <Clock className="w-3 h-3" />
-                <span>{allDay ? "全天" : startTime.time}</span>
+                <span>{allDay ? (t("schedule.all-day") as string) : startTime.time}</span>
               </div>
 
               {/* Title */}
@@ -156,7 +164,7 @@ export function ScheduleParsingCard({
               onClick={onConfirm}
               className="w-full mt-2.5 px-3 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
             >
-              确认创建
+              {t("schedule.quick-input.confirm-create") as string}
             </button>
           )}
         </div>
