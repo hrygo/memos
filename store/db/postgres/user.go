@@ -124,7 +124,14 @@ func (d *DB) ListUsers(ctx context.Context, find *store.FindUser) ([]*store.User
 		FROM "user"
 		WHERE ` + strings.Join(where, " AND ") + ` ORDER BY ` + strings.Join(orderBy, ", ")
 	if v := find.Limit; v != nil {
-		query += fmt.Sprintf(" LIMIT %d", *v)
+		limit := *v
+		if limit < 0 {
+			limit = 0
+		}
+		if limit > 10000 {
+			limit = 10000
+		}
+		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
 	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {

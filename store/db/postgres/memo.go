@@ -136,9 +136,20 @@ func (d *DB) ListMemos(ctx context.Context, find *store.FindMemo) ([]*store.Memo
 		WHERE ` + strings.Join(where, " AND ") + `
 		ORDER BY ` + strings.Join(orderBy, ", ")
 	if find.Limit != nil {
-		query = fmt.Sprintf("%s LIMIT %d", query, *find.Limit)
+		limit := *find.Limit
+		if limit < 0 {
+			limit = 0
+		}
+		if limit > 10000 {
+			limit = 10000
+		}
+		query = fmt.Sprintf("%s LIMIT %d", query, limit)
 		if find.Offset != nil {
-			query = fmt.Sprintf("%s OFFSET %d", query, *find.Offset)
+			offset := *find.Offset
+			if offset < 0 {
+				offset = 0
+			}
+			query = fmt.Sprintf("%s OFFSET %d", query, offset)
 		}
 	}
 

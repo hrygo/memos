@@ -14,6 +14,23 @@ import (
 	"github.com/usememos/memos/store"
 )
 
+// ============================================================================
+// POSTGRESQL SUPPORT (Production - Full Support)
+// ============================================================================
+// PostgreSQL is the PRIMARY database for production use.
+//
+// All features are fully supported:
+// - Complete CRUD operations
+// - Vector search (pgvector extension)
+// - Full-text search (ts_vector, BM25)
+// - Hybrid search (vector + BM25 with RRF fusion)
+// - Advanced AI features (reranking)
+// - Concurrent writes
+// - Complex migrations
+//
+// When adding new features, PostgreSQL is the reference implementation.
+// ============================================================================
+
 type DB struct {
 	db      *sql.DB
 	profile *profile.Profile
