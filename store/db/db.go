@@ -5,10 +5,24 @@ import (
 
 	"github.com/usememos/memos/internal/profile"
 	"github.com/usememos/memos/store"
-	"github.com/usememos/memos/store/db/mysql"
 	"github.com/usememos/memos/store/db/postgres"
 	"github.com/usememos/memos/store/db/sqlite"
 )
+
+// ============================================================================
+// DATABASE SUPPORT POLICY
+// ============================================================================
+// This project supports only PostgreSQL and SQLite databases.
+//
+// PostgreSQL: Full support for production use with all AI features.
+// SQLite: Limited support for development/testing only (no advanced AI).
+// MySQL: NOT SUPPORTED - all MySQL code has been removed.
+//
+// When adding new features:
+// - Implement fully for PostgreSQL
+// - Implement for SQLite ONLY if high ROI and low maintenance cost
+// - Do NOT add MySQL support under any circumstances
+// ============================================================================
 
 // NewDBDriver creates new db driver based on profile.
 func NewDBDriver(profile *profile.Profile) (store.Driver, error) {
@@ -18,12 +32,10 @@ func NewDBDriver(profile *profile.Profile) (store.Driver, error) {
 	switch profile.Driver {
 	case "sqlite":
 		driver, err = sqlite.NewDB(profile)
-	case "mysql":
-		driver, err = mysql.NewDB(profile)
 	case "postgres":
 		driver, err = postgres.NewDB(profile)
 	default:
-		return nil, errors.New("unknown db driver")
+		return nil, errors.New("unknown db driver: only 'postgres' and 'sqlite' are supported (MySQL is not supported)")
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create db driver")
