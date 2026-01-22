@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -115,8 +116,10 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 			Messages:    convertMessages(messages),
 		}
 
+		slog.Debug("LLM ChatStream starting", "model", s.model, "messages", len(messages))
 		stream, err := s.client.CreateChatCompletionStream(ctx, req)
 		if err != nil {
+			slog.Error("LLM ChatStream failed to create", "error", err)
 			select {
 			case errChan <- fmt.Errorf("create stream failed: %w", err):
 			case <-ctx.Done():
@@ -125,13 +128,15 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 		}
 		defer stream.Close()
 
+		chunkCount := 0
 		for {
 			response, err := stream.Recv()
 			if err != nil {
 				if strings.Contains(err.Error(), "EOF") || err.Error() == "EOF" {
-					// Normal stream termination
+					slog.Debug("LLM ChatStream completed", "chunks", chunkCount)
 					return
 				}
+				slog.Error("LLM ChatStream receive error", "error", err, "chunks_so_far", chunkCount)
 				select {
 				case errChan <- fmt.Errorf("stream recv failed: %w", err):
 				case <-ctx.Done():
@@ -145,15 +150,18 @@ func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan
 
 			delta := response.Choices[0].Delta.Content
 			if delta != "" {
+				chunkCount++
 				select {
 				case contentChan <- delta:
 				case <-ctx.Done():
+					slog.Warn("LLM ChatStream context cancelled during send", "chunks", chunkCount)
 					return
 				}
 			}
 
 			// Check if stream is finished
 			if response.Choices[0].FinishReason != "" {
+				slog.Debug("LLM ChatStream finished", "reason", response.Choices[0].FinishReason, "chunks", chunkCount)
 				return
 			}
 		}
