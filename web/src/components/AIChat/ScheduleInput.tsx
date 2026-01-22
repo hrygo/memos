@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { AlertTriangle, Bot, Calendar, Clock, Loader2, MapPin, Trash2, X } from "lucide-react";
+import { AlertTriangle, Bot, Loader2, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";

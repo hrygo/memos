@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Calendar, LayoutList, PlusIcon } from "lucide-react";
+import { Calendar, LayoutList } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
@@ -42,11 +42,6 @@ const Schedule = () => {
   const effectiveViewTab = hasSearchFilter ? "timeline" : viewTab;
 
   // Handlers
-  const handleAddSchedule = () => {
-    setEditSchedule(null);
-    setScheduleInputOpen(true);
-  };
-
   const handleEditSchedule = (schedule: Schedule) => {
     setEditSchedule(schedule);
     setScheduleInputOpen(true);
@@ -65,7 +60,7 @@ const Schedule = () => {
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header with View Tabs, Search (desktop) and Add Button */}
+      {/* Header with View Tabs and Search (desktop) */}
       <div className="hidden lg:flex flex-none px-4 py-3 border-b border-border/50 overflow-hidden">
         <div className="flex items-center justify-between gap-4 w-full">
           {/* Left: View Tabs */}
@@ -98,7 +93,7 @@ const Schedule = () => {
             </div>
           )}
 
-          {/* Right: Search Bar and Add Button */}
+          {/* Right: Search Bar */}
           <div className="flex items-center gap-2 flex-1 justify-end">
             <ScheduleSearchBar
               schedules={allSchedules}
@@ -106,15 +101,11 @@ const Schedule = () => {
               onHasFilterChange={setHasSearchFilter}
               className="max-w-xs"
             />
-            <Button onClick={handleAddSchedule} size="sm" className="gap-1.5 h-9 px-3">
-              <PlusIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("schedule.add") || "Add"}</span>
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile: View Tabs and Add Button */}
+      {/* Mobile: View Tabs */}
       <div className="lg:hidden flex-none px-3 py-2 flex items-center justify-between gap-2 border-b border-border/50">
         {!hasSearchFilter ? (
           <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
@@ -142,9 +133,6 @@ const Schedule = () => {
             </span>
           </div>
         )}
-        <Button onClick={handleAddSchedule} size="sm" className="gap-1 h-8 w-8 p-0">
-          <PlusIcon className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Content */}

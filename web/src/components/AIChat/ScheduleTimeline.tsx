@@ -1,16 +1,12 @@
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
-import "dayjs/locale/zh-cn";
 import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
-
-// Set dayjs default locale to Chinese
-dayjs.locale("zh-cn");
 
 interface ScheduleTimelineProps {
   schedules: Schedule[];
