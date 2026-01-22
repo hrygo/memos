@@ -392,15 +392,17 @@ func (s *service) CheckConflicts(ctx context.Context, userID int32, startTs int6
 	for _, sched := range list {
 		if !excludeSet[sched.ID] {
 			// Check if time ranges actually overlap
-			// Two intervals [s1, e1] and [s2, e2] overlap if: s1 <= e2 AND s2 <= e1
+			// 区间约定 Convention: [start, end) 左闭右开
+			// Two intervals [s1, e1) and [s2, e2) overlap if: s1 < e2 AND s2 < e1
 			scheduleEnd := sched.EndTs
 			if scheduleEnd == nil {
 				// For schedules without end time, treat as a point event at start_ts
 				scheduleEnd = &sched.StartTs
 			}
 
-			// Check overlap: query window [startTs, checkEndTs] vs schedule [sched.StartTs, *scheduleEnd]
-			if startTs <= *scheduleEnd && checkEndTs >= sched.StartTs {
+			// Check overlap: query window [startTs, checkEndTs) vs schedule [sched.StartTs, *scheduleEnd)
+			// Using [start, end) convention: overlap when new.start < existing.end AND new.end > existing.start
+			if startTs < *scheduleEnd && checkEndTs > sched.StartTs {
 				conflicts = append(conflicts, sched)
 			}
 		}
