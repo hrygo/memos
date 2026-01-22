@@ -155,15 +155,18 @@ class LocalParser {
       }
 
       // Extract time of day
-      const dayPart = match[1] || match[2] || "";
-      const hourStr = match[3] || match[match.length - 3]; // Hour position varies by pattern
-      const minuteStr = match[4] || match[match.length - 2] || "0"; // Minute position varies
+      const dayPart = match[1] ?? match[2] ?? "";
+      // For pattern 1: hour at [3], minute at [5]
+      // For pattern 2: hour at [2], minute at [4]
+      const hourStr = match[3] ?? match[2] ?? "";
+      // Minute is at [5] for pattern1, [4] for pattern2, with "0" default
+      const minuteStr = match[5] ?? match[4] ?? "0";
 
       const hour = parseInt(hourStr, 10);
-      const minute = parseInt(minuteStr, 10) || 0;
+      const minute = parseInt(minuteStr, 10) ?? 0;
 
-      // Validate hour is in valid range
-      if (isNaN(hour) || hour < 0 || hour > 23) {
+      // Validate hour is a valid number
+      if (Number.isNaN(hour) || hour < 0 || hour > 23) {
         return null;
       }
 
