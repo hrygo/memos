@@ -82,6 +82,103 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ---
 
+## 国际化 (i18n) 规范 ⚠️ 强制执行
+
+### 基本原则
+
+**所有新增的 UI 文本必须同时提供英文和中文翻译。**
+
+这是项目的强制规约，违反此规约的代码将不被接受。
+
+### 双语要求
+
+| 文件 | 强制要求 |
+|------|----------|
+| `en.json` | 必须 - 英文翻译 |
+| `zh-Hans.json` | 必须 - 简体中文翻译 |
+| `zh-Hant.json` | 可选 - 繁体中文翻译 |
+| 其他语言文件 | 可选 - 社区贡献 |
+
+### 添加新文本的步骤
+
+1. **在 `en.json` 中添加英文翻译**
+   ```json
+   {
+     "your": {
+       "new": {
+         "key": "Your new feature text",
+         "description": "Description here"
+       }
+     }
+   }
+   ```
+
+2. **在 `zh-Hans.json` 中添加中文翻译**
+   ```json
+   {
+     "your": {
+       "new": {
+         "key": "您的新功能文本",
+         "description": "描述在这里"
+       }
+     }
+   }
+   ```
+
+3. **验证 key 完整性**
+   ```bash
+   make check-i18n
+   ```
+
+### 命名规范
+
+- **使用小写字母和连字符**: `your-feature-name`
+- **使用点号分隔命名空间**: `common.save`, `schedule.title`
+- **key 应该有意义**: 避免使用 `text1`, `label2`
+- **保持一致性**: 相同概念使用相同的 key
+
+### 在代码中使用
+
+```tsx
+import { useTranslate } from "@/utils/i18n";
+
+const Component = () => {
+  const t = useTranslate();
+
+  return (
+    <button>{t("common.save")}</button>
+  );
+};
+```
+
+**禁止硬编码文本**:
+```tsx
+// ❌ 错误
+<button>Save</button>
+
+// ✅ 正确
+<button>{t("common.save")}</button>
+```
+
+### 检查命令
+
+```bash
+# 检查 i18n key 是否同步
+make check-i18n
+
+# 检查前端代码是否有硬编码文本
+make check-i18n-hardcode
+```
+
+### 提交前检查清单
+
+- [ ] `en.json` 和 `zh-Hans.json` 都添加了新的 key
+- [ ] key 的路径结构一致
+- [ ] 运行 `make check-i18n` 无错误
+- [ ] 运行 `make check-i18n-hardcode` 无警告
+
+---
+
 ## 测试规范
 
 ```bash

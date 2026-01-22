@@ -12,7 +12,7 @@ endif
 .PHONY: start stop restart status logs
 .PHONY: logs-backend logs-frontend logs-postgres logs-follow-backend logs-follow-frontend logs-follow-postgres
 .PHONY: git-status git-diff git-log git-push
-.PHONY: check-branch check-build check-test
+.PHONY: check-branch check-build check-test check-i18n check-i18n-hardcode
 
 .DEFAULT_GOAL := help
 
@@ -251,6 +251,18 @@ check-test: ## 检查测试
 	@go test ./... -short -timeout 30s || { echo "❌ Tests failed"; exit 1; }
 	@echo "✅ Tests OK"
 
+check-i18n: ## 检查 i18n 翻译完整性 (强制)
+	@echo "Checking i18n translations..."
+	@chmod +x scripts/check-i18n.sh
+	@./scripts/check-i18n.sh
+
+check-i18n-hardcode: ## 检查前端硬编码文本
+	@echo "Checking hardcoded text..."
+	@chmod +x scripts/check-i18n-hardcode.sh
+	@./scripts/check-i18n-hardcode.sh
+
+check-all: check-build check-test check-i18n ## 运行所有检查
+
 # ===================================================================
 # 帮助
 # ===================================================================
@@ -310,6 +322,9 @@ help: ## 显示此帮助信息
 	@printf "  check-branch         检查当前分支\n"
 	@printf "  check-build          检查编译\n"
 	@printf "  check-test           检查测试\n"
+	@printf "  check-i18n           检查 i18n 翻译完整性 (强制)\n"
+	@printf "  check-i18n-hardcode  检查前端硬编码文本\n"
+	@printf "  check-all            运行所有检查\n"
 	@printf "\n\033[1mQuick Start:\033[0m\n"
 	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
 	@printf "  2. make start                   # 启动后端 + 前端\n"

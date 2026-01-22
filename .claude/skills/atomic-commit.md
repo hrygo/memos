@@ -6,7 +6,10 @@
 
 1. **收集变更文件**：获取所有修改和新增的文件
 2. **分类变更**：按功能模块分组变更
-3. **预检查**：编译验证、测试验证
+3. **预检查**：
+   - 编译验证 (`go build ./...`)
+   - **i18n 双语检查** (`make check-i18n`) - **强制执行**
+   - 硬编码文本检查 (`make check-i18n-hardcode`)
 4. **生成提交消息**：为每组变更生成规范的提交消息
 5. **执行提交**：按顺序执行 git add 和 git commit
 
@@ -62,6 +65,56 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 - `node_modules/`, `dist/`, `bin/` (构建产物)
 - `*.log`, `*.tmp` (临时文件)
 
+---
+
+## i18n 双语强制规则 ⚠️
+
+**所有前端 UI 文本必须同时提供英文和中文翻译。**
+
+### 检查规则
+
+变更涉及以下文件时，强制执行 i18n 检查：
+- `web/src/locales/en.json`
+- `web/src/locales/zh-Hans.json`
+
+### 提交前验证
+
+```bash
+# 必须通过 i18n 检查才能提交
+make check-i18n
+```
+
+### 添加新文本流程
+
+1. 在 `en.json` 添加英文翻译
+2. 在 `zh-Hans.json` 添加中文翻译
+3. 确保 key 路径完全一致
+4. 运行 `make check-i18n` 验证
+
+### 禁止行为
+
+```tsx
+// ❌ 禁止：硬编码文本
+<button>Save</button>
+
+// ❌ 禁止：只有英文翻译
+// en.json: { "save": "Save" }
+// zh-Hans.json: { "save": "保存" }
+// 但在代码中仍用硬编码
+
+// ✅ 正确：使用 i18n hook
+<button>{t("common.save")}</button>
+```
+
+### 拒绝条件
+
+以下情况将**拒绝提交**：
+1. `en.json` 有 key 但 `zh-Hans.json` 没有
+2. `zh-Hans.json` 有 key 但 `en.json` 没有
+3. 前端代码中存在硬编码用户可见文本
+
+---
+
 ## 使用示例
 
 ```bash
@@ -69,5 +122,5 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 /commit
 
 # 带参数
-/commit "feat(store): add BM25 search"
+/commit "feat(web): add schedule page"
 ```

@@ -93,6 +93,7 @@
     "share": "分享",
     "shortcut-filter": "捷径过滤器",
     "shortcuts": "捷径",
+    "failed-to-sign-in": "登录失败",
     "sign-in": "登录",
     "sign-in-with": "使用 {{provider}} 登录",
     "sign-out": "退出登录",
