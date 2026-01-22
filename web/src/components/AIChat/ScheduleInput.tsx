@@ -452,34 +452,38 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                     />
 
                     {/* Start Time */}
-                    <Input
-                      type="datetime-local"
-                      value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
-                        "YYYY-MM-DDTHH:mm",
-                      )}
-                      onChange={(e) => {
-                        const ts = BigInt(dayjs(e.target.value).unix());
-                        setParsedSchedule({ ...parsedSchedule, startTs: ts });
-                      }}
-                      className="h-9"
-                    />
+                    <div className="relative">
+                      <Input
+                        type="datetime-local"
+                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
+                          "YYYY-MM-DDTHH:mm",
+                        )}
+                        onChange={(e) => {
+                          const ts = BigInt(dayjs(e.target.value).unix());
+                          setParsedSchedule({ ...parsedSchedule, startTs: ts });
+                        }}
+                        className="h-9 pr-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2"
+                      />
+                    </div>
 
                     {/* End Time */}
-                    <Input
-                      type="datetime-local"
-                      value={
-                        parsedSchedule.endTs > 0
-                          ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                              "YYYY-MM-DDTHH:mm",
-                            )
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const ts = BigInt(dayjs(e.target.value).unix());
-                        setParsedSchedule({ ...parsedSchedule, endTs: ts });
-                      }}
-                      className="h-9"
-                    />
+                    <div className="relative">
+                      <Input
+                        type="datetime-local"
+                        value={
+                          parsedSchedule.endTs > 0
+                            ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
+                                "YYYY-MM-DDTHH:mm",
+                              )
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const ts = BigInt(dayjs(e.target.value).unix());
+                          setParsedSchedule({ ...parsedSchedule, endTs: ts });
+                        }}
+                        className="h-9 pr-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2"
+                      />
+                    </div>
 
                     {/* Location */}
                     <Input
