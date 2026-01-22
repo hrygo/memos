@@ -13,7 +13,7 @@ type LRUCache struct {
 	maxEntries int
 	ttl        time.Duration
 	entries    map[string]*list.Element // Map from key to list element
-	lruList    *list.List                // LRU list (front = most recently used)
+	lruList    *list.List               // LRU list (front = most recently used)
 	mutex      sync.RWMutex
 
 	// Metrics
@@ -220,12 +220,6 @@ func (c *LRUCache) removeElement(elem *list.Element) {
 	entry := elem.Value.(*cacheEntry)
 	delete(c.entries, entry.key)
 	c.lruList.Remove(elem)
-}
-
-// expiration returns the TTL duration.
-// expiration 返回 TTL 时长。
-func (c *LRUCache) expiration() time.Duration {
-	return c.ttl
 }
 
 // String returns a string representation of the cache.

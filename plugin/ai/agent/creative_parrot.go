@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/usememos/memos/plugin/ai"
+	"github.com/usememos/memos/plugin/ai/timeout"
 )
 
 // CreativeParrot is the creative assistant parrot (🦜 灵灵).
@@ -29,8 +30,8 @@ func NewCreativeParrot(
 	}
 
 	return &CreativeParrot{
-		llm:   llm,
-		cache: NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
+		llm:    llm,
+		cache:  NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
 		userID: userID,
 	}, nil
 }
@@ -49,7 +50,7 @@ func (p *CreativeParrot) ExecuteWithCallback(
 	callback EventCallback,
 ) error {
 	// Add timeout protection
-	ctx, cancel := context.WithTimeout(ctx, AgentTimeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
 	// Step 1: Check cache
@@ -71,26 +72,42 @@ func (p *CreativeParrot) ExecuteWithCallback(
 		callback(EventTypeThinking, "正在构思创意...")
 	}
 
-	// Step 4: Get LLM response (creative parrot doesn't use tools)
+	// Step 4: Get LLM response streaming (creative parrot doesn't use tools)
 	messages := []ai.Message{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userInput},
 	}
 
-	response, err := p.llm.Chat(ctx, messages)
-	if err != nil {
-		return NewParrotError(p.Name(), "Chat", err)
+	contentChan, errChan := p.llm.ChatStream(ctx, messages)
+
+	var fullContent strings.Builder
+	for {
+		select {
+		case chunk, ok := <-contentChan:
+			if !ok {
+				// Stream closed, cache results and return
+				p.cache.Set(cacheKey, fullContent.String())
+				return nil
+			}
+			fullContent.WriteString(chunk)
+			if callback != nil {
+				// Send each chunk as an answer event for real-time UI updates
+				if err := callback(EventTypeAnswer, chunk); err != nil {
+					return err
+				}
+			}
+		case err, ok := <-errChan:
+			if !ok {
+				errChan = nil
+				continue
+			}
+			if err != nil {
+				return NewParrotError(p.Name(), "ChatStream", err)
+			}
+		case <-ctx.Done():
+			return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
+		}
 	}
-
-	// Cache the result
-	p.cache.Set(cacheKey, response)
-
-	// Send answer
-	if callback != nil {
-		callback(EventTypeAnswer, response)
-	}
-
-	return nil
 }
 
 // buildSystemPrompt builds the system prompt for the creative parrot.
@@ -170,11 +187,11 @@ func (p *CreativeParrot) GetStats() CacheStats {
 // GetCreativeModes returns available creative modes.
 func (p *CreativeParrot) GetCreativeModes() []string {
 	return []string{
-		"brainstorm",   // 头脑风暴
-		"writing",      // 创意写作
-		"optimizing",   // 内容优化
-		"expanding",    // 创意扩展
-		"inspiring",    // 灵感激发
+		"brainstorm", // 头脑风暴
+		"writing",    // 创意写作
+		"optimizing", // 内容优化
+		"expanding",  // 创意扩展
+		"inspiring",  // 灵感激发
 	}
 }
 
@@ -266,12 +283,12 @@ func (p *CreativeParrot) ParseCreativeMode(input string) string {
 // SelfDescribe 返回创意助手鹦鹉的元认知自我理解。
 func (p *CreativeParrot) SelfDescribe() *ParrotSelfCognition {
 	return &ParrotSelfCognition{
-		Name:    "creative",
-		Emoji:   "🦜",
-		Title:   "灵灵 (Spirit) - 创意助手鹦鹉",
+		Name:  "creative",
+		Emoji: "🦜",
+		Title: "灵灵 (Spirit) - 创意助手鹦鹉",
 		AvianIdentity: &AvianIdentity{
 			Species: "虎皮鹦鹉 (Budgerigar)",
-			Origin: "澳大利亚内陆",
+			Origin:  "澳大利亚内陆",
 			NaturalAbilities: []string{
 				"绚丽的羽毛色彩", "灵活的飞行技巧",
 				"富有表现力的鸣叫", "群居创造力",
@@ -302,6 +319,6 @@ func (p *CreativeParrot) SelfDescribe() *ParrotSelfCognition {
 			"无工具 - 纯创意",
 		},
 		SelfIntroduction: "我是灵灵，你的创意灵感缪斯。无论是头脑风暴还是创意写作，我都能帮你打破思维定式，发现新的可能性。",
-		FunFact: "我的名字'灵灵'取自'灵感' - 就像虎皮鹦鹉绚丽的羽毛一样，创意也是多彩斑斓的！虎皮鹦鹉是世界上最小的鹦鹉之一，但它们的创意和活力却无限大，就像小小的想法能带来巨大的改变。",
+		FunFact:          "我的名字'灵灵'取自'灵感' - 就像虎皮鹦鹉绚丽的羽毛一样，创意也是多彩斑斓的！虎皮鹦鹉是世界上最小的鹦鹉之一，但它们的创意和活力却无限大，就像小小的想法能带来巨大的改变。",
 	}
 }

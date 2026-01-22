@@ -6,15 +6,26 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/usememos/memos/plugin/ai/timeout"
 	"github.com/usememos/memos/server/retrieval"
+)
+
+const (
+	// Default search limit for memo search results.
+	defaultSearchLimit = 10
+
+	// Maximum search limit to prevent excessive results.
+	maxSearchLimit = 50
+
+	// Default minimum relevance score for search results.
+	defaultMinScore = 0.5
 )
 
 // MemoSearchTool searches for memos using semantic and keyword search.
 // MemoSearchTool 使用语义和关键词搜索来查找笔记。
 type MemoSearchTool struct {
-	retriever      *retrieval.AdaptiveRetriever
-	embeddingService any // Will be ai.EmbeddingService, using any to avoid circular dependency
-	userIDGetter   func(ctx context.Context) int32
+	retriever    *retrieval.AdaptiveRetriever
+	userIDGetter func(ctx context.Context) int32
 }
 
 // NewMemoSearchTool creates a new memo search tool.
@@ -22,18 +33,18 @@ type MemoSearchTool struct {
 func NewMemoSearchTool(
 	retriever *retrieval.AdaptiveRetriever,
 	userIDGetter func(ctx context.Context) int32,
-) *MemoSearchTool {
+) (*MemoSearchTool, error) {
 	if retriever == nil {
-		panic("retriever cannot be nil")
+		return nil, fmt.Errorf("retriever cannot be nil")
 	}
 	if userIDGetter == nil {
-		panic("userIDGetter cannot be nil")
+		return nil, fmt.Errorf("userIDGetter cannot be nil")
 	}
 
 	return &MemoSearchTool{
 		retriever:    retriever,
 		userIDGetter: userIDGetter,
-	}
+	}, nil
 }
 
 // Name returns the name of the tool.
@@ -69,6 +80,10 @@ type MemoSearchInput struct {
 // Run executes the memo search tool.
 // Run 执行笔记搜索工具。
 func (t *MemoSearchTool) Run(ctx context.Context, input string) (string, error) {
+	// Add timeout protection for search operation
+	ctx, cancel := context.WithTimeout(ctx, timeout.ToolExecutionTimeout)
+	defer cancel()
+
 	// Parse input
 	var searchInput MemoSearchInput
 	if err := json.Unmarshal([]byte(input), &searchInput); err != nil {
@@ -82,13 +97,13 @@ func (t *MemoSearchTool) Run(ctx context.Context, input string) (string, error) 
 
 	// Set defaults
 	if searchInput.Limit <= 0 {
-		searchInput.Limit = 10
+		searchInput.Limit = defaultSearchLimit
 	}
-	if searchInput.Limit > 50 {
-		searchInput.Limit = 50 // Cap at 50 to prevent excessive results
+	if searchInput.Limit > maxSearchLimit {
+		searchInput.Limit = maxSearchLimit
 	}
 	if searchInput.MinScore <= 0 {
-		searchInput.MinScore = 0.5
+		searchInput.MinScore = defaultMinScore
 	}
 
 	// Get user ID
@@ -163,6 +178,10 @@ type MemoSearchToolResult struct {
 // RunWithStructuredResult executes the tool and returns a structured result.
 // RunWithStructuredResult 执行工具并返回结构化结果。
 func (t *MemoSearchTool) RunWithStructuredResult(ctx context.Context, input string) (*MemoSearchToolResult, error) {
+	// Add timeout protection for search operation
+	ctx, cancel := context.WithTimeout(ctx, timeout.ToolExecutionTimeout)
+	defer cancel()
+
 	// Parse input
 	var searchInput MemoSearchInput
 	if err := json.Unmarshal([]byte(input), &searchInput); err != nil {

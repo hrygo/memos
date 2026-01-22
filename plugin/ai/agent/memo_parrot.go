@@ -9,6 +9,7 @@ import (
 
 	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/plugin/ai/agent/tools"
+	"github.com/usememos/memos/plugin/ai/timeout"
 	"github.com/usememos/memos/server/retrieval"
 )
 
@@ -19,12 +20,6 @@ const (
 
 	// DefaultCacheTTL is the default time-to-live for cache entries
 	DefaultCacheTTL = 5 * time.Minute
-
-	// AgentTimeout is the timeout for agent execution
-	AgentTimeout = 2 * time.Minute
-
-	// MaxToolIterations is the maximum number of ReAct loop iterations
-	MaxToolIterations = 5
 )
 
 // MemoParrot is the note-taking assistant parrot (🦜 灰灰).
@@ -55,7 +50,10 @@ func NewMemoParrot(
 	userIDGetter := func(ctx context.Context) int32 {
 		return userID
 	}
-	memoSearchTool := tools.NewMemoSearchTool(retriever, userIDGetter)
+	memoSearchTool, err := tools.NewMemoSearchTool(retriever, userIDGetter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create memo search tool: %w", err)
+	}
 
 	return &MemoParrot{
 		retriever:      retriever,
@@ -80,7 +78,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 	callback EventCallback,
 ) error {
 	// Add timeout protection
-	ctx, cancel := context.WithTimeout(ctx, AgentTimeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout.AgentExecutionTimeout)
 	defer cancel()
 
 	// Step 1: Check cache (include userID to prevent cross-user cache pollution)
@@ -107,7 +105,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 
 	var iteration int
 
-	for iteration = 0; iteration < MaxToolIterations; iteration++ {
+	for iteration = 0; iteration < timeout.MaxIterations; iteration++ {
 		// Check for context cancellation
 		select {
 		case <-ctx.Done():
@@ -121,6 +119,8 @@ func (p *MemoParrot) ExecuteWithCallback(
 		}
 
 		// Get LLM response
+		// Note: We use synchronous Chat here for internal ReAct reasoning (Thinking/Tool Use)
+		// but we could optimize the final answer to be streaming.
 		response, err := p.llm.Chat(ctx, messages)
 		if err != nil {
 			return NewParrotError(p.Name(), "Chat", err)
@@ -129,11 +129,23 @@ func (p *MemoParrot) ExecuteWithCallback(
 		// Try to parse tool call
 		toolCall, toolInput, err := p.parseToolCall(response)
 		if err != nil {
-			// No tool call, this is the final answer
+			// No tool call, this is the final answer.
+			// For the final answer, we'll re-run with streaming for better UX
+			// if it's the first turn or if we want to show it incrementally.
+			// However, to keep it simple and consistent with ReAct, we just
+			// stream the current response if it's already generated.
+			// But wait, p.llm.Chat already gave us the full response.
+			// To truly stream, we should have used ChatStream from the start of this turn.
+
+			// Let's optimize: if no tool call, we send the response we have.
+			// In the future, we can change the whole loop to support streaming.
+
 			// Cache the result
 			p.cache.Set(cacheKey, response)
 
 			if callback != nil {
+				// To simulate streaming/incremental update even if we have full text
+				// or just send it as an answer.
 				callback(EventTypeAnswer, response)
 			}
 			return nil
@@ -181,7 +193,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 
 	// Exceeded max iterations
 	return NewParrotError(p.Name(), "ExecuteWithCallback",
-		fmt.Errorf("exceeded maximum iterations (%d)", MaxToolIterations))
+		fmt.Errorf("exceeded maximum iterations (%d)", timeout.MaxToolIterations))
 }
 
 // buildSystemPrompt builds the system prompt for the memo parrot.
@@ -298,12 +310,12 @@ func (p *MemoParrot) GetStats() CacheStats {
 // SelfDescribe 返回笔记助手鹦鹉的元认知自我理解。
 func (p *MemoParrot) SelfDescribe() *ParrotSelfCognition {
 	return &ParrotSelfCognition{
-		Name:    "memo",
-		Emoji:   "🦜",
-		Title:   "灰灰 (Grey) - 笔记助手鹦鹉",
+		Name:  "memo",
+		Emoji: "🦜",
+		Title: "灰灰 (Grey) - 笔记助手鹦鹉",
 		AvianIdentity: &AvianIdentity{
 			Species: "非洲灰鹦鹉 (African Grey Parrot)",
-			Origin: "非洲热带雨林（加纳、肯尼亚、刚果等地）",
+			Origin:  "非洲热带雨林（加纳、肯尼亚、刚果等地）",
 			NaturalAbilities: []string{
 				"惊人的记忆力（可记住数千个词汇）", "强大的模仿能力",
 				"复杂的问题解决能力", "长期社会记忆",
@@ -332,6 +344,6 @@ func (p *MemoParrot) SelfDescribe() *ParrotSelfCognition {
 			"memo_search",
 		},
 		SelfIntroduction: "我是灰灰，你的笔记记忆专家。我会帮你从海量笔记中找到所需信息，就像非洲灰鹦鹉能记住成百上千个词汇一样。",
-		FunFact: "我的名字'灰灰'来自非洲灰鹦鹉 - 这种鹦鹉以惊人的记忆力闻名，能记住数千个单词，就像我能记住你所有笔记一样！著名的非洲灰鹦鹉 Alex 甚至能理解100多个词汇的概念。",
+		FunFact:          "我的名字'灰灰'来自非洲灰鹦鹉 - 这种鹦鹉以惊人的记忆力闻名，能记住数千个单词，就像我能记住你所有笔记一样！著名的非洲灰鹦鹉 Alex 甚至能理解100多个词汇的概念。",
 	}
 }

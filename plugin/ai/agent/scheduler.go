@@ -14,12 +14,8 @@ import (
 
 	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/plugin/ai/agent/tools"
+	"github.com/usememos/memos/plugin/ai/timeout"
 	"github.com/usememos/memos/server/service/schedule"
-)
-
-const (
-	// MaxIterations is the maximum number of reasoning cycles
-	MaxIterations = 5
 )
 
 // Pre-compiled regex for parsing tool calls (using non-greedy matching)
@@ -156,7 +152,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 	}
 
 	// Add timeout protection for the entire agent execution
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
 	startTime := time.Now()
@@ -180,7 +176,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 	}
 	recentToolCalls := make([]toolCallKey, 0, 5)
 
-	for iteration = 0; iteration < MaxIterations; iteration++ {
+	for iteration = 0; iteration < timeout.MaxIterations; iteration++ {
 		// Check for context cancellation
 		select {
 		case <-ctx.Done():
@@ -222,9 +218,9 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 			break
 		}
 
-		// Track this tool call (keep last 5)
+		// Track this tool call (keep last timeout.MaxRecentToolCalls)
 		recentToolCalls = append(recentToolCalls, callKey)
-		if len(recentToolCalls) > 5 {
+		if len(recentToolCalls) > timeout.MaxRecentToolCalls {
 			recentToolCalls = recentToolCalls[1:]
 		}
 
@@ -250,11 +246,11 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 				"tool", toolCall,
 				"failure_count", failCount,
 				"error", err,
-				"input", truncateString(toolInput, 200),
+				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
 
 			// If tool fails 3+ times in a row, abort to avoid wasting resources
-			if failCount >= 3 {
+			if failCount >= timeout.MaxToolFailures {
 				return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
 			}
 
@@ -272,8 +268,8 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 		messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(fmt.Sprintf("Tool result: %s", toolResult)))
 	}
 
-	if iteration >= MaxIterations {
-		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", MaxIterations)
+	if iteration >= timeout.MaxIterations {
+		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", timeout.MaxIterations)
 	}
 
 	// Log execution metrics
@@ -301,7 +297,7 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	}
 
 	// Add timeout protection for the entire agent execution
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
 	startTime := time.Now()
@@ -317,7 +313,14 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	var iteration int
 	var finalResponse string
 
-	for iteration = 0; iteration < MaxIterations; iteration++ {
+	// Track recent tool calls to detect loops (tool name + input hash)
+	type toolCallKey struct {
+		name     string
+		inputHash string
+	}
+	recentToolCalls := make([]toolCallKey, 0, 5)
+
+	for iteration = 0; iteration < timeout.MaxIterations; iteration++ {
 		// Check for context cancellation
 		select {
 		case <-ctx.Done():
@@ -365,6 +368,52 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			callback("tool_use", action)
 		}
 
+		// Detect loops: check if we've seen this exact tool call before executing
+		callKey := toolCallKey{name: toolCall, inputHash: toolInput}
+		repeatedCount := 0
+		for _, prevCall := range recentToolCalls {
+			if prevCall == callKey {
+				repeatedCount++
+			}
+		}
+		if repeatedCount > 0 {
+			slog.Warn("detected repeated tool call in ExecuteWithCallback, forcing completion",
+				"user_id", a.userID,
+				"tool", toolCall,
+				"repeat_count", repeatedCount,
+				"iteration", iteration+1,
+			)
+			// Return the last tool result as the final answer instead of executing again
+			// Find the last assistant message and extract tool result from it
+			for i := len(messages) - 1; i >= 0; i-- {
+				if messages[i].Role == "assistant" && strings.Contains(messages[i].Content, "Tool result:") {
+					// Extract tool result more precisely
+					parts := strings.SplitN(messages[i].Content, "Tool result:", 2)
+					if len(parts) == 2 {
+						finalResponse = strings.TrimSpace(parts[1])
+						if callback != nil {
+							callback("answer", finalResponse)
+						}
+					}
+					break
+				}
+			}
+			if finalResponse == "" {
+				// Fallback: synthesized message
+				finalResponse = fmt.Sprintf("I've completed your request. The %s tool was executed successfully.", toolCall)
+				if callback != nil {
+					callback("answer", finalResponse)
+				}
+			}
+			break
+		}
+
+		// Track this tool call (keep last timeout.MaxRecentToolCalls)
+		recentToolCalls = append(recentToolCalls, callKey)
+		if len(recentToolCalls) > timeout.MaxRecentToolCalls {
+			recentToolCalls = recentToolCalls[1:]
+		}
+
 		// Execute tool
 		tool, ok := a.tools[toolCall]
 		if !ok {
@@ -390,11 +439,11 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 				"tool", toolCall,
 				"failure_count", failCount,
 				"error", err,
-				"input", truncateString(toolInput, 200),
+				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
 
 			// If tool fails 3+ times in a row, abort to avoid wasting resources
-			if failCount >= 3 {
+			if failCount >= timeout.MaxToolFailures {
 				errorMsg := fmt.Sprintf("tool %s failed repeatedly (%d times): %v", toolCall, failCount, err)
 				if callback != nil {
 					callback("error", errorMsg)
@@ -424,8 +473,8 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 		messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(fmt.Sprintf("Tool result: %s", toolResult)))
 	}
 
-	if iteration >= MaxIterations {
-		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", MaxIterations)
+	if iteration >= timeout.MaxIterations {
+		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", timeout.MaxIterations)
 	}
 
 	// Log execution metrics
@@ -568,10 +617,16 @@ Supports creating, updating, and finding schedules.
    - ❌ Don't ask: "哪个会议？" → If only one on that day, update it
 
 9. **STOPPING CONDITIONS (CRITICAL)**:
-   - After using schedule_add: IMMEDIATELY stop with success message - DO NOT call schedule_query again
-   - After using schedule_update: IMMEDIATELY stop with success message - DO NOT verify
-   - If you successfully complete a task, respond with a plain text answer (no tool format)
-   - ONLY continue tool use if you need to gather more information to complete the task
+   - After using schedule_add: IMMEDIATELY stop and report success - DO NOT call schedule_query again to verify
+   - After using schedule_update: IMMEDIATELY stop and report success - DO NOT verify
+   - After schedule_query returns results: EITHER create/update schedule OR report results to user - DO NOT query again with same input
+   - If tool returns success or data: format it nicely for user and STOP - no more tools
+   - ONLY continue tool use if you need DIFFERENT information (not just to verify previous result)
+
+10. **FINAL RESPONSE FORMAT**:
+   - When done, respond in PLAIN TEXT (no TOOL: format)
+   - Be concise: "已创建: 明天15:00-16:00 开会" or "Found 3 schedules: ..."
+   - DO NOT add tool calls in your final answer
 
 Tool Usage Format:
 TOOL: tool_name

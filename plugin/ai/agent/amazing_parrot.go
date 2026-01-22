@@ -9,6 +9,7 @@ import (
 
 	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/plugin/ai/agent/tools"
+	"github.com/usememos/memos/plugin/ai/timeout"
 	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/server/service/schedule"
 )
@@ -27,28 +28,20 @@ type AmazingParrot struct {
 	scheduleUpdateTool *tools.ScheduleUpdateTool
 }
 
-// retrievalRequest represents a concurrent retrieval request.
-type retrievalRequest struct {
-	toolName string
-	input    string
-	result   string
-	err      error
-}
-
 // retrievalPlan represents the plan for concurrent retrieval.
 type retrievalPlan struct {
-	needsMemoSearch    bool
-	memoSearchQuery    string
-	needsScheduleQuery bool
-	scheduleStartTime  string
-	scheduleEndTime    string
-	needsScheduleAdd   bool
-	scheduleAddData    string
-	needsFreeTime      bool
-	freeTimeDate       string
+	needsMemoSearch     bool
+	memoSearchQuery     string
+	needsScheduleQuery  bool
+	scheduleStartTime   string
+	scheduleEndTime     string
+	needsScheduleAdd    bool
+	scheduleAddData     string
+	needsFreeTime       bool
+	freeTimeDate        string
 	needsScheduleUpdate bool
-	scheduleUpdateData string
-	needsDirectAnswer  bool // If true, skip retrieval and answer directly
+	scheduleUpdateData  string
+	needsDirectAnswer   bool // If true, skip retrieval and answer directly
 }
 
 // NewAmazingParrot creates a new amazing parrot agent.
@@ -75,20 +68,23 @@ func NewAmazingParrot(
 	}
 
 	// Initialize tools
-	memoSearchTool := tools.NewMemoSearchTool(retriever, userIDGetter)
+	memoSearchTool, err := tools.NewMemoSearchTool(retriever, userIDGetter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create memo search tool: %w", err)
+	}
 	scheduleQueryTool := tools.NewScheduleQueryTool(scheduleService, userIDGetter)
 	scheduleAddTool := tools.NewScheduleAddTool(scheduleService, userIDGetter)
 	findFreeTimeTool := tools.NewFindFreeTimeTool(scheduleService, userIDGetter)
 	scheduleUpdateTool := tools.NewScheduleUpdateTool(scheduleService, userIDGetter)
 
 	return &AmazingParrot{
-		llm:              llm,
-		cache:            NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
-		userID:           userID,
-		memoSearchTool:   memoSearchTool,
-		scheduleQueryTool: scheduleQueryTool,
-		scheduleAddTool:   scheduleAddTool,
-		findFreeTimeTool:  findFreeTimeTool,
+		llm:                llm,
+		cache:              NewLRUCache(DefaultCacheEntries, DefaultCacheTTL),
+		userID:             userID,
+		memoSearchTool:     memoSearchTool,
+		scheduleQueryTool:  scheduleQueryTool,
+		scheduleAddTool:    scheduleAddTool,
+		findFreeTimeTool:   findFreeTimeTool,
 		scheduleUpdateTool: scheduleUpdateTool,
 	}, nil
 }
@@ -111,7 +107,7 @@ func (p *AmazingParrot) ExecuteWithCallback(
 	callback EventCallback,
 ) error {
 	// Add timeout protection
-	ctx, cancel := context.WithTimeout(ctx, AgentTimeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
 	// Step 1: Check cache
@@ -137,17 +133,14 @@ func (p *AmazingParrot) ExecuteWithCallback(
 		return NewParrotError(p.Name(), "executeConcurrentRetrieval", err)
 	}
 
-	// Step 4: Synthesize final answer from retrieval results
-	finalAnswer, err := p.synthesizeAnswer(ctx, userInput, retrievalResults, plan)
+	// Step 4: Synthesize final answer from retrieval results streaming
+	finalAnswer, err := p.synthesizeAnswer(ctx, userInput, retrievalResults, callback)
 	if err != nil {
 		return NewParrotError(p.Name(), "synthesizeAnswer", err)
 	}
 
-	// Cache and send answer
+	// Cache answer
 	p.cache.Set(cacheKey, finalAnswer)
-	if callback != nil {
-		callback(EventTypeAnswer, finalAnswer)
-	}
 
 	return nil
 }
@@ -189,16 +182,25 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Collect retrieval tasks
-	tasks := make([]func(context.Context) (string, error), 0)
+	// retrievalTask represents a named retrieval task
+	type retrievalTask struct {
+		name string
+		fn   func(context.Context) (string, error)
+	}
+
+	// Collect retrieval tasks with names
+	tasks := make([]retrievalTask, 0)
 
 	if plan.needsMemoSearch {
 		if callback != nil {
 			callback(EventTypeToolUse, "正在搜索笔记...")
 		}
-		tasks = append(tasks, func(ctx context.Context) (string, error) {
-			input := fmt.Sprintf(`{"query": "%s"}`, plan.memoSearchQuery)
-			return p.memoSearchTool.Run(ctx, input)
+		tasks = append(tasks, retrievalTask{
+			name: "memo_search",
+			fn: func(ctx context.Context) (string, error) {
+				input := fmt.Sprintf(`{"query": "%s"}`, plan.memoSearchQuery)
+				return p.memoSearchTool.Run(ctx, input)
+			},
 		})
 	}
 
@@ -206,9 +208,12 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 		if callback != nil {
 			callback(EventTypeToolUse, "正在查询日程...")
 		}
-		tasks = append(tasks, func(ctx context.Context) (string, error) {
-			input := fmt.Sprintf(`{"start_time": "%s", "end_time": "%s"}`, plan.scheduleStartTime, plan.scheduleEndTime)
-			return p.scheduleQueryTool.Run(ctx, input)
+		tasks = append(tasks, retrievalTask{
+			name: "schedule_query",
+			fn: func(ctx context.Context) (string, error) {
+				input := fmt.Sprintf(`{"start_time": "%s", "end_time": "%s"}`, plan.scheduleStartTime, plan.scheduleEndTime)
+				return p.scheduleQueryTool.Run(ctx, input)
+			},
 		})
 	}
 
@@ -216,42 +221,35 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 		if callback != nil {
 			callback(EventTypeToolUse, "正在查找空闲时间...")
 		}
-		tasks = append(tasks, func(ctx context.Context) (string, error) {
-			input := fmt.Sprintf(`{"date": "%s"}`, plan.freeTimeDate)
-			return p.findFreeTimeTool.Run(ctx, input)
+		tasks = append(tasks, retrievalTask{
+			name: "find_free_time",
+			fn: func(ctx context.Context) (string, error) {
+				input := fmt.Sprintf(`{"date": "%s"}`, plan.freeTimeDate)
+				return p.findFreeTimeTool.Run(ctx, input)
+			},
 		})
 	}
 
 	// Execute tasks concurrently with goroutines
-	for i, task := range tasks {
+	for _, task := range tasks {
 		wg.Add(1)
-		go func(idx int, f func(context.Context) (string, error)) {
+		go func(t retrievalTask) {
 			defer wg.Done()
 
-			result, err := f(ctx)
+			result, err := t.fn(ctx)
 			mu.Lock()
 			defer mu.Unlock()
 
-			var taskName string
-			switch idx {
-			case 0:
-				taskName = "memo_search"
-			case 1:
-				taskName = "schedule_query"
-			case 2:
-				taskName = "find_free_time"
-			}
-
 			if err != nil {
-				results[taskName+"_error"] = err.Error()
+				results[t.name+"_error"] = err.Error()
 			} else {
-				results[taskName] = result
+				results[t.name] = result
 				// Send individual tool result for UI feedback
 				if callback != nil {
 					callback(EventTypeToolResult, result)
 				}
 			}
-		}(i, task)
+		}(task)
 	}
 
 	wg.Wait()
@@ -259,26 +257,43 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	return results, nil
 }
 
-// synthesizeAnswer generates the final answer from retrieval results.
-func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, retrievalResults map[string]string, plan *retrievalPlan) (string, error) {
-	if callback := ctx.Value("callback"); callback != nil {
-		// Notify synthesis phase
-	}
-
+// synthesizeAnswer generates the final answer from retrieval results streaming.
+func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, retrievalResults map[string]string, callback EventCallback) (string, error) {
 	// Build synthesis prompt with retrieved context
-	synthesisPrompt := p.buildSynthesisPrompt(userInput, retrievalResults)
+	synthesisPrompt := p.buildSynthesisPrompt(retrievalResults)
 
 	messages := []ai.Message{
 		{Role: "system", Content: synthesisPrompt},
 		{Role: "user", Content: userInput},
 	}
 
-	response, err := p.llm.Chat(ctx, messages)
-	if err != nil {
-		return "", fmt.Errorf("LLM synthesis failed: %w", err)
-	}
+	contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
-	return response, nil
+	var fullContent strings.Builder
+	for {
+		select {
+		case chunk, ok := <-contentChan:
+			if !ok {
+				return fullContent.String(), nil
+			}
+			fullContent.WriteString(chunk)
+			if callback != nil {
+				if err := callback(EventTypeAnswer, chunk); err != nil {
+					return "", err
+				}
+			}
+		case err, ok := <-errChan:
+			if !ok {
+				errChan = nil
+				continue
+			}
+			if err != nil {
+				return "", fmt.Errorf("LLM synthesis failed: %w", err)
+			}
+		case <-ctx.Done():
+			return "", context.Canceled
+		}
+	}
 }
 
 // parseRetrievalPlan parses the retrieval plan from LLM response.
@@ -385,7 +400,7 @@ direct_answer
 }
 
 // buildSynthesisPrompt builds the prompt for answer synthesis.
-func (p *AmazingParrot) buildSynthesisPrompt(userInput string, results map[string]string) string {
+func (p *AmazingParrot) buildSynthesisPrompt(results map[string]string) string {
 	var contextBuilder strings.Builder
 
 	contextBuilder.WriteString(`你是 Memos 的综合助手 🦜 惊奇。
@@ -433,12 +448,12 @@ func (p *AmazingParrot) GetStats() CacheStats {
 // SelfDescribe 返回综合助手鹦鹉的元认知自我理解。
 func (p *AmazingParrot) SelfDescribe() *ParrotSelfCognition {
 	return &ParrotSelfCognition{
-		Name:    "amazing",
-		Emoji:   "🦜",
-		Title:   "惊奇 (Amazing) - 综合助手鹦鹉",
+		Name:  "amazing",
+		Emoji: "🦜",
+		Title: "惊奇 (Amazing) - 综合助手鹦鹉",
 		AvianIdentity: &AvianIdentity{
 			Species: "亚马逊鹦鹉 (Amazon Parrot)",
-			Origin: "中南美洲热带雨林",
+			Origin:  "中南美洲热带雨林",
 			NaturalAbilities: []string{
 				"卓越的语言能力", "强大的社会协作",
 				"灵活的问题解决", "综合分析能力",
@@ -469,6 +484,6 @@ func (p *AmazingParrot) SelfDescribe() *ParrotSelfCognition {
 			"综合规划引擎",
 		},
 		SelfIntroduction: "我是惊奇，你的全能助手。我能同时调用笔记搜索和日程查询，并发执行，快速给你完整的答案。",
-		FunFact: "我的名字'惊奇'是因为我总能给人惊喜 - 亚马逊鹦鹉是世界上最会说话的鹦鹉之一，就像我能在一次对话中展现多种超能力！",
+		FunFact:          "我的名字'惊奇'是因为我总能给人惊喜 - 亚马逊鹦鹉是世界上最会说话的鹦鹉之一，就像我能在一次对话中展现多种超能力！",
 	}
 }
