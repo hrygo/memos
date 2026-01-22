@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import type { ConflictInfo, SuggestedTimeSlot } from "../types";
 
@@ -88,9 +88,9 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
 
   /**
    * Find available time slots on a specific day
+   * Memoized with useCallback to avoid recreating function on every render
    */
-  const findAvailableSlots = useMemo(() => {
-    return (date: Date, duration: number): SuggestedTimeSlot[] => {
+  const findAvailableSlots = useCallback((date: Date, duration: number): SuggestedTimeSlot[] => {
       const slots: SuggestedTimeSlot[] = [];
       const dayStart = dayjs(date).startOf("day");
       const dayEnd = dayjs(date).endOf("day");
@@ -180,8 +180,9 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
       }
 
       return slots.slice(0, 3); // Return max 3 suggestions
-    };
-  }, [existingSchedules, t]);
+    },
+    [existingSchedules, t],
+  );
 
   const suggestions = useMemo(() => {
     if (!startTs || !endTs) {
