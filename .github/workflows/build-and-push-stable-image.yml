@@ -111,7 +111,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=build-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=build-${{ matrix.platform }}
-          outputs: type=image,name=neosmemo/memos,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=hrygo/memos,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -149,8 +149,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            neosmemo/memos
-            ghcr.io/usememos/memos
+            hrygo/memos
+            ghcr.io/hrygo/memos
           tags: |
             type=semver,pattern={{version}},value=${{ needs.prepare.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.prepare.outputs.version }}
@@ -180,11 +180,11 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'neosmemo/memos@sha256:%s ' *)
+            $(printf 'hrygo/memos@sha256:%s ' *)
         env:
           DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
 
       - name: Inspect images
         run: |
-          docker buildx imagetools inspect neosmemo/memos:stable
-          docker buildx imagetools inspect ghcr.io/usememos/memos:stable
+          docker buildx imagetools inspect hrygo/memos:stable
+          docker buildx imagetools inspect ghcr.io/hrygo/memos:stable
