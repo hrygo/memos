@@ -63,6 +63,7 @@ CREATE TABLE attachment (
   creator_id INTEGER NOT NULL,
   created_ts BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
   updated_ts BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()),
+  row_status TEXT NOT NULL DEFAULT 'NORMAL',
   filename TEXT NOT NULL,
   blob BYTEA,
   type TEXT NOT NULL DEFAULT '',
@@ -70,8 +71,19 @@ CREATE TABLE attachment (
   memo_id INTEGER DEFAULT NULL,
   storage_type TEXT NOT NULL DEFAULT '',
   reference TEXT NOT NULL DEFAULT '',
-  payload TEXT NOT NULL DEFAULT '{}'
+  file_path TEXT,
+  thumbnail_path TEXT,
+  extracted_text TEXT,
+  ocr_text TEXT,
+  payload JSONB NOT NULL DEFAULT '{}',
+  CONSTRAINT chk_attachment_row_status CHECK (row_status IN ('NORMAL', 'ARCHIVED', 'DELETED'))
 );
+
+-- Indexes for attachment table
+CREATE INDEX idx_attachment_creator_status ON attachment(creator_id, row_status);
+CREATE INDEX idx_attachment_type ON attachment(type);
+CREATE INDEX idx_attachment_memo ON attachment(memo_id) WHERE memo_id IS NOT NULL;
+CREATE INDEX idx_attachment_text_gin ON attachment USING gin(to_tsvector('simple', COALESCE(extracted_text, '') || ' ' || COALESCE(ocr_text, ''))) WHERE extracted_text IS NOT NULL OR ocr_text IS NOT NULL;
 
 -- activity
 CREATE TABLE activity (
@@ -132,7 +144,7 @@ CREATE TABLE memo_embedding (
 
 CREATE INDEX idx_memo_embedding_hnsw
 ON memo_embedding USING hnsw (embedding vector_cosine_ops)
-WITH (m = 8, ef_construction = 32);
+WITH (m = 16, ef_construction = 64);
 
 CREATE INDEX idx_memo_embedding_memo_id
 ON memo_embedding (memo_id);
