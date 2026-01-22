@@ -78,9 +78,10 @@ func TestNewConfigFromProfile_OpenAI(t *testing.T) {
 		AIEnabled:           true,
 		AIEmbeddingProvider: "openai",
 		AIEmbeddingModel:    "text-embedding-3-small",
-		AIOpenAIAPIKey:      "openai-key",
-		AILLMProvider:       "openai",
-		AILLMModel:          "gpt-4",
+		AIOpenAIAPIKey:    "openai-key",
+		AIOpenAIBaseURL:   "https://api.openai.com/v1",
+		AILLMProvider:     "openai",
+		AILLMModel:        "gpt-4",
 	}
 
 	cfg := NewConfigFromProfile(prof)

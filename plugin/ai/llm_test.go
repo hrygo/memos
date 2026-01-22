@@ -38,12 +38,13 @@ func TestNewLLMService(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Ollama config - not implemented",
+			name: "Ollama config",
 			cfg: &LLMConfig{
 				Provider: "ollama",
 				Model:    "llama2",
+				BaseURL:  "http://localhost:11434",
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "Unsupported provider",
