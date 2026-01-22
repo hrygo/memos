@@ -1,21 +1,46 @@
-import { useState } from "react";
 import { MessageSquarePlus } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
-import { ConversationItem } from "./ConversationItem";
 import { useAIChat } from "@/contexts/AIChatContext";
+import { cn } from "@/lib/utils";
 import { ParrotAgentType } from "@/types/parrot";
+import { ConversationItem } from "./ConversationItem";
 
 interface ConversationHistoryPanelProps {
   className?: string;
+  onSelectConversation?: (id: string) => void;
 }
 
-export function ConversationHistoryPanel({ className }: ConversationHistoryPanelProps) {
+export function ConversationHistoryPanel({ className, onSelectConversation }: ConversationHistoryPanelProps) {
   const { t } = useTranslation();
-  const { conversationSummaries, state, createConversation, deleteConversation, selectConversation, updateConversationTitle, pinConversation, unpinConversation } = useAIChat();
+  const {
+    conversationSummaries,
+    conversations,
+    state,
+    createConversation,
+    deleteConversation,
+    selectConversation,
+    updateConversationTitle,
+    pinConversation,
+    unpinConversation,
+  } = useAIChat();
+
+  const handleSelectConversation = (id: string) => {
+    selectConversation(id);
+    onSelectConversation?.(id);
+  };
 
   const handleStartNewChat = (parrotId: ParrotAgentType) => {
+    // Check for existing conversation with same parrotId
+    const existingConversation = conversations.find((c) => c.parrotId === parrotId);
+    if (existingConversation) {
+      selectConversation(existingConversation.id);
+      onSelectConversation?.(existingConversation.id);
+      return;
+    }
+    // Only create new if no existing conversation found
     createConversation(parrotId);
+    onSelectConversation?.("");
   };
 
   const handleDelete = (id: string) => {
@@ -27,7 +52,7 @@ export function ConversationHistoryPanel({ className }: ConversationHistoryPanel
   };
 
   const handleTogglePin = (id: string) => {
-    const conversation = conversationSummaries.find(c => c.id === id);
+    const conversation = conversationSummaries.find((c) => c.id === id);
     if (conversation?.pinned) {
       unpinConversation(id);
     } else {
@@ -41,11 +66,9 @@ export function ConversationHistoryPanel({ className }: ConversationHistoryPanel
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {t("ai.aichat.sidebar.history")}
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.aichat.sidebar.history")}</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-          {conversationSummaries.length} {conversationSummaries.length === 1 ? "conversation" : "conversations"}
+          {t("ai.aichat.sidebar.conversation-count", { count: conversationSummaries.length })}
         </p>
       </div>
 
@@ -58,7 +81,7 @@ export function ConversationHistoryPanel({ className }: ConversationHistoryPanel
                 key={conversation.id}
                 conversation={conversation}
                 isActive={conversation.id === state.currentConversationId}
-                onSelect={selectConversation}
+                onSelect={handleSelectConversation}
                 onDelete={handleDelete}
                 onRename={handleRename}
                 onTogglePin={handleTogglePin}
@@ -92,12 +115,8 @@ function EmptyState({ onStartChat }: EmptyStateProps) {
       <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
         <MessageSquarePlus className="w-6 h-6 text-zinc-400" />
       </div>
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-        {t("ai.aichat.sidebar.no-conversations")}
-      </h3>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-        {t("ai.aichat.sidebar.start-new-chat")}
-      </p>
+      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-conversations")}</h3>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">{t("ai.aichat.sidebar.start-new-chat")}</p>
       <NewChatButton onStartChat={onStartChat} />
     </div>
   );

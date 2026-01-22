@@ -1,15 +1,16 @@
-import { SidebarTabs } from "./SidebarTabs";
-import { ConversationHistoryPanel } from "./ConversationHistoryPanel";
-import { ReferencedMemosPanel } from "./ReferencedMemosPanel";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { cn } from "@/lib/utils";
 import { SidebarTab } from "@/types/aichat";
+import { ConversationHistoryPanel } from "./ConversationHistoryPanel";
+import { ReferencedMemosPanel } from "./ReferencedMemosPanel";
+import { SidebarTabs } from "./SidebarTabs";
 
 interface AIChatSidebarProps {
   className?: string;
+  onClose?: () => void;
 }
 
-export function AIChatSidebar({ className }: AIChatSidebarProps) {
+export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
   const { state, setSidebarTab } = useAIChat();
   const { sidebarTab } = state;
 
@@ -26,7 +27,7 @@ export function AIChatSidebar({ className }: AIChatSidebarProps) {
 
       {/* Panel Content */}
       <div className="flex-1 overflow-hidden">
-        {sidebarTab === "history" && <ConversationHistoryPanel className="h-full" />}
+        {sidebarTab === "history" && <ConversationHistoryPanel className="h-full" onSelectConversation={onClose} />}
         {sidebarTab === "memos" && <ReferencedMemosPanel className="h-full" />}
       </div>
     </aside>

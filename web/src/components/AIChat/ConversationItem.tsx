@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { MoreHorizontal, Pin, PinOff, Trash2, Pencil } from "lucide-react";
+import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ConversationSummary } from "@/types/aichat";
 import { PARROT_AGENTS, PARROT_ICONS, PARROT_THEMES } from "@/types/parrot";
@@ -14,15 +15,7 @@ interface ConversationItemProps {
   className?: string;
 }
 
-export function ConversationItem({
-  conversation,
-  isActive,
-  onSelect,
-  onDelete,
-  onRename,
-  onTogglePin,
-  className,
-}: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, onSelect, onDelete, onRename, onTogglePin, className }: ConversationItemProps) {
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
   const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.DEFAULT;
@@ -31,31 +24,30 @@ export function ConversationItem({
     <div
       className={cn(
         "group relative rounded-lg transition-all",
-        isActive
-          ? "bg-zinc-100 dark:bg-zinc-800"
-          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
-        className
+        isActive ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+        className,
       )}
     >
       <button
         onClick={() => onSelect(conversation.id)}
         className="w-full text-left p-3"
+        aria-label={`Select conversation: ${conversation.title}`}
       >
         <div className="flex items-start gap-3">
           {/* Parrot Icon */}
-          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0", parrotTheme.iconBg)}>
-            {parrotIcon}
+          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0", !parrotIcon.startsWith("/") && parrotTheme.iconBg)}>
+            {parrotIcon.startsWith("/") ? (
+              <img src={parrotIcon} alt={parrot?.displayName || ""} className="w-8 h-8 object-contain" />
+            ) : (
+              parrotIcon
+            )}
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                {conversation.title}
-              </h3>
-              {conversation.pinned && (
-                <Pin className="w-3 h-3 text-blue-500 shrink-0" />
-              )}
+              <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{conversation.title}</h3>
+              {conversation.pinned && <Pin className="w-3 h-3 text-blue-500 shrink-0" />}
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               {conversation.messageCount} messages · {formatTime(conversation.updatedAt)}
@@ -88,14 +80,8 @@ interface ActionMenuProps {
   onTogglePin: (id: string) => void;
 }
 
-function ActionMenu({
-  conversationId,
-  conversationTitle,
-  isPinned,
-  onDelete,
-  onRename,
-  onTogglePin,
-}: ActionMenuProps) {
+function ActionMenu({ conversationId, conversationTitle, isPinned, onDelete, onRename, onTogglePin }: ActionMenuProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(conversationTitle);
@@ -125,6 +111,7 @@ function ActionMenu({
           onBlur={handleRename}
           className="w-32 px-2 py-1 text-xs bg-transparent border-0 outline-none text-zinc-900 dark:text-zinc-100"
           autoFocus
+          aria-label="Rename conversation"
         />
       </div>
     );
@@ -135,6 +122,7 @@ function ActionMenu({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+        aria-label={t("ai.more-options")}
       >
         <MoreHorizontal className="w-4 h-4 text-zinc-500" />
       </button>
@@ -149,6 +137,7 @@ function ActionMenu({
                 setIsOpen(false);
               }}
               className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
+              aria-label={isPinned ? "Unpin conversation" : "Pin conversation"}
             >
               {isPinned ? (
                 <>
@@ -168,6 +157,7 @@ function ActionMenu({
                 setIsOpen(false);
               }}
               className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
+              aria-label="Rename conversation"
             >
               <Pencil className="w-3.5 h-3.5" />
               Rename
@@ -179,6 +169,7 @@ function ActionMenu({
                 setIsOpen(false);
               }}
               className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              aria-label="Delete conversation"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete

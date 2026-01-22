@@ -1,16 +1,18 @@
+import type { ParrotAgentI18n } from "@/hooks/useParrots";
+import { useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
-import { getAvailableParrots, ParrotAgent } from "@/types/parrot";
+import { PARROT_ICONS } from "@/types/parrot";
 
 interface ParrotQuickActionsProps {
-  currentParrot: ParrotAgent | null;
-  onParrotChange: (parrot: ParrotAgent) => void;
+  currentParrot: ParrotAgentI18n | null;
+  onParrotChange: (parrot: ParrotAgentI18n) => void;
   disabled?: boolean;
 }
 
 export function ParrotQuickActions({ currentParrot, onParrotChange, disabled = false }: ParrotQuickActionsProps) {
-  const availableParrots = getAvailableParrots();
+  const availableParrots = useAvailableParrots();
 
-  const handleParrotSelect = (parrot: ParrotAgent) => {
+  const handleParrotSelect = (parrot: ParrotAgentI18n) => {
     if (!disabled) {
       onParrotChange(parrot);
     }
@@ -21,29 +23,37 @@ export function ParrotQuickActions({ currentParrot, onParrotChange, disabled = f
       {availableParrots.map((parrot) => {
         const isSelected = currentParrot?.id === parrot.id;
         const colorClass = getColorClass(parrot.color);
+        const icon = PARROT_ICONS[parrot.id] || parrot.icon;
 
         return (
           <button
             key={parrot.id}
             onClick={() => handleParrotSelect(parrot)}
             disabled={disabled}
+            aria-label={`Switch to ${parrot.displayName}`}
+            aria-pressed={isSelected}
             className={cn(
               "flex-shrink-0 flex items-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all",
               "hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed",
+              "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
               isSelected
                 ? `${colorClass} border-current shadow-sm`
                 : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800",
             )}
           >
-            <span className="text-2xl" role="img" aria-label={parrot.displayName}>
-              {parrot.icon}
-            </span>
+            {icon.startsWith("/") ? (
+              <img src={icon} alt={parrot.displayName} className="w-7 h-7 object-contain" />
+            ) : (
+              <span className="text-2xl" role="img" aria-label={parrot.displayName}>
+                {icon}
+              </span>
+            )}
             <div className="text-left">
               <div className={cn("font-semibold text-sm", isSelected ? "text-current" : "text-zinc-900 dark:text-zinc-100")}>
                 {parrot.displayName}
               </div>
               <div className={cn("text-xs", isSelected ? "text-current opacity-80" : "text-zinc-500 dark:text-zinc-400")}>
-                {parrot.name}
+                {parrot.displayNameAlt}
               </div>
             </div>
             {isSelected && (

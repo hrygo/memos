@@ -89,7 +89,12 @@ export const ScheduleSearchBar = ({ schedules, onFilteredChange, onHasFilterChan
           )}
         />
         {hasFilter && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1" id="search-result-count" role="status" aria-live="polite">
+          <div
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"
+            id="search-result-count"
+            role="status"
+            aria-live="polite"
+          >
             <span className="text-xs text-muted-foreground" aria-label={`找到 ${resultCount} 个结果，共 ${totalCount} 个日程`}>
               {resultCount}/{totalCount}
             </span>

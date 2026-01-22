@@ -1,17 +1,17 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from "react";
-import { ParrotAgentType } from "@/types/parrot";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  AI_STORAGE_KEYS,
   AIChatContextValue,
   AIChatState,
+  ChatItem,
+  ContextSeparator,
   Conversation,
   ConversationMessage,
-  ContextSeparator,
-  ReferencedMemo,
   ConversationViewMode,
+  ReferencedMemo,
   SidebarTab,
-  AI_STORAGE_KEYS,
-  ChatItem,
 } from "@/types/aichat";
+import { ParrotAgentType } from "@/types/parrot";
 
 const generateId = () => `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -51,17 +51,17 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // Helper to get message count
   const getMessageCount = useCallback((conversation: Conversation): number => {
-    return conversation.messages.filter(item => !isContextSeparator(item)).length;
+    return conversation.messages.filter((item) => !isContextSeparator(item)).length;
   }, []);
 
   // Computed values
   const currentConversation = useMemo(() => {
-    return state.conversations.find(c => c.id === state.currentConversationId) || null;
+    return state.conversations.find((c) => c.id === state.currentConversationId) || null;
   }, [state.conversations, state.currentConversationId]);
 
   const conversationSummaries = useMemo(() => {
     return state.conversations
-      .map(c => ({
+      .map((c) => ({
         id: c.id,
         title: c.title,
         parrotId: c.parrotId,
@@ -92,7 +92,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       pinned: false,
     };
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       conversations: [newConversation, ...prev.conversations],
       currentConversationId: newConversation.id,
@@ -103,11 +103,9 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const deleteConversation = useCallback((id: string) => {
-    setState(prev => {
-      const filtered = prev.conversations.filter(c => c.id !== id);
-      const newCurrentId = prev.currentConversationId === id
-        ? (filtered.length > 0 ? filtered[0].id : null)
-        : prev.currentConversationId;
+    setState((prev) => {
+      const filtered = prev.conversations.filter((c) => c.id !== id);
+      const newCurrentId = prev.currentConversationId === id ? (filtered.length > 0 ? filtered[0].id : null) : prev.currentConversationId;
 
       return {
         ...prev,
@@ -119,8 +117,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const selectConversation = useCallback((id: string) => {
-    setState(prev => {
-      if (!prev.conversations.find(c => c.id === id)) return prev;
+    setState((prev) => {
+      if (!prev.conversations.find((c) => c.id === id)) return prev;
       return {
         ...prev,
         currentConversationId: id,
@@ -130,63 +128,62 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const updateConversationTitle = useCallback((id: string, title: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c =>
-        c.id === id ? { ...c, title, updatedAt: Date.now() } : c
-      ),
+      conversations: prev.conversations.map((c) => (c.id === id ? { ...c, title, updatedAt: Date.now() } : c)),
     }));
   }, []);
 
   const pinConversation = useCallback((id: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c =>
-        c.id === id ? { ...c, pinned: true } : c
-      ),
+      conversations: prev.conversations.map((c) => (c.id === id ? { ...c, pinned: true } : c)),
     }));
   }, []);
 
   const unpinConversation = useCallback((id: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c =>
-        c.id === id ? { ...c, pinned: false } : c
-      ),
+      conversations: prev.conversations.map((c) => (c.id === id ? { ...c, pinned: false } : c)),
     }));
   }, []);
 
   // Message actions
-  const addMessage = useCallback((conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">) => {
-    setState(prev => ({
-      ...prev,
-      conversations: prev.conversations.map(c => {
-        if (c.id !== conversationId) return c;
+  const addMessage = useCallback((conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">): string => {
+    let newMessageId = "";
+    setState((prev) => {
+      const newMessage: ConversationMessage = {
+        ...message,
+        id: generateId(),
+        timestamp: Date.now(),
+      };
+      newMessageId = newMessage.id;
 
-        const newMessage: ConversationMessage = {
-          ...message,
-          id: generateId(),
-          timestamp: Date.now(),
-        };
+      return {
+        ...prev,
+        conversations: prev.conversations.map((c) => {
+          if (c.id !== conversationId) return c;
 
-        return {
-          ...c,
-          messages: [...c.messages, newMessage],
-          updatedAt: Date.now(),
-        };
-      }),
-    }));
+          return {
+            ...c,
+            messages: [...c.messages, newMessage],
+            updatedAt: Date.now(),
+          };
+        }),
+      };
+    });
+    return newMessageId;
   }, []);
 
   const updateMessage = useCallback((conversationId: string, messageId: string, updates: Partial<ConversationMessage>) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c => {
+      conversations: prev.conversations.map((c) => {
         if (c.id !== conversationId) return c;
 
         return {
           ...c,
-          messages: c.messages.map(m => {
+          messages: c.messages.map((m) => {
             if (isContextSeparator(m)) return m;
             if (m.id !== messageId) return m;
             return { ...m, ...updates };
@@ -198,14 +195,14 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const deleteMessage = useCallback((conversationId: string, messageId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c => {
+      conversations: prev.conversations.map((c) => {
         if (c.id !== conversationId) return c;
 
         return {
           ...c,
-          messages: c.messages.filter(m => !isContextSeparator(m) || ("id" in m && m.id !== messageId)),
+          messages: c.messages.filter((m) => !isContextSeparator(m) || ("id" in m && m.id !== messageId)),
           updatedAt: Date.now(),
         };
       }),
@@ -213,20 +210,16 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const clearMessages = useCallback((conversationId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c =>
-        c.id === conversationId
-          ? { ...c, messages: [], updatedAt: Date.now() }
-          : c
-      ),
+      conversations: prev.conversations.map((c) => (c.id === conversationId ? { ...c, messages: [], updatedAt: Date.now() } : c)),
     }));
   }, []);
 
   const addContextSeparator = useCallback((conversationId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c => {
+      conversations: prev.conversations.map((c) => {
         if (c.id !== conversationId) return c;
 
         const separator: ContextSeparator = {
@@ -245,13 +238,13 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // Referenced content actions
   const addReferencedMemos = useCallback((conversationId: string, memos: ReferencedMemo[]) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map(c => {
+      conversations: prev.conversations.map((c) => {
         if (c.id !== conversationId) return c;
 
-        const existingUids = new Set(c.referencedMemos.map(m => m.uid));
-        const newMemos = memos.filter(m => !existingUids.has(m.uid));
+        const existingUids = new Set(c.referencedMemos.map((m) => m.uid));
+        const newMemos = memos.filter((m) => !existingUids.has(m.uid));
 
         return {
           ...c,
@@ -263,19 +256,19 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // UI actions
   const setViewMode = useCallback((mode: ConversationViewMode) => {
-    setState(prev => ({ ...prev, viewMode: mode }));
+    setState((prev) => ({ ...prev, viewMode: mode }));
   }, []);
 
   const setSidebarTab = useCallback((tab: SidebarTab) => {
-    setState(prev => ({ ...prev, sidebarTab: tab }));
+    setState((prev) => ({ ...prev, sidebarTab: tab }));
   }, []);
 
   const setSidebarOpen = useCallback((open: boolean) => {
-    setState(prev => ({ ...prev, sidebarOpen: open }));
+    setState((prev) => ({ ...prev, sidebarOpen: open }));
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
+    setState((prev) => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
   }, []);
 
   // Persistence
@@ -295,11 +288,11 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       const currentConversationData = localStorage.getItem(AI_STORAGE_KEYS.CURRENT_CONVERSATION);
       const sidebarTabData = localStorage.getItem(AI_STORAGE_KEYS.SIDEBAR_TAB);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         conversations: conversationsData ? JSON.parse(conversationsData) : [],
         currentConversationId: currentConversationData || null,
-        sidebarTab: (sidebarTabData === "history" || sidebarTabData === "memos") ? sidebarTabData as SidebarTab : "history",
+        sidebarTab: sidebarTabData === "history" || sidebarTabData === "memos" ? (sidebarTabData as SidebarTab) : "history",
       }));
     } catch (e) {
       console.error("Failed to load AI chat state:", e);
@@ -330,6 +323,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   const contextValue: AIChatContextValue = {
     state,
     currentConversation,
+    conversations: state.conversations,
     conversationSummaries,
     createConversation,
     deleteConversation,
@@ -352,21 +346,31 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     clearStorage,
   };
 
-  return (
-    <AIChatContext.Provider value={contextValue}>
-      {children}
-    </AIChatContext.Provider>
-  );
+  return <AIChatContext.Provider value={contextValue}>{children}</AIChatContext.Provider>;
 }
 
-// Helper function to get default conversation title
+// Helper function to get default conversation title based on parrot type and current language
 function getDefaultTitle(parrotId: ParrotAgentType): string {
-  const titles: Record<ParrotAgentType, string> = {
-    [ParrotAgentType.DEFAULT]: "AI Chat",
-    [ParrotAgentType.MEMO]: "Memo Chat",
-    [ParrotAgentType.SCHEDULE]: "Schedule Chat",
-    [ParrotAgentType.AMAZING]: "Amazing Chat",
-    [ParrotAgentType.CREATIVE]: "Creative Chat",
+  const translations: Record<string, Record<string, string>> = {
+    "zh-CN": {
+      [ParrotAgentType.DEFAULT]: "与默认助手的对话",
+      [ParrotAgentType.MEMO]: "与灰灰的对话",
+      [ParrotAgentType.SCHEDULE]: "与金刚的对话",
+      [ParrotAgentType.AMAZING]: "与惊奇的对话",
+      [ParrotAgentType.CREATIVE]: "与灵灵的对话",
+    },
+    en: {
+      [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
+      [ParrotAgentType.MEMO]: "Chat with Memo",
+      [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
+      [ParrotAgentType.AMAZING]: "Chat with Amazing",
+      [ParrotAgentType.CREATIVE]: "Chat with Creative",
+    },
   };
-  return titles[parrotId] || "AI Chat";
+
+  // Try to detect language from localStorage or default to English
+  const language = localStorage.getItem("i18nextLng") || "en";
+  const lang = language.startsWith("zh") ? "zh-CN" : "en";
+
+  return translations[lang]?.[parrotId] || translations.en[parrotId] || "AI Chat";
 }

@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import copy from "copy-to-clipboard";
-
+import { ChevronLeft } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ChatHeader } from "@/components/AIChat/ChatHeader";
+import { ChatInput } from "@/components/AIChat/ChatInput";
+import { ChatMessages } from "@/components/AIChat/ChatMessages";
 import { MemoQueryResult } from "@/components/AIChat/MemoQueryResult";
 import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
-import { ChatHeader } from "@/components/AIChat/ChatHeader";
-import { ChatMessages } from "@/components/AIChat/ChatMessages";
-import { ChatInput } from "@/components/AIChat/ChatInput";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useAIChat } from "@/contexts/AIChatContext";
 import { useChatWithMemos } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { useAIChat } from "@/contexts/AIChatContext";
+import type { ParrotAgentI18n } from "@/hooks/useParrots";
+import { getLocalizedParrot, useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
+import type { ChatItem, ContextSeparator, ConversationMessage } from "@/types/aichat";
 import type { MemoQueryResultData } from "@/types/parrot";
-import type { ChatItem, ConversationMessage, ContextSeparator } from "@/types/aichat";
-import { ParrotAgent, PARROT_AGENTS, PARROT_THEMES, PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
+import { PARROT_AGENTS, PARROT_ICONS, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 // Helper function to check if item is ContextSeparator
 function isContextSeparator(item: ChatItem): item is ContextSeparator {
@@ -29,24 +31,28 @@ function isConversationMessage(item: ChatItem): item is ConversationMessage {
 // ============================================================
 // HUB VIEW - Agent Selection (Accessible when no conversation)
 // ============================================================
-function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => void }) {
-  const { t } = useTranslation();
-  const availableParrots = Object.values(PARROT_AGENTS).filter((p) => p.available);
+interface HubViewProps {
+  onSelectParrot: (parrot: ParrotAgentI18n) => void;
+  isCreating?: boolean;
+}
 
-  const handleSuggestedPrompt = (query: string, parrot: ParrotAgent) => {
+function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
+  const { t } = useTranslation();
+  const availableParrots = useAvailableParrots();
+
+  const handleSuggestedPrompt = (query: string, parrot: ParrotAgentI18n) => {
+    if (isCreating) return;
     onSelectParrot(parrot);
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('aichat-send-message', { detail: query }));
+      window.dispatchEvent(new CustomEvent("aichat-send-message", { detail: query }));
     }, 100);
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#F8F5F0] dark:bg-zinc-900">
+    <div className="w-full h-full flex flex-col bg-zinc-50 dark:bg-zinc-900">
       {/* Header */}
-      <div className="px-4 md:px-8 py-4 border-b border-zinc-200/50 dark:border-zinc-800">
-        <h1 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-          {t("ai.parrot.select-agent")}
-        </h1>
+      <div className="px-4 md:px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <h1 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.parrot.select-agent")}</h1>
       </div>
 
       {/* Agent Cards Grid */}
@@ -58,50 +64,57 @@ function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => 
               const icon = PARROT_ICONS[parrot.id] || parrot.icon;
 
               return (
-                <button
+                <div
                   key={parrot.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleSuggestedPrompt("", parrot)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSuggestedPrompt("", parrot);
+                    }
+                  }}
                   className={cn(
-                    "group relative w-full text-left rounded-xl border transition-all duration-200",
-                    "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                    "w-full text-left rounded-xl border transition-all duration-200",
+                    "hover:shadow-sm active:shadow-none",
+                    "focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2",
+                    "cursor-pointer",
+                    isCreating && "opacity-50 cursor-not-allowed",
+                    "relative overflow-hidden group",
                     parrotTheme.cardBg,
-                    parrotTheme.cardBorder
+                    parrotTheme.cardBorder,
                   )}
                 >
-                  <div className="p-3 md:p-4 flex items-start gap-3">
-                    {/* Icon */}
-                    <div className={cn(
-                      "w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-xl md:text-2xl shrink-0",
-                      parrotTheme.iconBg
-                    )}>
-                      <span>{icon}</span>
+                  {parrot.backgroundImage && (
+                    <>
+                      <div
+                        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-20 dark:opacity-10 pointer-events-none transition-transform duration-500 group-hover:scale-105"
+                        style={{ backgroundImage: `url(${parrot.backgroundImage})` }}
+                      />
+                    </>
+                  )}
+                  <div className="p-4 flex items-start gap-3 relative z-10">
+                    {/* Icon - transparent background */}
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0">
+                      {icon.startsWith("/") ? (
+                        <img src={icon} alt={parrot.displayName} className="w-10 h-10 object-contain" />
+                      ) : (
+                        <span>{icon}</span>
+                      )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                          {parrot.displayName}
-                        </h3>
-                        <span className={cn(
-                          "text-xs px-1.5 py-0.5 rounded-md font-medium shrink-0",
-                          parrotTheme.iconBg,
-                          parrotTheme.iconText
-                        )}>
-                          {parrot.id === "MEMO" && t("ai.parrot.memo-tagline")}
-                          {parrot.id === "SCHEDULE" && t("ai.parrot.schedule-tagline")}
-                          {parrot.id === "AMAZING" && t("ai.parrot.amazing-tagline")}
-                          {parrot.id === "CREATIVE" && t("ai.parrot.creative-tagline")}
-                          {parrot.id === "DEFAULT" && "RAG"}
-                        </span>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{parrot.displayName}</h3>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">{parrot.displayNameAlt}</span>
                       </div>
 
-                      <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                        {parrot.description}
-                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2">{parrot.description}</p>
 
-                      {/* Suggested Prompts */}
-                      <div className="mt-2 space-y-1">
+                      {/* Suggested Prompts - clean style */}
+                      <div className="space-y-1.5">
                         {(parrot.examplePrompts || []).slice(0, 2).map((prompt, idx) => (
                           <button
                             key={idx}
@@ -109,7 +122,15 @@ function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => 
                               e.stopPropagation();
                               handleSuggestedPrompt(prompt, parrot);
                             }}
-                            className="block w-full text-left px-2 py-1 rounded-lg text-xs border border-zinc-200/50 dark:border-zinc-700/50 hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors truncate"
+                            disabled={isCreating}
+                            className={cn(
+                              "block w-full text-left px-3 py-2 rounded-lg text-xs border",
+                              "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                              "border-zinc-200 dark:border-zinc-700",
+                              "text-zinc-700 dark:text-zinc-300",
+                              "disabled:opacity-50 disabled:cursor-not-allowed",
+                              "transition-colors",
+                            )}
                           >
                             {prompt}
                           </button>
@@ -117,7 +138,7 @@ function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => 
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -131,11 +152,12 @@ function HubView({ onSelectParrot }: { onSelectParrot: (parrot: ParrotAgent) => 
 // CHAT VIEW - Active Conversation
 // ============================================================
 interface ChatViewProps {
-  currentParrot: ParrotAgent;
+  currentParrot: ParrotAgentI18n;
   input: string;
   setInput: (value: string) => void;
-  onSend: () => void;
+  onSend: (messageContent?: string) => void;
   isTyping: boolean;
+  isThinking: boolean;
   clearDialogOpen: boolean;
   setClearDialogOpen: (open: boolean) => void;
   onClearChat: () => void;
@@ -143,7 +165,7 @@ interface ChatViewProps {
   onBackToHub: () => void;
   memoQueryResults: MemoQueryResultData[];
   items: ChatItem[];
-  onParrotChange: (parrot: ParrotAgent | null) => void;
+  onParrotChange: (parrot: ParrotAgentI18n | null) => void;
 }
 
 function ChatView({
@@ -152,6 +174,7 @@ function ChatView({
   setInput,
   onSend,
   isTyping,
+  isThinking,
   clearDialogOpen,
   setClearDialogOpen,
   onClearChat,
@@ -186,15 +209,18 @@ function ChatView({
   // Welcome message when no messages
   const welcomeMessage = (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3", theme.iconBg)}>
-        {currentIcon}
+      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3">
+        {currentIcon.startsWith("/") ? (
+          <img src={currentIcon} alt={currentParrot.displayName} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
+        ) : (
+          currentIcon
+        )}
       </div>
       <h3 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
         Hi, I'm {currentParrot.displayName}
+        <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
       </h3>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-4">
-        {currentParrot.description}
-      </p>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-4">{currentParrot.description}</p>
 
       {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
         <div className="flex flex-wrap gap-2 justify-center">
@@ -202,18 +228,14 @@ function ChatView({
             <button
               key={idx}
               onClick={() => {
-                setInput(prompt);
-                setTimeout(() => {
-                  setInput("");
-                  onSend();
-                }, 100);
+                onSend(prompt);
               }}
               className={cn(
-                "px-3 py-2 rounded-xl text-sm border transition-colors",
+                "px-3 py-2 rounded-xl text-sm border transition-colors cursor-pointer",
                 theme.inputBg,
                 theme.inputBorder,
                 theme.iconText,
-                "hover:opacity-80"
+                "hover:opacity-80",
               )}
             >
               {prompt}
@@ -225,17 +247,34 @@ function ChatView({
   );
 
   return (
-    <div className={cn(
-      "w-full h-full flex flex-col relative",
-      theme.bgLight,
-      theme.bgDark
-    )}>
+    <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
+      {/* Mobile Header */}
+      {!md && (
+        <header className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
+          <button
+            onClick={onBackToHub}
+            className="p-2 -ml-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+            aria-label="Go back to hub"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          {currentIcon.startsWith("/") ? (
+            <img src={currentIcon} alt={currentParrot.displayName} className="w-6 h-6 object-contain" />
+          ) : (
+            <span className="text-xl">{currentIcon}</span>
+          )}
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">{currentParrot.displayName}</span>
+        </header>
+      )}
+
       {/* Desktop Header */}
       {md && (
         <ChatHeader
           parrot={currentParrot}
-          isThinking={false}
+          isThinking={isThinking}
           onBack={onBackToHub}
+          onClearContext={onClearContext}
+          onClearChat={onClearChat}
         />
       )}
 
@@ -305,27 +344,46 @@ function ChatView({
 // MAIN AI CHAT PAGE
 // ============================================================
 const AIChat = () => {
-  const { t } = useTranslation();
-  const md = useMediaQuery("md");
   const chatHook = useChatWithMemos();
   const aiChat = useAIChat();
 
   // Local state
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
+  const lastAssistantMessageIdRef = useRef<string | null>(null);
+  const streamingContentRef = useRef<string>("");
 
   // Get current conversation from context
-  const { currentConversation, createConversation, addMessage, updateMessage, addReferencedMemos, addContextSeparator, clearMessages, setViewMode } = aiChat;
+  const {
+    currentConversation,
+    conversations,
+    createConversation,
+    selectConversation,
+    addMessage,
+    updateMessage,
+    addReferencedMemos,
+    addContextSeparator,
+    clearMessages,
+    setViewMode,
+  } = aiChat;
 
-  // Determine current parrot from conversation or default
-  const currentParrot = currentConversation
-    ? (PARROT_AGENTS[currentConversation.parrotId] || PARROT_AGENTS[ParrotAgentType.DEFAULT])
-    : null;
+  const { t } = useTranslation();
+
+  // Determine current parrot type from conversation
+  const currentParrotType = currentConversation?.parrotId;
+  // Get i18n version of the current parrot
+  const currentParrot = useMemo(() => {
+    if (!currentParrotType) return null;
+    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
+    return getLocalizedParrot(agent, t);
+  }, [currentParrotType, t]);
 
   // Get messages from current conversation
   const items = currentConversation?.messages || [];
@@ -348,9 +406,35 @@ const AIChat = () => {
   }, []);
 
   // Handle starting a new chat with a parrot
-  const handleParrotSelect = useCallback((parrot: ParrotAgent) => {
-    createConversation(parrot.id, parrot.displayName);
-  }, [createConversation]);
+  const handleParrotSelect = useCallback(
+    async (parrot: ParrotAgentI18n) => {
+      if (isCreating) return;
+
+      // Check for existing conversation with same parrotId
+      const existingConversation = conversations.find((c) => c.parrotId === parrot.id);
+      console.log(
+        "[handleParrotSelect] parrotId:",
+        parrot.id,
+        "existingConversation:",
+        existingConversation,
+        "all conversations:",
+        conversations,
+      );
+      if (existingConversation) {
+        selectConversation(existingConversation.id);
+        return;
+      }
+
+      setIsCreating(true);
+      try {
+        createConversation(parrot.id, parrot.displayName);
+      } finally {
+        // Small delay to ensure state is set
+        setTimeout(() => setIsCreating(false), 300);
+      }
+    },
+    [createConversation, isCreating, conversations, selectConversation],
+  );
 
   // Handle back to hub
   const handleBackToHub = useCallback(() => {
@@ -358,98 +442,142 @@ const AIChat = () => {
   }, [setViewMode]);
 
   // Handle parrot chat with callbacks
-  const handleParrotChat = useCallback(async (userMessage: string, history: string[]) => {
-    if (!currentConversation || !currentParrot) {
-      console.warn("[Parrot] No active conversation or parrot");
-      return;
-    }
+  const handleParrotChat = useCallback(
+    async (userMessage: string, history: string[]) => {
+      if (!currentConversation || !currentParrot) {
+        console.warn("[Parrot] No active conversation or parrot");
+        return;
+      }
 
-    setIsTyping(true);
-    setMemoQueryResults([]);
-    const _messageId = ++messageIdRef.current;
+      setIsTyping(true);
+      setIsThinking(true);
+      setMemoQueryResults([]);
+      const _messageId = ++messageIdRef.current;
 
-    try {
-      await chatHook.stream(
-        {
-          message: userMessage,
-          history,
-          agentType: currentParrot.id,
-          userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-        {
-          onThinking: (msg) => {
-            console.log("[Parrot Thinking]", msg);
+      try {
+        await chatHook.stream(
+          {
+            message: userMessage,
+            history,
+            agentType: currentParrot.id,
+            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
-          onToolUse: (toolName) => {
-            console.log("[Parrot Tool Use]", toolName);
+          {
+            onThinking: (msg) => {
+              console.log("[Parrot Thinking]", msg);
+            },
+            onToolUse: (toolName) => {
+              console.log("[Parrot Tool Use]", toolName);
+            },
+            onToolResult: (result) => {
+              console.log("[Parrot Tool Result]", result);
+            },
+            onMemoQueryResult: (result) => {
+              if (_messageId === messageIdRef.current) {
+                setMemoQueryResults((prev) => [...prev, result]);
+                addReferencedMemos(currentConversation.id, result.memos);
+              }
+            },
+            onContent: (content) => {
+              if (lastAssistantMessageIdRef.current) {
+                streamingContentRef.current += content;
+                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                  content: streamingContentRef.current,
+                });
+              }
+            },
+            onDone: () => {
+              setIsTyping(false);
+              setIsThinking(false);
+            },
+            onError: (error) => {
+              setIsTyping(false);
+              setIsThinking(false);
+              console.error("[Parrot Error]", error);
+              // Add error message to conversation
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                  content: streamingContentRef.current || "Sorry, something went wrong. Please try again.",
+                  error: true,
+                });
+              }
+            },
           },
-          onToolResult: (result) => {
-            console.log("[Parrot Tool Result]", result);
-          },
-          onMemoQueryResult: (result) => {
-            if (_messageId === messageIdRef.current) {
-              setMemoQueryResults((prev) => [...prev, result]);
-              addReferencedMemos(currentConversation.id, result.memos);
-            }
-          },
-          onContent: (content) => {
-            const lastItem = items[items.length - 1];
-            if (lastItem && isConversationMessage(lastItem) && lastItem.id) {
-              updateMessage(currentConversation.id, lastItem.id, {
-                content: (lastItem.content || "") + content,
-              });
-            }
-          },
-          onDone: () => {
-            setIsTyping(false);
-          },
-          onError: (error) => {
-            setIsTyping(false);
-            console.error("[Parrot Error]", error);
-          },
-        },
-      );
-    } catch (error) {
-      setIsTyping(false);
-      console.error("[Parrot Chat Error]", error);
-    }
-  }, [currentConversation, currentParrot, chatHook, items, updateMessage, addReferencedMemos]);
+        );
+      } catch (error) {
+        setIsTyping(false);
+        setIsThinking(false);
+        console.error("[Parrot Chat Error]", error);
+      }
+    },
+    [currentConversation, currentParrot, chatHook, updateMessage, addReferencedMemos],
+  );
 
-  const handleSend = useCallback(async (messageContent?: string) => {
-    const userMessage = (messageContent || input).trim();
-    if (!userMessage) return;
+  const handleSend = useCallback(
+    async (messageContent?: string) => {
+      const userMessage = (messageContent || input).trim();
+      if (!userMessage) return;
 
-    if (isTyping) {
-      resetTypingState();
-    }
+      if (isTyping) {
+        resetTypingState();
+      }
 
-    // Ensure we have a conversation
-    if (!currentConversation) {
-      createConversation(ParrotAgentType.DEFAULT);
-      return;
-    }
+      // Ensure we have a conversation
+      if (!currentConversation) {
+        // Check for existing DEFAULT conversation
+        const existingConversation = conversations.find((c) => c.parrotId === ParrotAgentType.DEFAULT);
+        if (existingConversation) {
+          selectConversation(existingConversation.id);
+        } else {
+          createConversation(ParrotAgentType.DEFAULT);
+        }
+        return;
+      }
 
-    // Add user message
-    addMessage(currentConversation.id, {
-      role: "user",
-      content: userMessage,
-    });
+      // Add user message
+      addMessage(currentConversation.id, {
+        role: "user",
+        content: userMessage,
+      });
 
-    // Add empty assistant message that will be filled during streaming
-    addMessage(currentConversation.id, {
-      role: "assistant",
-      content: "",
-    });
+      // Add empty assistant message that will be filled during streaming
+      const newMessage = {
+        role: "assistant" as const,
+        content: "",
+      };
+      const assistantMessageId = addMessage(currentConversation.id, newMessage);
 
-    setInput("");
+      // Store the new message ID for streaming updates
+      lastAssistantMessageIdRef.current = assistantMessageId;
 
-    const contextMessages = items.filter(isConversationMessage);
-    const history = contextMessages.map((m) => m.content);
+      // Reset streaming content ref
+      streamingContentRef.current = "";
 
-    if (currentParrot) {
-      await handleParrotChat(userMessage, history);
-    }
-  }, [input, isTyping, currentConversation, currentParrot, addMessage, createConversation, handleParrotChat, items, resetTypingState]);
+      setInput("");
+
+      // Build history: only include messages after the last context separator
+      const lastSeparatorIndex = items.findLastIndex((item) => isContextSeparator(item));
+      const messagesAfterSeparator = lastSeparatorIndex === -1 ? items : items.slice(lastSeparatorIndex + 1);
+      const contextMessages = messagesAfterSeparator.filter(isConversationMessage);
+      const history = contextMessages.map((m) => m.content);
+
+      if (currentParrot) {
+        await handleParrotChat(userMessage, history);
+      }
+    },
+    [
+      input,
+      isTyping,
+      currentConversation,
+      currentParrot,
+      addMessage,
+      conversations,
+      selectConversation,
+      createConversation,
+      handleParrotChat,
+      resetTypingState,
+    ],
+  );
 
   const handleClearChat = useCallback(() => {
     if (currentConversation) {
@@ -464,13 +592,22 @@ const AIChat = () => {
     }
   }, [currentConversation, addContextSeparator]);
 
-  const handleParrotChange = useCallback((parrot: ParrotAgent | null) => {
-    if (!parrot) {
-      handleBackToHub();
-      return;
-    }
-    createConversation(parrot.id, parrot.displayName);
-  }, [createConversation, handleBackToHub]);
+  const handleParrotChange = useCallback(
+    (parrot: ParrotAgentI18n | null) => {
+      if (!parrot) {
+        handleBackToHub();
+        return;
+      }
+      // Check for existing conversation with same parrotId
+      const existingConversation = conversations.find((c) => c.parrotId === parrot.id);
+      if (existingConversation) {
+        selectConversation(existingConversation.id);
+      } else {
+        createConversation(parrot.id, parrot.displayName);
+      }
+    },
+    [conversations, createConversation, handleBackToHub, selectConversation],
+  );
 
   // Handle custom event for sending messages (from suggested prompts)
   useEffect(() => {
@@ -482,9 +619,9 @@ const AIChat = () => {
       }, 100);
     };
 
-    window.addEventListener('aichat-send-message', handler as EventListener);
+    window.addEventListener("aichat-send-message", handler as EventListener);
     return () => {
-      window.removeEventListener('aichat-send-message', handler as EventListener);
+      window.removeEventListener("aichat-send-message", handler as EventListener);
     };
   }, [handleSend]);
 
@@ -495,7 +632,7 @@ const AIChat = () => {
   // RENDER
   // ============================================================
   return viewMode === "hub" || !currentParrot ? (
-    <HubView onSelectParrot={handleParrotSelect} />
+    <HubView onSelectParrot={handleParrotSelect} isCreating={isCreating} />
   ) : (
     <ChatView
       currentParrot={currentParrot}
@@ -503,6 +640,7 @@ const AIChat = () => {
       setInput={setInput}
       onSend={handleSend}
       isTyping={isTyping}
+      isThinking={isThinking}
       clearDialogOpen={clearDialogOpen}
       setClearDialogOpen={setClearDialogOpen}
       onClearChat={handleClearChat}

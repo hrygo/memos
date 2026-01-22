@@ -4,7 +4,6 @@ import dayjs from "dayjs";
 import { scheduleServiceClient } from "@/connect";
 import type {
   CheckConflictRequest,
-  CreateScheduleRequest,
   ListSchedulesRequest,
   ListSchedulesResponse,
   ParseAndCreateScheduleRequest,
@@ -60,6 +59,7 @@ export type ListSchedulesRequestWithStringTs = Omit<ListSchedulesRequest, "start
   startTs?: string;
   endTs?: string;
   month?: string; // For month-based grouping queries
+  _date?: string; // Internal cache key for date-based queries
 };
 
 // Query keys factory for consistent cache management

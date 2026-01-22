@@ -114,6 +114,7 @@ export interface AIChatContextValue {
 
   // Computed values
   currentConversation: Conversation | null;
+  conversations: Conversation[];
   conversationSummaries: ConversationSummary[];
 
   // Conversation actions
@@ -125,7 +126,7 @@ export interface AIChatContextValue {
   unpinConversation: (id: string) => void;
 
   // Message actions
-  addMessage: (conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">) => void;
+  addMessage: (conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">) => string;
   updateMessage: (conversationId: string, messageId: string, updates: Partial<ConversationMessage>) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   clearMessages: (conversationId: string) => void;
@@ -148,6 +149,7 @@ export interface AIChatContextValue {
 
 /**
  * Parrot theme configuration
+ * 鹦鹉主题配置 - AI Native 配色系统
  */
 export interface ParrotTheme {
   bgLight: string;
@@ -156,6 +158,7 @@ export interface ParrotTheme {
   bubbleBg: string;
   bubbleBorder: string;
   text: string;
+  textSecondary: string;
   iconBg: string;
   iconText: string;
   inputBg: string;
@@ -163,6 +166,8 @@ export interface ParrotTheme {
   inputFocus: string;
   cardBg: string;
   cardBorder: string;
+  accent: string;
+  accentText: string;
 }
 
 /**

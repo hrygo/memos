@@ -115,7 +115,9 @@ export const ScheduleCalendar = ({
     <div className={cn("flex flex-col gap-1.5", className)} role="region" aria-label="日历视图">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold" aria-live="polite">{currentMonth.format("YYYY MMMM")}</h3>
+        <h3 className="text-lg font-semibold" aria-live="polite">
+          {currentMonth.format("YYYY MMMM")}
+        </h3>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -154,14 +156,23 @@ export const ScheduleCalendar = ({
         {/* Weekday Headers */}
         <div className="grid grid-cols-7 gap-1 flex-none" role="row">
           {weekdays.map((day, index) => (
-            <div key={index} className="py-1 text-center text-xs font-medium text-muted-foreground" role="columnheader" aria-label={String(day)}>
+            <div
+              key={index}
+              className="py-1 text-center text-xs font-medium text-muted-foreground"
+              role="columnheader"
+              aria-label={String(day)}
+            >
               {day}
             </div>
           ))}
         </div>
 
         {/* Days */}
-        <div className="grid grid-cols-7 gap-1 flex-1 min-h-0" style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }} role="rowgroup">
+        <div
+          className="grid grid-cols-7 gap-1 flex-1 min-h-0"
+          style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}
+          role="rowgroup"
+        >
           {days.map((date, idx) => {
             const scheduleCount = getScheduleCount(date);
             const isTodayDate = isToday(date);
@@ -222,7 +233,10 @@ export const ScheduleCalendar = ({
           <span>{t("schedule.has-schedules") || "Has schedules"}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded-full bg-orange-200 border border-orange-300 dark:bg-orange-900/50 dark:border-orange-800" aria-hidden="true" />
+          <div
+            className="h-2 w-2 rounded-full bg-orange-200 border border-orange-300 dark:bg-orange-900/50 dark:border-orange-800"
+            aria-hidden="true"
+          />
           <span>{t("common.today") || "Today"}</span>
         </div>
       </div>

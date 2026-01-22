@@ -15,7 +15,12 @@ const MessageActions = ({ onCopy, onRegenerate, onDelete }: MessageActionsProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 min-w-[44px] min-h-[44px] opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity"
+          aria-label={t("ai.more-options")}
+        >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="1" />
             <circle cx="12" cy="5" r="1" />

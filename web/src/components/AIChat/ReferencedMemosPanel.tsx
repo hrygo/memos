@@ -1,9 +1,9 @@
 import { FileText, Search } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MiniMemoCard } from "./MiniMemoCard";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { MiniMemoCard } from "./MiniMemoCard";
 
 interface ReferencedMemosPanelProps {
   className?: string;
@@ -17,9 +17,7 @@ export function ReferencedMemosPanel({ className }: ReferencedMemosPanelProps) {
   const referencedMemos = currentConversation?.referencedMemos || [];
 
   // Filter memos by search query
-  const filteredMemos = referencedMemos.filter((memo) =>
-    memo.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMemos = referencedMemos.filter((memo) => memo.content.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Sort by score (descending)
   const sortedMemos = [...filteredMemos].sort((a, b) => b.score - a.score);
@@ -32,9 +30,7 @@ export function ReferencedMemosPanel({ className }: ReferencedMemosPanelProps) {
       <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-zinc-500" />
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {t("ai.aichat.sidebar.memos")}
-          </h2>
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.aichat.sidebar.memos")}</h2>
         </div>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 ml-6">
           {referencedMemos.length} {referencedMemos.length === 1 ? "memo" : "memos"}
@@ -62,12 +58,7 @@ export function ReferencedMemosPanel({ className }: ReferencedMemosPanelProps) {
         {hasMemos ? (
           <div className="p-2 space-y-2">
             {sortedMemos.map((memo, index) => (
-              <MiniMemoCard
-                key={memo.uid}
-                memo={memo}
-                rank={index + 1}
-                showRank={!!searchQuery}
-              />
+              <MiniMemoCard key={memo.uid} memo={memo} rank={index + 1} showRank={!!searchQuery} />
             ))}
           </div>
         ) : (
@@ -90,12 +81,8 @@ function EmptyState({ searchQuery, hasMemos }: EmptyStateProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
         <Search className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-          {t("ai.aichat.sidebar.no-results")}
-        </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {t("ai.aichat.sidebar.try-different-search")}
-        </p>
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-results")}</h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.try-different-search")}</p>
       </div>
     );
   }
@@ -104,12 +91,8 @@ function EmptyState({ searchQuery, hasMemos }: EmptyStateProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
         <FileText className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-          {t("ai.aichat.sidebar.no-referenced-memos")}
-        </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {t("ai.aichat.sidebar.search-memos-hint")}
-        </p>
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-referenced-memos")}</h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.search-memos-hint")}</p>
       </div>
     );
   }

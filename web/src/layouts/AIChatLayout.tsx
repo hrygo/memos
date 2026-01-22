@@ -1,20 +1,48 @@
+import { MenuIcon, SparklesIcon } from "lucide-react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { AIChatProvider } from "@/contexts/AIChatContext";
 import { AIChatSidebar } from "@/components/AIChat/AIChatSidebar";
 import NavigationDrawer from "@/components/NavigationDrawer";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AIChatProvider } from "@/contexts/AIChatContext";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
 
 const AIChatLayoutContent = () => {
   const lg = useMediaQuery("lg");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const t = useTranslate();
 
   return (
     <section className="@container w-full h-screen flex flex-col lg:h-screen overflow-hidden">
       {/* Mobile Header */}
-      <div className="lg:hidden flex-none flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-background">
-        <NavigationDrawer />
-        <div className="flex items-center gap-2 font-medium text-foreground">
-          <span>AI Chat</span>
+      <div className="lg:hidden flex-none relative flex items-center justify-center px-4 py-3 border-b border-border/50 bg-background">
+        {/* Left - Navigation Drawer */}
+        <div className="absolute left-0 top-0 bottom-0 px-4 flex items-center">
+          <NavigationDrawer />
+        </div>
+
+        {/* Center - Title */}
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="w-5 h-5 text-foreground" />
+          <span className="font-medium text-foreground">{t("common.ai-assistant")}</span>
+        </div>
+
+        {/* Right - Sidebar Toggle */}
+        <div className="absolute right-0 top-0 bottom-0 px-4 flex items-center">
+          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+            <SheetContent side="right" className="w-80 max-w-full bg-background p-0 gap-0">
+              <SheetHeader>
+                <SheetTitle />
+              </SheetHeader>
+              <AIChatSidebar className="h-full px-4" onClose={() => setMobileSidebarOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} aria-label="Open sidebar">
+            <MenuIcon className="w-5 h-5 text-foreground" />
+          </Button>
         </div>
       </div>
 

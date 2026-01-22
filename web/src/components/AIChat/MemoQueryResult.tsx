@@ -1,5 +1,6 @@
 import { FileText, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { MemoQueryResultData } from "@/types/parrot";
@@ -10,6 +11,7 @@ interface MemoQueryResultProps {
 }
 
 export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
+  const { t } = useTranslation();
   const { memos, query, count } = result;
 
   const sortedMemos = useMemo(() => {
@@ -25,8 +27,10 @@ export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
         )}
       >
         <FileText className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mb-3" />
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">未找到相关笔记</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">查询: "{query}"</p>
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("ai.memo-query.no-results")}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          {t("ai.memo-query.query-label")}: "{query}"
+        </p>
       </div>
     );
   }
@@ -38,15 +42,15 @@ export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
         <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <div>
-            <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">笔记查询结果</h3>
+            <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{t("ai.memo-query.results-title")}</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              查询: "{query}" · 找到 {count} 条相关笔记
+              {t("ai.memo-query.query-label")}: "{query}" · {t("ai.memo-query.found-count", { count })}
             </p>
           </div>
         </div>
         <div className="flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20">
           <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">已排序</span>
+          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{t("ai.memo-query.sorted")}</span>
         </div>
       </div>
 

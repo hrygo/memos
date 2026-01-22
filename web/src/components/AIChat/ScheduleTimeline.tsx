@@ -86,7 +86,10 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
               >
                 {dayName}
               </span>
-              <span className={cn("text-base sm:text-lg font-semibold leading-none", isToday && !isSelected && "text-primary")} aria-hidden="true">
+              <span
+                className={cn("text-base sm:text-lg font-semibold leading-none", isToday && !isSelected && "text-primary")}
+                aria-hidden="true"
+              >
                 {dayNum}
               </span>
               {scheduleCount > 0 && (

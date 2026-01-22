@@ -1,12 +1,11 @@
-import { SendIcon, EraserIcon, MoreHorizontalIcon } from "lucide-react";
+import { EraserIcon, MoreHorizontalIcon, SendIcon } from "lucide-react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardEvent, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PARROT_THEMES } from "@/types/parrot";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ParrotAgentType } from "@/types/parrot";
+import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 interface ChatInputProps {
   value: string;
@@ -39,10 +38,28 @@ export function ChatInput({
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const theme = currentParrotId
-    ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT
-    : PARROT_THEMES.DEFAULT;
+  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+
+  // Handle mobile keyboard visibility
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+
+      const windowHeight = window.innerHeight;
+      const keyboardVisible = viewport.height < windowHeight * 0.85;
+      const newKeyboardHeight = keyboardVisible ? windowHeight - viewport.height : 0;
+
+      setKeyboardHeight(newKeyboardHeight);
+    };
+
+    window.visualViewport.addEventListener("resize", handleResize);
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -67,7 +84,13 @@ export function ChatInput({
   const defaultPlaceholder = placeholder || t("ai.parrot.chat-default-placeholder");
 
   return (
-    <div className={cn("shrink-0 p-3 md:p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950", className)}>
+    <div
+      className={cn(
+        "shrink-0 p-3 md:p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-all",
+        className,
+      )}
+      style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 16}px` : "max(16px, env(safe-area-inset-bottom))" }}
+    >
       <div className="max-w-3xl mx-auto">
         {/* Quick Actions */}
         {showQuickActions && quickActions}
@@ -98,10 +121,7 @@ export function ChatInput({
                   </DropdownMenuItem>
                 )}
                 {onClearChat && (
-                  <DropdownMenuItem
-                    onClick={onClearChat}
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={onClearChat} className="text-destructive focus:text-destructive cursor-pointer">
                     <EraserIcon className="w-4 h-4 mr-2" />
                     <div>
                       <div className="font-medium">{t("ai.clear-chat")}</div>
@@ -118,10 +138,10 @@ export function ChatInput({
         <div
           className={cn(
             "flex items-end gap-2 md:gap-3 p-2.5 md:p-3 rounded-xl border transition-all",
-            "focus-within:ring-2 focus-within:ring-offset-2",
+            "focus-within:ring-2 focus-within:ring-offset-2 shadow-sm",
             theme.inputBg,
             theme.inputBorder,
-            theme.inputFocus
+            theme.inputFocus,
           )}
         >
           <Textarea
@@ -134,27 +154,28 @@ export function ChatInput({
             onKeyDown={handleKeyDown}
             placeholder={defaultPlaceholder}
             disabled={disabled || isTyping}
-            className="flex-1 min-h-[40px] md:min-h-[44px] max-h-[120px] bg-transparent border-0 outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 text-sm md:text-base"
+            className="flex-1 min-h-[44px] max-h-[120px] bg-transparent border-0 outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 text-base leading-relaxed"
             rows={1}
           />
           <Button
             size="icon"
             className={cn(
-              "shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-lg transition-all",
+              "shrink-0 h-11 min-w-[44px] rounded-xl transition-all",
               "hover:scale-105 active:scale-95",
               value.trim() && !isTyping
                 ? cn(theme.iconBg, theme.iconText)
                 : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
             )}
             onClick={onSend}
             disabled={!value.trim() || isTyping || disabled}
+            aria-label="Send message"
           >
-            <SendIcon className="w-4 h-4" />
+            <SendIcon className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Hint Text */}
+        {/* Hint Text - Desktop only */}
         <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1.5 text-center hidden md:block">
           Press Enter to send, Shift + Enter for new line
         </p>
