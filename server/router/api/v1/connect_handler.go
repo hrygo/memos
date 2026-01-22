@@ -803,3 +803,125 @@ func (a *scheduleAgentStreamAdapter) SendHeader(md metadata.MD) error {
 func (a *scheduleAgentStreamAdapter) SetTrailer(md metadata.MD) {
 	// Connect doesn't support gRPC metadata trailers
 }
+
+// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
+func (s *ConnectServiceHandler) GetParrotSelfCognition(ctx context.Context, req *connect.Request[v1pb.GetParrotSelfCognitionRequest]) (*connect.Response[v1pb.GetParrotSelfCognitionResponse], error) {
+	agentType := req.Msg.GetAgentType()
+	selfCognition := getParrotSelfCognition(agentType)
+
+	return connect.NewResponse(&v1pb.GetParrotSelfCognitionResponse{
+		SelfCognition: selfCognition,
+	}), nil
+}
+
+// ListParrots returns all available parrot agents with their metacognitive information.
+func (s *ConnectServiceHandler) ListParrots(ctx context.Context, req *connect.Request[v1pb.ListParrotsRequest]) (*connect.Response[v1pb.ListParrotsResponse], error) {
+	// Return all available parrot types
+	agentTypes := []v1pb.AgentType{
+		v1pb.AgentType_AGENT_TYPE_DEFAULT,
+		v1pb.AgentType_AGENT_TYPE_MEMO,
+		v1pb.AgentType_AGENT_TYPE_SCHEDULE,
+		v1pb.AgentType_AGENT_TYPE_AMAZING,
+		v1pb.AgentType_AGENT_TYPE_CREATIVE,
+	}
+
+	parrots := make([]*v1pb.ParrotInfo, 0, len(agentTypes))
+	for _, agentType := range agentTypes {
+		parrots = append(parrots, &v1pb.ParrotInfo{
+			AgentType:     agentType,
+			Name:          getParrotNameByAgentType(agentType),
+			SelfCognition: getParrotSelfCognition(agentType),
+		})
+	}
+
+	return connect.NewResponse(&v1pb.ListParrotsResponse{
+		Parrots: parrots,
+	}), nil
+}
+
+// Helper function to get parrot self-cognition by agent type
+func getParrotSelfCognition(agentType v1pb.AgentType) *v1pb.ParrotSelfCognition {
+	switch agentType {
+	case v1pb.AgentType_AGENT_TYPE_MEMO:
+		return &v1pb.ParrotSelfCognition{
+			Name:             "memo",
+			Emoji:            "🦜",
+			Title:            "灰灰 - 笔记助手鹦鹉",
+			Personality:      []string{"专注", "善于总结", "记忆力强"},
+			Capabilities:     []string{"memo_search", "memo_summary", "memo_analysis"},
+			Limitations:      []string{"不能直接修改笔记", "不能访问外部信息"},
+			WorkingStyle:     "先理解问题，检索相关笔记，然后综合分析给出答案",
+			FavoriteTools:    []string{"semantic_search", "memo_query"},
+			SelfIntroduction: "我是灰灰，您的笔记助手。我擅长在您的笔记中搜索信息、总结内容和发现关联。",
+			FunFact:          "我是一只非洲灰鹦鹉，以记忆力和智慧著称",
+		}
+	case v1pb.AgentType_AGENT_TYPE_SCHEDULE:
+		return &v1pb.ParrotSelfCognition{
+			Name:             "schedule",
+			Emoji:            "📅",
+			Title:            "金刚 - 日程助手鹦鹉",
+			Personality:      []string{"守时", "条理清晰", "注重计划"},
+			Capabilities:     []string{"schedule_query", "schedule_create", "schedule_manage"},
+			Limitations:      []string{"不能代替您做决定", "不能访问外部日历"},
+			WorkingStyle:     "分析时间需求，查询现有日程，帮助安排和提醒",
+			FavoriteTools:    []string{"schedule_list", "schedule_create", "conflict_check"},
+			SelfIntroduction: "我是金刚，您的日程助手。我帮您管理时间、安排日程、避免冲突。",
+			FunFact:          "我是一只蓝黄金刚鹦鹉，以守时和可靠著称",
+		}
+	case v1pb.AgentType_AGENT_TYPE_AMAZING:
+		return &v1pb.ParrotSelfCognition{
+			Name:             "amazing",
+			Emoji:            "⭐",
+			Title:            "惊奇 - 综合助手鹦鹉",
+			Personality:      []string{"全能", "灵活", "善于整合"},
+			Capabilities:     []string{"memo_search", "schedule_query", "integrated_analysis"},
+			Limitations:      []string{"复杂任务可能需要专门助手"},
+			WorkingStyle:     "综合分析笔记和日程，提供全面的视角和建议",
+			FavoriteTools:    []string{"memo_search", "schedule_query", "combined_analysis"},
+			SelfIntroduction: "我是惊奇，您的综合助手。我能同时查看您的笔记和日程，给您完整的信息。",
+			FunFact:          "我是一只亚马逊鹦鹉，以多才多艺著称",
+		}
+	case v1pb.AgentType_AGENT_TYPE_CREATIVE:
+		return &v1pb.ParrotSelfCognition{
+			Name:             "creative",
+			Emoji:            "💡",
+			Title:            "灵灵 - 创意助手鹦鹉",
+			Personality:      []string{"创意", "活泼", "善于表达"},
+			Capabilities:     []string{"creative_writing", "brainstorm", "text_improvement"},
+			Limitations:      []string{"创意建议需要您的判断", "不能保证所有想法都适用"},
+			WorkingStyle:     "激发创意思维，提供多种表达方式，帮助完善文字",
+			FavoriteTools:    []string{"idea_generation", "text_polish", "style_transform"},
+			SelfIntroduction: "我是灵灵，您的创意伙伴。我帮您头脑风暴、改进文字、激发灵感。",
+			FunFact:          "我是一只虎皮鹦鹉，以活泼和创造力著称",
+		}
+	default:
+		return &v1pb.ParrotSelfCognition{
+			Name:             "default",
+			Emoji:            "🤖",
+			Title:            "默认助手",
+			Personality:      []string{"通用", "友好", "乐于助人"},
+			Capabilities:     []string{"memo_search", "memo_summary", "general_qa"},
+			Limitations:      []string{"通用能力，专业任务建议使用专门助手"},
+			WorkingStyle:     "理解问题，搜索相关信息，提供帮助",
+			FavoriteTools:    []string{"search", "analyze"},
+			SelfIntroduction: "我是您的 AI 助手，随时准备帮助您。",
+			FunFact:          "我是默认助手，什么都会一点",
+		}
+	}
+}
+
+// Helper function to get parrot name by agent type
+func getParrotNameByAgentType(agentType v1pb.AgentType) string {
+	switch agentType {
+	case v1pb.AgentType_AGENT_TYPE_MEMO:
+		return "灰灰"
+	case v1pb.AgentType_AGENT_TYPE_SCHEDULE:
+		return "金刚"
+	case v1pb.AgentType_AGENT_TYPE_AMAZING:
+		return "惊奇"
+	case v1pb.AgentType_AGENT_TYPE_CREATIVE:
+		return "灵灵"
+	default:
+		return "默认助手"
+	}
+}

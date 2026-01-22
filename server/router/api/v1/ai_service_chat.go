@@ -39,6 +39,9 @@ const (
 	// Using 500ms provides 5x buffer for abnormal conditions (high load, network latency)
 	// If it takes longer than 500ms, there's likely a systemic issue that should be investigated.
 	AsyncRecordTimeout = 500 * time.Millisecond
+
+	// DefaultAgentSystemPrompt is the system prompt for the default agent
+	DefaultAgentSystemPrompt = "你是 Memos AI 助手。"
 )
 
 // Pre-compiled regex patterns for schedule query intent detection
@@ -416,32 +419,9 @@ func (s *AIService) buildOptimizedMessages(
 	scheduleResults []*retrieval.SearchResult,
 	hasNotes, hasSchedules bool,
 ) []ai.Message {
-	// ============================================================
-	// System Prompt - 简化版（⭐ 优化）
-	// ============================================================
-	systemPrompt := `你是 Memos AI 助手，帮助用户管理笔记和日程。
-
-## 回复原则
-1. **简洁准确**：基于提供的上下文回答，不编造信息
-2. **结构清晰**：使用列表、分段组织内容
-3. **完整回复**：
-   - 如果有日程，优先列出日程
-   - 如果有笔记，补充相关笔记
-   - 如果都没有，明确告知
-
-## 日程创建检测（重要）
-⚠️ **仅在用户的原始问题明确表示要创建日程时**才添加意图标记：
-- 创建意图的明确关键词："帮我创建"、"帮我添加"、"设置提醒"、"新建日程"
-- ❌ 以下情况**不是**创建意图：
-  - 查询类："有哪些"、"有什么安排"、"今天干什么"、"明天的事要干"
-  - 确认类："我明天有安排吗"、"今天有空吗"
-
-仅在检测到创建意图时，在回复最后一行添加：
-<<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>`
-
 	// 构建消息
 	messages := []ai.Message{
-		{Role: "system", Content: systemPrompt},
+		{Role: "system", Content: DefaultAgentSystemPrompt},
 	}
 
 	// 添加历史对话
@@ -806,7 +786,6 @@ func (s *AIService) chatWithParrot(
 	case v1pb.AgentType_AGENT_TYPE_MEMO:
 		// Memo Parrot (灰灰)
 		parrotAgent, err = agentpkg.NewMemoParrot(
-			nil, // router
 			s.AdaptiveRetriever,
 			s.LLMService,
 			user.ID,
@@ -957,11 +936,8 @@ func (s *AIService) streamChatResponse(
 		}
 	}
 
-	// Build system prompt based on decision type
-	systemPrompt := "You are a helpful assistant for Memos, a note-taking app. Answer questions based on the provided context."
-	if decision != nil && decision.Strategy == "schedule_semantic" {
-		systemPrompt = "You are a helpful schedule assistant for Memos. Help users manage their schedules based on the provided context."
-	}
+	// Build system prompt - 使用统一的默认 Agent prompt
+	systemPrompt := DefaultAgentSystemPrompt
 
 	// Build messages for LLM
 	messages := []ai.Message{
