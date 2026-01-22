@@ -238,7 +238,6 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
       style={dropdownStyle}
       className="p-1.5 bg-popover rounded-lg border shadow-lg z-[9999] max-h-[60vh] overflow-y-auto"
     >
-      <div className="text-[10px] text-muted-foreground mb-1.5 px-1">{t("schedule.quick-input.quick-create") || "快速创建"}</div>
       <div className="flex flex-col gap-0.5">
         {DEFAULT_TEMPLATES.map((template) => {
           const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
@@ -252,15 +251,12 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
                 onToggle?.(); // Close dropdown
               }}
               className={cn("flex items-center gap-2 px-2 py-2 rounded-md text-xs", "hover:bg-muted transition-colors", "text-left w-full")}
+              title={`${displayTitle} (${template.duration}分)`}
             >
               <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", template.color, "text-white")}>
                 <IconComponent className="h-3 w-3" />
               </div>
               <span className="font-medium truncate flex-1">{displayTitle}</span>
-              <span className="text-[10px] text-muted-foreground shrink-0">
-                {template.duration}
-                {t("schedule.quick-input.minutes-abbr") || "分"}
-              </span>
             </button>
           );
         })}
@@ -273,7 +269,8 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
       <button
         ref={triggerRef}
         onClick={onToggle}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors"
+        aria-label={t("schedule.quick-input.templates") as string || "模板"}
+        className="flex items-center justify-center p-2 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -292,7 +289,6 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle }: Q
           <rect x="14" y="14" width="7" height="7" />
           <rect x="3" y="14" width="7" height="7" />
         </svg>
-        <span>{t("schedule.quick-input.templates") || "模板"}</span>
       </button>
 
       {dropdownContent && createPortal(dropdownContent, document.body)}
