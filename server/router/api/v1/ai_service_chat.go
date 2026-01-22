@@ -8,13 +8,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	"github.com/usememos/memos/plugin/ai"
+	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/finops"
 	"github.com/usememos/memos/server/queryengine"
@@ -247,13 +248,13 @@ func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AI
 	if s.AdaptiveRetriever != nil {
 		// 使用新的自适应检索器
 		searchResults, err = s.AdaptiveRetriever.Retrieve(ctx, &retrieval.RetrievalOptions{
-			Query:            req.Message,
-			UserID:           user.ID,
-			Strategy:         routeDecision.Strategy,
-			TimeRange:        routeDecision.TimeRange,
+			Query:             req.Message,
+			UserID:            user.ID,
+			Strategy:          routeDecision.Strategy,
+			TimeRange:         routeDecision.TimeRange,
 			ScheduleQueryMode: routeDecision.ScheduleQueryMode, // P1: 传递查询模式
-			MinScore:         0.5,
-			Limit:            10,
+			MinScore:          0.5,
+			Limit:             10,
 		})
 		if err != nil {
 			slog.Warn("AdaptiveRetriever error, using fallback", "error", err)
@@ -521,13 +522,27 @@ func (s *AIService) finalizeChatStreamOptimized(
 			ctx, cancel := context.WithTimeout(context.Background(), AsyncRecordTimeout)
 			defer cancel()
 
-			if err := s.CostMonitor.Record(ctx, record); err != nil {
-				slog.Warn("Failed to record cost",
-					"error", err,
-					"user_id", user.ID,
-					"strategy", routeDecision.Strategy,
-				)
+			// 重试机制：最多重试 2 次
+			maxRetries := 2
+			var err error
+			for attempt := 0; attempt <= maxRetries; attempt++ {
+				if attempt > 0 {
+					// 指数退避
+					time.Sleep(time.Duration(attempt) * 100 * time.Millisecond)
+				}
+				err = s.CostMonitor.Record(ctx, record)
+				if err == nil {
+					return
+				}
 			}
+
+			// 所有重试都失败后记录警告
+			slog.Warn("Failed to record cost after retries",
+				"error", err,
+				"user_id", user.ID,
+				"strategy", routeDecision.Strategy,
+				"retries", maxRetries,
+			)
 		}()
 	}
 
@@ -681,6 +696,7 @@ func (s *AIService) chatWithParrot(
 		"agent_type", agentTypeStr,
 		"user_id", user.ID,
 		"message_length", len(req.Message),
+		"history_count", len(req.History),
 	)
 
 	// Get user timezone from request
@@ -688,6 +704,9 @@ func (s *AIService) chatWithParrot(
 	if userTimezone == "" {
 		userTimezone = "Asia/Shanghai" // Default timezone
 	}
+
+	// Use mutex to ensure thread-safety for stream.Send in concurrent agent execution (e.g. AmazingParrot)
+	var streamMu sync.Mutex
 
 	// Create stream adapter
 	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData interface{}) error {
@@ -707,6 +726,10 @@ func (s *AIService) chatWithParrot(
 				dataStr = string(jsonBytes)
 			}
 		}
+
+		// Thread-safe send
+		streamMu.Lock()
+		defer streamMu.Unlock()
 
 		// Send event through stream
 		return stream.Send(&v1pb.ChatWithMemosResponse{
@@ -780,7 +803,7 @@ func (s *AIService) chatWithParrot(
 
 	// Execute agent
 	slog.Info("ChatWithParrot: Executing agent", "agent_type", agentTypeStr)
-	if err := parrotAgent.ExecuteWithCallback(ctx, req.Message, callback); err != nil {
+	if err := parrotAgent.ExecuteWithCallback(ctx, req.Message, req.History, callback); err != nil {
 		slog.Error("Parrot agent execution failed",
 			"error", err,
 			"agent_type", agentTypeStr,
@@ -792,6 +815,8 @@ func (s *AIService) chatWithParrot(
 	slog.Info("ChatWithParrot: Agent execution completed", "agent_type", agentTypeStr)
 
 	// Send done marker
+	streamMu.Lock()
+	defer streamMu.Unlock()
 	if err := stream.Send(&v1pb.ChatWithMemosResponse{
 		Done: true,
 	}); err != nil {
@@ -877,9 +902,9 @@ func (s *AIService) streamChatResponse(
 	ctx context.Context,
 	req *v1pb.ChatWithMemosRequest,
 	stream v1pb.AIService_ChatWithMemosServer,
-	chatCtx *chatContext,
+	_ *chatContext,
 	results []*retrieval.SearchResult,
-	decision *queryengine.RouteDecision,
+	_ *queryengine.RouteDecision,
 ) error {
 	// Build context from retrieval results
 	var context strings.Builder
@@ -926,4 +951,3 @@ func (s *AIService) streamChatResponse(
 		Done: true,
 	})
 }
-
