@@ -65,28 +65,34 @@ const Schedule = () => {
         <div className="flex items-center justify-between gap-4 w-full">
           {/* Left: View Tabs */}
           {!hasSearchFilter ? (
-            <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-lg" role="tablist" aria-label="视图切换">
               <Button
+                role="tab"
+                aria-selected={viewTab === "timeline"}
+                aria-controls="schedule-panel"
                 variant={viewTab === "timeline" ? "default" : "ghost"}
                 size="sm"
-                className={cn("h-9 px-3 text-sm font-medium rounded-md", viewTab === "timeline" ? "shadow-sm" : "hover:bg-transparent")}
+                className={cn("h-9 px-3 text-sm font-medium rounded-md", viewTab === "timeline" ? "shadow-sm" : "hover:bg-transparent", "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2")}
                 onClick={() => setViewTab("timeline")}
               >
-                <LayoutList className="w-4 h-4 mr-1.5" />
+                <LayoutList className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 {t("schedule.timeline") || "Timeline"}
               </Button>
               <Button
+                role="tab"
+                aria-selected={viewTab === "calendar"}
+                aria-controls="schedule-panel"
                 variant={viewTab === "calendar" ? "default" : "ghost"}
                 size="sm"
-                className={cn("h-9 px-3 text-sm font-medium rounded-md", viewTab === "calendar" ? "shadow-sm" : "hover:bg-transparent")}
+                className={cn("h-9 px-3 text-sm font-medium rounded-md", viewTab === "calendar" ? "shadow-sm" : "hover:bg-transparent", "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2")}
                 onClick={() => setViewTab("calendar")}
               >
-                <Calendar className="w-4 h-4 mr-1.5" />
+                <Calendar className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 {t("schedule.month-view") || "Month"}
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" role="status" aria-live="polite">
               <span className="text-sm text-muted-foreground">
                 {filteredSchedules.length} {t("schedule.search-results") || "results"}
               </span>
@@ -108,26 +114,32 @@ const Schedule = () => {
       {/* Mobile: View Tabs */}
       <div className="lg:hidden flex-none px-3 py-2 flex items-center justify-between gap-2 border-b border-border/50">
         {!hasSearchFilter ? (
-          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg" role="tablist" aria-label="视图切换">
             <Button
+              role="tab"
+              aria-selected={viewTab === "timeline"}
+              aria-label="时间线视图"
               variant={viewTab === "timeline" ? "default" : "ghost"}
               size="sm"
-              className={cn("h-8 w-8 p-0 rounded-md", viewTab === "timeline" ? "shadow-sm" : "hover:bg-transparent")}
+              className={cn("h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]", viewTab === "timeline" ? "shadow-sm" : "hover:bg-transparent", "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2")}
               onClick={() => setViewTab("timeline")}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-4 h-4" aria-hidden="true" />
             </Button>
             <Button
+              role="tab"
+              aria-selected={viewTab === "calendar"}
+              aria-label="月历视图"
               variant={viewTab === "calendar" ? "default" : "ghost"}
               size="sm"
-              className={cn("h-8 w-8 p-0 rounded-md", viewTab === "calendar" ? "shadow-sm" : "hover:bg-transparent")}
+              className={cn("h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]", viewTab === "calendar" ? "shadow-sm" : "hover:bg-transparent", "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2")}
               onClick={() => setViewTab("calendar")}
             >
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4" aria-hidden="true" />
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" role="status" aria-live="polite">
             <span className="text-xs text-muted-foreground">
               {filteredSchedules.length} {t("schedule.search-results") || "results"}
             </span>
@@ -136,7 +148,13 @@ const Schedule = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
+      <div
+        id="schedule-panel"
+        role="tabpanel"
+        aria-label={effectiveViewTab === "calendar" ? "月历视图" : "时间线视图"}
+        tabIndex={0}
+        className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden focus-visible:outline-none"
+      >
         {effectiveViewTab === "calendar" ? (
           <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
         ) : (
