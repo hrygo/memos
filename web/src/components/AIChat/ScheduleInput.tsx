@@ -329,11 +329,11 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ScheduleErrorBoundary>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md overflow-hidden">
             <DialogTitle>{isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}</DialogTitle>
             <DialogDescription>{isEditMode ? "" : t("schedule.natural-language-hint")}</DialogDescription>
 
-            <div className="space-y-4 mt-4">
+            <div className="space-y-4 mt-4 overflow-y-auto max-h-[70vh] overflow-x-hidden">
               {/* Natural Language Input - Only for create mode */}
               {!isEditMode && !parsedSchedule && (
                 <div className="space-y-2">
@@ -444,20 +444,26 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
                   <div className="space-y-3 text-sm">
                     {/* Title */}
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground">标题</span>
+                      </div>
                       <Input
                         value={parsedSchedule.title}
                         onChange={(e) => setParsedSchedule({ ...parsedSchedule, title: e.target.value })}
-                        className="h-8 font-medium"
+                        className="h-9"
                         placeholder={t("common.title")}
                       />
                     </div>
 
                     {/* Time */}
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex items-center gap-2 w-full">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground">开始时间</span>
+                      </div>
+                      <div className="pl-6">
                         <Input
                           type="datetime-local"
                           value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
@@ -467,9 +473,14 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                             const ts = BigInt(dayjs(e.target.value).unix());
                             setParsedSchedule({ ...parsedSchedule, startTs: ts });
                           }}
-                          className="h-8 w-full"
+                          className="h-9"
                         />
-                        <span className="text-muted-foreground">-</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground shrink-0 opacity-0" />
+                        <span className="text-xs text-muted-foreground">结束时间</span>
+                      </div>
+                      <div className="pl-6">
                         <Input
                           type="datetime-local"
                           value={
@@ -483,33 +494,38 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                             const ts = BigInt(dayjs(e.target.value).unix());
                             setParsedSchedule({ ...parsedSchedule, endTs: ts });
                           }}
-                          className="h-8 w-full"
+                          className="h-9"
                         />
                       </div>
                     </div>
 
                     {/* Location */}
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground">地点</span>
+                      </div>
                       <Input
                         value={parsedSchedule.location || ""}
                         onChange={(e) => setParsedSchedule({ ...parsedSchedule, location: e.target.value })}
-                        className="h-8"
+                        className="h-9"
                         placeholder={t("common.location") || "Location"}
                       />
                     </div>
 
                     {/* Description - Always show in edit mode or when present */}
-                    {(isEditMode || parsedSchedule.description) && (
-                      <div className="pl-6">
-                        <Textarea
-                          value={parsedSchedule.description || ""}
-                          onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
-                          className="min-h-[60px] text-xs resize-none"
-                          placeholder={t("schedule.description")}
-                        />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-4 w-4 text-muted-foreground shrink-0 opacity-0">📝</span>
+                        <span className="text-xs text-muted-foreground">描述</span>
                       </div>
-                    )}
+                      <Textarea
+                        value={parsedSchedule.description || ""}
+                        onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
+                        className="min-h-[80px] text-sm resize-none"
+                        placeholder={t("schedule.description")}
+                      />
+                    </div>
 
                     {parsedSchedule.reminders.length > 0 && (
                       <div className="flex flex-wrap gap-1 pt-2 pl-6">
