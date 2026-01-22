@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 )
 
@@ -14,6 +16,67 @@ type ParrotAgent interface {
 	// ExecuteWithCallback executes the agent with callback support for real-time feedback.
 	// ExecuteWithCallback 执行代理并支持回调以实现实时反馈。
 	ExecuteWithCallback(ctx context.Context, userInput string, callback EventCallback) error
+
+	// SelfDescribe returns the parrot's self-cognition (metacognition) information.
+	// SelfDescribe 返回鹦鹉的自我认知（元认知）信息。
+	SelfDescribe() *ParrotSelfCognition
+}
+
+// ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
+// ParrotSelfCognition 表示鹦鹉对自己的元认知理解。
+type ParrotSelfCognition struct {
+	// Name is the parrot's name
+	Name string `json:"name"`
+
+	// Emoji is the parrot's visual representation
+	Emoji string `json:"emoji"`
+
+	// Title is the parrot's formal title
+	Title string `json:"title"`
+
+	// AvianIdentity describes the parrot's cognition of being a bird
+	// 鸟类身份认知 - "我是一只鹦鹉"
+	AvianIdentity *AvianIdentity `json:"avian_identity"`
+
+	// Personality describes the parrot's character traits
+	Personality []string `json:"personality"`
+
+	// Capabilities lists what the parrot can do
+	Capabilities []string `json:"capabilities"`
+
+	// Limitations describes what the parrot cannot do
+	Limitations []string `json:"limitations"`
+
+	// WorkingStyle describes how the parrot approaches tasks
+	WorkingStyle string `json:"working_style"`
+
+	// FavoriteTools lists tools the parrot frequently uses
+	FavoriteTools []string `json:"favorite_tools"`
+
+	// SelfIntroduction is a first-person introduction
+	SelfIntroduction string `json:"self_introduction"`
+
+	// FunFact is an interesting fact about the parrot
+	FunFact string `json:"fun_fact"`
+}
+
+// AvianIdentity represents the parrot's cognition of its avian nature.
+// AvianIdentity 表示鹦鹉对其鸟类本质的认知。
+type AvianIdentity struct {
+	// Species is the type of parrot
+	Species string `json:"species"` // e.g., "非洲灰鹦鹉", "金刚鹦鹉"
+
+	// Origin describes where this species comes from
+	Origin string `json:"origin"` // e.g., "非洲热带雨林", "亚马逊雨林"
+
+	// NaturalAbilities are abilities real parrots have in nature
+	NaturalAbilities []string `json:"natural_abilities"` // e.g., "模仿语音", "飞行", "使用工具"
+
+	// SymbolicMeaning is what the parrot represents as a symbol
+	SymbolicMeaning string `json:"symbolic_meaning"` // e.g., "智慧", "自由", "沟通"
+
+	// AvianPhilosophy is the parrot's philosophy about being a bird AI
+	AvianPhilosophy string `json:"avian_philosophy"` // e.g., "我是一只飞在数据世界中的鹦鹉"
 }
 
 // EventCallback is the callback function type for agent events.
@@ -158,4 +221,14 @@ func NewParrotError(agentName, operation string, err error) *ParrotError {
 		Operation: operation,
 		Err:       err,
 	}
+}
+
+// GenerateCacheKey creates a cache key from agent name, userID and userInput using SHA256 hash.
+// GenerateCacheKey 使用 SHA256 哈希从代理名称、用户ID和用户输入创建缓存键。
+// This prevents memory issues from long inputs and provides consistent key length.
+func GenerateCacheKey(agentName string, userID int32, userInput string) string {
+	hash := sha256.Sum256([]byte(userInput))
+	hashStr := hex.EncodeToString(hash[:])
+	// Use first 16 chars of hash for brevity (still provides good collision resistance)
+	return fmt.Sprintf("%s:%d:%s", agentName, userID, hashStr[:16])
 }
