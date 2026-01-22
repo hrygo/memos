@@ -1,0 +1,175 @@
+import { ParrotAgentType } from "./parrot";
+
+/**
+ * Message role in conversation
+ */
+export type MessageRole = "user" | "assistant" | "system";
+
+/**
+ * Single message in a conversation
+ */
+export interface ConversationMessage {
+  id: string;
+  role: MessageRole;
+  content: string;
+  timestamp: number;
+  error?: boolean;
+  metadata?: {
+    referencedMemos?: string[];
+    referencedSchedules?: string[];
+    toolName?: string;
+    thinking?: string;
+  };
+}
+
+/**
+ * Context separator type for clearing conversation context
+ */
+export interface ContextSeparator {
+  type: "context-separator";
+  timestamp: number;
+}
+
+/**
+ * Referenced memo in conversation
+ */
+export interface ReferencedMemo {
+  uid: string;
+  content: string;
+  score: number;
+  timestamp?: number;
+}
+
+/**
+ * Referenced schedule in conversation
+ */
+export interface ReferencedSchedule {
+  uid: string;
+  title: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  allDay: boolean;
+  location?: string;
+  status: string;
+}
+
+/**
+ * Chat item - union of message and separator
+ */
+export type ChatItem = ConversationMessage | ContextSeparator;
+
+/**
+ * Conversation state type
+ */
+export type ConversationViewMode = "hub" | "chat";
+
+/**
+ * Sidebar tab type
+ */
+export type SidebarTab = "history" | "memos";
+
+/**
+ * Single conversation
+ */
+export interface Conversation {
+  id: string;
+  title: string;
+  parrotId: ParrotAgentType;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatItem[];
+  referencedMemos: ReferencedMemo[];
+  pinned?: boolean;
+}
+
+/**
+ * Conversation summary for sidebar display
+ */
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  parrotId: ParrotAgentType;
+  updatedAt: number;
+  messageCount: number;
+  pinned: boolean;
+}
+
+/**
+ * AI Chat state
+ */
+export interface AIChatState {
+  conversations: Conversation[];
+  currentConversationId: string | null;
+  viewMode: ConversationViewMode;
+  sidebarTab: SidebarTab;
+  sidebarOpen: boolean;
+}
+
+/**
+ * AI Chat context value
+ */
+export interface AIChatContextValue {
+  // State
+  state: AIChatState;
+
+  // Computed values
+  currentConversation: Conversation | null;
+  conversationSummaries: ConversationSummary[];
+
+  // Conversation actions
+  createConversation: (parrotId: ParrotAgentType, title?: string) => string;
+  deleteConversation: (id: string) => void;
+  selectConversation: (id: string) => void;
+  updateConversationTitle: (id: string, title: string) => void;
+  pinConversation: (id: string) => void;
+  unpinConversation: (id: string) => void;
+
+  // Message actions
+  addMessage: (conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">) => void;
+  updateMessage: (conversationId: string, messageId: string, updates: Partial<ConversationMessage>) => void;
+  deleteMessage: (conversationId: string, messageId: string) => void;
+  clearMessages: (conversationId: string) => void;
+  addContextSeparator: (conversationId: string) => void;
+
+  // Referenced content actions
+  addReferencedMemos: (conversationId: string, memos: ReferencedMemo[]) => void;
+
+  // UI actions
+  setViewMode: (mode: ConversationViewMode) => void;
+  setSidebarTab: (tab: SidebarTab) => void;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+
+  // Persistence
+  saveToStorage: () => void;
+  loadFromStorage: () => void;
+  clearStorage: () => void;
+}
+
+/**
+ * Parrot theme configuration
+ */
+export interface ParrotTheme {
+  bgLight: string;
+  bgDark: string;
+  bubbleUser: string;
+  bubbleBg: string;
+  bubbleBorder: string;
+  text: string;
+  iconBg: string;
+  iconText: string;
+  inputBg: string;
+  inputBorder: string;
+  inputFocus: string;
+  cardBg: string;
+  cardBorder: string;
+}
+
+/**
+ * Local storage keys
+ */
+export const AI_STORAGE_KEYS = {
+  CONVERSATIONS: "aichat_conversations",
+  CURRENT_CONVERSATION: "aichat_current_conversation",
+  SIDEBAR_TAB: "aichat_sidebar_tab",
+} as const;

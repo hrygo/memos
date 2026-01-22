@@ -64,6 +64,7 @@ export interface ParrotAgent {
   description: string;
   color: string;
   available: boolean; // Whether this parrot is available in current milestone
+  examplePrompts?: string[]; // Suggested prompts for this parrot
 }
 
 /**
@@ -79,6 +80,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     description: "默认 AI 助手，使用 RAG 系统回答问题",
     color: "gray",
     available: true,
+    examplePrompts: ["总结最近的笔记", "帮我搜索关于 Python 的内容", "今天有什么安排"],
   },
   [ParrotAgentType.MEMO]: {
     id: ParrotAgentType.MEMO,
@@ -87,34 +89,38 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     displayName: "灰灰",
     description: "笔记助手，专注于检索、总结和管理笔记",
     color: "blue",
-    available: true, // Milestone 1
+    available: true,
+    examplePrompts: ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"],
   },
   [ParrotAgentType.SCHEDULE]: {
     id: ParrotAgentType.SCHEDULE,
     name: "schedule",
-    icon: "🦜",
+    icon: "📅",
     displayName: "金刚",
     description: "日程助手，帮助创建、查询和管理日程",
-    color: "purple",
-    available: true, // Milestone 1
+    color: "orange",
+    available: true,
+    examplePrompts: ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"],
   },
   [ParrotAgentType.AMAZING]: {
     id: ParrotAgentType.AMAZING,
     name: "amazing",
-    icon: "🦜",
+    icon: "⭐",
     displayName: "惊奇",
-    description: "综合助手，结合笔记和日程功能（Milestone 2）",
-    color: "orange",
-    available: false, // Milestone 2
+    description: "综合助手，结合笔记和日程功能",
+    color: "purple",
+    available: true,
+    examplePrompts: ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"],
   },
   [ParrotAgentType.CREATIVE]: {
     id: ParrotAgentType.CREATIVE,
     name: "creative",
-    icon: "🦜",
+    icon: "💡",
     displayName: "灵灵",
-    description: "创意助手，提供创意写作和头脑风暴（Milestone 4）",
+    description: "创意助手，提供创意写作和头脑风暴",
     color: "pink",
-    available: false, // Milestone 4
+    available: true,
+    examplePrompts: ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"],
   },
 };
 
@@ -220,3 +226,97 @@ export enum ParrotEventType {
   SCHEDULE_QUERY_RESULT = "schedule_query_result",
   SCHEDULE_UPDATED = "schedule_updated",
 }
+
+/**
+ * Parrot theme configuration
+ * 鹦鹉主题配置
+ */
+export const PARROT_THEMES = {
+  DEFAULT: {
+    bgLight: "bg-zinc-50",
+    bgDark: "dark:bg-zinc-900",
+    bubbleUser: "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900",
+    bubbleBg: "bg-white dark:bg-zinc-800",
+    bubbleBorder: "border-zinc-200 dark:border-zinc-700",
+    text: "text-zinc-800 dark:text-zinc-200",
+    iconBg: "bg-zinc-100 dark:bg-zinc-800",
+    iconText: "text-zinc-600 dark:text-zinc-400",
+    inputBg: "bg-zinc-50 dark:bg-zinc-900",
+    inputBorder: "border-zinc-200 dark:border-zinc-700",
+    inputFocus: "focus:ring-zinc-500",
+    cardBg: "bg-white dark:bg-zinc-800",
+    cardBorder: "border-zinc-200 dark:border-zinc-700",
+  },
+  MEMO: {
+    bgLight: "bg-[#E6F2FF]",
+    bgDark: "dark:bg-blue-900/20",
+    bubbleUser: "bg-[#B3D9FF] text-zinc-900",
+    bubbleBg: "bg-white dark:bg-zinc-800",
+    bubbleBorder: "border-blue-200 dark:border-blue-800",
+    text: "text-zinc-800 dark:text-zinc-200",
+    iconBg: "bg-blue-100 dark:bg-blue-900/40",
+    iconText: "text-[#2E86C1] dark:text-blue-400",
+    inputBg: "bg-blue-50 dark:bg-blue-900/20",
+    inputBorder: "border-blue-200 dark:border-blue-800",
+    inputFocus: "focus:ring-blue-500",
+    cardBg: "bg-[#E6F0FA] dark:bg-blue-900/10",
+    cardBorder: "border-blue-200 dark:border-blue-800",
+  },
+  SCHEDULE: {
+    bgLight: "bg-[#FFF7ED]",
+    bgDark: "dark:bg-orange-900/20",
+    bubbleUser: "bg-[#FFDAB9] text-zinc-900",
+    bubbleBg: "bg-white dark:bg-zinc-800",
+    bubbleBorder: "border-orange-200 dark:border-orange-800",
+    text: "text-zinc-800 dark:text-zinc-200",
+    iconBg: "bg-orange-100 dark:bg-orange-900/40",
+    iconText: "text-[#F5A623] dark:text-orange-400",
+    inputBg: "bg-orange-50 dark:bg-orange-900/20",
+    inputBorder: "border-orange-200 dark:border-orange-800",
+    inputFocus: "focus:ring-orange-500",
+    cardBg: "bg-[#FFF5E6] dark:bg-orange-900/10",
+    cardBorder: "border-orange-200 dark:border-orange-800",
+  },
+  AMAZING: {
+    bgLight: "bg-[#F3E6FF]",
+    bgDark: "dark:bg-purple-900/20",
+    bubbleUser: "bg-[#D1C4E9] text-zinc-900",
+    bubbleBg: "bg-white dark:bg-zinc-800",
+    bubbleBorder: "border-purple-200 dark:border-purple-800",
+    text: "text-zinc-800 dark:text-zinc-200",
+    iconBg: "bg-purple-100 dark:bg-purple-900/40",
+    iconText: "text-[#9B59B6] dark:text-purple-400",
+    inputBg: "bg-purple-50 dark:bg-purple-900/20",
+    inputBorder: "border-purple-200 dark:border-purple-800",
+    inputFocus: "focus:ring-purple-500",
+    cardBg: "bg-[#F5E6FF] dark:bg-purple-900/10",
+    cardBorder: "border-purple-200 dark:border-purple-800",
+  },
+  CREATIVE: {
+    bgLight: "bg-[#FFFBEB]",
+    bgDark: "dark:bg-amber-900/20",
+    bubbleUser: "bg-[#FFECB3] text-zinc-900",
+    bubbleBg: "bg-white dark:bg-zinc-800",
+    bubbleBorder: "border-[#F1C40F]/30 dark:border-amber-800/50",
+    text: "text-zinc-800 dark:text-zinc-200",
+    iconBg: "bg-amber-100 dark:bg-amber-900/40",
+    iconText: "text-[#F1C40F] dark:text-amber-400",
+    inputBg: "bg-amber-50 dark:bg-amber-900/20",
+    inputBorder: "border-amber-200 dark:border-amber-800",
+    inputFocus: "focus:ring-amber-500",
+    cardBg: "bg-[#FFFFE6] dark:bg-amber-900/10",
+    cardBorder: "border-amber-200 dark:border-amber-800",
+  },
+} as const;
+
+/**
+ * Icons for each parrot
+ * 每个鹦鹉的图标
+ */
+export const PARROT_ICONS: Record<string, string> = {
+  DEFAULT: "🤖",
+  MEMO: "🦜",
+  SCHEDULE: "📅",
+  AMAZING: "⭐",
+  CREATIVE: "💡",
+};
