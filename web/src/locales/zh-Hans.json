@@ -634,7 +634,44 @@
       "schedule-created-success": "日程创建成功",
       "failed-to-create": "创建日程失败",
       "failed-to-update": "更新日程失败",
-      "created-regex": "已成功创建|成功创建日程|successfully created"
+      "created-regex": "已成功创建|成功创建日程|successfully created",
+      "ai-suggestions": "AI 建议",
+      "double-click-create": "双击创建",
+      "click-again-create": "再次点击创建",
+      "default-title": "新日程",
+      "reply-placeholder": "输入回复...",
+      "title-placeholder": "日程标题",
+      "location-placeholder": "地点（可选）",
+      "input-hint": "输入：明天下午3点开会...",
+      "template-confirm-hint": "快速创建日程，请确认",
+      "ai-confirm-hint": "为您识别到以下日程，请确认",
+      "source-type-template": "模板",
+      "source-type-ai": "AI",
+      "template-applied": "来自模板：{title}",
+      "template-applied-message": "已应用\"{title}\"模板，时长 {duration} 分钟"
+    },
+    "time": {
+      "tbd": "时间待定",
+      "label": "时间"
+    },
+    "flow": {
+      "ask-title-time": "您想创建什么日程？请描述标题和时间。",
+      "ask-specific-time": "请告诉我具体时间，例如：\"明天下午3点\" 或 \"后天上午10点\"",
+      "ask-duration": "这个日程需要多长时间？例如：\"30分钟\" 或 \"2小时\"",
+      "ask-location": "需要设置地点吗？（可选）",
+      "ask-continue": "请继续..."
+    },
+    "error": {
+      "set-time-range": "请设置开始和结束时间",
+      "create-failed": "创建失败，请重试"
+    },
+    "conflict": {
+      "title": "时间冲突",
+      "type-full": "冲突",
+      "type-partial": "重叠",
+      "no-conflict-slot": "无冲突时段",
+      "end-slot": "末尾时段",
+      "next-day-available": "次日可用"
     }
   }
 }

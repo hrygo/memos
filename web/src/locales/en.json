@@ -635,7 +635,44 @@
       "schedule-created-success": "Schedule created successfully",
       "failed-to-create": "Failed to create schedule",
       "failed-to-update": "Failed to update schedule",
-      "created-regex": "successfully created|Schedule created|successfully created"
+      "created-regex": "successfully created|Schedule created|successfully created",
+      "ai-suggestions": "AI Suggestions",
+      "double-click-create": "Double-click to create",
+      "click-again-create": "Click again to create",
+      "default-title": "New Schedule",
+      "reply-placeholder": "Type a reply...",
+      "title-placeholder": "Schedule title",
+      "location-placeholder": "Location (optional)",
+      "input-hint": "Type: Meeting tomorrow at 3pm...",
+      "template-confirm-hint": "Quick create schedule, please confirm",
+      "ai-confirm-hint": "I've identified the following schedule, please confirm:",
+      "source-type-template": "Template",
+      "source-type-ai": "AI",
+      "template-applied": "From template: {title}",
+      "template-applied-message": "Applied \"{title}\" template, duration {duration} minutes"
+    },
+    "time": {
+      "tbd": "Time TBD",
+      "label": "Time"
+    },
+    "flow": {
+      "ask-title-time": "What schedule would you like to create? Please describe the title and time.",
+      "ask-specific-time": "Please tell me the specific time, e.g., \"Tomorrow at 3pm\" or \"Day after tomorrow at 10am\"",
+      "ask-duration": "How long will this schedule take? E.g., \"30 minutes\" or \"2 hours\"",
+      "ask-location": "Do you need to set a location? (Optional)",
+      "ask-continue": "Please continue..."
+    },
+    "error": {
+      "set-time-range": "Please set start and end time",
+      "create-failed": "Create failed, please try again"
+    },
+    "conflict": {
+      "title": "Time Conflict",
+      "type-full": "Conflict",
+      "type-partial": "Overlap",
+      "no-conflict-slot": "No conflict",
+      "end-slot": "End slot",
+      "next-day-available": "Next day available"
     }
   }
 }

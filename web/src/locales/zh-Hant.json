@@ -605,7 +605,44 @@
         "separator": "、"
       },
       "your-timeline": "您的時間軸",
-      "no-schedules": "暫無日程"
+      "no-schedules": "暫無日程",
+      "default-title": "新日程",
+      "reply-placeholder": "輸入回覆...",
+      "title-placeholder": "日程標題",
+      "location-placeholder": "地點（可選）",
+      "input-hint": "輸入：明天下午3點開會...",
+      "template-confirm-hint": "快速創建日程，請確認",
+      "ai-confirm-hint": "為您識別到以下日程，請確認",
+      "source-type-template": "模板",
+      "source-type-ai": "AI",
+      "template-applied": "來自模板：{title}",
+      "template-applied-message": "已應用\"{title}\"模板，時長 {duration} 分鐘",
+      "ai-suggestions": "AI 建議",
+      "double-click-create": "雙擊創建",
+      "click-again-create": "再次點擊創建"
+    },
+    "time": {
+      "tbd": "時間待定",
+      "label": "時間"
+    },
+    "flow": {
+      "ask-title-time": "您想創建什麼日程？請描述標題和時間。",
+      "ask-specific-time": "請告訴我具體時間，例如：\"明天下午3點\" 或 \"後天上午10點\"",
+      "ask-duration": "這個日程需要多長時間？例如：\"30分鐘\" 或 \"2小時\"",
+      "ask-location": "需要設置地點嗎？（可選）",
+      "ask-continue": "請繼續..."
+    },
+    "error": {
+      "set-time-range": "請設置開始和結束時間",
+      "create-failed": "創建失敗，請重試"
+    },
+    "conflict": {
+      "title": "時間衝突",
+      "type-full": "衝突",
+      "type-partial": "重疊",
+      "no-conflict-slot": "無衝突時段",
+      "end-slot": "末尾時段",
+      "next-day-available": "次日可用"
     }
   }
 }
