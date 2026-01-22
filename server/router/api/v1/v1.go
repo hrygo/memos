@@ -8,6 +8,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"log/slog"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/usememos/memos/internal/profile"
@@ -69,7 +70,20 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				rerankerService := ai.NewRerankerService(&aiConfig.Reranker)
 				var llmService ai.LLMService
 				if aiConfig.LLM.Provider != "" {
-					llmService, _ = ai.NewLLMService(&aiConfig.LLM)
+					var llmErr error
+					llmService, llmErr = ai.NewLLMService(&aiConfig.LLM)
+					if llmErr != nil {
+						slog.Warn("Failed to initialize LLM service",
+							"provider", aiConfig.LLM.Provider,
+							"error", llmErr,
+							"note", "Agent features will be disabled",
+						)
+					} else {
+						slog.Info("LLM service initialized",
+							"provider", aiConfig.LLM.Provider,
+							"model", aiConfig.LLM.Model,
+						)
+					}
 				}
 
 				// 创建优化组件
@@ -80,7 +94,11 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				// Initialize ParrotRouter if LLM service is available
 				var parrotRouter *agentpkg.ParrotRouter
 				if llmService != nil {
-					parrotRouter, _ = agentpkg.NewParrotRouter(llmService, store)
+					var routerErr error
+					parrotRouter, routerErr = agentpkg.NewParrotRouter(llmService, store)
+					if routerErr != nil {
+						slog.Warn("Failed to initialize ParrotRouter", "error", routerErr)
+					}
 				}
 
 				service.AIService = &AIService{
@@ -101,8 +119,17 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 
 				// Initialize ScheduleAgentService
 				service.ScheduleAgentService = NewScheduleAgentService(store, llmService, profile)
+			} else {
+				slog.Warn("Failed to initialize embedding service", "error", err)
 			}
+		} else {
+			slog.Warn("AI config validation failed", "error", err)
 		}
+	} else {
+		slog.Info("AI features disabled",
+			"enabled", profile.IsAIEnabled(),
+			"driver", profile.Driver,
+		)
 	}
 
 	return service

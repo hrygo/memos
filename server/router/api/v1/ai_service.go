@@ -38,8 +38,15 @@ type AIService struct {
 }
 
 // IsEnabled returns whether AI features are enabled.
+// For basic features (embedding, search), only EmbeddingService is required.
+// For Agent features (Memo, Schedule, etc.), both EmbeddingService and LLMService are required.
 func (s *AIService) IsEnabled() bool {
 	return s.EmbeddingService != nil
+}
+
+// IsLLMEnabled returns whether LLM features are enabled (required for Agents).
+func (s *AIService) IsLLMEnabled() bool {
+	return s.LLMService != nil
 }
 
 // getCurrentUser gets the authenticated user from context.

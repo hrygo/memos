@@ -18,8 +18,6 @@ import (
 
 // TestParseScheduleIntentFromAIResponse tests the schedule intent parsing logic
 func TestParseScheduleIntentFromAIResponse(t *testing.T) {
-	service := &AIService{} // No need for full setup for this test
-
 	tests := []struct {
 		name           string
 		aiResponse     string
@@ -93,7 +91,7 @@ func TestParseScheduleIntentFromAIResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := service.parseScheduleIntentFromAIResponse(tt.aiResponse)
+			result := ParseScheduleIntentFromAIResponse(tt.aiResponse)
 
 			if tt.expectDetected {
 				require.NotNil(t, result, "expected intent to be detected")
@@ -187,13 +185,11 @@ func TestDetectScheduleQueryIntent(t *testing.T) {
 
 // TestParseScheduleIntentFromAIResponse_EdgeCases tests edge cases
 func TestParseScheduleIntentFromAIResponse_EdgeCases(t *testing.T) {
-	service := &AIService{}
-
 	t.Run("marker appears in normal text", func(t *testing.T) {
 		// This tests that the marker format <<<SCHEDULE_INTENT: is unique enough
 		aiResponse := `用户询问：什么是 SCHEDULE_INTENT 格式？
 这是一个技术术语，不是意图标记。`
-		result := service.parseScheduleIntentFromAIResponse(aiResponse)
+		result := ParseScheduleIntentFromAIResponse(aiResponse)
 		require.Nil(t, result, "should not detect intent when marker appears in normal text")
 	})
 
@@ -204,14 +200,14 @@ func TestParseScheduleIntentFromAIResponse_EdgeCases(t *testing.T) {
 			longDesc += "测试内容"
 		}
 		aiResponse := `<<<SCHEDULE_INTENT:{"detected":true,"description":"` + longDesc + `"}>>>`
-		result := service.parseScheduleIntentFromAIResponse(aiResponse)
+		result := ParseScheduleIntentFromAIResponse(aiResponse)
 		require.NotNil(t, result)
 		require.Equal(t, longDesc, result.ScheduleDescription)
 	})
 
 	t.Run("unicode characters in description", func(t *testing.T) {
 		aiResponse := `<<<SCHEDULE_INTENT:{"detected":true,"description":"明天🎉开会📅讨论🚀项目"}>>>`
-		result := service.parseScheduleIntentFromAIResponse(aiResponse)
+		result := ParseScheduleIntentFromAIResponse(aiResponse)
 		require.NotNil(t, result)
 		require.Equal(t, "明天🎉开会📅讨论🚀项目", result.ScheduleDescription)
 	})

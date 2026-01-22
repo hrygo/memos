@@ -2,8 +2,8 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -169,7 +169,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		var err error
 		userTimezone, err = time.LoadLocation(req.Msg.UserTimezone)
 		if err != nil {
-			fmt.Printf("[ChatWithMemos] Invalid timezone %q, using UTC: %v\n", req.Msg.UserTimezone, err)
+			slog.Warn("Invalid timezone, using UTC", "timezone", req.Msg.UserTimezone, "error", err)
 			userTimezone = time.UTC
 		}
 	} else {
@@ -178,8 +178,11 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 
 	if s.AIService.QueryRouter != nil {
 		routeDecision = s.AIService.QueryRouter.Route(ctx, req.Msg.Message, userTimezone)
-		fmt.Printf("[QueryRouting] Strategy: %s, Confidence: %.2f, Timezone: %v\n",
-			routeDecision.Strategy, routeDecision.Confidence, userTimezone)
+		slog.Debug("Query routing decision",
+			"strategy", routeDecision.Strategy,
+			"confidence", routeDecision.Confidence,
+			"timezone", userTimezone,
+		)
 	} else {
 		// 降级：默认策略
 		routeDecision = &queryengine.RouteDecision{
@@ -205,7 +208,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 			Limit:     10,
 		})
 		if err != nil {
-			fmt.Printf("[AdaptiveRetriever] Error: %v, using fallback\n", err)
+			slog.Warn("AdaptiveRetriever error, using fallback", "error", err)
 			// 降级到旧逻辑
 			searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Msg.Message)
 			if err != nil {
@@ -220,7 +223,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		}
 	}
 
-	fmt.Printf("[Retrieval] Found %d results\n", len(searchResults))
+	slog.Debug("Retrieval completed", "results_count", len(searchResults))
 
 	// 分类结果：笔记和日程
 	var memoResults []*retrieval.SearchResult
@@ -240,7 +243,7 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 	var contextBuilder strings.Builder
 	var sources []string
 	totalChars := 0
-	maxChars := 3000
+	maxChars := MaxContextLength
 
 	// 添加笔记到上下文
 	for i, r := range memoResults {
@@ -359,7 +362,7 @@ func (s *ConnectServiceHandler) sendFinalResponse(
 	scheduleResults []*retrieval.SearchResult,
 ) error {
 	// 解析日程创建意图
-	scheduleIntent := s.parseScheduleIntentFromAIResponse(aiResponse)
+	scheduleIntent := ParseScheduleIntentFromAIResponse(aiResponse)
 
 	// 构建最终响应
 	response := &v1pb.ChatWithMemosResponse{
@@ -403,77 +406,6 @@ func (s *ConnectServiceHandler) sendFinalResponse(
 	}
 
 	return stream.Send(response)
-}
-
-// parseScheduleIntentFromAIResponse 从 AI 响应中解析日程创建意图
-// 复用 ai_service_chat.go 中的逻辑
-func (s *ConnectServiceHandler) parseScheduleIntentFromAIResponse(aiResponse string) *v1pb.ScheduleCreationIntent {
-	// 查找意图标记：使用独特的 <<<SCHEDULE_INTENT: 格式避免误判
-	const intentMarker = "<<<SCHEDULE_INTENT:"
-
-	startIdx := strings.Index(aiResponse, intentMarker)
-	if startIdx == -1 {
-		// 没有意图标记，用户没有创建日程的意图
-		return nil
-	}
-
-	// 提取 JSON 部分
-	startIdx += len(intentMarker)
-
-	// 查找结束标记 >>>（使用 LastIndex 避免描述中的 >>> 截断）
-	endIdx := strings.LastIndex(aiResponse[startIdx:], ">>>")
-	if endIdx == -1 {
-		fmt.Printf("[ScheduleIntent] Found marker but missing closing '>>>'\n")
-		return nil
-	}
-
-	jsonStr := strings.TrimSpace(aiResponse[startIdx : startIdx+endIdx])
-
-	// 清理 JSON 字符串：移除换行符和制表符，但保留空格（description 中可能包含空格）
-	cleanJSON := strings.ReplaceAll(jsonStr, "\n", "")
-	cleanJSON = strings.ReplaceAll(cleanJSON, "\t", "")
-	cleanJSON = strings.TrimSpace(cleanJSON)
-
-	// 解析 JSON
-	type IntentJSON struct {
-		Detected            bool   `json:"detected"`
-		ScheduleDescription string `json:"schedule_description"` // 正确的字段名
-		Description         string `json:"description"`          // 兼容旧字段名
-	}
-
-	var intentJSON IntentJSON
-	if err := json.Unmarshal([]byte(cleanJSON), &intentJSON); err != nil {
-		fmt.Printf("[ScheduleIntent] Failed to parse intent JSON: %v, original: %s, cleaned: %s\n", err, jsonStr, cleanJSON)
-		return nil
-	}
-
-	// 检查是否检测到意图
-	if !intentJSON.Detected {
-		return nil
-	}
-
-	// 获取描述（优先使用正确的字段名，兼容旧字段名）
-	description := intentJSON.ScheduleDescription
-	if description == "" {
-		description = intentJSON.Description // 兼容旧格式
-	}
-
-	// 验证描述不为空
-	if strings.TrimSpace(description) == "" {
-		fmt.Printf("[ScheduleIntent] Intent detected but description is empty\n")
-		return nil
-	}
-
-	// 构建返回对象
-	intent := &v1pb.ScheduleCreationIntent{
-		Detected:            true,
-		ScheduleDescription: description,
-	}
-
-	// 记录成功解析
-	fmt.Printf("[ScheduleIntent] Successfully parsed intent: description='%s'\n", description)
-
-	return intent
 }
 
 // fallbackRetrieval 降级检索逻辑（兼容旧版本）
