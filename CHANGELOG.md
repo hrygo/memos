@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.50.0] - 2026-01-23
+
+### 🦜 Parrot Multi-Agent System - First Release
+
+- **Four Specialized Agents**: Complete implementation of Memo (灰灰), Schedule (金刚), Amazing (惊奇), and Creative (灵灵) Parrots
+- **Agent Selection UI**: ParrotHub component with @-mention popover for quick agent switching
+- **Metacognition API**: Agents now have self-awareness of capabilities, personality, and limitations
+- **Bilingual Support**: Full i18n translations (en/zh-Hans) for all AI chat features
+- **Static Assets**: Background images and icons for each parrot agent type
+- **UI Polish**: Enhanced chat components with conflict detection and AI suggestions
+
+### 🔧 Improvements
+
+- **Performance**: Code cleanup and optimizations across web components
+- **Refactoring**: Extracted common utilities to eliminate duplication
+- **Schedule**: Week start day now defaults to Monday
+
 ## [v0.31.0] - 2026-01-21
 
 ### 🤖 Schedule Agent V2
