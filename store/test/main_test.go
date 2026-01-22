@@ -22,7 +22,8 @@ func TestMain(m *testing.M) {
 }
 
 func runAllDrivers() {
-	drivers := []string{"sqlite", "mysql", "postgres"}
+	// Only test PostgreSQL and SQLite (MySQL support removed)
+	drivers := []string{"sqlite", "postgres"}
 	_, currentFile, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(currentFile)))
 

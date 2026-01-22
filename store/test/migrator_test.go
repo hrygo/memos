@@ -84,31 +84,9 @@ func TestMigrationFromPreviousVersion_SQLite(t *testing.T) {
 	})
 }
 
-// TestMigrationFromPreviousVersion_MySQL verifies that migrating from the previous
-// Memos version to the current version works correctly for MySQL.
-func TestMigrationFromPreviousVersion_MySQL(t *testing.T) {
-	t.Parallel()
-	testMigration(t, "mysql", func() (MemosContainerConfig, func()) {
-		// For migration testing, we need a dedicated MySQL container
-		dsn, containerHost, cleanup := GetDedicatedMySQLDSN(t)
-
-		// Extract database name from DSN
-		parts := strings.Split(dsn, "/")
-		dbNameWithParams := parts[len(parts)-1]
-		dbName := strings.Split(dbNameWithParams, "?")[0]
-
-		// Container DSN uses internal network hostname
-		containerDSN := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", testUser, testPassword, containerHost, dbName)
-
-		return MemosContainerConfig{
-			Driver: "mysql",
-			DSN:    containerDSN,
-		}, cleanup
-	})
-}
-
 // TestMigrationFromPreviousVersion_Postgres verifies that migrating from the previous
 // Memos version to the current version works correctly for PostgreSQL.
+// Note: MySQL support has been removed.
 func TestMigrationFromPreviousVersion_Postgres(t *testing.T) {
 	t.Parallel()
 	testMigration(t, "postgres", func() (MemosContainerConfig, func()) {

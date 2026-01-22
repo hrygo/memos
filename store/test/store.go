@@ -21,7 +21,7 @@ import (
 // NewTestingStore creates a new testing store with a fresh database.
 // Each test gets its own isolated database:
 //   - SQLite: new temp file per test
-//   - MySQL/PostgreSQL: new database per test in shared container
+//   - PostgreSQL: new database per test in shared container
 func NewTestingStore(ctx context.Context, t *testing.T) *store.Store {
 	driver := getDriverFromEnv()
 	profile := getTestingProfileForDriver(t, driver)
@@ -64,12 +64,10 @@ func getTestingProfileForDriver(t *testing.T, driver string) *profile.Profile {
 	switch driver {
 	case "sqlite":
 		dsn = fmt.Sprintf("%s/memos_%s.db", dir, mode)
-	case "mysql":
-		dsn = GetMySQLDSN(t)
 	case "postgres":
 		dsn = GetPostgresDSN(t)
 	default:
-		t.Fatalf("unsupported driver: %s", driver)
+		t.Fatalf("unsupported driver: %s (only 'sqlite' and 'postgres' are supported, MySQL has been removed)", driver)
 	}
 
 	return &profile.Profile{
