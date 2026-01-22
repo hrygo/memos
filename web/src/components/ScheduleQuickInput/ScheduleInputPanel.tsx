@@ -170,18 +170,34 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
     async (scheduleData: Partial<ParsedSchedule>): Promise<boolean> => {
       if (!scheduleData.startTs || !scheduleData.endTs) return false;
 
+      // Validate timestamps before API call
+      if (scheduleData.startTs <= 0) {
+        console.error("[ScheduleInputPanel] Invalid startTs (must be positive):", scheduleData.startTs);
+        toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+        return false;
+      }
+      if (scheduleData.endTs <= scheduleData.startTs) {
+        console.error("[ScheduleInputPanel] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
+        toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
+        return false;
+      }
+
+      // Extract validated timestamps for type safety (no non-null assertion needed)
+      const validatedStartTs = scheduleData.startTs;
+      const validatedEndTs = scheduleData.endTs;
+
       try {
         const result = await checkConflict.mutateAsync({
-          startTs: scheduleData.startTs!,
-          endTs: scheduleData.endTs!,
+          startTs: validatedStartTs,
+          endTs: validatedEndTs,
         });
 
         if (result.conflicts.length > 0) {
           const conflictInfos: ConflictInfo[] = result.conflicts.map((s) => ({
             conflictingSchedule: s,
-            type: "partial",
-            overlapStartTs: scheduleData.startTs!,
-            overlapEndTs: scheduleData.endTs!,
+            type: "partial" as const,
+            overlapStartTs: validatedStartTs,
+            overlapEndTs: validatedEndTs,
           }));
           setConflicts(conflictInfos);
           setShowConflictPanel(true);
@@ -189,17 +205,27 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
         }
         return false;
       } catch (error) {
-        console.error("Conflict check error:", error);
+        console.error("[ScheduleInputPanel] Conflict check error:", error);
         return false;
       }
     },
-    [checkConflict],
+    [checkConflict, t],
   );
 
   // Handle create schedule
   const handleCreate = useCallback(async () => {
     if (!parsedSchedule?.startTs || !parsedSchedule?.endTs) {
       toast.error(t("schedule.error.set-time-range") as string);
+      return;
+    }
+
+    // Additional validation for timestamp validity
+    if (parsedSchedule.startTs <= 0) {
+      toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+      return;
+    }
+    if (parsedSchedule.endTs <= parsedSchedule.startTs) {
+      toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
       return;
     }
 
@@ -385,15 +411,24 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                     <Input
                       type="datetime-local"
                       value={
-                        parsedSchedule.startTs
+                        parsedSchedule.startTs && parsedSchedule.startTs > 0
                           ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
                               "YYYY-MM-DDTHH:mm",
                             )
                           : ""
                       }
                       onChange={(e) => {
-                        const ts = BigInt(dayjs(e.target.value).unix());
-                        handleScheduleUpdate("startTs", ts);
+                        if (!e.target.value) {
+                          // Clear the timestamp if input is empty
+                          handleScheduleUpdate("startTs", undefined);
+                          return;
+                        }
+                        const unix = dayjs(e.target.value).unix();
+                        if (Number.isNaN(unix) || unix < 0) {
+                          console.warn("[ScheduleInputPanel] Invalid datetime value:", e.target.value);
+                          return;
+                        }
+                        handleScheduleUpdate("startTs", BigInt(unix));
                       }}
                       className="h-8 flex-1 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
                       aria-label="开始时间"
@@ -403,17 +438,26 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
                     <Input
                       type="datetime-local"
                       value={
-                        parsedSchedule.endTs && Number(parsedSchedule.endTs) > 0
+                        parsedSchedule.endTs && parsedSchedule.endTs > 0
                           ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
                               "YYYY-MM-DDTHH:mm",
                             )
                           : ""
                       }
                       onChange={(e) => {
-                        const ts = BigInt(dayjs(e.target.value).unix());
-                        handleScheduleUpdate("endTs", ts);
+                        if (!e.target.value) {
+                          // Clear the timestamp if input is empty
+                          handleScheduleUpdate("endTs", undefined);
+                          return;
+                        }
+                        const unix = dayjs(e.target.value).unix();
+                        if (Number.isNaN(unix) || unix < 0) {
+                          console.warn("[ScheduleInputPanel] Invalid datetime value:", e.target.value);
+                          return;
+                        }
+                        handleScheduleUpdate("endTs", BigInt(unix));
                       }}
-                      className="h-8 flex-1 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2"
+                      className="h-8 flex-1 focus-visible:ring-border focus-visible:ring-offset-2"
                       aria-label="结束时间"
                       id="schedule-end-time"
                     />
