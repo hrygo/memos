@@ -65,6 +65,8 @@ export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => 
   }, [resolvedTheme, isDarkTheme]);
 
   // Highlight code using highlight.js
+  // Security: highlight.js automatically escapes HTML entities, preventing XSS.
+  // The fallback uses textContent -> innerHTML pattern for safe HTML escaping.
   const highlightedCode = useMemo(() => {
     try {
       const lang = hljs.getLanguage(language);

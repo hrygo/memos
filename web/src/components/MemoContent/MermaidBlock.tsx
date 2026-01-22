@@ -5,6 +5,14 @@ import { cn } from "@/lib/utils";
 import { getThemeWithFallback, resolveTheme, setupSystemThemeListener } from "@/utils/theme";
 import { extractCodeContent } from "./utils";
 
+// Security: Validate SVG output to prevent script injection
+const sanitizeSvg = (svg: string): string => {
+  // Remove any script tags or event handlers from SVG
+  return svg
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/\bon\w+\s*=/gi, ""); // Remove onclick, onload, etc.
+};
+
 interface MermaidBlockProps {
   children?: React.ReactNode;
   className?: string;
@@ -55,12 +63,14 @@ export const MermaidBlock = ({ children, className }: MermaidBlockProps) => {
         mermaid.initialize({
           startOnLoad: false,
           theme: mermaidTheme,
-          securityLevel: "strict",
+          securityLevel: "strict", // Security: Prevents script execution in SVG
           fontFamily: "inherit",
         });
 
         const { svg: renderedSvg } = await mermaid.render(id, codeContent);
-        setSvg(renderedSvg);
+        // Security: Sanitize SVG output as defense-in-depth
+        const sanitizedSvg = sanitizeSvg(renderedSvg);
+        setSvg(sanitizedSvg);
         setError("");
       } catch (err) {
         console.error("Failed to render mermaid diagram:", err);
@@ -87,6 +97,7 @@ export const MermaidBlock = ({ children, className }: MermaidBlockProps) => {
     <div
       ref={containerRef}
       className={cn("mermaid-diagram w-full flex justify-center items-center my-4 overflow-x-auto", className)}
+      // Security: SVG is sanitized and mermaid uses securityLevel: strict
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
