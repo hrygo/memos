@@ -290,16 +290,32 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
 
   // Check for conflicts
   const checkForConflicts = async (scheduleData: Partial<ParsedSchedule>): Promise<boolean> => {
+    // Validate timestamps before API call
+    if (!scheduleData.startTs || !scheduleData.endTs) {
+      console.error("[ScheduleQuickInput] Missing timestamps:", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
+      return false;
+    }
+    if (scheduleData.startTs <= 0) {
+      console.error("[ScheduleQuickInput] Invalid startTs (must be positive):", scheduleData.startTs);
+      toast.error((t as any)("schedule.error.invalid-time") || "无效的时间，请重新输入");
+      return false;
+    }
+    if (scheduleData.endTs <= scheduleData.startTs) {
+      console.error("[ScheduleQuickInput] Invalid time range (endTs <= startTs):", { startTs: scheduleData.startTs, endTs: scheduleData.endTs });
+      toast.error((t as any)("schedule.error.invalid-time-range") || "结束时间必须晚于开始时间");
+      return false;
+    }
+
     try {
       const result = await checkConflict.mutateAsync({
-        startTs: scheduleData.startTs!,
-        endTs: scheduleData.endTs!,
+        startTs: scheduleData.startTs,
+        endTs: scheduleData.endTs,
       });
 
       if (result.conflicts.length > 0) {
         const conflictInfos: ConflictInfo[] = result.conflicts.map((s) => ({
           conflictingSchedule: s,
-          type: "partial",
+          type: "partial" as const,
           overlapStartTs: scheduleData.startTs!,
           overlapEndTs: scheduleData.endTs!,
         }));
@@ -349,8 +365,8 @@ export function ScheduleQuickInput({ initialDate, onScheduleCreated, className }
       const createRequest: Partial<Schedule> = {
         name: `schedules/${generateUUID()}`,
         title: scheduleData.title || t("schedule.untitled") || "Untitled Schedule",
-        startTs: scheduleData.startTs!,
-        endTs: scheduleData.endTs!,
+        startTs: scheduleData.startTs,
+        endTs: scheduleData.endTs,
         allDay: scheduleData.allDay || false,
         location: scheduleData.location || "",
         description: scheduleData.description || "",
