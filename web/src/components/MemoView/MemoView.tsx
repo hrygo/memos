@@ -68,7 +68,13 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
 
   return (
     <MemoViewContext.Provider value={contextValue}>
-      <article className={cn(MEMO_CARD_BASE_CLASSES, className)} ref={cardRef} tabIndex={readonly ? -1 : 0}>
+      <article
+        className={cn(MEMO_CARD_BASE_CLASSES, className)}
+        ref={cardRef}
+        role="article"
+        aria-label={`Memo by ${creator?.displayName || creator?.username || "Unknown"}`}
+        tabIndex={readonly ? -1 : 0}
+      >
         <MemoHeader
           showCreator={props.showCreator}
           showVisibility={props.showVisibility}
