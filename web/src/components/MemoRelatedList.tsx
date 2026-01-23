@@ -1,8 +1,9 @@
-import { FileTextIcon, LoaderIcon } from "lucide-react";
+import { FileTextIcon, LoaderIcon, SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useRelatedMemos } from "@/hooks/useAIQueries";
 import { cn } from "@/lib/utils";
+import { RELATED_MEMO_CARD } from "@/components/ui/card/constants";
 
 interface Props {
   memoName: string; // format: "memos/{id}"
@@ -38,7 +39,7 @@ const MemoRelatedList = ({ memoName, className }: Props) => {
             <Link
               key={memo.name}
               to={`/m/${id}`}
-              className="block p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors group"
+              className={RELATED_MEMO_CARD}
             >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -56,8 +57,5 @@ const MemoRelatedList = ({ memoName, className }: Props) => {
     </div>
   );
 };
-
-// Import locally to avoid conflict references in file creation content
-import { SparklesIcon } from "lucide-react";
 
 export default MemoRelatedList;

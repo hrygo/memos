@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { MEMO_CARD_SKELETON } from "@/components/ui/card/constants";
 
 interface Props {
   showCreator?: boolean;
@@ -7,7 +8,7 @@ interface Props {
 
 // Memo card skeleton component for list loading states
 const MemoCardSkeleton = ({ showCreator = false, index = 0 }: { showCreator?: boolean; index?: number }) => (
-  <div className="relative flex flex-col justify-start items-start bg-card w-full px-4 py-3 mb-2 gap-2 rounded-lg border border-border animate-pulse">
+  <div className={MEMO_CARD_SKELETON}>
     {/* Header section */}
     <div className="w-full flex flex-row justify-between items-center gap-2">
       <div className="w-auto max-w-[calc(100%-8rem)] grow flex flex-row justify-start items-center">
