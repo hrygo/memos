@@ -85,7 +85,7 @@ const DialogHeader = React.forwardRef<React.ElementRef<"div">, React.ComponentPr
 DialogHeader.displayName = "DialogHeader";
 
 const DialogFooter = React.forwardRef<React.ElementRef<"div">, React.ComponentPropsWithoutRef<"div">>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)} {...props} />
+  <div ref={ref} className={cn("flex flex-col gap-3 sm:flex-row sm:justify-end", className)} {...props} />
 ));
 DialogFooter.displayName = "DialogFooter";
 
