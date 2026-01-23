@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/grpc/codes"
@@ -14,13 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/usememos/memos/plugin/ai"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/proto/gen/api/v1/apiv1connect"
-	"github.com/usememos/memos/server/queryengine"
-	"github.com/usememos/memos/server/retrieval"
-	"github.com/usememos/memos/server/timezone"
-	"github.com/usememos/memos/store"
 )
 
 // ConnectServiceHandler wraps APIV1Service to implement Connect handler interfaces.
@@ -144,398 +137,66 @@ func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 
-	// 1. 获取当前用户
-	user, err := s.fetchCurrentUser(ctx)
-	if err != nil {
-		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthorized"))
-	}
-	if user == nil {
-		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthorized"))
-	}
-
-	// 2. 参数校验
-	if req.Msg.Message == "" {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("message is required"))
-	}
-
-	// ============================================================
-	// Phase 1: 智能 Query Routing（⭐ 新增）
-	// ============================================================
-	var routeDecision *queryengine.RouteDecision
-
-	// 解析用户时区
-	var userTimezone *time.Location
-	if req.Msg.UserTimezone != "" {
-		var err error
-		userTimezone, err = time.LoadLocation(req.Msg.UserTimezone)
-		if err != nil {
-			slog.Warn("Invalid timezone, using UTC", "timezone", req.Msg.UserTimezone, "error", err)
-			userTimezone = time.UTC
-		}
-	} else {
-		userTimezone = time.UTC
-	}
-
-	if s.AIService.QueryRouter != nil {
-		routeDecision = s.AIService.QueryRouter.Route(ctx, req.Msg.Message, userTimezone)
-		slog.Debug("Query routing decision",
-			"strategy", routeDecision.Strategy,
-			"confidence", routeDecision.Confidence,
-			"timezone", userTimezone,
-		)
-	} else {
-		// 降级：默认策略
-		routeDecision = &queryengine.RouteDecision{
-			Strategy:      "hybrid_standard",
-			Confidence:    0.80,
-			SemanticQuery: req.Msg.Message,
-			NeedsReranker: false,
-		}
-	}
-
-	// ============================================================
-	// Phase 2: Adaptive Retrieval（⭐ 新增）
-	// ============================================================
-	var searchResults []*retrieval.SearchResult
-	if s.AIService.AdaptiveRetriever != nil {
-		// 使用新的自适应检索器
-		searchResults, err = s.AIService.AdaptiveRetriever.Retrieve(ctx, &retrieval.RetrievalOptions{
-			Query:     req.Msg.Message,
-			UserID:    user.ID,
-			Strategy:  routeDecision.Strategy,
-			TimeRange: routeDecision.TimeRange,
-			MinScore:  0.5,
-			Limit:     10,
-		})
-		if err != nil {
-			slog.Warn("AdaptiveRetriever error, using fallback", "error", err)
-			// 降级到旧逻辑
-			searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Msg.Message)
-			if err != nil {
-				return connect.NewError(connect.CodeInternal, fmt.Errorf("retrieval failed: %v", err))
-			}
-		}
-	} else {
-		// 降级到旧逻辑
-		searchResults, err = s.fallbackRetrieval(ctx, user.ID, req.Msg.Message)
-		if err != nil {
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("retrieval failed: %v", err))
-		}
-	}
-
-	slog.Debug("Retrieval completed", "results_count", len(searchResults))
-
-	// 分类结果：笔记和日程
-	var memoResults []*retrieval.SearchResult
-	var scheduleResults []*retrieval.SearchResult
-	for _, result := range searchResults {
-		switch result.Type {
-		case "memo":
-			memoResults = append(memoResults, result)
-		case "schedule":
-			scheduleResults = append(scheduleResults, result)
-		}
-	}
-
-	// ============================================================
-	// Phase 3: 构建上下文（⭐ 支持日程）
-	// ============================================================
-	var contextBuilder strings.Builder
-	var sources []string
-	totalChars := 0
-	maxChars := MaxContextLength
-
-	// 添加笔记到上下文
-	for i, r := range memoResults {
-		content := r.Content
-		if totalChars+len(content) > maxChars {
-			break
-		}
-
-		contextBuilder.WriteString(fmt.Sprintf("### 笔记 %d (相关度: %.0f%%)\n%s\n\n", i+1, r.Score*100, content))
-		if r.Memo != nil {
-			sources = append(sources, fmt.Sprintf("memos/%s", r.Memo.UID))
-		}
-		totalChars += len(content)
-
-		if len(sources) >= 5 {
-			break
-		}
-	}
-
-	// ⭐ 新增：添加日程到上下文
-	if len(scheduleResults) > 0 {
-		contextBuilder.WriteString("### 📅 日程安排\n")
-		for i, r := range scheduleResults {
-			if r.Schedule != nil {
-				// 使用 timezone 包格式化日程时间（完整日期时间）
-				timeStr := timezone.FormatScheduleTime(
-					r.Schedule.StartTs,
-					r.Schedule.EndTs,
-					r.Schedule.AllDay,
-					userTimezone,
-				)
-				contextBuilder.WriteString(fmt.Sprintf("%d. %s - %s", i+1, timeStr, r.Schedule.Title))
-				if r.Schedule.Location != "" {
-					contextBuilder.WriteString(fmt.Sprintf(" @ %s", r.Schedule.Location))
-				}
-				contextBuilder.WriteString("\n")
-				// ⭐ 添加日程到 sources
-				sources = append(sources, fmt.Sprintf("schedules/%d", r.Schedule.ID))
-			}
-		}
-		contextBuilder.WriteString("\n")
-	}
-
-	// ============================================================
-	// Phase 4: 构建提示词（⭐ 优化）
-	// ============================================================
-	var hasNotes = len(memoResults) > 0
-	var hasSchedules = len(scheduleResults) > 0
-
-	messages := s.buildOptimizedMessagesForConnect(
-		req.Msg.Message,
-		req.Msg.History,
-		contextBuilder.String(),
-		scheduleResults,
-		hasNotes,
-		hasSchedules,
+	// Log entry for debugging
+	slog.Info("ConnectServiceHandler: ChatWithMemos called",
+		"message", truncateStringForLog(req.Msg.Message, 50),
+		"agent_type", req.Msg.AgentType.String(),
+		"agent_type_value", int(req.Msg.AgentType),
+		"is_default", req.Msg.AgentType == v1pb.AgentType_AGENT_TYPE_DEFAULT,
 	)
 
-	// ============================================================
-	// Phase 5: 流式调用 LLM
-	// ============================================================
-	contentChan, errChan := s.AIService.LLMService.ChatStream(ctx, messages)
-
-	// 先发送来源信息
-	if err := stream.Send(&v1pb.ChatWithMemosResponse{
-		Sources: sources,
-	}); err != nil {
-		return err
-	}
-
-	// 收集完整回复内容
-	var fullContent strings.Builder
-
-	// 流式发送内容
-	for {
-		select {
-		case content, ok := <-contentChan:
-			if !ok {
-				contentChan = nil
-				if errChan == nil {
-					// 流结束，发送最终响应
-					return s.sendFinalResponse(stream, fullContent.String(), scheduleResults)
-				}
-				continue
-			}
-			fullContent.WriteString(content)
-			if err := stream.Send(&v1pb.ChatWithMemosResponse{
-				Content: content,
-			}); err != nil {
-				return err
-			}
-
-		case err, ok := <-errChan:
-			if !ok {
-				errChan = nil
-				if contentChan == nil {
-					// 流结束，发送最终响应
-					return s.sendFinalResponse(stream, fullContent.String(), scheduleResults)
-				}
-				continue
-			}
-			if err != nil {
-				return connect.NewError(connect.CodeInternal, fmt.Errorf("LLM error: %v", err))
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
-// sendFinalResponse 发送最终响应（包含 Done、ScheduleQueryResult 等）
-func (s *ConnectServiceHandler) sendFinalResponse(
-	stream *connect.ServerStream[v1pb.ChatWithMemosResponse],
-	aiResponse string,
-	scheduleResults []*retrieval.SearchResult,
-) error {
-	// 解析日程创建意图
-	scheduleIntent := ParseScheduleIntentFromAIResponse(aiResponse)
-
-	// 构建最终响应
-	response := &v1pb.ChatWithMemosResponse{
-		Done: true,
-	}
-
-	// 添加日程创建意图
-	if scheduleIntent != nil {
-		response.ScheduleCreationIntent = scheduleIntent
-	}
-
-	// 添加日程查询结果
-	if len(scheduleResults) > 0 {
-		scheduleSummaries := make([]*v1pb.ScheduleSummary, 0, len(scheduleResults))
-		for _, r := range scheduleResults {
-			if r.Schedule != nil {
-				summary := &v1pb.ScheduleSummary{
-					Uid:      fmt.Sprintf("schedules/%d", r.Schedule.ID),
-					Title:    r.Schedule.Title,
-					StartTs:  r.Schedule.StartTs,
-					AllDay:   r.Schedule.AllDay,
-					Location: r.Schedule.Location,
-				}
-
-				// 处理可选字段
-				if r.Schedule.EndTs != nil {
-					summary.EndTs = *r.Schedule.EndTs
-				}
-				if r.Schedule.RecurrenceRule != nil {
-					summary.RecurrenceRule = *r.Schedule.RecurrenceRule
-				}
-				// 使用 RowStatus 作为 Status
-				summary.Status = r.Schedule.RowStatus.String()
-
-				scheduleSummaries = append(scheduleSummaries, summary)
-			}
-		}
-		response.ScheduleQueryResult = &v1pb.ScheduleQueryResult{
-			Schedules: scheduleSummaries,
-		}
-	}
-
-	return stream.Send(response)
-}
-
-// fallbackRetrieval 降级检索逻辑（兼容旧版本）
-func (s *ConnectServiceHandler) fallbackRetrieval(ctx context.Context, userID int32, query string) ([]*retrieval.SearchResult, error) {
-	// 简化的向量检索
-	queryVector, err := s.AIService.EmbeddingService.Embed(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to embed query: %w", err)
-	}
-
-	vectorResults, err := s.AIService.Store.VectorSearch(ctx, &store.VectorSearchOptions{
-		UserID: userID,
-		Vector: queryVector,
-		Limit:  20,
+	// Delegate to AIService.ChatWithMemos which has the full agent routing logic
+	return s.AIService.ChatWithMemos(req.Msg, &connectStreamAdapter{
+		stream: stream,
+		ctx:    ctx,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to search: %w", err)
-	}
-
-	// 转换为 SearchResult
-	results := make([]*retrieval.SearchResult, len(vectorResults))
-	for i, r := range vectorResults {
-		results[i] = &retrieval.SearchResult{
-			ID:      int64(r.Memo.ID),
-			Type:    "memo",
-			Score:   r.Score,
-			Content: r.Memo.Content,
-			Memo:    r.Memo,
-		}
-	}
-
-	return results, nil
 }
 
-// buildOptimizedMessagesForConnect 构建优化后的消息（支持日程）
-func (s *ConnectServiceHandler) buildOptimizedMessagesForConnect(
-	userMessage string,
-	history []string,
-	memoContext string,
-	scheduleResults []*retrieval.SearchResult,
-	hasNotes, hasSchedules bool,
-) []ai.Message {
-	// ============================================================
-	// System Prompt - 简化版（⭐ 优化）
-	// ============================================================
-	systemPrompt := `你是 Memos AI 助手，帮助用户管理笔记和日程。
+// connectStreamAdapter wraps Connect ServerStream to implement AIService_ChatWithMemosServer
+type connectStreamAdapter struct {
+	stream *connect.ServerStream[v1pb.ChatWithMemosResponse]
+	ctx    context.Context
+}
 
-## 回复原则
-1. **简洁准确**：基于提供的上下文回答，不编造信息
-2. **结构清晰**：使用列表、分段组织内容
-3. **完整回复**：
-   - 如果有日程，优先列出日程
-   - 如果有笔记，补充相关笔记
-   - 如果都没有，明确告知
+func (a *connectStreamAdapter) Send(resp *v1pb.ChatWithMemosResponse) error {
+	return a.stream.Send(resp)
+}
 
-## 日程查询
-当用户查询时间范围的日程时（如"今天"、"本周"）：
-1. **优先回复日程信息**
-2. 格式：时间 - 标题 (@地点)
-3. 如果没有日程，明确告知"暂无日程"
+func (a *connectStreamAdapter) Context() context.Context {
+	return a.ctx
+}
 
-## 日程创建检测（重要）
-⚠️ **仅在用户的原始问题明确表示要创建日程时**才添加意图标记：
-- 创建意图的明确关键词："帮我创建"、"帮我添加"、"设置提醒"、"新建日程"
-- ❌ 以下情况**不是**创建意图：
-  - 查询类："有哪些"、"有什么安排"、"今天干什么"、"明天的事要干"
-  - 确认类："我明天有安排吗"、"今天有空吗"
-
-仅在检测到创建意图时，在回复最后一行添加：
-<<<SCHEDULE_INTENT:{"detected":true,"schedule_description":"自然语言描述"}>>>`
-
-	// 构建消息
-	messages := []ai.Message{
-		{Role: "system", Content: systemPrompt},
+func (a *connectStreamAdapter) SendMsg(m any) error {
+	if resp, ok := m.(*v1pb.ChatWithMemosResponse); ok {
+		return a.Send(resp)
 	}
+	return fmt.Errorf("invalid message type: %T", m)
+}
 
-	// 添加历史对话（跳过空消息以避免 LLM API 错误）
-	for i := 0; i < len(history)-1; i += 2 {
-		if i+1 < len(history) {
-			userMsg := history[i]
-			assistantMsg := history[i+1]
-			// 只添加非空消息
-			if userMsg != "" && assistantMsg != "" {
-				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
-				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
-			}
-		}
+func (a *connectStreamAdapter) RecvMsg(m any) error {
+	return fmt.Errorf("RecvMsg not supported for server streaming")
+}
+
+func (a *connectStreamAdapter) SetHeader(md metadata.MD) error {
+	return nil
+}
+
+func (a *connectStreamAdapter) SendHeader(md metadata.MD) error {
+	return nil
+}
+
+func (a *connectStreamAdapter) SetTrailer(md metadata.MD) {
+}
+
+// truncateStringForLog truncates a string for logging
+func truncateStringForLog(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
-
-	// ============================================================
-	// User Message - 构建上下文
-	// ============================================================
-	var userMsgBuilder strings.Builder
-
-	// 添加上下文标题
-	if hasNotes || hasSchedules {
-		userMsgBuilder.WriteString("## 上下文信息\n\n")
+	if maxLen <= 3 {
+		return s[:maxLen]
 	}
-
-	// 添加笔记上下文
-	if hasNotes {
-		userMsgBuilder.WriteString("### 📝 相关笔记\n")
-		userMsgBuilder.WriteString(memoContext)
-		userMsgBuilder.WriteString("\n")
-	}
-
-	// ⭐ 添加日程上下文
-	if hasSchedules {
-		userMsgBuilder.WriteString("### 📅 日程安排\n")
-		for i, r := range scheduleResults {
-			if r.Schedule != nil {
-				scheduleTime := time.Unix(r.Schedule.StartTs, 0)
-				timeStr := scheduleTime.Format("15:04")
-				userMsgBuilder.WriteString(fmt.Sprintf("%d. %s - %s", i+1, timeStr, r.Schedule.Title))
-				if r.Schedule.Location != "" {
-					userMsgBuilder.WriteString(fmt.Sprintf(" @ %s", r.Schedule.Location))
-				}
-				userMsgBuilder.WriteString("\n")
-			}
-		}
-		userMsgBuilder.WriteString("\n")
-	}
-
-	// 用户问题
-	userMsgBuilder.WriteString("## 问题\n")
-	userMsgBuilder.WriteString(userMessage)
-
-	messages = append(messages, ai.Message{Role: "user", Content: userMsgBuilder.String()})
-
-	return messages
+	return s[:maxLen-3] + "..."
 }
 
 // ScheduleService wrappers for Connect

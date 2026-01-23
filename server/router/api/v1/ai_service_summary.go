@@ -7,23 +7,20 @@ import (
 	"time"
 
 	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/server/finops"
 	"github.com/usememos/memos/store"
 )
 
 // SummaryService provides AI-powered summarization features.
 type SummaryService struct {
-	store       *store.Store
-	llm         ai.LLMService
-	costMonitor *finops.CostMonitor
+	store *store.Store
+	llm   ai.LLMService
 }
 
 // NewSummaryService creates a new summary service.
-func NewSummaryService(st *store.Store, llm ai.LLMService, cm *finops.CostMonitor) *SummaryService {
+func NewSummaryService(st *store.Store, llm ai.LLMService) *SummaryService {
 	return &SummaryService{
-		store:       st,
-		llm:         llm,
-		costMonitor: cm,
+		store: st,
+		llm:   llm,
 	}
 }
 

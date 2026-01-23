@@ -17,8 +17,6 @@ import (
 	"github.com/usememos/memos/plugin/markdown"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/server/finops"
-	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/store"
 )
@@ -86,10 +84,8 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 					}
 				}
 
-				// 创建优化组件
-				queryRouter := queryengine.NewQueryRouter()
+				// 创建自适应检索器
 				adaptiveRetriever := retrieval.NewAdaptiveRetriever(store, embeddingService, rerankerService)
-				costMonitor := finops.NewCostMonitor(store.GetDriver().GetDB())
 
 				// Initialize ParrotRouter if LLM service is available
 				var parrotRouter *agentpkg.ParrotRouter
@@ -106,9 +102,7 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 					EmbeddingService:  embeddingService,
 					RerankerService:   rerankerService,
 					LLMService:        llmService,
-					QueryRouter:       queryRouter,
 					AdaptiveRetriever: adaptiveRetriever,
-					CostMonitor:       costMonitor,
 					ParrotRouter:      parrotRouter,
 				}
 				// Initialize ScheduleService with LLM service for natural language parsing

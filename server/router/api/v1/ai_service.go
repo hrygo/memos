@@ -8,9 +8,7 @@ import (
 	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/server/finops"
 	"github.com/usememos/memos/server/middleware"
-	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/store"
 )
@@ -28,10 +26,8 @@ type AIService struct {
 	RerankerService  ai.RerankerService
 	LLMService       ai.LLMService
 
-	// 优化组件（Phase 1）
-	QueryRouter       *queryengine.QueryRouter
+	// Adaptive retriever for RAG operations
 	AdaptiveRetriever *retrieval.AdaptiveRetriever
-	CostMonitor       *finops.CostMonitor
 
 	// 鹦鹉系统（Milestone 1）
 	ParrotRouter *agentpkg.ParrotRouter
