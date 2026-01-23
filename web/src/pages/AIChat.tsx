@@ -228,7 +228,7 @@ function ChatView({
         Hi, I'm {currentParrot.displayName}
         <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
       </h3>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg md:max-w-xl mb-4 leading-relaxed">{currentParrot.description}</p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg md:max-w-xl mb-4 leading-relaxed" style={{ writingMode: "horizontal-tb", textOrientation: "upright" }}>{currentParrot.description}</p>
 
       {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center w-full max-w-2xl">
