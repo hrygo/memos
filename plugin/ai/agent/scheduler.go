@@ -31,6 +31,7 @@ type SchedulerAgent struct {
 	timezone    string
 	timezoneLoc *time.Location // Cached timezone location
 	tools       map[string]*AgentTool
+	metrics     *AgentMetrics // Metrics collection
 
 	// Cache management (protected by cacheMutex)
 	cacheMutex         sync.RWMutex
@@ -132,6 +133,7 @@ func NewSchedulerAgent(llm ai.LLMService, scheduleSvc schedule.Service, userID i
 		timezone:     userTimezone,
 		timezoneLoc:  timezoneLoc,
 		tools:        toolMap,
+		metrics:      GetGlobalMetrics(), // Use shared metrics instance
 		failureCount: make(map[string]int),
 	}
 
@@ -233,31 +235,84 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 			continue
 		}
 
+		// Track tool start time for metrics
+		toolStart := time.Now()
+
 		toolResult, err := tool.Execute(ctx, toolInput)
+		toolDuration := time.Since(toolStart)
+
+		// Record tool call metrics
+		if a.metrics != nil {
+			a.metrics.RecordToolCall(toolCall, toolDuration, err == nil)
+		}
+
 		if err != nil {
-			// Check for repeated failures
+			// Classify the error to determine retry strategy
+			classified := ClassifyError(err)
+
+			// Check for repeated failures based on error class
 			a.failureMutex.Lock()
 			a.failureCount[toolCall]++
 			failCount := a.failureCount[toolCall]
 			a.failureMutex.Unlock()
 
-			// Log tool failure for monitoring
+			// Log tool failure with classification
 			slog.Warn("tool execution failed",
 				"user_id", a.userID,
 				"tool", toolCall,
+				"error_class", classified.Class,
 				"failure_count", failCount,
 				"error", err,
 				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
 
-			// If tool fails 3+ times in a row, abort to avoid wasting resources
-			if failCount >= timeout.MaxToolFailures {
-				return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
+			// Record error class metrics
+			if a.metrics != nil {
+				a.metrics.RecordErrorClass(classified.Class)
 			}
 
-			errorMsg := fmt.Sprintf("Tool %s failed: %v", toolCall, err)
-			messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-			continue
+			// Handle based on error class
+			switch classified.Class {
+			case ErrorClassConflict:
+				// Conflict errors are permanent for this tool call
+				// Reset failure count and continue - let LLM try a different approach
+				a.failureMutex.Lock()
+				a.failureCount[toolCall] = 0
+				a.failureMutex.Unlock()
+
+				// Provide a helpful error message to the LLM
+				errorMsg := fmt.Sprintf("Tool %s failed due to schedule conflict. Please use find_free_time to check availability or suggest a different time.", toolCall)
+				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
+				continue
+
+			case ErrorClassPermanent:
+				// Permanent errors should not be retried - abort immediately
+				return "", fmt.Errorf("tool %s failed with permanent error: %w", toolCall, err)
+
+			case ErrorClassTransient:
+				// Transient errors can be retried with exponential backoff
+				if failCount >= timeout.MaxToolFailures {
+					return "", fmt.Errorf("tool %s failed repeatedly (%d times) with transient errors: %w", toolCall, failCount, err)
+				}
+
+				// Add delay before retry for transient errors
+				if classified.RetryAfter > 0 {
+					select {
+					case <-time.After(classified.RetryAfter):
+						// Continue with retry
+					case <-ctx.Done():
+						return "", fmt.Errorf("retry cancelled: %w", ctx.Err())
+					}
+				}
+
+				errorMsg := fmt.Sprintf("Tool %s failed: %v. Retrying...", toolCall, err)
+				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
+				continue
+
+			default:
+				// Unknown error - treat as permanent
+				return "", fmt.Errorf("tool %s failed with unknown error: %w", toolCall, err)
+			}
 		}
 
 		// Reset failure count on success
@@ -287,6 +342,11 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 		"cache_misses", cacheMisses,
 		"cache_hit_rate", fmt.Sprintf("%.2f%%", cacheHitRate),
 	)
+
+	// Record metrics
+	if a.metrics != nil {
+		a.metrics.RecordExecution(duration, iteration+1, true)
+	}
 
 	return finalResponse, nil
 }
@@ -524,43 +584,110 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			"input", truncateString(toolInput, 200),
 		)
 
+		// Track tool start time for metrics
+		toolStart := time.Now()
+
 		toolResult, err := tool.Execute(ctx, toolInput)
+		toolDuration := time.Since(toolStart)
+
+		// Record tool call metrics
+		if a.metrics != nil {
+			a.metrics.RecordToolCall(toolCall, toolDuration, err == nil)
+		}
+
 		if err != nil {
 			slog.Warn("SchedulerAgent: Tool execution failed",
 				"iteration", iteration+1,
 				"tool", toolCall,
 				"error", err,
 			)
-			// Check for repeated failures
+			// Classify the error to determine retry strategy
+			classified := ClassifyError(err)
+
+			// Check for repeated failures based on error class
 			a.failureMutex.Lock()
 			a.failureCount[toolCall]++
 			failCount := a.failureCount[toolCall]
 			a.failureMutex.Unlock()
 
-			// Log tool failure for monitoring
+			// Log tool failure with classification
 			slog.Warn("tool execution failed",
 				"user_id", a.userID,
 				"tool", toolCall,
+				"error_class", classified.Class,
 				"failure_count", failCount,
 				"error", err,
 				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
 
-			// If tool fails 3+ times in a row, abort to avoid wasting resources
-			if failCount >= timeout.MaxToolFailures {
-				errorMsg := fmt.Sprintf("tool %s failed repeatedly (%d times): %v", toolCall, failCount, err)
+			// Record error class metrics
+			if a.metrics != nil {
+				a.metrics.RecordErrorClass(classified.Class)
+			}
+
+			// Handle based on error class
+			switch classified.Class {
+			case ErrorClassConflict:
+				// Conflict errors are permanent for this tool call
+				// Reset failure count and continue - let LLM try a different approach
+				a.failureMutex.Lock()
+				a.failureCount[toolCall] = 0
+				a.failureMutex.Unlock()
+
+				errorMsg := fmt.Sprintf("Tool %s failed due to schedule conflict. Please use find_free_time to check availability.", toolCall)
+				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
 				if callback != nil {
 					callback("error", errorMsg)
 				}
-				return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
-			}
+				continue
 
-			errorMsg := fmt.Sprintf("Tool %s failed: %v", toolCall, err)
-			messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-			if callback != nil {
-				callback("error", errorMsg)
+			case ErrorClassPermanent:
+				// Permanent errors should not be retried - abort immediately
+				errorMsg := fmt.Sprintf("Tool %s failed with permanent error: %v", toolCall, err)
+				if callback != nil {
+					callback("error", errorMsg)
+				}
+				return "", fmt.Errorf("tool %s failed with permanent error: %w", toolCall, err)
+
+			case ErrorClassTransient:
+				// Transient errors can be retried
+				if failCount >= timeout.MaxToolFailures {
+					errorMsg := fmt.Sprintf("tool %s failed repeatedly (%d times) with transient errors: %v", toolCall, failCount, err)
+					if callback != nil {
+						callback("error", errorMsg)
+					}
+					return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
+				}
+
+				// Add delay before retry for transient errors
+				if classified.RetryAfter > 0 {
+					select {
+					case <-time.After(classified.RetryAfter):
+						// Continue with retry
+					case <-ctx.Done():
+						errorMsg := fmt.Sprintf("Retry cancelled: %v", ctx.Err())
+						if callback != nil {
+							callback("error", errorMsg)
+						}
+						return "", ctx.Err()
+					}
+				}
+
+				errorMsg := fmt.Sprintf("Tool %s failed: %v. Retrying...", toolCall, err)
+				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
+				if callback != nil {
+					callback("error", errorMsg)
+				}
+				continue
+
+			default:
+				// Unknown error - treat as permanent
+				errorMsg := fmt.Sprintf("Tool %s failed with unknown error: %v", toolCall, err)
+				if callback != nil {
+					callback("error", errorMsg)
+				}
+				return "", fmt.Errorf("tool %s failed with unknown error: %w", toolCall, err)
 			}
-			continue
 		}
 
 		// Reset failure count on success
@@ -795,6 +922,11 @@ func (a *SchedulerAgent) getToolNames() string {
 		names = append(names, name)
 	}
 	return strings.Join(names, ", ")
+}
+
+// GetMetrics returns the agent's metrics collector.
+func (a *SchedulerAgent) GetMetrics() *AgentMetrics {
+	return a.metrics
 }
 
 // truncateString truncates a string to a maximum length for logging.

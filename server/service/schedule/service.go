@@ -3,7 +3,7 @@
 //
 // Key features:
 //   - Recurring schedule expansion using RRule
-//   - Conflict detection and prevention
+//   - Conflict detection and prevention (atomic via DB constraint)
 //   - Timezone-aware time handling
 //
 // The service layer abstracts business logic from the store layer and provides
@@ -12,6 +12,7 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/usememos/memos/internal/util"
 	aischedule "github.com/usememos/memos/plugin/ai/schedule"
 	"github.com/usememos/memos/store"
+	postgresstore "github.com/usememos/memos/store/db/postgres"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
@@ -225,7 +227,8 @@ func (s *service) CreateSchedule(ctx context.Context, userID int32, create *Crea
 	payloadStr := "{}"
 	sched.Payload = &payloadStr
 
-	// Check for conflicts before creating
+	// Check for conflicts before creating (provides better error messages)
+	// The database EXCLUDE constraint provides the final atomic guarantee
 	conflicts, err := s.CheckConflicts(ctx, userID, create.StartTs, create.EndTs, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check conflicts: %w", err)
@@ -235,8 +238,16 @@ func (s *service) CreateSchedule(ctx context.Context, userID int32, create *Crea
 	}
 
 	// Create schedule in database
+	// The database will atomically verify no conflicts exist via EXCLUDE constraint
 	created, err := s.store.CreateSchedule(ctx, sched)
 	if err != nil {
+		// Check for database-level conflict constraint violation
+		var conflictErr *postgresstore.ConflictConstraintError
+		if errors.As(err, &conflictErr) {
+			// Return a more user-friendly error
+			return nil, fmt.Errorf("%w: %s", ErrScheduleConflict,
+				"this time slot overlaps with an existing schedule (detected atomically)")
+		}
 		return nil, fmt.Errorf("failed to create schedule: %w", err)
 	}
 
