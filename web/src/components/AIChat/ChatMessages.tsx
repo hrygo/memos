@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, Scissors } from "lucide-react";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
@@ -69,86 +69,89 @@ export function ChatMessages({
 
   const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
   const currentIcon = currentParrotId ? PARROT_ICONS[currentParrotId] || PARROT_ICONS.DEFAULT : PARROT_ICONS.DEFAULT;
-
+  console.log("items", items);
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn("flex-1 overflow-y-auto px-3 md:px-6 py-4", className)}>
-      <div className="max-w-3xl mx-auto">
-        {children}
-      </div>
+      {children}
 
-      <div className="max-w-3xl mx-auto space-y-4">
-        {items.map((item, index) => {
-          // Context separator
-          if ("type" in item && item.type === "context-separator") {
+      {items.length > 0 && (
+        <div className="max-w-3xl mx-auto space-y-4" ref={endRef}>
+          {items.map((item, index) => {
+            // Context separator - optimized visual design
+            if ("type" in item && item.type === "context-separator") {
+              return (
+                <div key={`separator-${index}`} className="flex items-center justify-center gap-3 py-3 my-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm">
+                    <Scissors className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 rotate-[-45deg]" />
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">{t("ai.context-cleared")}</span>
+                  </div>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+                </div>
+              );
+            }
+
+            const msg = item as ConversationMessage;
+            const isLastMessage = index === items.length - 1;
+            const isNew = Date.now() - msg.timestamp < 1000; // Animation for recent messages
+
             return (
-              <div key={`separator-${index}`} className="flex items-center gap-4 py-4 animate-in fade-in duration-300">
-                <div className="flex-1 h-px bg-zinc-300 dark:bg-zinc-700" />
-                <span className="text-xs text-zinc-500 dark:text-zinc-500 whitespace-nowrap font-medium">{t("ai.context-cleared")}</span>
-                <div className="flex-1 h-px bg-zinc-300 dark:bg-zinc-700" />
-              </div>
-            );
-          }
-
-          const msg = item as ConversationMessage;
-          const isLastMessage = index === items.length - 1;
-          const isNew = Date.now() - msg.timestamp < 1000; // Animation for recent messages
-
-          return (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              theme={theme}
-              icon={msg.role === "user" ? undefined : currentIcon}
-              isLastAssistant={msg.role === "assistant" && isLastMessage}
-              isNew={isNew}
-              onCopy={() => onCopyMessage?.(msg.content)}
-              onRegenerate={onRegenerate}
-              onDelete={() => onDeleteMessage?.(index)}
-            >
-              {msg.role === "assistant" && isTyping && isLastMessage && !msg.error && (
-                <TypingCursor active={true} parrotId={currentParrotId} variant="dots" />
-              )}
-            </MessageBubble>
-          );
-        })}
-
-        {/* Amazing Insight Card - rendered in message flow with exact same alignment as assistant messages */}
-        {amazingInsightCard && !isTyping && items.length > 0 && (
-          <div className="flex gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Spacer for avatar alignment */}
-            <div className="w-9 h-9 md:w-10 md:h-10 shrink-0 invisible" />
-            <div className="flex-1 min-w-0">
-              <div className="max-w-[85%] md:max-w-[80%]">
-                {amazingInsightCard}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Typing indicator - AI Native design */}
-        {isTyping &&
-          (() => {
-            const lastItem = items[items.length - 1];
-            if (!lastItem) return true;
-            if ("type" in lastItem && lastItem.type === "context-separator") return true;
-            return "role" in lastItem && lastItem.role !== "assistant";
-          })() && (
-            <div className="flex gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-sm">
-                {currentIcon.startsWith("/") ? (
-                  <img src={currentIcon} alt="" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
-                ) : (
-                  <span className="text-lg md:text-xl">{currentIcon}</span>
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                theme={theme}
+                icon={msg.role === "user" ? undefined : currentIcon}
+                isLastAssistant={msg.role === "assistant" && isLastMessage}
+                isNew={isNew}
+                onCopy={() => onCopyMessage?.(msg.content)}
+                onRegenerate={onRegenerate}
+                onDelete={() => onDeleteMessage?.(index)}
+              >
+                {msg.role === "assistant" && isTyping && isLastMessage && !msg.error && (
+                  <TypingCursor active={true} parrotId={currentParrotId} variant="dots" />
                 )}
-              </div>
-              <div className={cn("px-4 py-3 rounded-2xl border shadow-sm", theme.bubbleBg, theme.bubbleBorder)}>
-                <TypingCursor active={true} parrotId={currentParrotId} variant="dots" />
+              </MessageBubble>
+            );
+          })}
+
+          {/* Amazing Insight Card - rendered in message flow with exact same alignment as assistant messages */}
+          {amazingInsightCard && !isTyping && items.length > 0 && (
+            <div className="flex gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Spacer for avatar alignment */}
+              <div className="w-9 h-9 md:w-10 md:h-10 shrink-0 invisible" />
+              <div className="flex-1 min-w-0">
+                <div className="max-w-[85%] md:max-w-[80%]">
+                  {amazingInsightCard}
+                </div>
               </div>
             </div>
           )}
-        {/* Scroll anchor */}
-        <div ref={endRef} className="h-1" />
-      </div>
+
+          {/* Typing indicator - AI Native design */}
+          {isTyping &&
+            (() => {
+              const lastItem = items[items.length - 1];
+              if (!lastItem) return true;
+              if ("type" in lastItem && lastItem.type === "context-separator") return true;
+              return "role" in lastItem && lastItem.role !== "assistant";
+            })() && (
+              <div className="flex gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-sm">
+                  {currentIcon.startsWith("/") ? (
+                    <img src={currentIcon} alt="" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
+                  ) : (
+                    <span className="text-lg md:text-xl">{currentIcon}</span>
+                  )}
+                </div>
+                <div className={cn("px-4 py-3 rounded-2xl border shadow-sm", theme.bubbleBg, theme.bubbleBorder)}>
+                  <TypingCursor active={true} parrotId={currentParrotId} variant="dots" />
+                </div>
+              </div>
+            )}
+          {/* Scroll anchor */}
+          <div ref={endRef} className="h-1" />
+        </div>
+      )}
     </div>
   );
 }
