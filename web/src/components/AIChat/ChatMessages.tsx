@@ -72,7 +72,9 @@ export function ChatMessages({
 
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn("flex-1 overflow-y-auto px-3 md:px-6 py-4", className)}>
-      {children}
+      <div className="max-w-3xl mx-auto">
+        {children}
+      </div>
 
       <div className="max-w-3xl mx-auto space-y-4">
         {items.map((item, index) => {
