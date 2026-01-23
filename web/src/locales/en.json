@@ -499,7 +499,9 @@
     "clear-chat-desc": "Delete all conversation content",
     "clear-context": "Clear context",
     "clear-context-desc": "Subsequent conversations won't include above content",
+    "clear-context-shortcut": "Press ⌘K to clear context",
     "context-cleared": "Context cleared",
+    "context-cleared-toast": "Context cleared",
     "welcome-title": "Welcome to AI Assistant",
     "welcome-description": "I can help you search, summarize, and discuss your memos, as well as manage your schedules",
     "send-shortcut": "Send",
@@ -523,7 +525,16 @@
         "no-results": "No results found",
         "try-different-search": "Try a different search term",
         "conversation-count_one": "{{count}} conversation",
-        "conversation-count_other": "{{count}} conversations"
+        "conversation-count_other": "{{count}} conversations",
+        "message-count_one": "{{count}} message",
+        "message-count_other": "{{count}} messages",
+        "time-just-now": "Just now",
+        "time-minutes-ago_one": "{{count}}m ago",
+        "time-minutes-ago_other": "{{count}}m ago",
+        "time-hours-ago_one": "{{count}}h ago",
+        "time-hours-ago_other": "{{count}}h ago",
+        "time-days-ago_one": "{{count}}d ago",
+        "time-days-ago_other": "{{count}}d ago"
       },
       "memo-query": {
         "no-results": "No related memos found",

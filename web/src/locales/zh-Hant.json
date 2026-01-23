@@ -462,7 +462,9 @@
     "clear-chat-desc": "刪除所有會話內容",
     "clear-context": "清空上下文",
     "clear-context-desc": "後續對話不攜帶上方內容",
+    "clear-context-shortcut": "按 ⌘K 清空上下文",
     "context-cleared": "上下文已清空",
+    "context-cleared-toast": "上下文已清空",
     "welcome-title": "歡迎使用 AI 助手",
     "welcome-description": "我可以幫您搜尋、總結和討論您的備忘內容，以及管理您的日程",
     "send-shortcut": "發送",
@@ -472,7 +474,32 @@
     "prompt-explain": "解釋某個概念",
     "prompt-discuss": "開始討論",
     "error-title": "出錯了",
-    "retry": "重試"
+    "retry": "重試",
+    "aichat": {
+      "sidebar": {
+        "history": "歷史記錄",
+        "memos": "引用筆記",
+        "new-chat": "新建對話",
+        "no-conversations": "暫無對話記錄",
+        "start-new-chat": "開始一個新對話",
+        "no-referenced-memos": "暫無引用筆記",
+        "search-memos-hint": "與筆記鸚鵡對話以搜索和引用您的筆記",
+        "search-placeholder": "搜索筆記...",
+        "no-results": "未找到結果",
+        "try-different-search": "嘗試不同的搜索詞",
+        "conversation-count_one": "{{count}} 個對話",
+        "conversation-count_other": "{{count}} 個對話",
+        "message-count_one": "{{count}} 條消息",
+        "message-count_other": "{{count}} 條消息",
+        "time-just-now": "剛剛",
+        "time-minutes-ago_one": "{{count}} 分鐘前",
+        "time-minutes-ago_other": "{{count}} 分鐘前",
+        "time-hours-ago_one": "{{count}} 小時前",
+        "time-hours-ago_other": "{{count}} 小時前",
+        "time-days-ago_one": "{{count}} 天前",
+        "time-days-ago_other": "{{count}} 天前"
+      }
+    }
   },
   "schedule": {
     "title": "日程",
