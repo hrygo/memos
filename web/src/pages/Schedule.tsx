@@ -88,7 +88,7 @@ const Schedule = () => {
             </span>
           )}
 
-          <div className="flex items-center gap-2 flex-1 justify-end">
+          <div className="flex items-center gap-2 justify-end">
             <ScheduleSearchBar
               schedules={allSchedules}
               onFilteredChange={setFilteredSchedules}
