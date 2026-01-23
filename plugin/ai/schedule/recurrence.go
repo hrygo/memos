@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -327,3 +328,220 @@ func parseInt(s string) int {
 	}
 	return val
 }
+
+// RecurrenceIterator provides lazy-loading iteration over recurrence instances.
+// This is more memory-efficient than generating all instances upfront.
+type RecurrenceIterator struct {
+	rule        *RecurrenceRule
+	startTs     int64
+	cache       []int64
+	cacheEndTs  int64 // The timestamp covered by the end of the cache
+	mu          sync.Mutex
+	maxCache    int  // Maximum cache size
+	exhausted   bool // True if no more instances can be generated
+}
+
+// Iterator creates a new iterator for this recurrence rule.
+func (r *RecurrenceRule) Iterator(startTs int64) *RecurrenceIterator {
+	return &RecurrenceIterator{
+		rule:       r,
+		startTs:    startTs,
+		cache:      make([]int64, 0, 100),
+		cacheEndTs: startTs - 1, // Start with empty cache
+		maxCache:   500,
+		exhausted:  false,
+	}
+}
+
+// GetUntil returns all instances up to the given end timestamp.
+// Results are cached for efficient repeated calls with increasing ranges.
+func (it *RecurrenceIterator) GetUntil(endTs int64) []int64 {
+	it.mu.Lock()
+	defer it.mu.Unlock()
+
+	// If already exhausted, return cached results
+	if it.exhausted {
+		return it.filterCached(endTs)
+	}
+
+	// If cache already covers the range, return filtered results
+	if it.cacheEndTs >= endTs {
+		return it.filterCached(endTs)
+	}
+
+	// Expand cache until we cover endTs or hit a limit
+	for it.cacheEndTs < endTs && len(it.cache) < it.maxCache {
+		next := it.generateNext()
+		if next == 0 {
+			it.exhausted = true
+			break
+		}
+		it.cache = append(it.cache, next)
+		it.cacheEndTs = next
+	}
+
+	return it.filterCached(endTs)
+}
+
+// Next returns the next instance in the sequence, or 0 if exhausted.
+func (it *RecurrenceIterator) Next() int64 {
+	it.mu.Lock()
+	defer it.mu.Unlock()
+
+	if it.exhausted && len(it.cache) > 0 {
+		// Return cached value
+		next := it.cache[0]
+		it.cache = it.cache[1:]
+		return next
+	}
+
+	if it.exhausted {
+		return 0
+	}
+
+	next := it.generateNext()
+	if next == 0 {
+		it.exhausted = true
+		return 0
+	}
+
+	return next
+}
+
+// CountInRange returns the number of instances in the given range without
+// materializing all of them.
+func (it *RecurrenceIterator) CountInRange(startTs, endTs int64) int {
+	instances := it.GetUntil(endTs)
+	count := 0
+	for _, ts := range instances {
+		if ts >= startTs && ts <= endTs {
+			count++
+		}
+	}
+	return count
+}
+
+// filterCached returns cached instances up to endTs.
+func (it *RecurrenceIterator) filterCached(endTs int64) []int64 {
+	result := make([]int64, 0)
+	for _, ts := range it.cache {
+		if ts <= endTs {
+			result = append(result, ts)
+		}
+	}
+	return result
+}
+
+// generateNext generates the next timestamp in the sequence.
+// Returns 0 if exhausted.
+func (it *RecurrenceIterator) generateNext() int64 {
+	if it.exhausted {
+		return 0
+	}
+
+	var next time.Time
+
+	// Determine where to start from
+	if len(it.cache) == 0 {
+		// First instance
+		next = time.Unix(it.startTs, 0).UTC()
+	} else {
+		// Subsequent instances
+		lastTs := it.cache[len(it.cache)-1]
+		lastTime := time.Unix(lastTs, 0).UTC()
+
+		switch it.rule.Type {
+		case RecurrenceTypeDaily:
+			next = lastTime.AddDate(0, 0, it.rule.Interval)
+
+		case RecurrenceTypeWeekly:
+			// Find next matching weekday
+			next = it.findNextWeekly(lastTime)
+
+		case RecurrenceTypeMonthly:
+			// Find next matching month day
+			next = it.findNextMonthly(lastTime)
+
+		default:
+			return 0
+		}
+	}
+
+	// Safety limit: don't generate beyond 10 years from start
+	maxTime := time.Unix(it.startTs, 0).AddDate(10, 0, 0)
+	if next.After(maxTime) {
+		it.exhausted = true
+		return 0
+	}
+
+	return next.Unix()
+}
+
+// findNextWeekly finds the next occurrence for weekly recurrence.
+func (it *RecurrenceIterator) findNextWeekly(lastTime time.Time) time.Time {
+	weekdays := it.rule.Weekdays
+	if len(weekdays) == 0 {
+		weekdays = []int{1, 2, 3, 4, 5} // Default to weekdays
+	}
+
+	// Move forward by interval weeks, then find next matching day
+	candidate := lastTime.AddDate(0, 0, 7*it.rule.Interval)
+
+	// Find the first matching weekday on or after candidate
+	for attempts := 0; attempts < 7; attempts++ {
+		weekday := int(candidate.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+		for _, target := range weekdays {
+			if weekday == target {
+				return candidate
+			}
+		}
+		candidate = candidate.AddDate(0, 0, 1)
+	}
+
+	return candidate
+}
+
+// findNextMonthly finds the next occurrence for monthly recurrence.
+func (it *RecurrenceIterator) findNextMonthly(lastTime time.Time) time.Time {
+	targetDay := it.rule.MonthDay
+
+	// Move to next month
+	nextMonth := lastTime.AddDate(0, it.rule.Interval, 0)
+
+	// Get first day of that month
+	firstOfMonth := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	// Get last day of the target month
+	lastDay := getLastDayOfMonth(firstOfMonth.Year(), firstOfMonth.Month())
+
+	// Adjust target day if it exceeds month length
+	if targetDay > lastDay {
+		targetDay = lastDay
+	}
+
+	// If we're past the target day in the original month, we need next month
+	if lastTime.Day() > targetDay {
+		firstOfMonth = firstOfMonth.AddDate(0, it.rule.Interval, 0)
+		lastDay = getLastDayOfMonth(firstOfMonth.Year(), firstOfMonth.Month())
+		if targetDay > lastDay {
+			targetDay = lastDay
+		}
+	}
+
+	return time.Date(firstOfMonth.Year(), firstOfMonth.Month(), targetDay,
+		lastTime.Hour(), lastTime.Minute(), lastTime.Second(), 0, time.UTC)
+}
+
+// Reset resets the iterator to the beginning.
+func (it *RecurrenceIterator) Reset() {
+	it.mu.Lock()
+	defer it.mu.Unlock()
+
+	it.cache = make([]int64, 0, 100)
+	it.cacheEndTs = it.startTs - 1
+	it.exhausted = false
+}
+
