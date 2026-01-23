@@ -11,7 +11,18 @@
 
 @layer base {
   * {
-    @apply border-border outline-none ring-0;
+    @apply border-border ring-0;
+  }
+
+  /* Show focus ring only for keyboard navigation (focus-visible) */
+  *:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Hide focus ring when element is focused via mouse/touch */
+  *:focus:not(:focus-visible) {
+    outline: none;
   }
 
   body {
