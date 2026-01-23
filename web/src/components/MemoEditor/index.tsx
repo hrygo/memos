@@ -12,7 +12,7 @@ import { convertVisibilityFromString } from "@/utils/memo";
 import { EditorContent, EditorMetadata, EditorToolbar, FocusModeExitButton, FocusModeOverlay } from "./components";
 import { FOCUS_MODE_STYLES } from "./constants";
 import type { EditorRefActions } from "./Editor";
-import { useAutoSave, useFocusMode, useKeyboard, useMemoInit } from "./hooks";
+import { useAutoSave, useFocusMode, useKeyboard, useMemoInit, useVirtualKeyboard } from "./hooks";
 import { cacheService, errorService, memoService, validationService } from "./services";
 import { EditorProvider, useEditorContext } from "./state";
 import type { MemoEditorProps } from "./types";
@@ -60,6 +60,9 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
 
   // Auto-save content to localStorage
   useAutoSave(state.content, currentUser?.name ?? "", cacheKey);
+
+  // Track virtual keyboard height for mobile
+  const keyboardHeight = useVirtualKeyboard();
 
   // Focus mode management with body scroll lock
   useFocusMode(state.ui.isFocusMode);
@@ -137,6 +140,9 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
           state.ui.isFocusMode && cn(FOCUS_MODE_STYLES.container.base, FOCUS_MODE_STYLES.container.spacing),
           className,
         )}
+        style={{
+          paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 16}px` : undefined,
+        }}
       >
         {/* Exit button is absolutely positioned in top-right corner when active */}
         <FocusModeExitButton isActive={state.ui.isFocusMode} onToggle={handleToggleFocusMode} title={t("editor.exit-focus-mode")} />
