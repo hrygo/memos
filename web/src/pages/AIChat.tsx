@@ -216,7 +216,7 @@ function ChatView({
 
   // Welcome message when no messages
   const welcomeMessage = (
-    <div className="flex flex-col items-center justify-center text-center px-4 py-8 min-w-0">
+    <div className="flex flex-col items-center justify-center px-4 py-8 w-full">
       <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3 shrink-0">
         {currentIcon.startsWith("/") ? (
           <img src={currentIcon} alt={currentParrot.displayName} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
@@ -228,7 +228,7 @@ function ChatView({
         Hi, I'm {currentParrot.displayName}
         <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
       </h3>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg md:max-w-xl mb-4 leading-relaxed break-words w-full">{currentParrot.description}</p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg md:max-w-xl mb-4 leading-relaxed">{currentParrot.description}</p>
 
       {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center w-full max-w-2xl">
