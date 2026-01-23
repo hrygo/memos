@@ -20,7 +20,6 @@ import (
 
 	"github.com/usememos/memos/internal/profile"
 	"github.com/usememos/memos/internal/util"
-	"github.com/usememos/memos/plugin/storage/s3"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/store"
@@ -376,33 +375,6 @@ func (s *FileServerService) getAttachmentReader(attachment *store.Attachment) (i
 		}
 		return file, nil
 	}
-	// For S3 storage, download the file from S3.
-	if attachment.StorageType == storepb.AttachmentStorageType_S3 {
-		if attachment.Payload == nil {
-			return nil, errors.New("attachment payload is missing")
-		}
-		s3Object := attachment.Payload.GetS3Object()
-		if s3Object == nil {
-			return nil, errors.New("S3 object payload is missing")
-		}
-		if s3Object.S3Config == nil {
-			return nil, errors.New("S3 config is missing")
-		}
-		if s3Object.Key == "" {
-			return nil, errors.New("S3 object key is missing")
-		}
-
-		s3Client, err := s3.NewClient(context.Background(), s3Object.S3Config)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create S3 client")
-		}
-
-		reader, err := s3Client.GetObjectStream(context.Background(), s3Object.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get object from S3")
-		}
-		return reader, nil
-	}
 	// For database storage, return the blob from the database.
 	return io.NopCloser(bytes.NewReader(attachment.Blob)), nil
 }
@@ -427,33 +399,6 @@ func (s *FileServerService) getAttachmentBlob(attachment *store.Attachment) ([]b
 		blob, err := io.ReadAll(file)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read the file")
-		}
-		return blob, nil
-	}
-	// For S3 storage, download the file from S3.
-	if attachment.StorageType == storepb.AttachmentStorageType_S3 {
-		if attachment.Payload == nil {
-			return nil, errors.New("attachment payload is missing")
-		}
-		s3Object := attachment.Payload.GetS3Object()
-		if s3Object == nil {
-			return nil, errors.New("S3 object payload is missing")
-		}
-		if s3Object.S3Config == nil {
-			return nil, errors.New("S3 config is missing")
-		}
-		if s3Object.Key == "" {
-			return nil, errors.New("S3 object key is missing")
-		}
-
-		s3Client, err := s3.NewClient(context.Background(), s3Object.S3Config)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create S3 client")
-		}
-
-		blob, err := s3Client.GetObject(context.Background(), s3Object.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get object from S3")
 		}
 		return blob, nil
 	}

@@ -2,14 +2,12 @@ package store
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 
 	"github.com/usememos/memos/internal/base"
-	"github.com/usememos/memos/plugin/storage/s3"
 	storepb "github.com/usememos/memos/proto/gen/store"
 )
 
@@ -148,35 +146,6 @@ func (s *Store) DeleteAttachment(ctx context.Context, delete *DeleteAttachment) 
 			return nil
 		}(); err != nil {
 			return errors.Wrap(err, "failed to delete local file")
-		}
-	} else if attachment.StorageType == storepb.AttachmentStorageType_S3 {
-		if err := func() error {
-			s3ObjectPayload := attachment.Payload.GetS3Object()
-			if s3ObjectPayload == nil {
-				return errors.Errorf("No s3 object found")
-			}
-			instanceStorageSetting, err := s.GetInstanceStorageSetting(ctx)
-			if err != nil {
-				return errors.Wrap(err, "failed to get instance storage setting")
-			}
-			s3Config := s3ObjectPayload.S3Config
-			if s3Config == nil {
-				if instanceStorageSetting.S3Config == nil {
-					return errors.Errorf("S3 config is not found")
-				}
-				s3Config = instanceStorageSetting.S3Config
-			}
-
-			s3Client, err := s3.NewClient(ctx, s3Config)
-			if err != nil {
-				return errors.Wrap(err, "Failed to create s3 client")
-			}
-			if err := s3Client.DeleteObject(ctx, s3ObjectPayload.Key); err != nil {
-				return errors.Wrap(err, "Failed to delete s3 object")
-			}
-			return nil
-		}(); err != nil {
-			slog.Warn("Failed to delete s3 object", slog.Any("err", err))
 		}
 	}
 

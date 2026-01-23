@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -24,7 +23,6 @@ import (
 	"github.com/usememos/memos/internal/profile"
 	"github.com/usememos/memos/internal/util"
 	"github.com/usememos/memos/plugin/filter"
-	"github.com/usememos/memos/plugin/storage/s3"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
@@ -295,7 +293,7 @@ func convertAttachmentFromStore(attachment *store.Attachment) *v1pb.Attachment {
 		memoName := fmt.Sprintf("%s%s", MemoNamePrefix, *attachment.MemoUID)
 		attachmentMessage.Memo = &memoName
 	}
-	if attachment.StorageType == storepb.AttachmentStorageType_EXTERNAL || attachment.StorageType == storepb.AttachmentStorageType_S3 {
+	if attachment.StorageType == storepb.AttachmentStorageType_EXTERNAL {
 		attachmentMessage.ExternalLink = attachment.Reference
 	}
 
@@ -303,80 +301,43 @@ func convertAttachmentFromStore(attachment *store.Attachment) *v1pb.Attachment {
 }
 
 // SaveAttachmentBlob save the blob of attachment based on the storage config.
+// For personal assistant, always uses local storage.
 func SaveAttachmentBlob(ctx context.Context, profile *profile.Profile, stores *store.Store, create *store.Attachment) error {
 	instanceStorageSetting, err := stores.GetInstanceStorageSetting(ctx)
 	if err != nil {
 		return errors.Wrap(err, "Failed to find instance storage setting")
 	}
 
-	switch instanceStorageSetting.StorageType {
-	case storepb.InstanceStorageSetting_LOCAL:
-		filepathTemplate := "assets/{timestamp}_{filename}"
-		if instanceStorageSetting.FilepathTemplate != "" {
-			filepathTemplate = instanceStorageSetting.FilepathTemplate
-		}
-
-		internalPath := filepathTemplate
-		if !strings.Contains(internalPath, "{filename}") {
-			internalPath = filepath.Join(internalPath, "{filename}")
-		}
-		internalPath = replaceFilenameWithPathTemplate(internalPath, create.Filename)
-		internalPath = filepath.ToSlash(internalPath)
-
-		// Ensure the directory exists.
-		osPath := filepath.FromSlash(internalPath)
-		if !filepath.IsAbs(osPath) {
-			osPath = filepath.Join(profile.Data, osPath)
-		}
-		dir := filepath.Dir(osPath)
-		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
-			return errors.Wrap(err, "Failed to create directory")
-		}
-
-		// Write the blob to the file.
-		if err := os.WriteFile(osPath, create.Blob, 0644); err != nil {
-			return errors.Wrap(err, "Failed to write file")
-		}
-		create.Reference = internalPath
-		create.Blob = nil
-		create.StorageType = storepb.AttachmentStorageType_LOCAL
-	case storepb.InstanceStorageSetting_S3:
-		s3Config := instanceStorageSetting.S3Config
-		if s3Config == nil {
-			return errors.Errorf("No activated external storage found")
-		}
-		s3Client, err := s3.NewClient(ctx, s3Config)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create s3 client")
-		}
-
-		filepathTemplate := instanceStorageSetting.FilepathTemplate
-		if !strings.Contains(filepathTemplate, "{filename}") {
-			filepathTemplate = filepath.Join(filepathTemplate, "{filename}")
-		}
-		filepathTemplate = replaceFilenameWithPathTemplate(filepathTemplate, create.Filename)
-		key, err := s3Client.UploadObject(ctx, filepathTemplate, create.Type, bytes.NewReader(create.Blob))
-		if err != nil {
-			return errors.Wrap(err, "Failed to upload via s3 client")
-		}
-		presignURL, err := s3Client.PresignGetObject(ctx, key)
-		if err != nil {
-			return errors.Wrap(err, "Failed to presign via s3 client")
-		}
-
-		create.Reference = presignURL
-		create.Blob = nil
-		create.StorageType = storepb.AttachmentStorageType_S3
-		create.Payload = &storepb.AttachmentPayload{
-			Payload: &storepb.AttachmentPayload_S3Object_{
-				S3Object: &storepb.AttachmentPayload_S3Object{
-					S3Config:          s3Config,
-					Key:               key,
-					LastPresignedTime: timestamppb.New(time.Now()),
-				},
-			},
-		}
+	// Always use local storage for personal assistant
+	filepathTemplate := "assets/{timestamp}_{filename}"
+	if instanceStorageSetting.FilepathTemplate != "" {
+		filepathTemplate = instanceStorageSetting.FilepathTemplate
 	}
+
+	internalPath := filepathTemplate
+	if !strings.Contains(internalPath, "{filename}") {
+		internalPath = filepath.Join(internalPath, "{filename}")
+	}
+	internalPath = replaceFilenameWithPathTemplate(internalPath, create.Filename)
+	internalPath = filepath.ToSlash(internalPath)
+
+	// Ensure the directory exists.
+	osPath := filepath.FromSlash(internalPath)
+	if !filepath.IsAbs(osPath) {
+		osPath = filepath.Join(profile.Data, osPath)
+	}
+	dir := filepath.Dir(osPath)
+	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+		return errors.Wrap(err, "Failed to create directory")
+	}
+
+	// Write the blob to the file.
+	if err := os.WriteFile(osPath, create.Blob, 0644); err != nil {
+		return errors.Wrap(err, "Failed to write file")
+	}
+	create.Reference = internalPath
+	create.Blob = nil
+	create.StorageType = storepb.AttachmentStorageType_LOCAL
 
 	return nil
 }
@@ -400,33 +361,6 @@ func (s *APIV1Service) GetAttachmentBlob(attachment *store.Attachment) ([]byte, 
 		blob, err := io.ReadAll(file)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read the file")
-		}
-		return blob, nil
-	}
-	// For S3 storage, download the file from S3.
-	if attachment.StorageType == storepb.AttachmentStorageType_S3 {
-		if attachment.Payload == nil {
-			return nil, errors.New("attachment payload is missing")
-		}
-		s3Object := attachment.Payload.GetS3Object()
-		if s3Object == nil {
-			return nil, errors.New("S3 object payload is missing")
-		}
-		if s3Object.S3Config == nil {
-			return nil, errors.New("S3 config is missing")
-		}
-		if s3Object.Key == "" {
-			return nil, errors.New("S3 object key is missing")
-		}
-
-		s3Client, err := s3.NewClient(context.Background(), s3Object.S3Config)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create S3 client")
-		}
-
-		blob, err := s3Client.GetObject(context.Background(), s3Object.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get object from S3")
 		}
 		return blob, nil
 	}

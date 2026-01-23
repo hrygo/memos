@@ -23,7 +23,6 @@ import (
 	"github.com/usememos/memos/server/router/rss"
 	"github.com/usememos/memos/server/runner/embedding"
 	"github.com/usememos/memos/server/runner/ocr"
-	"github.com/usememos/memos/server/runner/s3presign"
 	"github.com/usememos/memos/store"
 )
 
@@ -140,23 +139,6 @@ func (s *Server) Shutdown(ctx context.Context) {
 }
 
 func (s *Server) StartBackgroundRunners(ctx context.Context) {
-	// Create a separate context for each background runner
-	// This allows us to control cancellation for each runner independently
-	s3Context, s3Cancel := context.WithCancel(ctx)
-
-	// Store the cancel function so we can properly shut down runners
-	s.runnerCancelFuncs = append(s.runnerCancelFuncs, s3Cancel)
-
-	// Create and start S3 presign runner
-	s3presignRunner := s3presign.NewRunner(s.Store)
-	s3presignRunner.RunOnce(ctx)
-
-	// Start continuous S3 presign runner
-	go func() {
-		s3presignRunner.Run(s3Context)
-		slog.Info("s3presign runner stopped")
-	}()
-
 	// Start embedding runner if AI is enabled
 	if s.Profile.IsAIEnabled() && s.Profile.Driver == "postgres" {
 		aiConfig := ai.NewConfigFromProfile(s.Profile)
