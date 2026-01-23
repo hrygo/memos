@@ -619,8 +619,23 @@ func (t *ScheduleAddTool) findNextAvailableSlot(ctx context.Context, userID int3
 			return time.Time{}, fmt.Errorf("failed to query schedules: %w", err)
 		}
 
+		// Calculate the starting hour offset
+		// On the first day (dayOffset == 0), start checking from searchStart's hour
+		// On subsequent days, start from hourStart (8 AM)
+		startHourOffset := 0
+		if dayOffset == 0 {
+			hourOfDay := searchStart.Hour()
+			if hourOfDay > hourStart {
+				startHourOffset = hourOfDay - hourStart
+			}
+			// If searchStart is exactly at a slot boundary, start from the next slot
+			if searchStart.Minute() > 0 || searchStart.Second() > 0 {
+				startHourOffset++
+			}
+		}
+
 		// Check each hour slot
-		for hour := 0; hour <= (hourEnd - hourStart); hour++ {
+		for hour := startHourOffset; hour <= (hourEnd - hourStart); hour++ {
 			currentSlotStart := slotStart.Add(time.Duration(hour) * time.Hour)
 			slotEnd := currentSlotStart.Add(time.Duration(slotDuration))
 
