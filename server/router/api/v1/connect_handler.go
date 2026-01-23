@@ -57,8 +57,11 @@ func (s *ConnectServiceHandler) RegisterConnectHandlers(mux *http.ServeMux, opts
 	// Register Schedule service handlers
 	handlers = append(handlers, wrap(apiv1connect.NewScheduleServiceHandler(s, opts...)))
 
-	// Note: ScheduleAgentService uses gRPC gateway, not Connect
-	// Clients should use the main Chat endpoint with agent_type=SCHEDULE
+	// Register ScheduleAgentService for Connect protocol
+	if s.ScheduleAgentService != nil {
+		scheduleAgentHandler := NewScheduleAgentServiceConnectHandler(s.ScheduleAgentService)
+		handlers = append(handlers, wrap(apiv1connect.NewScheduleAgentServiceHandler(scheduleAgentHandler, opts...)))
+	}
 
 	for _, h := range handlers {
 		mux.Handle(h.path, h.handler)
@@ -329,15 +332,24 @@ func (a *chatStreamToScheduleAgentAdapter) SetTrailer(md metadata.MD) {
 	// Connect doesn't support gRPC metadata trailers
 }
 
-// ScheduleAgentService wrappers for Connect
+// ScheduleAgentServiceConnectHandler implements ScheduleAgentServiceHandler interface
+// by delegating to the underlying ScheduleAgentService.
+type ScheduleAgentServiceConnectHandler struct {
+	scheduleAgentService *ScheduleAgentService
+}
 
-// ChatAgent handles non-streaming schedule agent chat requests.
-func (s *ConnectServiceHandler) ChatAgent(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest]) (*connect.Response[v1pb.ScheduleAgentChatResponse], error) {
-	if s.ScheduleAgentService == nil {
+// NewScheduleAgentServiceConnectHandler creates a new Connect handler for ScheduleAgentService.
+func NewScheduleAgentServiceConnectHandler(svc *ScheduleAgentService) *ScheduleAgentServiceConnectHandler {
+	return &ScheduleAgentServiceConnectHandler{scheduleAgentService: svc}
+}
+
+// Chat handles non-streaming schedule agent chat requests.
+func (s *ScheduleAgentServiceConnectHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest]) (*connect.Response[v1pb.ScheduleAgentChatResponse], error) {
+	if s.scheduleAgentService == nil {
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
 	}
 
-	resp, err := s.ScheduleAgentService.Chat(ctx, req.Msg)
+	resp, err := s.scheduleAgentService.Chat(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}
@@ -345,8 +357,8 @@ func (s *ConnectServiceHandler) ChatAgent(ctx context.Context, req *connect.Requ
 }
 
 // ChatStream handles streaming schedule agent chat requests.
-func (s *ConnectServiceHandler) ChatStream(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest], stream *connect.ServerStream[v1pb.ScheduleAgentStreamResponse]) error {
-	if s.ScheduleAgentService == nil {
+func (s *ScheduleAgentServiceConnectHandler) ChatStream(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest], stream *connect.ServerStream[v1pb.ScheduleAgentStreamResponse]) error {
+	if s.scheduleAgentService == nil {
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
 	}
 
@@ -357,7 +369,7 @@ func (s *ConnectServiceHandler) ChatStream(ctx context.Context, req *connect.Req
 	}
 
 	// Call the gRPC streaming implementation
-	return s.ScheduleAgentService.ChatStream(req.Msg, grpcStream)
+	return s.scheduleAgentService.ChatStream(req.Msg, grpcStream)
 }
 
 // scheduleAgentStreamAdapter adapts Connect ServerStream to gRPC ScheduleAgentService_ChatStreamServer
