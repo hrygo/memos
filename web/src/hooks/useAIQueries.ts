@@ -202,6 +202,11 @@ export function useChatWithMemos() {
 
           // Handle parrot-specific events
           if (response.eventType && response.eventData) {
+            console.debug("[AI Chat] Parrot event", {
+              eventType: response.eventType,
+              eventDataLength: response.eventData.length,
+              eventDataPreview: response.eventData.slice(0, 100),
+            });
             switch (response.eventType) {
               case "thinking":
                 callbacks?.onThinking?.(response.eventData);

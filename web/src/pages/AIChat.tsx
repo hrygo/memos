@@ -436,12 +436,7 @@ const AIChat = () => {
 
   // Handle parrot chat with callbacks
   const handleParrotChat = useCallback(
-    async (userMessage: string, history: string[]) => {
-      if (!currentConversation || !currentParrot) {
-        console.warn("[Parrot] No active conversation or parrot");
-        return;
-      }
-
+    async (conversationId: string, parrotId: ParrotAgentType, userMessage: string, history: string[]) => {
       setIsTyping(true);
       setIsThinking(true);
       setMemoQueryResults([]);
@@ -452,20 +447,20 @@ const AIChat = () => {
           {
             message: userMessage,
             history,
-            agentType: currentParrot.id,
+            agentType: parrotId,
             userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
           {
             onThinking: (msg) => {
               if (lastAssistantMessageIdRef.current) {
-                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
                   content: msg,
                 });
               }
             },
             onToolUse: (toolName) => {
               if (lastAssistantMessageIdRef.current) {
-                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
                   content: toolName,
                 });
               }
@@ -476,15 +471,23 @@ const AIChat = () => {
             onMemoQueryResult: (result) => {
               if (_messageId === messageIdRef.current) {
                 setMemoQueryResults((prev) => [...prev, result]);
-                addReferencedMemos(currentConversation.id, result.memos);
+                addReferencedMemos(conversationId, result.memos);
               }
             },
             onContent: (content) => {
+              console.debug("[AI Chat] onContent callback", {
+                contentLength: content.length,
+                contentPreview: content.slice(0, 50),
+                conversationId,
+                lastMessageId: lastAssistantMessageIdRef.current,
+              });
               if (lastAssistantMessageIdRef.current) {
                 streamingContentRef.current += content;
-                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
                   content: streamingContentRef.current,
                 });
+              } else {
+                console.warn("[AI Chat] onContent: lastAssistantMessageIdRef.current is null!");
               }
             },
             onDone: () => {
@@ -497,7 +500,7 @@ const AIChat = () => {
               console.error("[Parrot Error]", error);
               // Add error message to conversation
               if (lastAssistantMessageIdRef.current) {
-                updateMessage(currentConversation.id, lastAssistantMessageIdRef.current, {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
                   content: streamingContentRef.current || "Sorry, something went wrong. Please try again.",
                   error: true,
                 });
@@ -511,7 +514,7 @@ const AIChat = () => {
         console.error("[Parrot Chat Error]", error);
       }
     },
-    [currentConversation, currentParrot, chatHook, updateMessage, addReferencedMemos],
+    [chatHook, updateMessage, addReferencedMemos],
   );
 
   const handleSend = useCallback(
@@ -524,19 +527,34 @@ const AIChat = () => {
       }
 
       // Ensure we have a conversation
-      if (!currentConversation) {
-        // Check for existing DEFAULT conversation
-        const existingConversation = conversations.find((c) => c.parrotId === ParrotAgentType.DEFAULT);
+      let targetConversationId = currentConversation?.id;
+      let targetParrotId = currentConversation?.parrotId;
+
+      if (!targetConversationId) {
+        // No active conversation - need to create one
+        // Use current parrot if available (user selected agent from hub), otherwise DEFAULT
+        const fallbackParrotId = currentParrot?.id || ParrotAgentType.DEFAULT;
+
+        // Check for existing conversation with same parrotId
+        const existingConversation = conversations.find((c) => c.parrotId === fallbackParrotId);
         if (existingConversation) {
+          targetConversationId = existingConversation.id;
+          targetParrotId = existingConversation.parrotId;
           selectConversation(existingConversation.id);
         } else {
-          createConversation(ParrotAgentType.DEFAULT);
+          targetConversationId = createConversation(fallbackParrotId);
+          targetParrotId = fallbackParrotId;
         }
+      }
+
+      // At this point we must have both conversationId and parrotId
+      if (!targetConversationId || !targetParrotId) {
+        console.error("[AI Chat] Failed to determine conversation or parrot");
         return;
       }
 
       // Add user message
-      addMessage(currentConversation.id, {
+      addMessage(targetConversationId, {
         role: "user",
         content: userMessage,
       });
@@ -546,10 +564,17 @@ const AIChat = () => {
         role: "assistant" as const,
         content: "",
       };
-      const assistantMessageId = addMessage(currentConversation.id, newMessage);
+      const assistantMessageId = addMessage(targetConversationId, newMessage);
 
       // Store the new message ID for streaming updates
       lastAssistantMessageIdRef.current = assistantMessageId;
+
+      console.debug("[AI Chat] handleSend: messages added", {
+        targetConversationId,
+        targetParrotId,
+        assistantMessageId,
+        refValue: lastAssistantMessageIdRef.current,
+      });
 
       // Reset streaming content ref
       streamingContentRef.current = "";
@@ -562,9 +587,14 @@ const AIChat = () => {
       const contextMessages = messagesAfterSeparator.filter(isConversationMessage);
       const history = contextMessages.map((m) => m.content);
 
-      if (currentParrot) {
-        await handleParrotChat(userMessage, history);
-      }
+      console.debug("[AI Chat] handleSend: calling handleParrotChat", {
+        targetConversationId,
+        targetParrotId,
+        historyCount: history.length,
+      });
+
+      // Execute chat with explicit conversationId and parrotId
+      await handleParrotChat(targetConversationId, targetParrotId, userMessage, history);
     },
     [
       input,
@@ -577,6 +607,7 @@ const AIChat = () => {
       createConversation,
       handleParrotChat,
       resetTypingState,
+      items,
     ],
   );
 
