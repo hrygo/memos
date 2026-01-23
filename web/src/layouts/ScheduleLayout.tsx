@@ -52,7 +52,7 @@ const ScheduleLayout = () => {
       )}
 
       {/* Main Content */}
-      <div className={cn("flex-1 min-h-0 overflow-x-hidden", lg ? "pl-80" : "")}>
+      <div className={cn("flex-1 min-h-0 overflow-hidden", lg ? "pl-80" : "")}>
         <Outlet />
       </div>
     </section>

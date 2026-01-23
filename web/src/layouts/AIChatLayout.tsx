@@ -71,7 +71,7 @@ const AIChatLayoutContent = () => {
       )}
 
       {/* Main Content */}
-      <div className={cn("flex-1 min-h-0 overflow-x-auto", lg ? "pl-72" : "")}>
+      <div className={cn("flex-1 min-h-0 overflow-hidden", lg ? "pl-72" : "")}>
         <Outlet />
       </div>
     </section>

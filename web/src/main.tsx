@@ -1,6 +1,5 @@
 import "@github/relative-time-element";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import React, { useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "react-hot-toast";
@@ -57,21 +56,22 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 
 function Main() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <InstanceProvider>
-          <AuthProvider>
-            <ViewProvider>
-              <AppInitializer>
-                <RouterProvider router={router} />
-                <Toaster position="top-right" />
-              </AppInitializer>
-            </ViewProvider>
-          </AuthProvider>
-        </InstanceProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <div className="w-full h-full">
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <InstanceProvider>
+            <AuthProvider>
+              <ViewProvider>
+                <AppInitializer>
+                  <RouterProvider router={router} />
+                  <Toaster position="top-right" />
+                </AppInitializer>
+              </ViewProvider>
+            </AuthProvider>
+          </InstanceProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </div>
   );
 }
 

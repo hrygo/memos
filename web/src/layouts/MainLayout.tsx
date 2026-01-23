@@ -68,7 +68,7 @@ const MainLayout = () => {
   const { statistics, tags } = useFilteredMemoStats({ userName: statsUserName });
 
   return (
-    <section className="@container w-full min-h-full flex flex-col justify-start items-center">
+    <section className="@container w-full h-full flex flex-col justify-start items-center overflow-hidden">
       {!md && location.pathname !== Routes.ROOT && (
         <MobileHeader>
           <MemoExplorerDrawer context={context} statisticsData={statistics} tagCount={tags} />
@@ -79,7 +79,7 @@ const MainLayout = () => {
           <MemoExplorer className={cn("px-3 py-6")} context={context} statisticsData={statistics} tagCount={tags} />
         </div>
       )}
-      <div className={cn("w-full min-h-full", lg ? "pl-72" : md ? "pl-56" : "")}>
+      <div className={cn("flex-1 min-h-0 overflow-y-auto w-full", lg ? "pl-72" : md ? "pl-56" : "")}>
         <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-8")}>
           <Outlet />
         </div>
