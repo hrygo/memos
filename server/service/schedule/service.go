@@ -28,6 +28,12 @@ const (
 	DefaultConflictCheckWindow = 1 * time.Hour
 )
 
+// Schedule-specific errors that can be checked with errors.Is.
+var (
+	// ErrScheduleConflict is returned when a schedule conflicts with existing schedules.
+	ErrScheduleConflict = fmt.Errorf("schedule conflicts detected")
+)
+
 type service struct {
 	store Store
 }
@@ -225,7 +231,7 @@ func (s *service) CreateSchedule(ctx context.Context, userID int32, create *Crea
 		return nil, fmt.Errorf("failed to check conflicts: %w", err)
 	}
 	if len(conflicts) > 0 {
-		return nil, fmt.Errorf("schedule conflicts detected: %s", buildConflictError(conflicts))
+		return nil, fmt.Errorf("%w: %s", ErrScheduleConflict, buildConflictError(conflicts))
 	}
 
 	// Create schedule in database
@@ -319,7 +325,7 @@ func (s *service) UpdateSchedule(ctx context.Context, userID int32, id int32, up
 		return nil, fmt.Errorf("failed to check conflicts: %w", err)
 	}
 	if len(conflicts) > 0 {
-		return nil, fmt.Errorf("schedule conflicts detected: %s", buildConflictError(conflicts))
+		return nil, fmt.Errorf("%w: %s", ErrScheduleConflict, buildConflictError(conflicts))
 	}
 
 	// Update schedule in database

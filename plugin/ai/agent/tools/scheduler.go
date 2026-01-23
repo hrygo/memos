@@ -3,8 +3,10 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 	"log/slog"
 
@@ -15,11 +17,82 @@ const (
 	// DefaultTimezone is used when no timezone is specified
 	DefaultTimezone = "Asia/Shanghai"
 
+	// maxTimezoneCacheEntries limits the cache size to prevent unbounded growth.
+	// Realistically, there are ~500 IANA timezones, but 100 is more than enough
+	// for typical usage while preventing potential DoS via malicious inputs.
+	maxTimezoneCacheEntries = 100
+
 	// Audit log field length limits (for sensitive data sanitization)
 	maxTitleLengthForLog       = 50
 	maxDescriptionLengthForLog = 100
 	maxInputLengthForLog       = 200
 )
+
+// timezoneCache caches parsed timezone locations for performance.
+// Uses a simple size-limited cache that resets when full (LRU-lite).
+var timezoneCache struct {
+	sync.RWMutex
+	locations map[string]*time.Location
+	hits      int64 // Cache hit counter for metrics
+	misses    int64 // Cache miss counter for metrics
+}
+
+// init initializes the timezone cache.
+func init() {
+	timezoneCache.locations = make(map[string]*time.Location)
+	// Pre-load common timezone
+	if loc, err := time.LoadLocation(DefaultTimezone); err == nil {
+		timezoneCache.locations[DefaultTimezone] = loc
+	}
+}
+
+// getTimezoneLocation gets a timezone location from cache, loading it if necessary.
+// Implements size-limited caching to prevent unbounded growth.
+func getTimezoneLocation(timezone string) *time.Location {
+	// Fast path: read lock for cache hit
+	timezoneCache.RLock()
+	loc, ok := timezoneCache.locations[timezone]
+	timezoneCache.RUnlock()
+
+	if ok {
+		return loc
+	}
+
+	// Slow path: load and cache with write lock
+	timezoneCache.Lock()
+	defer timezoneCache.Unlock()
+
+	// Double-check after acquiring write lock
+	if loc, ok := timezoneCache.locations[timezone]; ok {
+		return loc
+	}
+
+	// Enforce cache size limit: if full, reset and keep common timezone
+	if len(timezoneCache.locations) >= maxTimezoneCacheEntries {
+		slog.Debug("timezone cache full, resetting",
+			"current_size", len(timezoneCache.locations),
+			"max_size", maxTimezoneCacheEntries,
+		)
+		// Reset cache, keeping only the default timezone
+		timezoneCache.locations = make(map[string]*time.Location)
+		if loc, err := time.LoadLocation(DefaultTimezone); err == nil {
+			timezoneCache.locations[DefaultTimezone] = loc
+		}
+	}
+
+	// Load timezone
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		slog.Warn("failed to load timezone, using UTC",
+			"timezone", timezone,
+			"error", err,
+		)
+		loc = time.UTC
+	}
+
+	timezoneCache.locations[timezone] = loc
+	return loc
+}
 
 // JSON field name mappings for camelCase to snake_case compatibility.
 // Some LLMs generate camelCase (startTime) while we expect snake_case (start_time).
@@ -331,7 +404,42 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 
 	// Create schedule
 	created, err := t.service.CreateSchedule(ctx, userID, createReq)
-	if err != nil {
+
+	// Auto-resolve conflicts: if creation fails due to conflict, find next available slot
+	if errors.Is(err, schedule.ErrScheduleConflict) {
+		slog.Info("schedule_add: conflict detected, finding available slot",
+			"user_id", userID,
+			"requested_start", startTime.Unix(),
+		)
+
+		// Find next available slot
+		durationSec := int64(3600)
+		if endTime != nil {
+			durationSec = *endTime - startTime.Unix()
+		}
+		nextSlot, slotErr := t.findNextAvailableSlot(ctx, userID, startTime, durationSec)
+		if slotErr != nil {
+			return "", fmt.Errorf("failed to create schedule: %w (and no alternative slots available: %v)", err, slotErr)
+		}
+
+		// Update request with new time
+		newStartTs := nextSlot.Unix()
+		newEndTs := newStartTs + durationSec
+		createReq.StartTs = newStartTs
+		createReq.EndTs = &newEndTs
+
+		slog.Info("schedule_add: retrying with auto-resolved time",
+			"user_id", userID,
+			"original_start", startTime.Unix(),
+			"new_start", newStartTs,
+		)
+
+		// Retry creation with new time
+		created, err = t.service.CreateSchedule(ctx, userID, createReq)
+		if err != nil {
+			return "", fmt.Errorf("failed to create schedule even with alternative time: %w", err)
+		}
+	} else if err != nil {
 		return "", fmt.Errorf("failed to create schedule: %w", err)
 	}
 
@@ -357,17 +465,90 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		endTimeFormatted = formatTime(*created.EndTs, created.Timezone)
 	}
 
-	result := fmt.Sprintf("Successfully created schedule: %s (%s", created.Title, startTimeFormatted)
+	// Check if time was auto-adjusted (original start time != actual start time)
+	wasAdjusted := created.StartTs != startTime.Unix()
+
+	result := fmt.Sprintf("✓ 已创建: %s (%s", created.Title, startTimeFormatted)
 	if endTimeFormatted != "" {
 		result += fmt.Sprintf(" - %s", endTimeFormatted)
 	}
 	result += ")"
 
+	if wasAdjusted {
+		result += " [时间冲突已自动调整]"
+	}
+
 	if created.Location != "" {
-		result += fmt.Sprintf(" at %s", created.Location)
+		result += fmt.Sprintf(" @ %s", created.Location)
 	}
 
 	return result, nil
+}
+
+// findNextAvailableSlot finds the next available time slot after the requested time.
+// Returns the start time of the next available slot (in RFC3339 format).
+func (t *ScheduleAddTool) findNextAvailableSlot(ctx context.Context, userID int32, requestedStart time.Time, durationSec int64) (time.Time, error) {
+	const hourStart = 8  // 8 AM
+	const hourEnd = 22   // 10 PM (last slot starts at 22:00)
+	const slotDuration = int64(3600) // 1 hour
+
+	// Start searching from the requested time
+	searchStart := requestedStart.Add(time.Duration(durationSec))
+	if searchStart.Hour() < hourStart {
+		searchStart = time.Date(searchStart.Year(), searchStart.Month(), searchStart.Day(), hourStart, 0, 0, 0, searchStart.Location())
+	}
+
+	// Search for up to 7 days
+	for dayOffset := 0; dayOffset < 7; dayOffset++ {
+		// Check for context cancellation before processing each day
+		select {
+		case <-ctx.Done():
+			return time.Time{}, ctx.Err()
+		default:
+		}
+
+		slotDate := searchStart.Add(time.Duration(dayOffset) * 24 * time.Hour)
+		slotStart := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(), hourStart, 0, 0, 0, searchStart.Location())
+
+		// Get schedules for this day
+		endOfDay := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(), 23, 59, 59, 0, slotStart.Location())
+		schedules, err := t.service.FindSchedules(ctx, userID, slotStart, endOfDay)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("failed to query schedules: %w", err)
+		}
+
+		// Check each hour slot
+		for hour := 0; hour <= (hourEnd-hourStart); hour++ {
+			currentSlotStart := slotStart.Add(time.Duration(hour) * time.Hour)
+			slotEnd := currentSlotStart.Add(time.Duration(slotDuration))
+
+			// Check for conflicts
+			hasConflict := false
+			for _, existing := range schedules {
+				var existingEndTs int64
+				if existing.EndTs != nil && *existing.EndTs > 0 {
+					existingEndTs = *existing.EndTs
+				} else {
+					existingEndTs = existing.StartTs + 3600 // Default 1 hour
+				}
+
+				// Check overlap: (StartA < EndB) && (EndA > StartB)
+				slotStartTs := currentSlotStart.Unix()
+				slotEndTs := slotEnd.Unix()
+
+				if (slotStartTs < existingEndTs) && (slotEndTs > existing.StartTs) {
+					hasConflict = true
+					break
+				}
+			}
+
+			if !hasConflict {
+				return currentSlotStart, nil
+			}
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("no available time slots in the next 7 days")
 }
 
 // Validate runs before execution to check input validity.
@@ -391,19 +572,11 @@ func (t *ScheduleAddTool) Validate(ctx context.Context, inputJSON string) error 
 	return nil
 }
 
-// Helper function to format timestamp for display in user's timezone
+// Helper function to format timestamp for display in user's timezone.
+// Uses cached timezone locations for better performance.
 func formatTime(ts int64, timezone string) string {
 	t := time.Unix(ts, 0)
-
-	// Parse timezone
-	loc, err := time.LoadLocation(timezone)
-	if err != nil {
-		slog.Warn("invalid timezone, using UTC for time formatting",
-			"timezone", timezone,
-			"error", err)
-		loc = time.UTC
-	}
-
+	loc := getTimezoneLocation(timezone)
 	return t.In(loc).Format("2006-01-02 15:04 MST")
 }
 
@@ -492,14 +665,8 @@ func (t *FindFreeTimeTool) Run(ctx context.Context, inputJSON string) (string, e
 
 	userID := t.userIDGetter(ctx)
 
-	// Load user's timezone for proper date parsing
-	loc, err := time.LoadLocation(t.timezone)
-	if err != nil {
-		slog.Warn("invalid timezone in FindFreeTimeTool, using UTC",
-			"timezone", t.timezone,
-			"error", err)
-		loc = time.UTC
-	}
+	// Load user's timezone for proper date parsing (cached)
+	loc := getTimezoneLocation(t.timezone)
 
 	// Parse the input date in user's timezone (e.g., "2026-01-22")
 	date, err := time.ParseInLocation("2006-01-02", input.Date, loc)
@@ -666,11 +833,8 @@ func (t *ScheduleUpdateTool) Run(ctx context.Context, inputJSON string) (string,
 		// Direct update by ID
 		scheduleID = input.ID
 	} else if input.Date != "" {
-		// Find schedule by date
-		loc, err := time.LoadLocation(DefaultTimezone)
-		if err != nil {
-			return "", fmt.Errorf("failed to load timezone: %w", err)
-		}
+		// Find schedule by date (using cached timezone)
+		loc := getTimezoneLocation(DefaultTimezone)
 
 		date, err := time.ParseInLocation("2006-01-02", input.Date, loc)
 		if err != nil {
