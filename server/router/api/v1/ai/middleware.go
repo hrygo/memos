@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -151,76 +150,6 @@ func (h *rateLimitHandler) Handle(ctx context.Context, req *ChatRequest, stream 
 		return status.Error(codes.ResourceExhausted, "rate limit exceeded")
 	}
 	return h.next.Handle(ctx, req, stream)
-}
-
-// ObservabilityMiddleware adds logging and metrics.
-type ObservabilityMiddleware struct {
-	metrics *observability.Metrics
-	logger  *slog.Logger
-}
-
-// NewObservabilityMiddleware creates a new observability middleware.
-func NewObservabilityMiddleware(metrics *observability.Metrics) Middleware {
-	return func(next Handler) Handler {
-		return &observabilityHandler{
-			metrics: metrics,
-			next:    next,
-		}
-	}
-}
-
-type observabilityHandler struct {
-	metrics *observability.Metrics
-	next    Handler
-}
-
-func (h *observabilityHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatStream) error {
-	// Create request context
-	startTime := time.Now()
-
-	// Record request start
-	agentTypeStr := req.AgentType.String()
-	h.metrics.RecordRequest(agentTypeStr)
-
-	// Wrap stream for metrics
-	wrappedStream := &metricsStream{
-		ChatStream: stream,
-		metrics:    h.metrics,
-		agentType:  agentTypeStr,
-	}
-
-	// Call next handler
-	err := h.next.Handle(ctx, req, wrappedStream)
-
-	// Record metrics
-	duration := time.Since(startTime)
-	h.metrics.RecordDuration(agentTypeStr, duration)
-
-	if err != nil {
-		h.metrics.RecordFailure(agentTypeStr)
-	}
-
-	return err
-}
-
-// metricsStream wraps ChatStream to collect metrics.
-type metricsStream struct {
-	ChatStream
-	metrics   *observability.Metrics
-	agentType string
-	mu        sync.Mutex
-}
-
-func (s *metricsStream) Send(resp *v1pb.ChatWithMemosResponse) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Record stream chunks
-	if resp.Content != "" {
-		s.metrics.RecordStreamChunk()
-	}
-
-	return s.ChatStream.Send(resp)
 }
 
 // TruncateString truncates a string for logging.

@@ -31,7 +31,6 @@ type SchedulerAgent struct {
 	timezone    string
 	timezoneLoc *time.Location // Cached timezone location
 	tools       map[string]*AgentTool
-	metrics     *AgentMetrics // Metrics collection
 
 	// Cache management (protected by cacheMutex)
 	cacheMutex         sync.RWMutex
@@ -133,7 +132,6 @@ func NewSchedulerAgent(llm ai.LLMService, scheduleSvc schedule.Service, userID i
 		timezone:     userTimezone,
 		timezoneLoc:  timezoneLoc,
 		tools:        toolMap,
-		metrics:      GetGlobalMetrics(), // Use shared metrics instance
 		failureCount: make(map[string]int),
 	}
 
@@ -235,16 +233,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 			continue
 		}
 
-		// Track tool start time for metrics
-		toolStart := time.Now()
-
 		toolResult, err := tool.Execute(ctx, toolInput)
-		toolDuration := time.Since(toolStart)
-
-		// Record tool call metrics
-		if a.metrics != nil {
-			a.metrics.RecordToolCall(toolCall, toolDuration, err == nil)
-		}
 
 		if err != nil {
 			// Classify the error to determine retry strategy
@@ -265,11 +254,6 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 				"error", err,
 				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
-
-			// Record error class metrics
-			if a.metrics != nil {
-				a.metrics.RecordErrorClass(classified.Class)
-			}
 
 			// Handle based on error class
 			switch classified.Class {
@@ -342,11 +326,6 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 		"cache_misses", cacheMisses,
 		"cache_hit_rate", fmt.Sprintf("%.2f%%", cacheHitRate),
 	)
-
-	// Record metrics
-	if a.metrics != nil {
-		a.metrics.RecordExecution(duration, iteration+1, true)
-	}
 
 	return finalResponse, nil
 }
@@ -584,16 +563,7 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			"input", truncateString(toolInput, 200),
 		)
 
-		// Track tool start time for metrics
-		toolStart := time.Now()
-
 		toolResult, err := tool.Execute(ctx, toolInput)
-		toolDuration := time.Since(toolStart)
-
-		// Record tool call metrics
-		if a.metrics != nil {
-			a.metrics.RecordToolCall(toolCall, toolDuration, err == nil)
-		}
 
 		if err != nil {
 			slog.Warn("SchedulerAgent: Tool execution failed",
@@ -619,11 +589,6 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 				"error", err,
 				"input", truncateString(toolInput, timeout.MaxTruncateLength),
 			)
-
-			// Record error class metrics
-			if a.metrics != nil {
-				a.metrics.RecordErrorClass(classified.Class)
-			}
 
 			// Handle based on error class
 			switch classified.Class {
@@ -922,11 +887,6 @@ func (a *SchedulerAgent) getToolNames() string {
 		names = append(names, name)
 	}
 	return strings.Join(names, ", ")
-}
-
-// GetMetrics returns the agent's metrics collector.
-func (a *SchedulerAgent) GetMetrics() *AgentMetrics {
-	return a.metrics
 }
 
 // truncateString truncates a string to a maximum length for logging.
