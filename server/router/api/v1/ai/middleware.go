@@ -156,12 +156,7 @@ func (h *rateLimitHandler) Handle(ctx context.Context, req *ChatRequest, stream 
 // ObservabilityMiddleware adds logging and metrics.
 type ObservabilityMiddleware struct {
 	metrics *observability.Metrics
-	logger  *slogLogger
-}
-
-// slogLogger wraps the standard slog.Logger.
-type slogLogger struct {
-	logger interface{}
+	logger  *slog.Logger
 }
 
 // NewObservabilityMiddleware creates a new observability middleware.

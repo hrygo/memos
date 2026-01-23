@@ -131,7 +131,7 @@ func (h *ParrotHandler) executeAgent(
 	var streamMu sync.Mutex
 
 	// Create stream adapter
-	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData interface{}) error {
+	streamAdapter := agentpkg.NewParrotStreamAdapter(func(eventType string, eventData any) error {
 		// Track events
 		eventCount[eventType]++
 		if eventType == "answer" || eventType == "content" {
@@ -167,7 +167,7 @@ func (h *ParrotHandler) executeAgent(
 	})
 
 	// Create callback wrapper
-	callback := func(eventType string, eventData interface{}) error {
+	callback := func(eventType string, eventData any) error {
 		return streamAdapter.Send(eventType, eventData)
 	}
 

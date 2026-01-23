@@ -131,11 +131,8 @@ func (f *AgentFactory) createScheduleParrot(_ context.Context, cfg *CreateConfig
 		return nil, fmt.Errorf("store is required for schedule parrot")
 	}
 
-	// Set default timezone if not provided
-	timezone := cfg.Timezone
-	if timezone == "" {
-		timezone = "Asia/Shanghai"
-	}
+	// Normalize timezone: use provided timezone or default
+	timezone := NormalizeTimezone(cfg.Timezone)
 
 	// Create schedule service
 	scheduleSvc := schedule.NewService(f.store)
