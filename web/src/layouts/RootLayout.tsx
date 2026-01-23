@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import usePrevious from "react-use/lib/usePrevious";
+import KeyboardShortcutsHelp from "@/components/KeyboardShortcutsHelp";
 import Navigation from "@/components/Navigation";
 import Spinner from "@/components/Spinner";
 import { useInstance } from "@/contexts/InstanceContext";
@@ -35,6 +36,7 @@ const RootLayout = () => {
 
   return (
     <div className="w-full min-h-full flex flex-row justify-center items-start sm:pl-16 overflow-x-hidden">
+      <KeyboardShortcutsHelp />
       {sm && (
         <div
           className={cn(

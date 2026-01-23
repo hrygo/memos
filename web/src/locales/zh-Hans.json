@@ -116,6 +116,20 @@
     "yourself": "您自己",
     "more": "更多"
   },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "description": "按 ? 键随时打开此帮助对话框",
+    "editor": "编辑器",
+    "save-memo": "保存备忘录",
+    "cancel-edit": "取消编辑",
+    "formatting": "格式化",
+    "bold": "粗体文本",
+    "italic": "斜体文本",
+    "link": "插入链接",
+    "navigation": "导航",
+    "show-help": "显示键盘快捷键",
+    "close-dialog": "关闭对话框/抽屉"
+  },
   "days": {
     "fri": "五",
     "mon": "一",

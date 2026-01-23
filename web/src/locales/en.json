@@ -116,6 +116,20 @@
     "yourself": "Yourself",
     "more": "More"
   },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "description": "Press ? to open this help dialog anytime",
+    "editor": "Editor",
+    "save-memo": "Save memo",
+    "cancel-edit": "Cancel edit",
+    "formatting": "Formatting",
+    "bold": "Bold text",
+    "italic": "Italic text",
+    "link": "Insert link",
+    "navigation": "Navigation",
+    "show-help": "Show keyboard shortcuts",
+    "close-dialog": "Close dialog/drawer"
+  },
   "days": {
     "fri": "Fri",
     "mon": "Mon",
