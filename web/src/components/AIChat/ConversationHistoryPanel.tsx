@@ -1,9 +1,11 @@
 import { MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import { useAIChat } from "@/contexts/AIChatContext";
+import { useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
-import { ParrotAgentType } from "@/types/parrot";
+import { PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
 import { ConversationItem } from "./ConversationItem";
 
 interface ConversationHistoryPanelProps {
@@ -20,9 +22,6 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     createConversation,
     addContextSeparator,
     selectConversation,
-    updateConversationTitle,
-    pinConversation,
-    unpinConversation,
   } = useAIChat();
 
   const handleSelectConversation = (id: string) => {
@@ -44,20 +43,12 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
   };
 
   const handleResetContext = (id: string) => {
-    addContextSeparator(id);
-  };
-
-  const handleRename = (id: string, newTitle: string) => {
-    updateConversationTitle(id, newTitle);
-  };
-
-  const handleTogglePin = (id: string) => {
-    const conversation = conversationSummaries.find((c) => c.id === id);
-    if (conversation?.pinned) {
-      unpinConversation(id);
-    } else {
-      pinConversation(id);
-    }
+    addContextSeparator(id, "manual");
+    toast.success(t("ai.context-cleared-toast"), {
+      duration: 2000,
+      icon: "✂️",
+      className: "dark:bg-zinc-800 dark:border-zinc-700",
+    });
   };
 
   const hasConversations = conversationSummaries.length > 0;
@@ -83,8 +74,6 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
                 isActive={conversation.id === state.currentConversationId}
                 onSelect={handleSelectConversation}
                 onResetContext={handleResetContext}
-                onRename={handleRename}
-                onTogglePin={handleTogglePin}
               />
             ))}
           </div>
@@ -129,14 +118,7 @@ interface NewChatButtonProps {
 function NewChatButton({ onStartChat }: NewChatButtonProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-
-  const parrots = [
-    { id: ParrotAgentType.DEFAULT, label: "Default", icon: "🤖" },
-    { id: ParrotAgentType.MEMO, label: "Memo", icon: "🦜" },
-    { id: ParrotAgentType.SCHEDULE, label: "Schedule", icon: "📅" },
-    { id: ParrotAgentType.AMAZING, label: "Amazing", icon: "⭐" },
-    { id: ParrotAgentType.CREATIVE, label: "Creative", icon: "💡" },
-  ];
+  const availableParrots = useAvailableParrots();
 
   return (
     <div className="relative">
@@ -151,20 +133,31 @@ function NewChatButton({ onStartChat }: NewChatButtonProps) {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10 cursor-pointer" onClick={() => setIsOpen(false)} />
-          <div className="absolute bottom-full left-0 mb-2 z-20 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 min-w-[160px]">
-            {parrots.map((parrot) => (
-              <button
-                key={parrot.id}
-                onClick={() => {
-                  onStartChat(parrot.id);
-                  setIsOpen(false);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              >
-                <span>{parrot.icon}</span>
-                <span className="text-zinc-900 dark:text-zinc-100">{parrot.label}</span>
-              </button>
-            ))}
+          <div className="absolute bottom-full left-0 mb-2 z-20 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-1.5 min-w-[180px]">
+            {availableParrots.map((parrot) => {
+              const icon = PARROT_ICONS[parrot.id] || parrot.icon;
+              return (
+                <button
+                  key={parrot.id}
+                  onClick={() => {
+                    onStartChat(parrot.id);
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  {/* Parrot Icon */}
+                  {icon.startsWith("/") ? (
+                    <img src={icon} alt={parrot.displayName} className="w-5 h-5 object-contain" />
+                  ) : (
+                    <span className="text-base">{icon}</span>
+                  )}
+                  {/* Localized Name */}
+                  <span className="text-zinc-900 dark:text-zinc-100 font-medium">{parrot.displayName}</span>
+                  {/* Alt Name */}
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-auto">{parrot.displayNameAlt}</span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}
