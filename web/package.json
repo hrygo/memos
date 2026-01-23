@@ -32,6 +32,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "copy-to-clipboard": "^3.3.3",
+    "cytoscape": "^3.33.1",
     "dayjs": "^1.11.19",
     "fuse.js": "^7.1.0",
     "highlight.js": "^11.11.1",

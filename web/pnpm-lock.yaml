@@ -74,6 +74,9 @@ importers:
       copy-to-clipboard:
         specifier: ^3.3.3
         version: 3.3.3
+      cytoscape:
+        specifier: ^3.33.1
+        version: 3.33.1
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
