@@ -93,7 +93,7 @@ const UserMenu = (props: Props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={!currentUser}>
-        <div className={cn("w-auto flex flex-row justify-start items-center cursor-pointer text-foreground", collapsed ? "px-1" : "px-3")}>
+        <div className={cn("min-h-[44px] w-auto flex flex-row justify-start items-center cursor-pointer text-foreground", collapsed ? "px-1" : "px-3")}>
           {currentUser?.avatarUrl ? (
             <UserAvatar className="shrink-0" avatarUrl={currentUser?.avatarUrl} />
           ) : (

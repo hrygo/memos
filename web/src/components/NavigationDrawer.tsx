@@ -20,7 +20,7 @@ const NavigationDrawer = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="px-0 hover:bg-transparent cursor-pointer">
+        <Button variant="ghost" className="min-h-[44px] min-w-[44px] px-0 hover:bg-transparent cursor-pointer">
           <img src="/full-logo.webp" alt={title} className="h-10 w-auto object-contain" />
         </Button>
       </SheetTrigger>

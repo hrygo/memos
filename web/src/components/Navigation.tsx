@@ -95,7 +95,7 @@ const Navigation = (props: Props) => {
           <NavLink
             className={({ isActive }) =>
               cn(
-                "px-2 py-2 rounded-2xl border flex flex-row items-center text-lg text-sidebar-foreground transition-colors cursor-pointer",
+                "min-h-[44px] px-2 py-2 rounded-2xl border flex flex-row items-center text-lg text-sidebar-foreground transition-colors cursor-pointer",
                 collapsed ? "" : "w-full px-4",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-accent-border drop-shadow"

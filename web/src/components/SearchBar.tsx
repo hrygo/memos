@@ -71,9 +71,10 @@ const SearchBar = () => {
           <button
             onClick={() => setIsSemantic(!isSemantic)}
             className={cn(
-              "p-1 rounded-md transition-colors",
+              "min-h-[44px] min-w-[44px] p-3 flex items-center justify-center rounded-md transition-colors",
               isSemantic ? "text-blue-500 bg-blue-100 dark:bg-blue-900" : "text-muted-foreground hover:bg-muted",
             )}
+            aria-label={isSemantic ? "Disable semantic search" : "Enable semantic search"}
             title="Toggle Semantic Search"
           >
             <SparklesIcon className="w-4 h-4" />
