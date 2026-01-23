@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -134,18 +135,17 @@ func (s *Store) DeleteAttachment(ctx context.Context, delete *DeleteAttachment) 
 	}
 
 	if attachment.StorageType == storepb.AttachmentStorageType_LOCAL {
-		if err := func() error {
-			p := filepath.FromSlash(attachment.Reference)
-			if !filepath.IsAbs(p) {
-				p = filepath.Join(s.profile.Data, p)
-			}
-			err := os.Remove(p)
-			if err != nil {
-				return errors.Wrap(err, "failed to delete local file")
-			}
-			return nil
-		}(); err != nil {
-			return errors.Wrap(err, "failed to delete local file")
+		p := filepath.FromSlash(attachment.Reference)
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(s.profile.Data, p)
+		}
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			// Log error but don't prevent database deletion
+			slog.Error("failed to delete attachment file",
+				"error", err,
+				"path", p,
+				"attachment_id", delete.ID,
+			)
 		}
 	}
 

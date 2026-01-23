@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 	"os"
@@ -46,7 +47,8 @@ var SupportedThumbnailMimeTypes = []string{
 func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.CreateAttachmentRequest) (*v1pb.Attachment, error) {
 	user, err := s.fetchCurrentUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+		slog.Error("failed to get current user", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get current user")
 	}
 	if user == nil {
 		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
@@ -96,7 +98,8 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 
 	instanceStorageSetting, err := s.Store.GetInstanceStorageSetting(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get instance storage setting: %v", err)
+		slog.Error("failed to get instance storage setting", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get instance storage setting")
 	}
 	size := binary.Size(request.Attachment.Content)
 	uploadSizeLimit := int(instanceStorageSetting.UploadSizeLimitMb) * MebiByte
@@ -110,26 +113,29 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 	create.Blob = request.Attachment.Content
 
 	if err := SaveAttachmentBlob(ctx, s.Profile, s.Store, create); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to save attachment blob: %v", err)
+		slog.Error("failed to save attachment blob", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to save attachment blob")
 	}
 
 	if request.Attachment.Memo != nil {
 		memoUID, err := ExtractMemoUIDFromName(*request.Attachment.Memo)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid memo name: %v", err)
+			return nil, status.Errorf(codes.InvalidArgument, "invalid memo name")
 		}
 		memo, err := s.Store.GetMemo(ctx, &store.FindMemo{UID: &memoUID})
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to find memo: %v", err)
+			slog.Error("failed to find memo", "error", err)
+			return nil, status.Errorf(codes.Internal, "failed to find memo")
 		}
 		if memo == nil {
-			return nil, status.Errorf(codes.NotFound, "memo not found: %s", *request.Attachment.Memo)
+			return nil, status.Errorf(codes.NotFound, "memo not found")
 		}
 		create.MemoID = &memo.ID
 	}
 	attachment, err := s.Store.CreateAttachment(ctx, create)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create attachment: %v", err)
+		slog.Error("failed to create attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to create attachment")
 	}
 
 	return convertAttachmentFromStore(attachment), nil
@@ -138,7 +144,8 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 func (s *APIV1Service) ListAttachments(ctx context.Context, request *v1pb.ListAttachmentsRequest) (*v1pb.ListAttachmentsResponse, error) {
 	user, err := s.fetchCurrentUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+		slog.Error("failed to get current user", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get current user")
 	}
 	if user == nil {
 		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
@@ -179,7 +186,8 @@ func (s *APIV1Service) ListAttachments(ctx context.Context, request *v1pb.ListAt
 
 	attachments, err := s.Store.ListAttachments(ctx, findAttachment)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list attachments: %v", err)
+		slog.Error("failed to list attachments", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to list attachments")
 	}
 
 	response := &v1pb.ListAttachmentsResponse{}
@@ -203,11 +211,12 @@ func (s *APIV1Service) ListAttachments(ctx context.Context, request *v1pb.ListAt
 func (s *APIV1Service) GetAttachment(ctx context.Context, request *v1pb.GetAttachmentRequest) (*v1pb.Attachment, error) {
 	attachmentUID, err := ExtractAttachmentUIDFromName(request.Name)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id")
 	}
 	attachment, err := s.Store.GetAttachment(ctx, &store.FindAttachment{UID: &attachmentUID})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get attachment: %v", err)
+		slog.Error("failed to get attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get attachment")
 	}
 	if attachment == nil {
 		return nil, status.Errorf(codes.NotFound, "attachment not found")
@@ -218,14 +227,15 @@ func (s *APIV1Service) GetAttachment(ctx context.Context, request *v1pb.GetAttac
 func (s *APIV1Service) UpdateAttachment(ctx context.Context, request *v1pb.UpdateAttachmentRequest) (*v1pb.Attachment, error) {
 	attachmentUID, err := ExtractAttachmentUIDFromName(request.Attachment.Name)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id")
 	}
 	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "update mask is required")
 	}
 	attachment, err := s.Store.GetAttachment(ctx, &store.FindAttachment{UID: &attachmentUID})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get attachment: %v", err)
+		slog.Error("failed to get attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get attachment")
 	}
 
 	currentTs := time.Now().Unix()
@@ -243,7 +253,8 @@ func (s *APIV1Service) UpdateAttachment(ctx context.Context, request *v1pb.Updat
 	}
 
 	if err := s.Store.UpdateAttachment(ctx, update); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update attachment: %v", err)
+		slog.Error("failed to update attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to update attachment")
 	}
 	return s.GetAttachment(ctx, &v1pb.GetAttachmentRequest{
 		Name: request.Attachment.Name,
@@ -253,11 +264,12 @@ func (s *APIV1Service) UpdateAttachment(ctx context.Context, request *v1pb.Updat
 func (s *APIV1Service) DeleteAttachment(ctx context.Context, request *v1pb.DeleteAttachmentRequest) (*emptypb.Empty, error) {
 	attachmentUID, err := ExtractAttachmentUIDFromName(request.Name)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid attachment id")
 	}
 	user, err := s.fetchCurrentUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+		slog.Error("failed to get current user", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get current user")
 	}
 	if user == nil {
 		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
@@ -267,7 +279,8 @@ func (s *APIV1Service) DeleteAttachment(ctx context.Context, request *v1pb.Delet
 		CreatorID: &user.ID,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to find attachment: %v", err)
+		slog.Error("failed to find attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to find attachment")
 	}
 	if attachment == nil {
 		return nil, status.Errorf(codes.NotFound, "attachment not found")
@@ -276,7 +289,8 @@ func (s *APIV1Service) DeleteAttachment(ctx context.Context, request *v1pb.Delet
 	if err := s.Store.DeleteAttachment(ctx, &store.DeleteAttachment{
 		ID: attachment.ID,
 	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete attachment: %v", err)
+		slog.Error("failed to delete attachment", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to delete attachment")
 	}
 	return &emptypb.Empty{}, nil
 }

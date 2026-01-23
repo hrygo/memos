@@ -408,6 +408,9 @@ func (s *FileServerService) getAttachmentBlob(attachment *store.Attachment) ([]b
 
 // getOrGenerateThumbnail returns the thumbnail image of the attachment.
 // Uses semaphore to limit concurrent thumbnail generation and prevent memory exhaustion.
+// Uses a detached context for generation so thumbnail completes even if HTTP request is cancelled.
+//
+//nolint:unusedparams // ctx is reserved for future use (e.g., logging request context)
 func (s *FileServerService) getOrGenerateThumbnail(ctx context.Context, attachment *store.Attachment) ([]byte, error) {
 	thumbnailCacheFolder := filepath.Join(s.Profile.Data, ThumbnailCacheFolder)
 	if err := os.MkdirAll(thumbnailCacheFolder, os.ModePerm); err != nil {
@@ -433,7 +436,11 @@ func (s *FileServerService) getOrGenerateThumbnail(ctx context.Context, attachme
 	}
 
 	// Thumbnail doesn't exist, acquire semaphore to limit concurrent generation
-	if err := s.thumbnailSemaphore.Acquire(ctx, 1); err != nil {
+	// Use a detached context with timeout so thumbnail generation completes even if HTTP request is cancelled
+	genCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := s.thumbnailSemaphore.Acquire(genCtx, 1); err != nil {
 		return nil, errors.Wrap(err, "failed to acquire thumbnail generation semaphore")
 	}
 	defer s.thumbnailSemaphore.Release(1)
