@@ -59,10 +59,6 @@ func (d *DB) CreateSchedule(ctx context.Context, create *store.Schedule) (*store
 func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*store.Schedule, error) {
 	where, args := []string{"1 = 1"}, []any{}
 
-	// Debug logging
-	fmt.Printf("[DEBUG] ListSchedules called with find.StartTs=%v, find.EndTs=%v\n",
-		find.StartTs, find.EndTs)
-
 	if v := find.ID; v != nil {
 		where, args = append(where, "schedule.id = "+placeholder(len(args)+1)), append(args, *v)
 	}
@@ -88,12 +84,10 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 			// 严格模式：日程必须完全在查询范围内
 			// 日程的开始时间 >= 查询范围的开始时间
 			where, args = append(where, "schedule.start_ts >= "+placeholder(len(args)+1)), append(args, *v)
-			fmt.Printf("[DEBUG] STRICT mode: schedule.start_ts >= %d\n", *v)
 		} else {
 			// 标准模式（默认）：返回有任何部分在范围内的日程
 			// 日程的结束时间 >= 查询范围的开始时间
 			where, args = append(where, "(schedule.end_ts >= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
-			fmt.Printf("[DEBUG] STANDARD mode: schedule.end_ts >= %d\n", *v)
 		}
 	}
 	if v := find.EndTs; v != nil {
@@ -101,12 +95,10 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 			// 严格模式：日程必须完全在查询范围内
 			// 日程的结束时间 <= 查询范围的结束时间
 			where, args = append(where, "(schedule.end_ts <= "+placeholder(len(args)+1)+" OR schedule.end_ts IS NULL)"), append(args, *v)
-			fmt.Printf("[DEBUG] STRICT mode: schedule.end_ts <= %d\n", *v)
 		} else {
 			// 标准模式（默认）：返回有任何部分在范围内的日程
 			// 日程的开始时间 <= 查询范围的结束时间
 			where, args = append(where, "schedule.start_ts <= "+placeholder(len(args)+1)), append(args, *v)
-			fmt.Printf("[DEBUG] STANDARD mode: schedule.start_ts <= %d\n", *v)
 		}
 	}
 
@@ -207,17 +199,6 @@ func (d *DB) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*st
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to iterate schedules: %w", err)
-	}
-
-	// Debug logging
-	fmt.Printf("[DEBUG] ListSchedules returning %d schedules\n", len(list))
-	for i, sched := range list {
-		endTsVal := int64(0)
-		if sched.EndTs != nil {
-			endTsVal = *sched.EndTs
-		}
-		fmt.Printf("[DEBUG]   [%d] %s: start_ts=%d, end_ts=%d\n",
-			i, sched.Title, sched.StartTs, endTsVal)
 	}
 
 	return list, nil

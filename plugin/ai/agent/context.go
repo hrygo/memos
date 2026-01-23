@@ -141,7 +141,7 @@ func (c *ConversationContext) UpdateWorkingState(state *WorkingState) {
 	c.UpdatedAt = time.Now()
 }
 
-// GetWorkingState returns a copy of the current working state.
+// GetWorkingState returns a deep copy of the current working state.
 func (c *ConversationContext) GetWorkingState() *WorkingState {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -151,16 +151,52 @@ func (c *ConversationContext) GetWorkingState() *WorkingState {
 	}
 
 	// Return a deep copy to avoid race conditions
-	return &WorkingState{
-		ProposedSchedule: c.WorkingState.ProposedSchedule,
-		Conflicts:       c.WorkingState.Conflicts,
-		LastIntent:      c.WorkingState.LastIntent,
-		LastToolUsed:    c.WorkingState.LastToolUsed,
-		CurrentStep:     c.WorkingState.CurrentStep,
+	result := &WorkingState{
+		LastIntent:   c.WorkingState.LastIntent,
+		LastToolUsed: c.WorkingState.LastToolUsed,
+		CurrentStep:  c.WorkingState.CurrentStep,
 	}
+
+	// Deep copy ProposedSchedule
+	if c.WorkingState.ProposedSchedule != nil {
+		result.ProposedSchedule = &ScheduleDraft{
+			Title:         c.WorkingState.ProposedSchedule.Title,
+			Description:   c.WorkingState.ProposedSchedule.Description,
+			Location:      c.WorkingState.ProposedSchedule.Location,
+			AllDay:        c.WorkingState.ProposedSchedule.AllDay,
+			Timezone:      c.WorkingState.ProposedSchedule.Timezone,
+			OriginalInput: c.WorkingState.ProposedSchedule.OriginalInput,
+		}
+		if c.WorkingState.ProposedSchedule.StartTime != nil {
+			t := *c.WorkingState.ProposedSchedule.StartTime
+			result.ProposedSchedule.StartTime = &t
+		}
+		if c.WorkingState.ProposedSchedule.EndTime != nil {
+			t := *c.WorkingState.ProposedSchedule.EndTime
+			result.ProposedSchedule.EndTime = &t
+		}
+		if c.WorkingState.ProposedSchedule.Recurrence != nil {
+			// RecurrenceRule contains simple types, shallow copy is sufficient
+			result.ProposedSchedule.Recurrence = c.WorkingState.ProposedSchedule.Recurrence
+		}
+		if c.WorkingState.ProposedSchedule.Confidence != nil {
+			result.ProposedSchedule.Confidence = make(map[string]float32, len(c.WorkingState.ProposedSchedule.Confidence))
+			for k, v := range c.WorkingState.ProposedSchedule.Confidence {
+				result.ProposedSchedule.Confidence[k] = v
+			}
+		}
+	}
+
+	// Deep copy Conflicts slice
+	if len(c.WorkingState.Conflicts) > 0 {
+		result.Conflicts = make([]*store.Schedule, len(c.WorkingState.Conflicts))
+		copy(result.Conflicts, c.WorkingState.Conflicts)
+	}
+
+	return result
 }
 
-// GetLastTurn returns the most recent conversation turn.
+// GetLastTurn returns a copy of the most recent conversation turn.
 func (c *ConversationContext) GetLastTurn() *ConversationTurn {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -169,7 +205,9 @@ func (c *ConversationContext) GetLastTurn() *ConversationTurn {
 		return nil
 	}
 
-	return &c.Turns[len(c.Turns)-1]
+	// Return a copy, not a pointer to the slice element
+	last := c.Turns[len(c.Turns)-1]
+	return &last
 }
 
 // GetLastNTurns returns the last N conversation turns.

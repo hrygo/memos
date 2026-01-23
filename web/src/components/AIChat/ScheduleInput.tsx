@@ -97,7 +97,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
     // Validate input length
     if (input.length > MAX_INPUT_LENGTH) {
-      toast.error((t("schedule.input-too-long") as string) || "Input too long");
+      const errorMsg = t("schedule.input-too-long");
+      toast.error(typeof errorMsg === "string" ? errorMsg : "Input too long");
       return;
     }
 
@@ -197,7 +198,9 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         const validName =
           parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
             ? parsedSchedule.name
-            : `schedules/${self.crypto.randomUUID()}`;
+            : `schedules/${typeof crypto !== "undefined" && crypto.randomUUID
+                ? crypto.randomUUID()
+                : `${Date.now()}_${Math.random().toString(36).slice(2)}`}`;
 
         const scheduleToCreate = { ...parsedSchedule, name: validName };
 
@@ -541,14 +544,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
       </Dialog>
 
       {/* Conflict Alert */}
-      <ScheduleConflictAlert
-        open={showConflictAlert}
-        onOpenChange={setShowConflictAlert}
-        conflicts={conflicts}
-        onAdjust={handleAdjust}
-        onDiscard={handleDiscard}
-      />
-
       <ScheduleConflictAlert
         open={showConflictAlert}
         onOpenChange={setShowConflictAlert}

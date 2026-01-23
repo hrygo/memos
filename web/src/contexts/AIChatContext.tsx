@@ -309,9 +309,12 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     }
   }, []);
 
-  // Auto-save to localStorage when state changes
+  // Auto-save to localStorage when state changes (debounced)
   useEffect(() => {
-    saveToStorage();
+    const timer = setTimeout(() => {
+      saveToStorage();
+    }, 500); // 500ms debounce
+    return () => clearTimeout(timer);
   }, [state, saveToStorage]);
 
   // Load from storage on mount

@@ -69,7 +69,7 @@ export function ChatMessages({
 
   const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
   const currentIcon = currentParrotId ? PARROT_ICONS[currentParrotId] || PARROT_ICONS.DEFAULT : PARROT_ICONS.DEFAULT;
-  console.log("items", items);
+
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn("flex-1 overflow-y-auto px-3 md:px-6 py-4", className)}>
       {children}
@@ -284,8 +284,8 @@ function MessageBubble({
                         ),
                         p: ({ node, ...props }) => <p {...props} className="mb-1 last:mb-0 text-sm leading-relaxed" />,
                         pre: ({ node, ...props }) => <CodeBlock {...props} />,
-                        code: ({ className, children, ...props }: any) =>
-                          props.inline ? (
+                        code: ({ className, children, inline, ...props }: { className?: string; children?: ReactNode; inline?: boolean; [key: string]: unknown }) =>
+                          inline ? (
                             <code className={cn("px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs", className)} {...props}>
                               {children}
                             </code>
@@ -296,7 +296,7 @@ function MessageBubble({
                           ),
                       }}
                     >
-                      {content || "..."}
+                      {content || t("ai.thinking") || "..."}
                     </ReactMarkdown>
                     {children}
                   </div>
@@ -317,9 +317,9 @@ function MessageBubble({
                       className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-600 text-zinc-500"
                     >
                       {isFolded ? (
-                        <><ChevronDown className="w-3 h-3" />{t("common.expand") || "Expand"}</>
+                        <><ChevronDown className="w-3 h-3" />{t("common.expand")}</>
                       ) : (
-                        <><ChevronUp className="w-3 h-3" />{t("common.collapse") || "Collapse"}</>
+                        <><ChevronUp className="w-3 h-3" />{t("common.collapse")}</>
                       )}
                     </button>
                   </div>

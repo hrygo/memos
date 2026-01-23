@@ -5,6 +5,7 @@ package agent
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -199,18 +200,12 @@ func (m *AgentMetrics) GetP95Duration() time.Duration {
 		return 0
 	}
 
-	// Simple approach: sort and get 95th percentile
+	// Sort and get 95th percentile
 	sorted := make([]time.Duration, len(m.executionDuration))
 	copy(sorted, m.executionDuration)
-
-	// Simple bubble sort (good enough for small N)
-	for i := 0; i < len(sorted); i++ {
-		for j := i + 1; j < len(sorted); j++ {
-			if sorted[i] > sorted[j] {
-				sorted[i], sorted[j] = sorted[j], sorted[i]
-			}
-		}
-	}
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i] < sorted[j]
+	})
 
 	idx := int(float64(len(sorted)) * 0.95)
 	if idx >= len(sorted) {

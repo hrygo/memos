@@ -30,6 +30,9 @@ func NewParser(llmService ai.LLMService, timezone string) (*Parser, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		// Default to Asia/Shanghai if timezone is invalid
+		slog.Warn("invalid timezone, falling back to Asia/Shanghai",
+			"requested_timezone", timezone,
+			"error", err)
 		timezone = "Asia/Shanghai"
 		loc, _ = time.LoadLocation("Asia/Shanghai")
 	}
