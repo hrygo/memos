@@ -4,6 +4,8 @@
  * Registers the service worker for PWA support and offline capability.
  */
 
+const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
+
 const registerServiceWorker = () => {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
     return;
@@ -13,6 +15,9 @@ const registerServiceWorker = () => {
   if (import.meta.env.DEV) {
     return;
   }
+
+  // Store interval ID for cleanup
+  let updateIntervalId: number | undefined;
 
   window.addEventListener("load", () => {
     const swUrl = "/sw.js";
@@ -36,9 +41,10 @@ const registerServiceWorker = () => {
         });
 
         // Periodic update check (every hour)
-        setInterval(() => {
+        // Store interval ID for potential cleanup
+        updateIntervalId = window.setInterval(() => {
           registration.update();
-        }, 60 * 60 * 1000);
+        }, UPDATE_CHECK_INTERVAL);
       })
       .catch((error) => {
         console.log("Service Worker registration failed: ", error);
@@ -51,6 +57,13 @@ const registerServiceWorker = () => {
     if (!refreshing) {
       refreshing = true;
       window.location.reload();
+    }
+  });
+
+  // Cleanup interval on page unload to prevent memory leaks
+  window.addEventListener("beforeunload", () => {
+    if (updateIntervalId !== undefined) {
+      clearInterval(updateIntervalId);
     }
   });
 };

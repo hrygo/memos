@@ -31,15 +31,15 @@ const KeyboardShortcutsHelp = () => {
         e.preventDefault();
         setOpen(true);
       }
-      // Close with Escape
-      if (e.key === "Escape" && open) {
+      // Close with Escape - use functional update to always get latest state
+      if (e.key === "Escape") {
         setOpen(false);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, []);
 
   const categories: ShortcutCategory[] = [
     {
