@@ -68,6 +68,13 @@ func NewDB(profile *profile.Profile) (store.Driver, error) {
 		return nil, errors.Wrapf(err, "failed to open db with dsn: %s", profile.DSN)
 	}
 
+	// Configure connection pool for single-user SQLite with WAL mode
+	// SQLite handles concurrency differently; these settings optimize for local usage
+	sqliteDB.SetMaxOpenConns(1)                 // SQLite: single connection is optimal with WAL
+	sqliteDB.SetMaxIdleConns(1)                 // Keep the single connection ready
+	sqliteDB.SetConnMaxLifetime(0)              // No lifetime limit (local file, no network)
+	sqliteDB.SetConnMaxIdleTime(0)              // No idle timeout (personal use, always ready)
+
 	driver := DB{db: sqliteDB, profile: profile}
 
 	return &driver, nil

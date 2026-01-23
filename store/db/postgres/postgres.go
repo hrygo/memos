@@ -48,12 +48,12 @@ func NewDB(profile *profile.Profile) (store.Driver, error) {
 		return nil, errors.Wrapf(err, "failed to open database: %s", profile.DSN)
 	}
 
-	// Configure connection pool for 2C2G environment
-	// These settings are optimized for low-resource environments
-	db.SetMaxOpenConns(10)                // Limit total connections (default is unlimited)
-	db.SetMaxIdleConns(5)                 // Keep idle connections ready (default is 2)
-	db.SetConnMaxLifetime(1 * time.Hour)  // Recycle connections after 1 hour
-	db.SetConnMaxIdleTime(10 * time.Minute) // Don't keep idle connections too long
+	// Configure connection pool for single-user personal assistant
+	// Optimized for low resource usage while maintaining responsiveness
+	db.SetMaxOpenConns(5)                 // Single-user: max 5 concurrent connections
+	db.SetMaxIdleConns(2)                 // Keep 2 idle connections ready for instant response
+	db.SetConnMaxLifetime(2 * time.Hour)  // Personal use: longer lifetime, less churn
+	db.SetConnMaxIdleTime(15 * time.Minute) // Close idle connections after 15min
 
 	// Verify connection is working before returning
 	if err := db.Ping(); err != nil {
