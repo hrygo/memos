@@ -6,6 +6,16 @@
 
 const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
 
+// Conditional logging - only in development
+const log = {
+  info: (...args: unknown[]) => {
+    if (import.meta.env.DEV) console.log("[ServiceWorker]", ...args);
+  },
+  error: (...args: unknown[]) => {
+    console.error("[ServiceWorker]", ...args);
+  },
+};
+
 const registerServiceWorker = () => {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
     return;
@@ -25,7 +35,7 @@ const registerServiceWorker = () => {
     navigator.serviceWorker
       .register(swUrl)
       .then((registration) => {
-        console.log("Service Worker registered: ", registration);
+        log.info("Service Worker registered:", registration);
 
         // Check for updates
         registration.addEventListener("updatefound", () => {
@@ -34,7 +44,7 @@ const registerServiceWorker = () => {
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
                 // New version available
-                console.log("New service worker available. Refresh to update.");
+                log.info("New service worker available. Refresh to update.");
               }
             });
           }
@@ -47,7 +57,7 @@ const registerServiceWorker = () => {
         }, UPDATE_CHECK_INTERVAL);
       })
       .catch((error) => {
-        console.log("Service Worker registration failed: ", error);
+        log.error("Service Worker registration failed:", error);
       });
   });
 
