@@ -5,15 +5,19 @@ import { AIChatSidebar } from "@/components/AIChat/AIChatSidebar";
 import NavigationDrawer from "@/components/NavigationDrawer";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { AIChatProvider } from "@/contexts/AIChatContext";
+import { AIChatProvider, useAIChat } from "@/contexts/AIChatContext";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import { useParrot } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
+import { ParrotAgentType } from "@/types/parrot";
 import { useTranslate } from "@/utils/i18n";
 
 const AIChatLayoutContent = () => {
   const lg = useMediaQuery("lg");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const t = useTranslate();
+  const { currentConversation } = useAIChat();
+  const currentParrot = useParrot(currentConversation?.parrotId || ParrotAgentType.DEFAULT);
 
   return (
     <section className="@container w-full h-screen flex flex-col lg:h-screen overflow-hidden">
@@ -25,9 +29,22 @@ const AIChatLayoutContent = () => {
         </div>
 
         {/* Center - Title */}
-        <div className="flex items-center gap-2">
-          <SparklesIcon className="w-5 h-5 text-foreground" />
-          <span className="font-medium text-foreground">{t("common.ai-assistant")}</span>
+        <div className="flex items-center gap-2 overflow-hidden px-2">
+          {currentConversation ? (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+              {currentParrot.icon.startsWith("/") ? (
+                <img src={currentParrot.icon} alt="" className="w-5 h-5 object-contain" />
+              ) : (
+                <span className="text-base">{currentParrot.icon}</span>
+              )}
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm truncate">{currentParrot.displayName}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <SparklesIcon className="w-4 h-4 text-zinc-500" />
+              <span className="font-medium text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider">{t("common.ai-assistant")}</span>
+            </div>
+          )}
         </div>
 
         {/* Right - Sidebar Toggle */}

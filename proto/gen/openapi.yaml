@@ -73,8 +73,8 @@ paths:
         post:
             tags:
                 - AIService
-            description: ChatWithMemos streams a chat response using memos as context.
-            operationId: AIService_ChatWithMemos
+            description: Chat streams a chat response with AI agents.
+            operationId: AIService_Chat
             requestBody:
                 content:
                     application/json:

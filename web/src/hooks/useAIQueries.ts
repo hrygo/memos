@@ -1,12 +1,11 @@
 import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { aiServiceClient, scheduleAgentServiceClient } from "@/connect";
+import { aiServiceClient } from "@/connect";
 import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 import {
   ChatWithMemosRequestSchema,
   GetRelatedMemosRequestSchema,
   SemanticSearchRequestSchema,
-  ScheduleAgentChatRequestSchema,
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
 
@@ -152,7 +151,7 @@ export function useChatWithMemos() {
 
       try {
         // Use the streaming method from Connect RPC client
-        const stream = aiServiceClient.chatWithMemos(request);
+        const stream = aiServiceClient.chat(request);
 
         const sources: string[] = [];
         let fullContent = "";
@@ -228,6 +227,30 @@ export function useChatWithMemos() {
                   callbacks?.onMemoQueryResult?.(result);
                 } catch (e) {
                   console.error("Failed to parse memo_query_result:", e);
+                }
+                break;
+              case "schedule_query_result":
+                try {
+                  const result = JSON.parse(response.eventData);
+                  // Transform to the expected format with bigint conversion
+                  const transformedResult = {
+                    detected: true,
+                    schedules: (result.schedules || []).map((s: { uid: string; title: string; start_ts: number; end_ts: number; all_day: boolean; location?: string; status: string }) => ({
+                      uid: s.uid || "",
+                      title: s.title || "",
+                      startTs: BigInt(s.start_ts || 0),
+                      endTs: BigInt(s.end_ts || 0),
+                      allDay: s.all_day || false,
+                      location: s.location || "",
+                      recurrenceRule: "",
+                      status: s.status || "ACTIVE",
+                    })),
+                    timeRangeDescription: result.time_range_description || "",
+                    queryType: result.query_type || "range",
+                  };
+                  callbacks?.onScheduleQueryResult?.(transformedResult);
+                } catch (e) {
+                  console.error("Failed to parse schedule_query_result:", e);
                 }
                 break;
             }

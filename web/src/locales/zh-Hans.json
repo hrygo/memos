@@ -27,6 +27,7 @@
     "attachments": "附件",
     "auto-expand": "自动展开",
     "avatar": "头像",
+    "back": "返回鹦巢",
     "basic": "基础",
     "beta": "测试",
     "calendar": "日历",
@@ -515,6 +516,12 @@
         "results-title": "笔记查询结果",
         "found-count": "找到 {{count}} 条相关笔记",
         "sorted": "已排序"
+      },
+      "amazing-insight": {
+        "title": "惊奇洞察",
+        "key-memos": "关键笔记",
+        "upcoming-events": "近期日程",
+        "insight-prefix": "洞察"
       }
     },
     "parrot": {
@@ -541,31 +548,51 @@
           "name": "默认助手",
           "nameAlt": "Default Assistant",
           "description": "默认 AI 助手，使用 RAG 系统回答问题",
-          "examples": ["总结最近的笔记", "帮我搜索关于 Python 的内容", "今天有什么安排"]
+          "examples": [
+            "总结最近的笔记",
+            "帮我搜索关于 Python 的内容",
+            "今天有什么安排"
+          ]
         },
         "memo": {
           "name": "灰灰",
           "nameAlt": "Memo",
           "description": "笔记助手，专注于检索、总结和管理笔记",
-          "examples": ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"]
+          "examples": [
+            "搜索关于编程的笔记",
+            "总结最近的工作备忘",
+            "查找包含项目管理的笔记"
+          ]
         },
         "schedule": {
           "name": "金刚",
           "nameAlt": "Schedule",
           "description": "日程助手，帮助创建、查询和管理日程",
-          "examples": ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"]
+          "examples": [
+            "今天有什么安排",
+            "明天下午有空吗",
+            "帮我创建下周会议提醒"
+          ]
         },
         "amazing": {
           "name": "惊奇",
           "nameAlt": "Amazing",
           "description": "综合助手，结合笔记和日程功能",
-          "examples": ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"]
+          "examples": [
+            "总结今天的笔记和日程",
+            "帮我规划下周工作",
+            "查询最近的项目相关内容"
+          ]
         },
         "creative": {
           "name": "灵灵",
           "nameAlt": "Creative",
           "description": "创意助手，提供创意写作和头脑风暴",
-          "examples": ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"]
+          "examples": [
+            "帮我头脑风暴产品推广创意",
+            "写一封项目进度汇报邮件",
+            "优化这段文字的表达"
+          ]
         }
       }
     }
@@ -622,7 +649,6 @@
     "more-conflicts": "更多冲突",
     "adjust-time": "调整时间",
     "create-anyway": "仍要创建",
-    "conflict": "冲突",
     "schedule-count": "{{count}} 个日程",
     "schedule-count_plural": "{{count}} 个日程",
     "schedules": "日程",
@@ -722,8 +748,6 @@
       "source-type-ai": "AI",
       "template-applied": "来自模板：{title}",
       "template-applied-message": "已应用\"{title}\"模板，时长 {duration} 分钟",
-      "schedule-created": "日程已创建",
-      "selection-canceled": "已取消选择",
       "selected-label": "已选择：{title}，{date} {time}",
       "create-schedule-label": "创建日程：{title}，{date} {time}{endTime}"
     },
@@ -748,7 +772,7 @@
     },
     "flow": {
       "ask-title-time": "您想创建什么日程？请描述标题和时间。",
-      "ask-specific-time": "请告诉我具体时间，例如：\"明天下午3点\" 或 \"后天上午10点\"",
+      "ask-specific-time": "请告诉我具体时间，例如：\"明天下午3点\" 或 \"后天上午10點\"",
       "ask-duration": "这个日程需要多长时间？例如：\"30分钟\" 或 \"2小时\"",
       "ask-location": "需要设置地点吗？（可选）",
       "ask-continue": "请继续..."
@@ -783,49 +807,6 @@
     "input-reply": "输入回复",
     "send-reply": "发送回复",
     "cancel-chat": "取消对话",
-    "schedule-preview": "日程预览",
-    "schedule-title-label": "日程标题",
-    "time-and-location": "时间和地点",
-    "edit-schedule": "编辑日程",
-    "no-schedules-this-period": "该时间段暂无日程安排",
-    "found-schedules": "找到 {{count}} 个日程",
-    "view-full-schedule": "查看完整日程表",
-    "search-schedule": "搜索日程",
-    "clear-search": "清除搜索",
-    "calendar-view": "日历视图",
-    "jump-to-today": "跳转到今天",
-    "previous-month": "上一月",
-    "next-month": "下一月",
-    "calendar": "日历",
-    "legend": "图例",
-    "hint": "提示",
-    "previous-week": "上一周",
-    "next-week": "下一周",
-    "select-date": "选择日期",
-    "schedule-list": "日程列表",
-    "schedule-conflict": "日程冲突",
-    "date-aria-label": "{{date}} {{isToday}} {{scheduleCount}}",
-    "schedule-aria-label": "{{title}}，{{startTime}} 到 {{endTime}} {{hasConflict}}",
-    "close-conflict-alert": "关闭冲突提示",
-    "need-more-info": "需要更多信息",
-    "need-more-info-message": "需要更多信息",
-    "parse-failed": "解析失败",
-    "parse-failed-message": "解析失败，请重试",
-    "ai-parse-failed": "智能解析失败，请重试",
-    "parsing": "解析中",
-    "parse-success": "解析成功",
-    "please-input-schedule-content": "请输入日程内容",
-    "drag-resize-panel": "拖动调整面板大小",
-    "close-panel": "关闭面板",
-    "force-create": "强制创建",
-    "edit-form": "编辑表单",
-    "start-time": "开始时间",
-    "end-time": "结束时间",
-    "location-label": "地点",
-    "cancel-edit": "取消编辑",
-    "manual-parse": "手动解析",
-    "close-card": "关闭",
-    "conflicting-schedules": "冲突的日程",
-    "input-schedule-desc": "输入日程描述"
+    "schedule-preview": "日程预览"
   }
 }

@@ -1500,11 +1500,11 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\xb5\b\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x042\xac\b\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
-	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12v\n" +
-	"\rChatWithMemos\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/ai/chat0\x01\x12\x86\x01\n" +
+	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12m\n" +
+	"\x04Chat\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/ai/chat0\x01\x12\x86\x01\n" +
 	"\x0fGetRelatedMemos\x12$.memos.api.v1.GetRelatedMemosRequest\x1a%.memos.api.v1.GetRelatedMemosResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/{name=memos/*}/related\x12\x87\x01\n" +
 	"\x15ChatWithScheduleAgent\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/ai/chat/schedule0\x01\x12\x8b\x01\n" +
 	"\x17ChatWithMemosIntegrated\x12\".memos.api.v1.ChatWithMemosRequest\x1a#.memos.api.v1.ChatWithMemosResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/ai/chat/integrated0\x01\x12\xab\x01\n" +
@@ -1570,7 +1570,7 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	17, // 11: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
 	5,  // 12: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
 	8,  // 13: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	10, // 14: memos.api.v1.AIService.ChatWithMemos:input_type -> memos.api.v1.ChatWithMemosRequest
+	10, // 14: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatWithMemosRequest
 	15, // 15: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
 	10, // 16: memos.api.v1.AIService.ChatWithScheduleAgent:input_type -> memos.api.v1.ChatWithMemosRequest
 	10, // 17: memos.api.v1.AIService.ChatWithMemosIntegrated:input_type -> memos.api.v1.ChatWithMemosRequest
@@ -1580,7 +1580,7 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	2,  // 21: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
 	6,  // 22: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
 	9,  // 23: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	11, // 24: memos.api.v1.AIService.ChatWithMemos:output_type -> memos.api.v1.ChatWithMemosResponse
+	11, // 24: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatWithMemosResponse
 	16, // 25: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
 	11, // 26: memos.api.v1.AIService.ChatWithScheduleAgent:output_type -> memos.api.v1.ChatWithMemosResponse
 	11, // 27: memos.api.v1.AIService.ChatWithMemosIntegrated:output_type -> memos.api.v1.ChatWithMemosResponse

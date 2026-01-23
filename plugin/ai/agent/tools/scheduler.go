@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
-	"log/slog"
 
 	"github.com/usememos/memos/server/service/schedule"
 )
@@ -25,7 +25,6 @@ const (
 	// Audit log field length limits (for sensitive data sanitization)
 	maxTitleLengthForLog       = 50
 	maxDescriptionLengthForLog = 100
-	maxInputLengthForLog       = 200
 )
 
 // timezoneCache caches parsed timezone locations for performance.
@@ -97,10 +96,10 @@ func getTimezoneLocation(timezone string) *time.Location {
 // JSON field name mappings for camelCase to snake_case compatibility.
 // Some LLMs generate camelCase (startTime) while we expect snake_case (start_time).
 var fieldNameMappings = map[string]string{
-	"startTime":   "start_time",
-	"endTime":     "end_time",
-	"allDay":      "all_day",
-	"minScore":    "min_score",
+	"startTime": "start_time",
+	"endTime":   "end_time",
+	"allDay":    "all_day",
+	"minScore":  "min_score",
 }
 
 // normalizeJSONFields converts camelCase keys to snake_case for LLM compatibility.
@@ -132,14 +131,14 @@ func normalizeJSONFields(inputJSON string) string {
 
 // ScheduleQueryTool searches for schedule events within a specific time range.
 type ScheduleQueryTool struct {
-	service     schedule.Service
+	service      schedule.Service
 	userIDGetter func(ctx context.Context) int32
 }
 
 // NewScheduleQueryTool creates a new schedule query tool.
 func NewScheduleQueryTool(service schedule.Service, userIDGetter func(ctx context.Context) int32) *ScheduleQueryTool {
 	return &ScheduleQueryTool{
-		service:     service,
+		service:      service,
 		userIDGetter: userIDGetter,
 	}
 }
@@ -277,16 +276,119 @@ func (t *ScheduleQueryTool) Validate(ctx context.Context, inputJSON string) erro
 	return nil
 }
 
+// ScheduleSummary represents a simplified schedule for query results.
+type ScheduleSummary struct {
+	UID      string `json:"uid"`
+	Title    string `json:"title"`
+	StartTs  int64  `json:"start_ts"`
+	EndTs    int64  `json:"end_ts"`
+	AllDay   bool   `json:"all_day"`
+	Location string `json:"location,omitempty"`
+	Status   string `json:"status"`
+}
+
+// ScheduleQueryToolResult represents the structured result of schedule query.
+type ScheduleQueryToolResult struct {
+	Schedules            []ScheduleSummary `json:"schedules"`
+	Query                string            `json:"query"`
+	Count                int               `json:"count"`
+	TimeRangeDescription string            `json:"time_range_description"`
+	QueryType            string            `json:"query_type"`
+}
+
+// RunWithStructuredResult executes the tool and returns a structured result.
+// RunWithStructuredResult 执行工具并返回结构化结果。
+func (t *ScheduleQueryTool) RunWithStructuredResult(ctx context.Context, inputJSON string) (*ScheduleQueryToolResult, error) {
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedJSON := normalizeJSONFields(inputJSON)
+
+	// Parse input
+	var input struct {
+		StartTime string `json:"start_time"`
+		EndTime   string `json:"end_time"`
+	}
+
+	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {
+		return nil, fmt.Errorf("invalid JSON input: %w", err)
+	}
+
+	// Validate input
+	if input.StartTime == "" {
+		return nil, fmt.Errorf("start_time is required")
+	}
+	if input.EndTime == "" {
+		return nil, fmt.Errorf("end_time is required")
+	}
+
+	// Parse times
+	startTime, err := time.Parse(time.RFC3339, input.StartTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid start_time format: %w. Please use ISO8601 format (e.g., 2026-01-21T09:00:00Z)", err)
+	}
+
+	endTime, err := time.Parse(time.RFC3339, input.EndTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid end_time format: %w. Please use ISO8601 format (e.g., 2026-01-21T09:00:00Z)", err)
+	}
+
+	if endTime.Before(startTime) {
+		return nil, fmt.Errorf("end_time must be after start_time")
+	}
+
+	// Get user ID from context
+	userID := t.userIDGetter(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized: no user ID in context")
+	}
+
+	// Query schedules
+	instances, err := t.service.FindSchedules(ctx, userID, startTime, endTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query schedules: %w", err)
+	}
+
+	// Convert to ScheduleSummary
+	schedules := make([]ScheduleSummary, 0, len(instances))
+	for _, inst := range instances {
+		var endTs int64
+		if inst.EndTs != nil {
+			endTs = *inst.EndTs
+		}
+		schedules = append(schedules, ScheduleSummary{
+			UID:      inst.UID,
+			Title:    inst.Title,
+			StartTs:  inst.StartTs,
+			EndTs:    endTs,
+			AllDay:   inst.AllDay,
+			Location: inst.Location,
+			Status:   "ACTIVE", // Default status
+		})
+	}
+
+	// Determine time range description
+	timeRangeDescription := fmt.Sprintf("%s to %s",
+		startTime.Format("2006-01-02"),
+		endTime.Format("2006-01-02"))
+
+	return &ScheduleQueryToolResult{
+		Schedules:            schedules,
+		Query:                fmt.Sprintf("%s - %s", input.StartTime, input.EndTime),
+		Count:                len(schedules),
+		TimeRangeDescription: timeRangeDescription,
+		QueryType:            "range",
+	}, nil
+}
+
 // ScheduleAddTool creates a new schedule event.
 type ScheduleAddTool struct {
-	service     schedule.Service
+	service      schedule.Service
 	userIDGetter func(ctx context.Context) int32
 }
 
 // NewScheduleAddTool creates a new schedule add tool.
 func NewScheduleAddTool(service schedule.Service, userIDGetter func(ctx context.Context) int32) *ScheduleAddTool {
 	return &ScheduleAddTool{
-		service:     service,
+		service:      service,
 		userIDGetter: userIDGetter,
 	}
 }
@@ -488,8 +590,8 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 // findNextAvailableSlot finds the next available time slot after the requested time.
 // Returns the start time of the next available slot (in RFC3339 format).
 func (t *ScheduleAddTool) findNextAvailableSlot(ctx context.Context, userID int32, requestedStart time.Time, durationSec int64) (time.Time, error) {
-	const hourStart = 8  // 8 AM
-	const hourEnd = 22   // 10 PM (last slot starts at 22:00)
+	const hourStart = 8              // 8 AM
+	const hourEnd = 22               // 10 PM (last slot starts at 22:00)
 	const slotDuration = int64(3600) // 1 hour
 
 	// Start searching from the requested time
@@ -518,7 +620,7 @@ func (t *ScheduleAddTool) findNextAvailableSlot(ctx context.Context, userID int3
 		}
 
 		// Check each hour slot
-		for hour := 0; hour <= (hourEnd-hourStart); hour++ {
+		for hour := 0; hour <= (hourEnd - hourStart); hour++ {
 			currentSlotStart := slotStart.Add(time.Duration(hour) * time.Hour)
 			slotEnd := currentSlotStart.Add(time.Duration(slotDuration))
 
@@ -595,17 +697,17 @@ func sanitizeString(s string, maxLen int) string {
 
 // FindFreeTimeTool finds available time slots for scheduling.
 type FindFreeTimeTool struct {
-	service     schedule.Service
+	service      schedule.Service
 	userIDGetter func(ctx context.Context) int32
-	timezone    string
+	timezone     string
 }
 
 // NewFindFreeTimeTool creates a new find free time tool.
 func NewFindFreeTimeTool(service schedule.Service, userIDGetter func(ctx context.Context) int32) *FindFreeTimeTool {
 	return &FindFreeTimeTool{
-		service:     service,
+		service:      service,
 		userIDGetter: userIDGetter,
-		timezone:    DefaultTimezone,
+		timezone:     DefaultTimezone,
 	}
 }
 
@@ -690,8 +792,8 @@ func (t *FindFreeTimeTool) Run(ctx context.Context, inputJSON string) (string, e
 	// Find free slots (checking each hour from 8:00 to 22:00 inclusive)
 	// hourStart=8 (8 AM), hourEnd=22 (10 PM)
 	// We check hour <= hourEnd to include the 22:00-23:00 slot
-	const hourStart = 8  // 8 AM
-	const hourEnd = 22   // 10 PM (last slot starts at 22:00)
+	const hourStart = 8 // 8 AM
+	const hourEnd = 22  // 10 PM (last slot starts at 22:00)
 
 	// Check each hour slot
 	for hour := hourStart; hour <= hourEnd; hour++ {
@@ -737,14 +839,14 @@ func (t *FindFreeTimeTool) Run(ctx context.Context, inputJSON string) (string, e
 
 // ScheduleUpdateTool updates an existing schedule event.
 type ScheduleUpdateTool struct {
-	service     schedule.Service
+	service      schedule.Service
 	userIDGetter func(ctx context.Context) int32
 }
 
 // NewScheduleUpdateTool creates a new schedule update tool.
 func NewScheduleUpdateTool(service schedule.Service, userIDGetter func(ctx context.Context) int32) *ScheduleUpdateTool {
 	return &ScheduleUpdateTool{
-		service:     service,
+		service:      service,
 		userIDGetter: userIDGetter,
 	}
 }
@@ -806,13 +908,13 @@ func (t *ScheduleUpdateTool) Run(ctx context.Context, inputJSON string) (string,
 
 	// Parse input
 	var input struct {
-		ID          int32   `json:"id,omitempty"`
-		Date        string  `json:"date,omitempty"`
-		Title       string  `json:"title,omitempty"`
-		StartTime   string  `json:"start_time,omitempty"`
-		EndTime     string  `json:"end_time,omitempty"`
-		Description string  `json:"description,omitempty"`
-		Location    string  `json:"location,omitempty"`
+		ID          int32  `json:"id,omitempty"`
+		Date        string `json:"date,omitempty"`
+		Title       string `json:"title,omitempty"`
+		StartTime   string `json:"start_time,omitempty"`
+		EndTime     string `json:"end_time,omitempty"`
+		Description string `json:"description,omitempty"`
+		Location    string `json:"location,omitempty"`
 	}
 
 	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {

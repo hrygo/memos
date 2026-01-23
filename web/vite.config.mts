@@ -39,7 +39,22 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "utils-vendor": ["dayjs", "lodash-es"],
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "ui-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-switch",
+            "lucide-react",
+          ],
+          "markdown-vendor": ["react-markdown", "remark-gfm", "remark-breaks", "rehype-raw", "rehype-sanitize"],
+          "query-vendor": ["@tanstack/react-query"],
+          "i18n-vendor": ["i18next", "react-i18next"],
+          "graph-vendor": ["cytoscape", "react-force-graph-2d"],
+          "utils-vendor": ["dayjs", "lodash-es", "fuse.js", "uuid"],
           "mermaid-vendor": ["mermaid"],
           "leaflet-vendor": ["leaflet", "react-leaflet"],
         },

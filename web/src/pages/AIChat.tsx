@@ -2,10 +2,11 @@ import copy from "copy-to-clipboard";
 import { ChevronLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AmazingInsightCard } from "@/components/AIChat/AmazingInsightCard";
 import { ChatHeader } from "@/components/AIChat/ChatHeader";
 import { ChatInput } from "@/components/AIChat/ChatInput";
 import { ChatMessages } from "@/components/AIChat/ChatMessages";
-import { MemoQueryResult } from "@/components/AIChat/MemoQueryResult";
+
 import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
@@ -15,7 +16,7 @@ import type { ParrotAgentI18n } from "@/hooks/useParrots";
 import { getLocalizedParrot, useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
 import type { ChatItem, ContextSeparator, ConversationMessage } from "@/types/aichat";
-import type { MemoQueryResultData } from "@/types/parrot";
+import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
 import { PARROT_AGENTS, PARROT_ICONS, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 // Helper function to check if item is ContextSeparator
@@ -77,11 +78,11 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
                   }}
                   className={cn(
                     "w-full text-left rounded-xl border transition-all duration-200",
-                    "hover:shadow-sm active:shadow-none",
-                    "focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2",
+                    "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0",
+                    "focus:outline-none focus:ring-2 focus:ring-zinc-500/20 focus:ring-offset-0",
                     "cursor-pointer",
                     isCreating && "opacity-50 cursor-not-allowed",
-                    "relative overflow-hidden group",
+                    "relative overflow-hidden group/card",
                     parrotTheme.cardBg,
                     parrotTheme.cardBorder,
                   )}
@@ -125,11 +126,11 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
                             disabled={isCreating}
                             className={cn(
                               "block w-full text-left px-3 py-2 rounded-lg text-xs border",
-                              "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                              "hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-[0.97]",
                               "border-zinc-200 dark:border-zinc-700",
                               "text-zinc-700 dark:text-zinc-300",
                               "disabled:opacity-50 disabled:cursor-not-allowed",
-                              "transition-colors",
+                              "transition-all duration-200",
                             )}
                           >
                             {prompt}
@@ -164,6 +165,7 @@ interface ChatViewProps {
   onClearContext: () => void;
   onBackToHub: () => void;
   memoQueryResults: MemoQueryResultData[];
+  scheduleQueryResults: ScheduleQueryResultData[];
   items: ChatItem[];
   onParrotChange: (parrot: ParrotAgentI18n | null) => void;
 }
@@ -181,6 +183,7 @@ function ChatView({
   onClearContext,
   onBackToHub,
   memoQueryResults,
+  scheduleQueryResults,
   items,
   onParrotChange,
 }: ChatViewProps) {
@@ -231,11 +234,9 @@ function ChatView({
                 onSend(prompt);
               }}
               className={cn(
-                "px-3 py-2 rounded-xl text-sm border transition-colors cursor-pointer",
-                theme.inputBg,
-                theme.inputBorder,
+                "hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95",
                 theme.iconText,
-                "hover:opacity-80",
+                "hover:opacity-90",
               )}
             >
               {prompt}
@@ -248,22 +249,17 @@ function ChatView({
 
   return (
     <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
-      {/* Mobile Header */}
+      {/* Mobile Sub-Header - Compact back button only */}
       {!md && (
-        <header className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
+        <header className="flex items-center px-1.5 py-1 border-b border-zinc-100 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-20">
           <button
             onClick={onBackToHub}
-            className="p-2 -ml-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            aria-label="Go back to hub"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95 group"
+            aria-label="Back to hub"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <span className="text-xs font-medium">{t("common.back") || "Back"}</span>
           </button>
-          {currentIcon.startsWith("/") ? (
-            <img src={currentIcon} alt={currentParrot.displayName} className="w-6 h-6 object-contain" />
-          ) : (
-            <span className="text-xl">{currentIcon}</span>
-          )}
-          <span className="font-medium text-zinc-900 dark:text-zinc-100">{currentParrot.displayName}</span>
         </header>
       )}
 
@@ -285,16 +281,18 @@ function ChatView({
         currentParrotId={currentParrot.id}
         onCopyMessage={handleCopyMessage}
         onDeleteMessage={handleDeleteMessage}
+        amazingInsightCard={
+          currentParrot.id === ParrotAgentType.AMAZING &&
+            (memoQueryResults.length > 0 || scheduleQueryResults.length > 0) ? (
+            <AmazingInsightCard
+              memos={memoQueryResults[0]?.memos ?? []}
+              schedules={scheduleQueryResults[0]?.schedules ?? []}
+            />
+          ) : undefined
+        }
       >
         {/* Welcome message */}
         {items.length === 0 && welcomeMessage}
-
-        {/* Memo Query Results */}
-        {memoQueryResults.map((result, index) => (
-          <div key={index} className="max-w-3xl mx-auto mb-4">
-            <MemoQueryResult result={result} />
-          </div>
-        ))}
       </ChatMessages>
 
       {/* Input Area */}
@@ -355,6 +353,7 @@ const AIChat = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
+  const [scheduleQueryResults, setScheduleQueryResults] = useState<ScheduleQueryResultData[]>([]);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
@@ -440,6 +439,7 @@ const AIChat = () => {
       setIsTyping(true);
       setIsThinking(true);
       setMemoQueryResults([]);
+      setScheduleQueryResults([]);
       const _messageId = ++messageIdRef.current;
 
       try {
@@ -472,6 +472,27 @@ const AIChat = () => {
               if (_messageId === messageIdRef.current) {
                 setMemoQueryResults((prev) => [...prev, result]);
                 addReferencedMemos(conversationId, result.memos);
+              }
+            },
+            onScheduleQueryResult: (result) => {
+              if (_messageId === messageIdRef.current) {
+                // Transform callback result to ScheduleQueryResultData format
+                const transformedResult: ScheduleQueryResultData = {
+                  schedules: result.schedules.map((s) => ({
+                    uid: s.uid,
+                    title: s.title,
+                    startTimestamp: Number(s.startTs),
+                    endTimestamp: Number(s.endTs),
+                    allDay: s.allDay,
+                    location: s.location || undefined,
+                    status: s.status,
+                  })),
+                  query: "",
+                  count: result.schedules.length,
+                  timeRangeDescription: result.timeRangeDescription,
+                  queryType: result.queryType,
+                };
+                setScheduleQueryResults((prev) => [...prev, transformedResult]);
               }
             },
             onContent: (content) => {
@@ -658,7 +679,7 @@ const AIChat = () => {
   }, [handleSend]);
 
   // View mode determination
-  const viewMode = currentConversation ? "chat" : "hub";
+  const viewMode = aiChat.state.viewMode;
 
   // ============================================================
   // RENDER
@@ -679,6 +700,7 @@ const AIChat = () => {
       onClearContext={handleClearContext}
       onBackToHub={handleBackToHub}
       memoQueryResults={memoQueryResults}
+      scheduleQueryResults={scheduleQueryResults}
       items={items}
       onParrotChange={handleParrotChange}
     />

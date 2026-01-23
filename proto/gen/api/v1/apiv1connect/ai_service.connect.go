@@ -40,8 +40,8 @@ const (
 	AIServiceSemanticSearchProcedure = "/memos.api.v1.AIService/SemanticSearch"
 	// AIServiceSuggestTagsProcedure is the fully-qualified name of the AIService's SuggestTags RPC.
 	AIServiceSuggestTagsProcedure = "/memos.api.v1.AIService/SuggestTags"
-	// AIServiceChatWithMemosProcedure is the fully-qualified name of the AIService's ChatWithMemos RPC.
-	AIServiceChatWithMemosProcedure = "/memos.api.v1.AIService/ChatWithMemos"
+	// AIServiceChatProcedure is the fully-qualified name of the AIService's Chat RPC.
+	AIServiceChatProcedure = "/memos.api.v1.AIService/Chat"
 	// AIServiceGetRelatedMemosProcedure is the fully-qualified name of the AIService's GetRelatedMemos
 	// RPC.
 	AIServiceGetRelatedMemosProcedure = "/memos.api.v1.AIService/GetRelatedMemos"
@@ -70,8 +70,8 @@ type AIServiceClient interface {
 	SemanticSearch(context.Context, *connect.Request[v1.SemanticSearchRequest]) (*connect.Response[v1.SemanticSearchResponse], error)
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(context.Context, *connect.Request[v1.SuggestTagsRequest]) (*connect.Response[v1.SuggestTagsResponse], error)
-	// ChatWithMemos streams a chat response using memos as context.
-	ChatWithMemos(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
+	// Chat streams a chat response with AI agents.
+	Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
 	// ChatWithScheduleAgent streams a chat response using the schedule agent.
@@ -107,10 +107,10 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("SuggestTags")),
 			connect.WithClientOptions(opts...),
 		),
-		chatWithMemos: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
+		chat: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
 			httpClient,
-			baseURL+AIServiceChatWithMemosProcedure,
-			connect.WithSchema(aIServiceMethods.ByName("ChatWithMemos")),
+			baseURL+AIServiceChatProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("Chat")),
 			connect.WithClientOptions(opts...),
 		),
 		getRelatedMemos: connect.NewClient[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse](
@@ -150,7 +150,7 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 type aIServiceClient struct {
 	semanticSearch          *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
 	suggestTags             *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
-	chatWithMemos           *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
+	chat                    *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
 	getRelatedMemos         *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
 	chatWithScheduleAgent   *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
 	chatWithMemosIntegrated *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
@@ -168,9 +168,9 @@ func (c *aIServiceClient) SuggestTags(ctx context.Context, req *connect.Request[
 	return c.suggestTags.CallUnary(ctx, req)
 }
 
-// ChatWithMemos calls memos.api.v1.AIService.ChatWithMemos.
-func (c *aIServiceClient) ChatWithMemos(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
-	return c.chatWithMemos.CallServerStream(ctx, req)
+// Chat calls memos.api.v1.AIService.Chat.
+func (c *aIServiceClient) Chat(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
+	return c.chat.CallServerStream(ctx, req)
 }
 
 // GetRelatedMemos calls memos.api.v1.AIService.GetRelatedMemos.
@@ -204,8 +204,8 @@ type AIServiceHandler interface {
 	SemanticSearch(context.Context, *connect.Request[v1.SemanticSearchRequest]) (*connect.Response[v1.SemanticSearchResponse], error)
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(context.Context, *connect.Request[v1.SuggestTagsRequest]) (*connect.Response[v1.SuggestTagsResponse], error)
-	// ChatWithMemos streams a chat response using memos as context.
-	ChatWithMemos(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
+	// Chat streams a chat response with AI agents.
+	Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
 	// ChatWithScheduleAgent streams a chat response using the schedule agent.
@@ -237,10 +237,10 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("SuggestTags")),
 		connect.WithHandlerOptions(opts...),
 	)
-	aIServiceChatWithMemosHandler := connect.NewServerStreamHandler(
-		AIServiceChatWithMemosProcedure,
-		svc.ChatWithMemos,
-		connect.WithSchema(aIServiceMethods.ByName("ChatWithMemos")),
+	aIServiceChatHandler := connect.NewServerStreamHandler(
+		AIServiceChatProcedure,
+		svc.Chat,
+		connect.WithSchema(aIServiceMethods.ByName("Chat")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aIServiceGetRelatedMemosHandler := connect.NewUnaryHandler(
@@ -279,8 +279,8 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceSemanticSearchHandler.ServeHTTP(w, r)
 		case AIServiceSuggestTagsProcedure:
 			aIServiceSuggestTagsHandler.ServeHTTP(w, r)
-		case AIServiceChatWithMemosProcedure:
-			aIServiceChatWithMemosHandler.ServeHTTP(w, r)
+		case AIServiceChatProcedure:
+			aIServiceChatHandler.ServeHTTP(w, r)
 		case AIServiceGetRelatedMemosProcedure:
 			aIServiceGetRelatedMemosHandler.ServeHTTP(w, r)
 		case AIServiceChatWithScheduleAgentProcedure:
@@ -308,8 +308,8 @@ func (UnimplementedAIServiceHandler) SuggestTags(context.Context, *connect.Reque
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.SuggestTags is not implemented"))
 }
 
-func (UnimplementedAIServiceHandler) ChatWithMemos(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithMemos is not implemented"))
+func (UnimplementedAIServiceHandler) Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.Chat is not implemented"))
 }
 
 func (UnimplementedAIServiceHandler) GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {

@@ -494,7 +494,6 @@
     "conflict-error": "日程衝突，無法創建。請檢查並調整時間。",
     "conflict-hint": "提示：當前時間段已被佔用，請修改時間後重試",
     "create-anyway": "仍要創建",
-    "conflict": "衝突",
     "schedule-count": "{{count}} 個日程",
     "schedule-count_plural": "{{count}} 個日程",
     "schedules": "日程",
@@ -511,7 +510,6 @@
     "schedule-deleted": "日程已刪除",
     "quick-input": {
       "placeholder": "例：明天下午3點開會",
-      "parsing": "解析中...",
       "ai-parsing": "AI 解析中...",
       "parse-success": "識別成功",
       "parse-partial": "需要更多信息",
@@ -585,7 +583,6 @@
       "conflicting-schedules": "衝突的日程",
       "more-conflicts": "更多衝突",
       "adjust-time": "調整時間",
-      "conflict-warning-desc": "該時間段與 {{count}} 個現有日程衝突，請調整日程信息。",
       "tap-to-view": "點擊日期查看日程詳情",
       "has-schedules": "有日程",
       "schedule-updated": "日程更新成功",
@@ -605,7 +602,6 @@
         "separator": "、"
       },
       "your-timeline": "您的時間軸",
-      "no-schedules": "暫無日程",
       "default-title": "新日程",
       "reply-placeholder": "輸入回覆...",
       "title-placeholder": "日程標題",

@@ -57,10 +57,8 @@ func (s *ConnectServiceHandler) RegisterConnectHandlers(mux *http.ServeMux, opts
 	// Register Schedule service handlers
 	handlers = append(handlers, wrap(apiv1connect.NewScheduleServiceHandler(s, opts...)))
 
-	// Register ScheduleAgent service handlers if available
-	if s.ScheduleAgentService != nil {
-		handlers = append(handlers, wrap(apiv1connect.NewScheduleAgentServiceHandler(s, opts...)))
-	}
+	// Note: ScheduleAgentService uses gRPC gateway, not Connect
+	// Clients should use the main Chat endpoint with agent_type=SCHEDULE
 
 	for _, h := range handlers {
 		mux.Handle(h.path, h.handler)
@@ -132,27 +130,27 @@ func (s *ConnectServiceHandler) GetRelatedMemos(ctx context.Context, req *connec
 	return connect.NewResponse(resp), nil
 }
 
-func (s *ConnectServiceHandler) ChatWithMemos(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
+func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
 	if s.AIService == nil || !s.AIService.IsEnabled() {
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 
 	// Log entry for debugging
-	slog.Info("ConnectServiceHandler: ChatWithMemos called",
+	slog.Info("ConnectServiceHandler: Chat called",
 		"message", truncateStringForLog(req.Msg.Message, 50),
 		"agent_type", req.Msg.AgentType.String(),
 		"agent_type_value", int(req.Msg.AgentType),
 		"is_default", req.Msg.AgentType == v1pb.AgentType_AGENT_TYPE_DEFAULT,
 	)
 
-	// Delegate to AIService.ChatWithMemos which has the full agent routing logic
-	return s.AIService.ChatWithMemos(req.Msg, &connectStreamAdapter{
+	// Delegate to AIService.Chat which has the full agent routing logic
+	return s.AIService.Chat(req.Msg, &connectStreamAdapter{
 		stream: stream,
 		ctx:    ctx,
 	})
 }
 
-// connectStreamAdapter wraps Connect ServerStream to implement AIService_ChatWithMemosServer
+// connectStreamAdapter wraps Connect ServerStream to implement AIService_ChatServer
 type connectStreamAdapter struct {
 	stream *connect.ServerStream[v1pb.ChatWithMemosResponse]
 	ctx    context.Context
@@ -280,11 +278,11 @@ func (s *ConnectServiceHandler) ChatWithScheduleAgent(ctx context.Context, req *
 }
 
 // ChatWithMemosIntegrated integrates both RAG and schedule agent.
-// For now, this is an alias to ChatWithMemos (RAG only).
+// For now, this is an alias to Chat.
 func (s *ConnectServiceHandler) ChatWithMemosIntegrated(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
 	// TODO: Implement true integration with schedule agent
-	// For now, just use the existing ChatWithMemos implementation
-	return s.ChatWithMemos(ctx, req, stream)
+	// For now, just use the existing Chat implementation
+	return s.Chat(ctx, req, stream)
 }
 
 // chatStreamToScheduleAgentAdapter adapts Connect ChatWithMemosResponse stream to ScheduleAgentStreamResponse
@@ -333,8 +331,8 @@ func (a *chatStreamToScheduleAgentAdapter) SetTrailer(md metadata.MD) {
 
 // ScheduleAgentService wrappers for Connect
 
-// Chat handles non-streaming schedule agent chat requests.
-func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest]) (*connect.Response[v1pb.ScheduleAgentChatResponse], error) {
+// ChatAgent handles non-streaming schedule agent chat requests.
+func (s *ConnectServiceHandler) ChatAgent(ctx context.Context, req *connect.Request[v1pb.ScheduleAgentChatRequest]) (*connect.Response[v1pb.ScheduleAgentChatResponse], error) {
 	if s.ScheduleAgentService == nil {
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
 	}

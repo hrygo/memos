@@ -83,8 +83,6 @@ func (p *MemoParrot) ExecuteWithCallback(
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentExecutionTimeout)
 	defer cancel()
 
-	startTime := time.Now()
-
 	// Log execution start
 	slog.Info("MemoParrot: ExecuteWithCallback started",
 		"user_id", p.userID,
@@ -180,38 +178,20 @@ func (p *MemoParrot) ExecuteWithCallback(
 		)
 
 		// Try to parse tool call
-		toolCall, toolInput, parseErr := p.parseToolCall(response)
+		cleanText, toolCall, toolInput, parseErr := p.parseToolCall(response)
 		if parseErr != nil {
 			// No tool call, this is the final reasoning/answer turn.
-			slog.Debug("MemoParrot: No tool call detected, streaming final answer",
-				"user_id", p.userID,
-				"iteration", iteration,
-			)
-			// Let's optimize: perform the final answer with streaming.
+			// Optimize: Perform final answer with streaming for better UX.
 			contentChan, errChan := p.llm.ChatStream(ctx, messages)
 
 			var fullContent strings.Builder
-			var chunkCount int
 			for {
 				select {
 				case chunk, ok := <-contentChan:
 					if !ok {
-						slog.Debug("MemoParrot: Stream closed",
-							"user_id", p.userID,
-							"total_chunks", chunkCount,
-							"total_length", fullContent.Len(),
-						)
-						// Stream closed, cache final result and return
 						p.cache.Set(cacheKey, fullContent.String())
-						slog.Info("MemoParrot: Execution completed successfully",
-							"user_id", p.userID,
-							"duration_ms", time.Since(startTime).Milliseconds(),
-							"output_length", fullContent.Len(),
-							"iterations", iteration + 1,
-						)
 						return nil
 					}
-					chunkCount++
 					fullContent.WriteString(chunk)
 					if callback != nil {
 						if err := callback(EventTypeAnswer, chunk); err != nil {
@@ -224,10 +204,6 @@ func (p *MemoParrot) ExecuteWithCallback(
 						continue
 					}
 					if err != nil {
-						slog.Error("MemoParrot: Stream error",
-							"user_id", p.userID,
-							"error", err,
-						)
 						return NewParrotError(p.Name(), "ChatStream", err)
 					}
 				case <-ctx.Done():
@@ -241,10 +217,17 @@ func (p *MemoParrot) ExecuteWithCallback(
 			"user_id", p.userID,
 			"iteration", iteration,
 			"tool", toolCall,
+			"clean_text_len", len(cleanText),
 			"input", truncateString(toolInput, 100),
 		)
+
+		// Notify user of progress with pleasantries if present
+		if cleanText != "" && callback != nil {
+			callback(EventTypeAnswer, cleanText+"\n")
+		}
+
 		if callback != nil {
-			callback(EventTypeToolUse, fmt.Sprintf("正在使用工具: %s", toolCall))
+			callback(EventTypeToolUse, fmt.Sprintf("正在搜索: %s", toolCall))
 		}
 
 		var toolResult string
@@ -306,107 +289,78 @@ func (p *MemoParrot) ExecuteWithCallback(
 }
 
 // buildSystemPrompt builds the system prompt for the memo parrot.
+// Optimized for "快准省": concise, direct, minimal tokens.
 func (p *MemoParrot) buildSystemPrompt() string {
 	now := time.Now()
-	return fmt.Sprintf(`你是 Memos 的笔记助手 🦜 灰灰，专注于帮助用户检索、总结和管理笔记。
+	return fmt.Sprintf(`你是 Memos 笔记助手 🦜 灰灰。时间: %s
 
-当前时间: %s
+## 工作模式
+用户提问 → 立即搜索 → 基于结果回答
 
-## 核心能力
-1. **笔记检索**: 使用 memo_search 工具搜索相关笔记
-2. **内容总结**: 总结和整理笔记内容
-3. **问答**: 基于笔记内容回答用户问题
+## 工具
+memo_search: {"query": "关键词", "limit": 10, "min_score": 0.5}
 
-## 工作流程 (ReAct 模式)
-1. **思考**: 分析用户需求，确定是否需要检索笔记
-2. **工具**: 使用 memo_search 工具搜索相关笔记
-3. **观察**: 分析搜索结果
-4. **回答**: 基于搜索结果生成准确的回答
+## 规则
+1. 先搜索，后回答。不编造。
+2. 找到结果: 简洁总结，引用笔记内容
+3. 无结果: 明确告知，建议换词
+4. 一次搜索足够，避免重复调用
 
-## 工具使用规范
-
-### memo_search 工具
-用途: 搜索笔记
-输入格式: JSON
-- query (必需): 搜索关键词
-- limit (可选): 返回结果数量，默认 10，最大 50
-- min_score (可选): 最小相关度分数，默认 0.5
-
-示例:
-- 搜索 Python 笔记: {"query": "Python 编程", "limit": 5}
-- 搜索重要内容: {"query": "重要", "min_score": 0.7}
-
-## 回答原则
-1. **准确优先**: 仅基于搜索到的笔记内容回答，不编造信息
-2. **结构清晰**: 使用列表、分段组织内容
-3. **简洁明了**: 直接给出答案，避免冗余
-4. **无结果时说明**: 如果没有找到相关笔记，明确告知用户
-
-## 示例对话
-
-用户: "帮我找关于 Python 的笔记"
-思考: 用户想搜索 Python 相关笔记
-工具: {"query": "Python", "limit": 10}
-观察: 找到 5 条相关笔记
-回答: 我为您找到了 5 条关于 Python 的笔记...
-
-用户: "总结一下会议纪要"
-思考: 需要搜索会议相关笔记并总结
-工具: {"query": "会议", "limit": 5}
-观察: 找到 3 条会议笔记
-回答: 根据搜索到的笔记，最近的会议内容如下...
-
-## 重要提醒
-- 总是先使用工具搜索笔记，再给出答案
-- 如果搜索结果为空，告知用户并建议换个关键词
-- 保持回答简洁但信息完整
-工具调用格式:
+## 格式
 TOOL: memo_search
-INPUT: {"query": "搜索关键词"}`,
-		now.Format("2006-01-02 15:04:05"))
+INPUT: {"query": "搜索词"}`,
+		now.Format("2006-01-02 15:04"))
 }
 
 // parseToolCall attempts to parse a tool call from LLM response.
-// Returns tool name, input JSON, and error if no tool call is found.
-func (p *MemoParrot) parseToolCall(response string) (string, string, error) {
+// Returns cleaned text, tool name, input JSON, and error if no tool call is found.
+func (p *MemoParrot) parseToolCall(response string) (string, string, string, error) {
+	// Robust parsing: detect TOOL and INPUT lines
 	lines := strings.Split(response, "\n")
 
 	var toolName string
 	var inputJSON string
+	var pleasantryLines []string
 	foundTool := false
 	foundInput := false
 
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
+		trimmedLine := strings.TrimSpace(line)
 
-		if strings.HasPrefix(line, "TOOL:") {
-			parts := strings.SplitN(line, ":", 2)
+		if strings.HasPrefix(trimmedLine, "TOOL:") {
+			parts := strings.SplitN(trimmedLine, ":", 2)
 			if len(parts) == 2 {
 				toolName = strings.TrimSpace(parts[1])
 				foundTool = true
 			}
+			continue
 		}
 
-		if strings.HasPrefix(line, "INPUT:") {
-			parts := strings.SplitN(line, ":", 2)
+		if strings.HasPrefix(trimmedLine, "INPUT:") {
+			parts := strings.SplitN(trimmedLine, ":", 2)
 			if len(parts) == 2 {
 				inputStr := strings.TrimSpace(parts[1])
-				// Validate JSON - reject invalid JSON to prevent tool execution errors
+				// Validate JSON
 				var jsonObj map[string]any
-				if err := json.Unmarshal([]byte(inputStr), &jsonObj); err != nil {
-					return "", "", fmt.Errorf("invalid JSON in INPUT: %w", err)
+				if err := json.Unmarshal([]byte(inputStr), &jsonObj); err == nil {
+					inputJSON = inputStr
+					foundInput = true
 				}
-				inputJSON = inputStr
-				foundInput = true
 			}
+			continue
+		}
+
+		if !foundTool && !foundInput {
+			pleasantryLines = append(pleasantryLines, line)
 		}
 	}
 
-	if !foundTool || !foundInput {
-		return "", "", fmt.Errorf("no tool call in response")
+	if foundTool && foundInput {
+		cleanText := strings.TrimSpace(strings.Join(pleasantryLines, "\n"))
+		return cleanText, toolName, inputJSON, nil
 	}
 
-	return toolName, inputJSON, nil
+	return response, "", "", fmt.Errorf("no tool call in response")
 }
 
 // GetStats returns the cache statistics for the memo parrot.

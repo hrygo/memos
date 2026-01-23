@@ -217,7 +217,7 @@ export function ChatInput({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
                 >
                   <EraserIcon className="w-3.5 h-3.5 mr-1" />
                   {t("ai.clear")}
@@ -268,7 +268,7 @@ export function ChatInput({
             onKeyDown={handleKeyDown}
             placeholder={defaultPlaceholder}
             disabled={disabled || isTyping}
-            className="flex-1 min-h-[44px] max-h-[120px] bg-transparent border-0 outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 text-base leading-relaxed"
+            className="flex-1 min-h-[44px] max-h-[120px] bg-transparent border-0 outline-none resize-none text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 text-sm leading-relaxed font-sans"
             rows={1}
           />
           <Button

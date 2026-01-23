@@ -25,8 +25,8 @@ service AIService {
     };
   }
 
-  // ChatWithMemos streams a chat response using memos as context.
-  rpc ChatWithMemos(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+  // Chat streams a chat response with AI agents.
+  rpc Chat(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
     option (google.api.http) = {
       post: "/api/v1/ai/chat"
       body: "*"

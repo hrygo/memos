@@ -78,7 +78,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.DEFAULT]: {
     id: ParrotAgentType.DEFAULT,
     name: "default",
-    icon: "🤖",
+    icon: "/images/parrots/icons/memo_icon.webp",
     displayName: "Default Assistant",
     description: "Default AI assistant with RAG system",
     color: "gray",
@@ -88,7 +88,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.MEMO]: {
     id: ParrotAgentType.MEMO,
     name: "memo",
-    icon: "🦜",
+    icon: "/images/parrots/icons/memo_icon.webp",
     displayName: "Memo",
     description: "Note assistant for searching, summarizing, and managing memos",
     color: "blue",
@@ -99,7 +99,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.SCHEDULE]: {
     id: ParrotAgentType.SCHEDULE,
     name: "schedule",
-    icon: "📅",
+    icon: "/images/parrots/icons/schedule_icon.webp",
     displayName: "Schedule",
     description: "Schedule assistant for creating, querying, and managing schedules",
     color: "orange",
@@ -110,7 +110,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.AMAZING]: {
     id: ParrotAgentType.AMAZING,
     name: "amazing",
-    icon: "⭐",
+    icon: "/images/parrots/icons/amazing_icon.webp",
     displayName: "Amazing",
     description: "Comprehensive assistant combining memo and schedule features",
     color: "purple",
@@ -121,7 +121,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.CREATIVE]: {
     id: ParrotAgentType.CREATIVE,
     name: "creative",
-    icon: "💡",
+    icon: "/images/parrots/icons/creative_icon.webp",
     displayName: "Creative",
     description: "Creative writing assistant for brainstorming and content creation",
     color: "pink",
@@ -247,10 +247,10 @@ export enum ParrotEventType {
 export const PARROT_THEMES = {
   DEFAULT: {
     // 默认助手 - 中性灰
-    bubbleUser: "bg-zinc-900 dark:bg-zinc-200 text-white dark:text-zinc-900",
+    bubbleUser: "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-zinc-200 dark:border-zinc-700",
-    text: "text-zinc-900 dark:text-zinc-100",
+    text: "text-zinc-800 dark:text-zinc-100",
     textSecondary: "text-zinc-600 dark:text-zinc-400",
     iconBg: "bg-zinc-100 dark:bg-zinc-700",
     iconText: "text-zinc-700 dark:text-zinc-300",
@@ -265,10 +265,10 @@ export const PARROT_THEMES = {
   // 灰灰 - 非洲灰鹦鹉 (African Grey Parrot)
   // DNA: 银灰羽毛 + 红色点缀 (subtle)
   MEMO: {
-    bubbleUser: "bg-slate-700 dark:bg-slate-300 text-white dark:text-slate-900",
+    bubbleUser: "bg-slate-800 dark:bg-slate-300 text-white dark:text-slate-800",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-slate-200 dark:border-slate-700",
-    text: "text-slate-900 dark:text-slate-100",
+    text: "text-slate-800 dark:text-slate-100",
     textSecondary: "text-slate-600 dark:text-slate-400",
     iconBg: "bg-slate-100 dark:bg-slate-700",
     iconText: "text-slate-700 dark:text-slate-300",
@@ -286,7 +286,7 @@ export const PARROT_THEMES = {
     bubbleUser: "bg-cyan-600 dark:bg-cyan-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-cyan-200 dark:border-cyan-700",
-    text: "text-slate-900 dark:text-cyan-50",
+    text: "text-slate-800 dark:text-cyan-50",
     textSecondary: "text-slate-600 dark:text-cyan-200",
     iconBg: "bg-cyan-100 dark:bg-cyan-900",
     iconText: "text-cyan-700 dark:text-cyan-300",
@@ -304,7 +304,7 @@ export const PARROT_THEMES = {
     bubbleUser: "bg-emerald-600 dark:bg-emerald-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-emerald-200 dark:border-emerald-700",
-    text: "text-slate-900 dark:text-emerald-50",
+    text: "text-slate-800 dark:text-emerald-50",
     textSecondary: "text-slate-600 dark:text-emerald-200",
     iconBg: "bg-emerald-100 dark:bg-emerald-900",
     iconText: "text-emerald-700 dark:text-emerald-300",
@@ -322,7 +322,7 @@ export const PARROT_THEMES = {
     bubbleUser: "bg-lime-600 dark:bg-lime-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
     bubbleBorder: "border-lime-200 dark:border-lime-700",
-    text: "text-slate-900 dark:text-lime-50",
+    text: "text-slate-800 dark:text-lime-50",
     textSecondary: "text-slate-600 dark:text-lime-200",
     iconBg: "bg-lime-100 dark:bg-lime-900",
     iconText: "text-lime-700 dark:text-lime-300",
@@ -341,7 +341,7 @@ export const PARROT_THEMES = {
  * 每个鹦鹉的图标
  */
 export const PARROT_ICONS: Record<string, string> = {
-  DEFAULT: "🤖",
+  DEFAULT: "/images/parrots/icons/memo_icon.webp",
   MEMO: "/images/parrots/icons/memo_icon.webp",
   SCHEDULE: "/images/parrots/icons/schedule_icon.webp",
   AMAZING: "/images/parrots/icons/amazing_icon.webp",

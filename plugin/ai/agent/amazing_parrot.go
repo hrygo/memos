@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -189,13 +190,8 @@ func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, his
 	}
 
 	now := time.Now()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
-	todayEnd := todayStart.Add(24 * time.Hour)
-	tomorrowStart := todayStart.Add(24 * time.Hour)
-	tomorrowEnd := tomorrowStart.Add(24 * time.Hour)
-
-	// Build planning prompt
-	planningPrompt := p.buildPlanningPrompt(now, todayStart, todayEnd, tomorrowStart, tomorrowEnd)
+	// Build planning prompt (optimized for minimal tokens)
+	planningPrompt := p.buildPlanningPrompt(now)
 
 	messages := []ai.Message{
 		{Role: "system", Content: planningPrompt},
@@ -234,55 +230,6 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// retrievalTask represents a named retrieval task
-	type retrievalTask struct {
-		name string
-		fn   func(context.Context) (string, error)
-	}
-
-	// Collect retrieval tasks with names
-	tasks := make([]retrievalTask, 0)
-
-	if plan.needsMemoSearch {
-		if callback != nil {
-			callback(EventTypeToolUse, "正在搜索笔记...")
-		}
-		tasks = append(tasks, retrievalTask{
-			name: "memo_search",
-			fn: func(ctx context.Context) (string, error) {
-				input := fmt.Sprintf(`{"query": "%s"}`, plan.memoSearchQuery)
-				return p.memoSearchTool.Run(ctx, input)
-			},
-		})
-	}
-
-	if plan.needsScheduleQuery {
-		if callback != nil {
-			callback(EventTypeToolUse, "正在查询日程...")
-		}
-		tasks = append(tasks, retrievalTask{
-			name: "schedule_query",
-			fn: func(ctx context.Context) (string, error) {
-				input := fmt.Sprintf(`{"start_time": "%s", "end_time": "%s"}`, plan.scheduleStartTime, plan.scheduleEndTime)
-				return p.scheduleQueryTool.Run(ctx, input)
-			},
-		})
-	}
-
-	if plan.needsFreeTime {
-		if callback != nil {
-			callback(EventTypeToolUse, "正在查找空闲时间...")
-		}
-		tasks = append(tasks, retrievalTask{
-			name: "find_free_time",
-			fn: func(ctx context.Context) (string, error) {
-				input := fmt.Sprintf(`{"date": "%s"}`, plan.freeTimeDate)
-				return p.findFreeTimeTool.Run(ctx, input)
-			},
-		})
-	}
-
-	// Execute tasks concurrently with goroutines
 	// Check context before launching goroutines to avoid unnecessary work
 	select {
 	case <-ctx.Done():
@@ -290,26 +237,148 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	default:
 	}
 
-	for _, task := range tasks {
+	// Helper function to safely call callback under mutex
+	safeCallback := func(eventType string, eventData interface{}) {
+		if callback != nil {
+			mu.Lock()
+			callback(eventType, eventData)
+			mu.Unlock()
+		}
+	}
+
+	// Execute memo search
+	if plan.needsMemoSearch {
 		wg.Add(1)
-		go func(t retrievalTask) {
+		go func() {
 			defer wg.Done()
 
-			// Each goroutine checks context at start
-			result, err := t.fn(ctx)
+			safeCallback(EventTypeToolUse, "正在搜索笔记...")
+
+			input := fmt.Sprintf(`{"query": "%s"}`, plan.memoSearchQuery)
+
+			// Use structured result method
+			structuredResult, err := p.memoSearchTool.RunWithStructuredResult(ctx, input)
+
 			mu.Lock()
 			defer mu.Unlock()
 
 			if err != nil {
-				results[t.name+"_error"] = err.Error()
+				results["memo_search_error"] = err.Error()
+				return
+			}
+
+			// Convert to JSON for LLM synthesis
+			jsonBytes, marshalErr := json.Marshal(structuredResult)
+			if marshalErr != nil {
+				results["memo_search_error"] = marshalErr.Error()
+				return
+			}
+			results["memo_search"] = string(jsonBytes)
+
+			// Send tool result for debugging
+			if callback != nil {
+				callback(EventTypeToolResult, string(jsonBytes))
+
+				// Send structured memo_query_result event for Generative UI
+				memoQueryResult := MemoQueryResultData{
+					Query: structuredResult.Query,
+					Count: structuredResult.Count,
+					Memos: make([]MemoSummary, 0, len(structuredResult.Memos)),
+				}
+				for _, m := range structuredResult.Memos {
+					memoQueryResult.Memos = append(memoQueryResult.Memos, MemoSummary{
+						UID:     m.UID,
+						Content: m.Content,
+						Score:   m.Score,
+					})
+				}
+				eventData, _ := json.Marshal(memoQueryResult)
+				callback(EventTypeMemoQueryResult, string(eventData))
+			}
+		}()
+	}
+
+	// Execute schedule query
+	if plan.needsScheduleQuery {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			safeCallback(EventTypeToolUse, "正在查询日程...")
+
+			input := fmt.Sprintf(`{"start_time": "%s", "end_time": "%s"}`, plan.scheduleStartTime, plan.scheduleEndTime)
+
+			// Use structured result method
+			structuredResult, err := p.scheduleQueryTool.RunWithStructuredResult(ctx, input)
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			if err != nil {
+				results["schedule_query_error"] = err.Error()
+				return
+			}
+
+			// Convert to JSON for LLM synthesis
+			jsonBytes, marshalErr := json.Marshal(structuredResult)
+			if marshalErr != nil {
+				results["schedule_query_error"] = marshalErr.Error()
+				return
+			}
+			results["schedule_query"] = string(jsonBytes)
+
+			// Send tool result for debugging
+			if callback != nil {
+				callback(EventTypeToolResult, string(jsonBytes))
+
+				// Send structured schedule_query_result event for Generative UI
+				scheduleQueryResult := ScheduleQueryResultData{
+					Query:                structuredResult.Query,
+					Count:                structuredResult.Count,
+					TimeRangeDescription: structuredResult.TimeRangeDescription,
+					QueryType:            structuredResult.QueryType,
+					Schedules:            make([]ScheduleSummary, 0, len(structuredResult.Schedules)),
+				}
+				for _, s := range structuredResult.Schedules {
+					scheduleQueryResult.Schedules = append(scheduleQueryResult.Schedules, ScheduleSummary{
+						UID:            s.UID,
+						Title:          s.Title,
+						StartTimestamp: s.StartTs,
+						EndTimestamp:   s.EndTs,
+						AllDay:         s.AllDay,
+						Location:       s.Location,
+						Status:         s.Status,
+					})
+				}
+				eventData, _ := json.Marshal(scheduleQueryResult)
+				callback(EventTypeScheduleQueryResult, string(eventData))
+			}
+		}()
+	}
+
+	// Execute find free time
+	if plan.needsFreeTime {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			safeCallback(EventTypeToolUse, "正在查找空闲时间...")
+
+			input := fmt.Sprintf(`{"date": "%s"}`, plan.freeTimeDate)
+			result, err := p.findFreeTimeTool.Run(ctx, input)
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			if err != nil {
+				results["find_free_time_error"] = err.Error()
 			} else {
-				results[t.name] = result
-				// Send individual tool result for UI feedback
+				results["find_free_time"] = result
 				if callback != nil {
 					callback(EventTypeToolResult, result)
 				}
 			}
-		}(task)
+		}()
 	}
 
 	wg.Wait()
@@ -440,86 +509,63 @@ func (p *AmazingParrot) parseRetrievalPlan(response string, now time.Time) *retr
 }
 
 // buildPlanningPrompt builds the prompt for retrieval planning.
-func (p *AmazingParrot) buildPlanningPrompt(now, todayStart, todayEnd, tomorrowStart, tomorrowEnd time.Time) string {
-	return fmt.Sprintf(`你是 Memos 的综合助手 🦜 惊奇的计划模块。
-
-当前时间: %s
-今天: %s ~ %s
-明天: %s ~ %s
+// Optimized for "快准省": minimal tokens, clear output format.
+func (p *AmazingParrot) buildPlanningPrompt(now time.Time) string {
+	return fmt.Sprintf(`你是综合助手 🦜 惊奇的规划模块。时间: %s
 
 ## 任务
-分析用户需求，制定并发检索计划。你的输出应该是一行或多行计划指令：
+分析用户需求，输出并发检索计划（每行一条）:
 
-## 计划指令格式
-- memo_search: <搜索关键词>
-- schedule_query: today/tomorrow/custom
+## 指令格式
+- memo_search: 关键词
+- schedule_query: today/tomorrow
 - find_free_time: YYYY-MM-DD
-- direct_answer: (用于无需检索的问题)
+- direct_answer (无需检索)
 
 ## 示例
-用户: "帮我找关于 Python 的笔记，并查看今天有没有时间学习"
-输出:
-memo_search: Python 编程
-schedule_query: today
+"找Python笔记，看今天有空吗" → memo_search: Python + schedule_query: today
+"明天安排" → schedule_query: tomorrow
+"你好" → direct_answer
 
-用户: "明天下午有什么安排？"
-输出:
-schedule_query: tomorrow
-
-用户: "你好"
-输出:
-direct_answer
-
-## 规则
-1. 如果用户需要搜索笔记，使用 memo_search
-2. 如果用户需要查询日程，使用 schedule_query
-3. 如果用户需要查找空闲时间，使用 find_free_time
-4. 可以同时使用多个指令（每行一个）
-5. 简单问候或问题使用 direct_answer
-
-现在请分析用户需求并输出计划：`,
-		now.Format("2006-01-02 15:04:05"),
-		todayStart.Format("2006-01-02"), todayEnd.Format("2006-01-02"),
-		tomorrowStart.Format("2006-01-02"), tomorrowEnd.Format("2006-01-02"),
-	)
+用户需求:`,
+		now.Format("2006-01-02 15:04"))
 }
 
 // buildSynthesisPrompt builds the prompt for answer synthesis.
+// Optimized for "快准省": minimal tokens, focus on insight not data listing.
 func (p *AmazingParrot) buildSynthesisPrompt(results map[string]string) string {
 	var contextBuilder strings.Builder
 
-	contextBuilder.WriteString(`你是 Memos 的综合助手 🦜 惊奇。
+	contextBuilder.WriteString(`你是综合助手 🦜 惊奇。
 
-基于以下检索结果，为用户提供准确、有用的回答。
-
-## 检索结果
-`)
+重要：详细的笔记和日程已通过可视化卡片展示给用户，请勿再重复列出。
+基于以下数据提供简短洞察:`)
 
 	if memoResult, ok := results["memo_search"]; ok {
-		contextBuilder.WriteString("\n### 笔记搜索结果\n")
+		contextBuilder.WriteString("\n[笔记数据] ")
 		contextBuilder.WriteString(memoResult)
-		contextBuilder.WriteString("\n")
 	}
 
 	if scheduleResult, ok := results["schedule_query"]; ok {
-		contextBuilder.WriteString("\n### 日程查询结果\n")
+		contextBuilder.WriteString("\n[日程数据] ")
 		contextBuilder.WriteString(scheduleResult)
-		contextBuilder.WriteString("\n")
 	}
 
 	if freeTimeResult, ok := results["find_free_time"]; ok {
-		contextBuilder.WriteString("\n### 空闲时间查询结果\n")
+		contextBuilder.WriteString("\n[空闲时段] ")
 		contextBuilder.WriteString(freeTimeResult)
-		contextBuilder.WriteString("\n")
 	}
 
 	contextBuilder.WriteString(`
-## 回答原则
-1. 仅基于检索结果回答，不编造信息
-2. 结构清晰，使用列表和分段
-3. 综合笔记和日程信息给出建议
-4. 如果没有相关信息，明确告知用户
-5. 保持简洁但完整`)
+
+## 回答规则
+1. **不要**重复列出笔记内容和日程详情（用户已在卡片中看到）
+2. 提供**简短洞察**：发现的模式、建议、或关联
+3. 示例回复：
+   - "今天有3个会议，建议上午完成重要任务"
+   - "找到2条相关笔记，与您上周的项目进展一致"
+   - "今天日程较满，下午5点后有空闲时间"
+4. 如无特别洞察，简单确认即可，如"已为您展示相关信息"`)
 
 	return contextBuilder.String()
 }

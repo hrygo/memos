@@ -150,28 +150,22 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // Message actions
   const addMessage = useCallback((conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">): string => {
-    let newMessageId = "";
-    setState((prev) => {
-      const newMessage: ConversationMessage = {
-        ...message,
-        id: generateId(),
-        timestamp: Date.now(),
-      };
-      newMessageId = newMessage.id;
+    // Generate ID and timestamp BEFORE setState (setState is async!)
+    const newMessageId = generateId();
+    const now = Date.now();
 
-      return {
-        ...prev,
-        conversations: prev.conversations.map((c) => {
-          if (c.id !== conversationId) return c;
+    setState((prev) => ({
+      ...prev,
+      conversations: prev.conversations.map((c) => {
+        if (c.id !== conversationId) return c;
 
-          return {
-            ...c,
-            messages: [...c.messages, newMessage],
-            updatedAt: Date.now(),
-          };
-        }),
-      };
-    });
+        return {
+          ...c,
+          messages: [...c.messages, { ...message, id: newMessageId, timestamp: now }],
+          updatedAt: now,
+        };
+      }),
+    }));
     return newMessageId;
   }, []);
 

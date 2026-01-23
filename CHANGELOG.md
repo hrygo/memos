@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.51.0] - 2026-01-23
+
+### 📱 Mobile UI & UX Overhaul
+
+- **Dynamic Navigation**: Fixed mobile header to display current Parrot Agent name and icon.
+- **Streamlined Headers**: Simplified mobile sub-header to a single "Back to Nest" button for better chat immersion.
+- **Interactive Feedback**: Added micro-scale touch feedback (`active:scale`) to all core buttons and agent cards.
+- **Navigation Fix**: Resolved issue where clicking the Logo would cause the sidebar to flash and disappear.
+
+### 🎨 Visual & i18n Polish
+
+- **Unified Avatars**: All AI agents (including default assistant) now use high-quality image avatars instead of emojis.
+- **Bilingual Identity**: Updated "Back" text to "返回鹦巢" / "Back to Nest" across en/zh-Hans/zh-Hant.
+- **i18n Cleanup**: Optimized locale files by removing 50+ duplicate keys and fixing structure in all supported languages.
+
 ## [v0.50.0] - 2026-01-23
 
 ### 🦜 Parrot Multi-Agent System - First Release

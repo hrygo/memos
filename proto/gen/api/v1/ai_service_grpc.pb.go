@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AIService_SemanticSearch_FullMethodName          = "/memos.api.v1.AIService/SemanticSearch"
 	AIService_SuggestTags_FullMethodName             = "/memos.api.v1.AIService/SuggestTags"
-	AIService_ChatWithMemos_FullMethodName           = "/memos.api.v1.AIService/ChatWithMemos"
+	AIService_Chat_FullMethodName                    = "/memos.api.v1.AIService/Chat"
 	AIService_GetRelatedMemos_FullMethodName         = "/memos.api.v1.AIService/GetRelatedMemos"
 	AIService_ChatWithScheduleAgent_FullMethodName   = "/memos.api.v1.AIService/ChatWithScheduleAgent"
 	AIService_ChatWithMemosIntegrated_FullMethodName = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
@@ -39,8 +39,8 @@ type AIServiceClient interface {
 	SemanticSearch(ctx context.Context, in *SemanticSearchRequest, opts ...grpc.CallOption) (*SemanticSearchResponse, error)
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(ctx context.Context, in *SuggestTagsRequest, opts ...grpc.CallOption) (*SuggestTagsResponse, error)
-	// ChatWithMemos streams a chat response using memos as context.
-	ChatWithMemos(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error)
+	// Chat streams a chat response with AI agents.
+	Chat(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error)
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(ctx context.Context, in *GetRelatedMemosRequest, opts ...grpc.CallOption) (*GetRelatedMemosResponse, error)
 	// ChatWithScheduleAgent streams a chat response using the schedule agent.
@@ -81,9 +81,9 @@ func (c *aIServiceClient) SuggestTags(ctx context.Context, in *SuggestTagsReques
 	return out, nil
 }
 
-func (c *aIServiceClient) ChatWithMemos(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error) {
+func (c *aIServiceClient) Chat(ctx context.Context, in *ChatWithMemosRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatWithMemosResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AIService_ServiceDesc.Streams[0], AIService_ChatWithMemos_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &AIService_ServiceDesc.Streams[0], AIService_Chat_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (c *aIServiceClient) ChatWithMemos(ctx context.Context, in *ChatWithMemosRe
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AIService_ChatWithMemosClient = grpc.ServerStreamingClient[ChatWithMemosResponse]
+type AIService_ChatClient = grpc.ServerStreamingClient[ChatWithMemosResponse]
 
 func (c *aIServiceClient) GetRelatedMemos(ctx context.Context, in *GetRelatedMemosRequest, opts ...grpc.CallOption) (*GetRelatedMemosResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -178,8 +178,8 @@ type AIServiceServer interface {
 	SemanticSearch(context.Context, *SemanticSearchRequest) (*SemanticSearchResponse, error)
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(context.Context, *SuggestTagsRequest) (*SuggestTagsResponse, error)
-	// ChatWithMemos streams a chat response using memos as context.
-	ChatWithMemos(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error
+	// Chat streams a chat response with AI agents.
+	Chat(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *GetRelatedMemosRequest) (*GetRelatedMemosResponse, error)
 	// ChatWithScheduleAgent streams a chat response using the schedule agent.
@@ -206,8 +206,8 @@ func (UnimplementedAIServiceServer) SemanticSearch(context.Context, *SemanticSea
 func (UnimplementedAIServiceServer) SuggestTags(context.Context, *SuggestTagsRequest) (*SuggestTagsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SuggestTags not implemented")
 }
-func (UnimplementedAIServiceServer) ChatWithMemos(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error {
-	return status.Error(codes.Unimplemented, "method ChatWithMemos not implemented")
+func (UnimplementedAIServiceServer) Chat(*ChatWithMemosRequest, grpc.ServerStreamingServer[ChatWithMemosResponse]) error {
+	return status.Error(codes.Unimplemented, "method Chat not implemented")
 }
 func (UnimplementedAIServiceServer) GetRelatedMemos(context.Context, *GetRelatedMemosRequest) (*GetRelatedMemosResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRelatedMemos not implemented")
@@ -281,16 +281,16 @@ func _AIService_SuggestTags_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AIService_ChatWithMemos_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _AIService_Chat_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ChatWithMemosRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(AIServiceServer).ChatWithMemos(m, &grpc.GenericServerStream[ChatWithMemosRequest, ChatWithMemosResponse]{ServerStream: stream})
+	return srv.(AIServiceServer).Chat(m, &grpc.GenericServerStream[ChatWithMemosRequest, ChatWithMemosResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AIService_ChatWithMemosServer = grpc.ServerStreamingServer[ChatWithMemosResponse]
+type AIService_ChatServer = grpc.ServerStreamingServer[ChatWithMemosResponse]
 
 func _AIService_GetRelatedMemos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRelatedMemosRequest)
@@ -398,8 +398,8 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ChatWithMemos",
-			Handler:       _AIService_ChatWithMemos_Handler,
+			StreamName:    "Chat",
+			Handler:       _AIService_Chat_Handler,
 			ServerStreams: true,
 		},
 		{

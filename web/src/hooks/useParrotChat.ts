@@ -57,7 +57,7 @@ export function useParrotChat() {
 
       try {
         // Use the streaming method from Connect RPC client
-        const stream = aiServiceClient.chatWithMemos(request);
+        const stream = aiServiceClient.chat(request);
 
         let fullContent = "";
         let doneCalled = false;

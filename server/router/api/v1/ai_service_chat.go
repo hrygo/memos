@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"log/slog"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -12,23 +11,20 @@ import (
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
-// ChatWithMemos streams a chat response.
+// Chat streams a chat response with AI agents.
 // This is the main entry point for AI chat requests.
-// It delegates to the refactored ai package for actual processing.
-func (s *AIService) ChatWithMemos(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_ChatWithMemosServer) error {
+// Routes to appropriate handler based on agent_type:
+// - DEFAULT: Direct LLM chat (no RAG)
+// - MEMO: Chat with memo context (RAG)
+// - SCHEDULE: Schedule management agent
+// - AMAZING: Comprehensive assistant
+// - CREATIVE: Creative assistant
+func (s *AIService) Chat(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_ChatServer) error {
 	ctx := stream.Context()
 
 	if !s.IsEnabled() {
 		return status.Errorf(codes.Unavailable, "AI features are disabled")
 	}
-
-	// Log request info with structured logging
-	slog.Info("ChatWithMemos: Request received",
-		"message", ai.TruncateString(req.Message, 50),
-		"history_count", len(req.History),
-		"agent_type", req.AgentType.String(),
-		"user_timezone", req.UserTimezone,
-	)
 
 	// Check if LLM service is available (required for all chat)
 	if !s.IsLLMEnabled() {
@@ -86,7 +82,7 @@ func (s *AIService) createChatHandler() ai.Handler {
 
 // grpcStreamWrapper wraps the gRPC stream to implement ai.ChatStream.
 type grpcStreamWrapper struct {
-	stream v1pb.AIService_ChatWithMemosServer
+	stream v1pb.AIService_ChatServer
 }
 
 // Send sends a response through the gRPC stream.

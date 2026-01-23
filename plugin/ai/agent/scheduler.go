@@ -19,7 +19,8 @@ import (
 )
 
 // Pre-compiled regex for parsing tool calls (using non-greedy matching)
-var toolCallRegex = regexp.MustCompile(`TOOL:\s*(\w+)\s+INPUT:\s*(\{.*?\})`)
+// Pre-compiled regex for parsing tool calls (using non-greedy multiline matching)
+var toolCallRegex = regexp.MustCompile(`(?s)TOOL:\s*(\w+)\s*INPUT:\s*(\{.*?\})`)
 
 // SchedulerAgent is a simplified ReAct-style agent for schedule management.
 // It uses direct LLM calls with tool execution instead of complex agent frameworks.
@@ -191,7 +192,7 @@ func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string,
 		}
 
 		// Check if LLM wants to use a tool
-		toolCall, toolInput, err := a.parseToolCall(response)
+		_, toolCall, toolInput, err := a.parseToolCall(response)
 		if err != nil {
 			// No tool call, this is the final answer
 			finalResponse = response
@@ -377,24 +378,30 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 			return "", fmt.Errorf("LLM chat failed (iteration %d): %w", iteration+1, err)
 		}
 
-		slog.Debug("SchedulerAgent: LLM response received",
+		slog.Info("SchedulerAgent: LLM response received",
 			"iteration", iteration+1,
 			"response_length", len(response),
 			"response_preview", truncateString(response, 200),
 		)
 
 		// Check if LLM wants to use a tool
-		toolCall, toolInput, parseErr := a.parseToolCall(response)
+		cleanText, toolCall, toolInput, parseErr := a.parseToolCall(response)
+
 		if parseErr != nil {
+			slog.Info("SchedulerAgent: No tool call detected",
+				"iteration", iteration+1,
+				"parse_error", parseErr.Error(),
+				"response_preview", truncateString(response, 300),
+			)
 			// No tool call, this is the final answer.
-			// Optimize: Perform final answer with streaming for better UX.
-			// Note: We use the same message history including this turn's prompt.
+			// If we have content in response, send it (stripping any broken tool markers)
 			finalResponse = response
 
 			// Notify streaming start
 			if callback != nil {
-				// Clear "thinking" or "tool_use" status if needed and start answer
-				// (Frontend handles this via onContent)
+				// We still use ChatStream for the final response to provide that "live" feel
+				// unless the response is already complete and short.
+				// But to be safe and consistent with previous turns, we stream it.
 			}
 
 			// Note: We use the context with AgentTimeout
@@ -405,11 +412,6 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 				select {
 				case chunk, ok := <-contentChan:
 					if !ok {
-						// Stream closed
-						if callback != nil {
-							// For scheduler, we might want to send the full accumulated response
-							// but here we send chunks as they come.
-						}
 						return fullContent.String(), nil
 					}
 					fullContent.WriteString(chunk)
@@ -433,19 +435,28 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 		slog.Info("SchedulerAgent: Tool call parsed",
 			"iteration", iteration+1,
 			"tool", toolCall,
+			"clean_text_len", len(cleanText),
 			"input", truncateString(toolInput, 200),
 		)
+
+		// Notify user of progress with pleasantries if present
+		if cleanText != "" && callback != nil {
+			// Send the pleasantry part as an answer chunk
+			callback("answer", cleanText+"\n")
+		}
 
 		// Notify tool use
 		if callback != nil {
 			var action string
 			switch toolCall {
 			case "schedule_query":
-				action = "Querying your calendar..."
+				action = "正在查询日程..."
 			case "schedule_add":
-				action = "Creating a new schedule..."
+				action = "正在创建新日程..."
+			case "schedule_update":
+				action = "正在更新日程..."
 			default:
-				action = fmt.Sprintf("Using tool: %s", toolCall)
+				action = fmt.Sprintf("正在执行: %s", toolCall)
 			}
 			callback("tool_use", action)
 		}
@@ -643,43 +654,28 @@ func (a *SchedulerAgent) getFullSystemPrompt() string {
 }
 
 // buildSystemPrompt creates the system prompt with current time context.
+// Optimized for "快准省": minimal tokens, clear actions.
 func (a *SchedulerAgent) buildSystemPrompt() string {
-	now := time.Now()
-	nowLocal := now.In(a.timezoneLoc)
+	nowLocal := time.Now().In(a.timezoneLoc)
+	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
+当前系统时间: %s (%s)
 
-	return fmt.Sprintf(`你是 Memos 日程助手。当前: %s (%s)
+## 身份与态度
+- 你是一只聪明、严谨且守时的金刚鹦鹉。
+- 说话简练有力。默认日程时长为1小时。
+- 只有在执行工具前可以简要回复用户你的动作，工具调用必须严格遵守格式。
 
-## 工具调用格式
-TOOL: tool_name
-INPUT: {"field": "value"}
+## 工具调用规则
+- 必须包含 TOOL 和 INPUT 两个标识符且独立占行。
+- 严禁向用户展示 TOOL 或 INPUT 的原始文本。
+- schedule_add: 用于创建用户提到的新活动、新安排或意图。
+- schedule_update: 仅用于修改、更新已有日程或补充缺失信息（如地点）。
+- find_free_time: 在检测到冲突或用户询问“什么时候有空”时使用。
 
-## 可用工具
-- schedule_add: 创建日程 (默认1小时)
-- schedule_update: 更新日程 (按ID或日期)
-- schedule_query: 查询日程
-- find_free_time: 查找空闲时段 (8:00-22:00)
-
-## 字段格式 (重要!)
-- 时间: ISO8601格式，如 "2026-01-23T15:00:00+08:00"
-- 字段名: 使用 snake_case (start_time, end_time, all_day)
-- 时长: 默认3600秒(1小时)，end_time = start_time + 3600
-
-## 冲突解决
-当 schedule_add 返回 "schedule conflicts detected" 时:
-1. 调用 find_free_time: {"date": "YYYY-MM-DD"}
-2. 使用返回的空闲时间重新调用 schedule_add
-3. 一次成功后立即停止，不要重复调用
-
-## 停止条件
-- 创建/更新成功后立即停止，不要再验证
-- 查询结果后直接反馈给用户，不要重复查询
-
-## 快捷指令
-"明天3点开会" → schedule_add
-"把明天的会议改到4点" → schedule_update
-"明天有空吗" → find_free_time
-
-目标：快速完成，减少对话轮次。`,
+## 格式样例
+好的，我来帮你安排。
+TOOL: schedule_add
+INPUT: {"title": "评估绩效", "start_time": "2026-01-23T15:00:00+08:00"}`,
 		nowLocal.Format("2006-01-02 15:04"),
 		a.timezone,
 	)
@@ -708,61 +704,72 @@ func (a *SchedulerAgent) buildToolsDescription() string {
 }
 
 // parseToolCall attempts to parse a tool call from LLM response.
-// Returns tool name, input JSON, and error if no tool call is found.
-func (a *SchedulerAgent) parseToolCall(response string) (string, string, error) {
-	// Try to parse tool call format: "TOOL: tool_name\nINPUT: {json}"
-	lines := strings.Split(response, "\n")
+// Returns cleaned text, tool name, input JSON, and error if no tool call is found.
+func (a *SchedulerAgent) parseToolCall(response string) (string, string, string, error) {
+	// 1. Try robust regex parsing first (handles multiline and embedding better)
+	matches := toolCallRegex.FindStringSubmatch(response)
+	if len(matches) == 3 {
+		toolName := matches[1]
+		inputJSON := matches[2]
 
+		// Extract text BEFORE the tool call
+		startIndex := toolCallRegex.FindStringIndex(response)[0]
+		cleanText := strings.TrimSpace(response[:startIndex])
+
+		// Normalize the matched JSON
+		normalized, err := normalizeJSON(inputJSON)
+		if err != nil {
+			return cleanText, toolName, inputJSON, nil // Return as-is on error
+		}
+		return cleanText, toolName, normalized, nil
+	}
+
+	// 2. Fallback to line-by-line parsing if regex failed for some complex reason
+	lines := strings.Split(response, "\n")
 	var toolName string
 	var inputJSON string
+	var pleasantryLines []string
 	foundTool := false
 	foundInput := false
 
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
+		trimmedLine := strings.TrimSpace(line)
 
-		if strings.HasPrefix(line, "TOOL:") {
-			parts := strings.SplitN(line, ":", 2)
+		if strings.HasPrefix(trimmedLine, "TOOL:") {
+			parts := strings.SplitN(trimmedLine, ":", 2)
 			if len(parts) == 2 {
 				toolName = strings.TrimSpace(parts[1])
 				foundTool = true
 			}
+			continue
 		}
 
-		if strings.HasPrefix(line, "INPUT:") {
-			parts := strings.SplitN(line, ":", 2)
+		if strings.HasPrefix(trimmedLine, "INPUT:") {
+			parts := strings.SplitN(trimmedLine, ":", 2)
 			if len(parts) == 2 {
 				inputStr := strings.TrimSpace(parts[1])
-				// Validate and normalize JSON
 				normalized, err := normalizeJSON(inputStr)
 				if err != nil {
-					// If JSON is invalid, use as-is (best effort)
 					inputJSON = inputStr
 				} else {
 					inputJSON = normalized
 				}
 				foundInput = true
 			}
+			continue
+		}
+
+		if !foundTool && !foundInput {
+			pleasantryLines = append(pleasantryLines, line)
 		}
 	}
 
-	if !foundTool || !foundInput {
-		// Try alternative format with JSON in same line using pre-compiled regex
-		matches := toolCallRegex.FindStringSubmatch(response)
-		if len(matches) == 3 {
-			// Normalize the matched JSON
-			normalized, err := normalizeJSON(matches[2])
-			if err != nil {
-				return matches[1], matches[2], nil // Return as-is on error
-			}
-			return matches[1], normalized, nil
-		}
-
-		// No tool call found
-		return "", "", fmt.Errorf("no tool call in response")
+	if foundTool && foundInput {
+		cleanText := strings.TrimSpace(strings.Join(pleasantryLines, "\n"))
+		return cleanText, toolName, inputJSON, nil
 	}
 
-	return toolName, inputJSON, nil
+	return response, "", "", fmt.Errorf("no tool call in response")
 }
 
 // normalizeJSON validates and normalizes a JSON string.

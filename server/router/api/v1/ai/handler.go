@@ -44,18 +44,18 @@ func (h *DirectLLMHandler) Handle(ctx context.Context, req *ChatRequest, stream 
 
 	// Create logger for this request
 	logger := observability.NewRequestContext(slog.Default(), req.AgentType.String(), req.UserID)
-	logger.Info("Direct LLM request started",
+	logger.Info("AI chat started (direct LLM, no RAG)",
 		slog.Int(observability.LogFieldMessageLen, len(req.Message)),
 		slog.Int("history_count", len(req.History)),
 	)
 
 	// Stream LLM response
 	if err := StreamLLMResponse(ctx, h.llm, messages, stream, logger); err != nil {
-		logger.Error("Direct LLM request failed", err)
+		logger.Error("AI chat failed", err)
 		return err
 	}
 
-	logger.Info("Direct LLM request completed",
+	logger.Info("AI chat completed",
 		slog.Int64(observability.LogFieldDuration, logger.DurationMs()),
 	)
 
@@ -84,7 +84,8 @@ func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream Cha
 
 	// Create logger for this request
 	logger := observability.NewRequestContext(slog.Default(), req.AgentType.String(), req.UserID)
-	logger.Info("Parrot request started",
+	logger.Info("AI chat started (parrot agent)",
+		slog.String("agent_type", req.AgentType.String()),
 		slog.Int(observability.LogFieldMessageLen, len(req.Message)),
 		slog.Int("history_count", len(req.History)),
 	)
@@ -100,17 +101,18 @@ func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream Cha
 		return status.Error(codes.Internal, fmt.Sprintf("failed to create agent: %v", err))
 	}
 
-	logger.Info("Agent created successfully",
+	logger.Debug("Agent created",
 		slog.String("agent_name", agent.Name()),
 	)
 
 	// Execute agent with streaming
 	if err := h.executeAgent(ctx, agent, req, stream, logger); err != nil {
-		logger.Error("Agent execution failed", err)
+		logger.Error("AI chat failed", err)
 		return status.Error(codes.Internal, fmt.Sprintf("agent execution failed: %v", err))
 	}
 
-	logger.Info("Parrot request completed",
+	logger.Info("AI chat completed",
+		slog.String("agent_type", req.AgentType.String()),
 		slog.Int64(observability.LogFieldDuration, logger.DurationMs()),
 	)
 
