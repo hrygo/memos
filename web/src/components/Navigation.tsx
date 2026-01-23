@@ -87,7 +87,7 @@ const Navigation = (props: Props) => {
 
   return (
     <header className={cn("w-full h-full overflow-auto flex flex-col justify-between items-start gap-4 hide-scrollbar", className)}>
-      <div className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden hide-scrollbar shrink">
+      <nav aria-label={t("common.navigation") || "Main navigation"} className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden hide-scrollbar shrink">
         <NavLink className="mb-3 cursor-pointer" to={currentUser ? Routes.CHAT : Routes.EXPLORE}>
           <MemosLogo collapsed={collapsed} />
         </NavLink>
@@ -102,6 +102,8 @@ const Navigation = (props: Props) => {
                   : "border-transparent hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-border opacity-80",
               )
             }
+            aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+            aria-label={navLink.title}
             key={navLink.id}
             to={navLink.path}
             id={navLink.id}
@@ -124,7 +126,7 @@ const Navigation = (props: Props) => {
             {!props.collapsed && <span className="ml-3 truncate">{navLink.title}</span>}
           </NavLink>
         ))}
-      </div>
+      </nav>
       {currentUser && (
         <div className={cn("w-full flex flex-col justify-end", props.collapsed ? "items-center" : "items-start pl-3")}>
           <UserMenu collapsed={collapsed} />
