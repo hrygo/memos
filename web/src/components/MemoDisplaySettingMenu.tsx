@@ -16,7 +16,7 @@ function MemoDisplaySettingMenu({ className }: Props) {
 
   return (
     <Popover>
-      <PopoverTrigger className={cn("min-h-[44px] min-w-[44px] flex items-center justify-center", className, isApplying ? "text-primary bg-primary/10 rounded" : "opacity-40")}>
+      <PopoverTrigger className={cn("min-h-[36px] min-w-[36px] flex items-center justify-center", className, isApplying ? "text-primary bg-primary/10 rounded" : "opacity-40")}>
         <Settings2Icon className="w-4 h-auto shrink-0" />
       </PopoverTrigger>
       <PopoverContent align="end" alignOffset={-12} sideOffset={14}>

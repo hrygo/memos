@@ -67,11 +67,11 @@ const SearchBar = () => {
           onKeyDown={onKeyDown}
           ref={inputRef}
         />
-        <div className="absolute right-8 top-1 flex items-center">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <button
             onClick={() => setIsSemantic(!isSemantic)}
             className={cn(
-              "min-h-[44px] min-w-[44px] p-3 flex items-center justify-center rounded-md transition-colors",
+              "min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md transition-colors",
               isSemantic ? "text-blue-500 bg-blue-100 dark:bg-blue-900" : "text-muted-foreground hover:bg-muted",
             )}
             aria-label={isSemantic ? "Disable semantic search" : "Enable semantic search"}
@@ -79,8 +79,8 @@ const SearchBar = () => {
           >
             <SparklesIcon className="w-4 h-4" />
           </button>
+          <MemoDisplaySettingMenu className="text-sidebar-foreground" />
         </div>
-        <MemoDisplaySettingMenu className="absolute right-2 top-2 text-sidebar-foreground" />
       </div>
 
       {isSemantic && queryText.length > 1 && (
