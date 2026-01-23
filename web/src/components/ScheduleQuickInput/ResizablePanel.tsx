@@ -110,7 +110,9 @@ export function ResizablePanel({
   // Reset size when opening
   useEffect(() => {
     if (open) {
-      setSizePercent(initialSize);
+      // Ensure size is within safe bounds
+      const safeSize = Math.max(20, Math.min(85, initialSize));
+      setSizePercent(safeSize);
     }
   }, [open, initialSize]);
 
@@ -198,8 +200,8 @@ export function ResizablePanel({
   const panelStyle = isRight ? { width: `${sizePercent}%`, height: "100%" } : { height: `${sizePercent}%`, width: "100%" };
 
   const panelClass = isRight
-    ? "absolute top-0 bottom-0 right-0 border-l border-border/50 rounded-l-2xl"
-    : "absolute bottom-0 left-0 right-0 border-t border-border/50 rounded-t-2xl";
+    ? "absolute top-0 bottom-0 right-0 border-l border-border/50 rounded-l-2xl min-w-[200px]"
+    : "absolute bottom-0 left-0 right-0 border-t border-border/50 rounded-t-2xl min-h-[150px]";
 
   const handleClass = isRight
     ? "flex-row items-center justify-center py-3 w-3 cursor-ew-resize hover:bg-muted/50"

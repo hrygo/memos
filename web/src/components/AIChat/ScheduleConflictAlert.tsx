@@ -72,7 +72,7 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust,
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end sm:space-x-2">
           {/* Cancel - Secondary */}
           <Button variant="outline" onClick={onDiscard} className="w-full sm:w-auto">
             <X className="h-4 w-4 mr-2" />
