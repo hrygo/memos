@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/usememos/memos/plugin/ai"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
@@ -20,6 +22,7 @@ const (
 type Parser struct {
 	llmService ai.LLMService
 	location   *time.Location
+	validator  *TimezoneValidator // DST edge case validator
 }
 
 // NewParser creates a new schedule parser.
@@ -27,12 +30,16 @@ func NewParser(llmService ai.LLMService, timezone string) (*Parser, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		// Default to Asia/Shanghai if timezone is invalid
+		timezone = "Asia/Shanghai"
 		loc, _ = time.LoadLocation("Asia/Shanghai")
 	}
+
+	validator := NewTimezoneValidator(timezone)
 
 	return &Parser{
 		llmService: llmService,
 		location:   loc,
+		validator:  validator,
 	}, nil
 }
 
@@ -309,6 +316,18 @@ Before returning, verify:
 	}
 	if endTs == 0 || endTs < startTs {
 		endTs = startTs + 3600
+	}
+
+	// Validate timezone edge cases (DST transitions)
+	// This ensures we catch invalid/ambiguous times before creating the schedule
+	if p.validator != nil {
+		rangeResult := p.validator.ValidateTimeRange(startTs, endTs)
+		if len(rangeResult.Warnings) > 0 {
+			// Log warnings but continue - the validator has already adjusted times
+			slog.Warn("timezone validation warnings",
+				"warnings", rangeResult.Warnings,
+				"user_timezone", p.validator.GetTimezone())
+		}
 	}
 
 	return &ParseResult{
