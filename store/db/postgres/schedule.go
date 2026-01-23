@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/lib/pq"
 	"github.com/usememos/memos/store"
 )
 
@@ -41,6 +43,13 @@ func (d *DB) CreateSchedule(ctx context.Context, create *store.Schedule) (*store
 		&create.UpdatedTs,
 		&create.RowStatus,
 	); err != nil {
+		// Check for EXCLUDE constraint violation (conflict detection)
+		if isConflictConstraintError(err) {
+			return nil, &ConflictConstraintError{
+				Err: err,
+				Message: "schedule conflicts with an existing schedule",
+			}
+		}
 		return nil, fmt.Errorf("failed to create schedule: %w", err)
 	}
 
@@ -291,4 +300,46 @@ func (d *DB) DeleteSchedule(ctx context.Context, delete *store.DeleteSchedule) e
 	}
 
 	return nil
+}
+
+// ConflictConstraintError represents a schedule conflict constraint violation.
+// This error is returned when the database EXCLUDE constraint detects an overlap.
+type ConflictConstraintError struct {
+	Err     error
+	Message string
+}
+
+func (e *ConflictConstraintError) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+	return "schedule conflicts with an existing schedule"
+}
+
+func (e *ConflictConstraintError) Unwrap() error {
+	return e.Err
+}
+
+// IsConflictConstraintError checks if an error is from the EXCLUDE constraint violation.
+// PostgreSQL returns error code 23514 for check_violation or exclusion_violation.
+// The EXCLUDE constraint returns SQLState '23P01' (exclusion_violation).
+func isConflictConstraintError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for PostgreSQL exclusion_violation error code
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		// 23P01 is the SQLSTATE for exclusion_violation
+		if pqErr.Code == "23P01" {
+			return true
+		}
+		// Also check if the constraint name is in the error message
+		if strings.Contains(pqErr.Message, "no_overlapping_schedules") {
+			return true
+		}
+	}
+
+	return false
 }
