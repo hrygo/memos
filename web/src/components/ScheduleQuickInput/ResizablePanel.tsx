@@ -119,13 +119,17 @@ export function ResizablePanel({
   useEffect(() => {
     if (!isResizing) return;
 
+    const sidebarWidth = 384;
+
     const handleMouseMove = (e: MouseEvent) => {
       let newSizePx: number;
 
       if (isRight) {
         // For right panel, measure from right edge
+        // Available width is viewport - sidebar
+        const availableWidth = window.innerWidth - sidebarWidth;
         newSizePx = window.innerWidth - e.clientX;
-        const newSizePercent = (newSizePx / window.innerWidth) * 100;
+        const newSizePercent = (newSizePx / availableWidth) * 100;
         const clampedPercent = Math.max(minSize, Math.min(maxSize, newSizePercent));
         setSizePercent(clampedPercent);
       } else {
@@ -197,7 +201,14 @@ export function ResizablePanel({
 
   if (!open) return null;
 
-  const panelStyle = isRight ? { width: `${sizePercent}%`, height: "100%" } : { height: `${sizePercent}%`, width: "100%" };
+  // For right panel, calculate width based on available space (viewport - sidebar)
+  // Sidebar is w-80 = 20rem = 320px, left-16 = 4rem = 64px, total = 384px
+  const sidebarWidth = 384;
+  const availableWidth = window.innerWidth - sidebarWidth;
+  const panelWidthPx = isRight ? (availableWidth * sizePercent) / 100 : 0;
+  const panelStyle = isRight
+    ? { width: `${Math.max(200, panelWidthPx)}px`, height: "100%" }
+    : { height: `${sizePercent}%`, width: "100%" };
 
   const panelClass = isRight
     ? "absolute top-0 bottom-0 right-0 border-l border-border/50 rounded-l-2xl min-w-[200px]"
