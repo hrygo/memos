@@ -1,4 +1,5 @@
 import copy from "copy-to-clipboard";
+import toast from "react-hot-toast";
 import { ChevronLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -107,7 +108,7 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
 
                     {/* Content */}
                     <div className="flex-1">
-                      <div className="flex items-baseline gap-2 mb-1">
+                      <div className="flex items-baseline gap-2 mb-1 flex-wrap">
                         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{parrot.displayName}</h3>
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">{parrot.displayNameAlt}</span>
                       </div>
@@ -194,7 +195,6 @@ function ChatView({
 }: ChatViewProps) {
   const { t } = useTranslation();
   const md = useMediaQuery("md");
-  const theme = PARROT_THEMES[currentParrot.id] || PARROT_THEMES.DEFAULT;
 
   const handleInputChange = (value: string) => {
     setInput(value);
@@ -216,7 +216,7 @@ function ChatView({
 
   // Welcome message when no messages
   const welcomeMessage = (
-    <div className="flex flex-col items-center justify-center px-4 py-8 w-full">
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
       <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3 shrink-0">
         {currentIcon.startsWith("/") ? (
           <img src={currentIcon} alt={currentParrot.displayName} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
@@ -228,7 +228,11 @@ function ChatView({
         Hi, I'm {currentParrot.displayName}
         <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
       </h3>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg md:max-w-xl mb-4 leading-relaxed" style={{ writingMode: "horizontal-tb", textOrientation: "upright" }}>{currentParrot.description}</p>
+      {currentParrot.description && (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+          {currentParrot.description}
+        </p>
+      )}
 
       {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center w-full max-w-2xl">
@@ -650,11 +654,16 @@ const AIChat = () => {
     setClearDialogOpen(false);
   }, [currentConversation, clearMessages]);
 
-  const handleClearContext = useCallback(() => {
+  const handleClearContext = useCallback((trigger: "manual" | "auto" | "shortcut" = "manual") => {
     if (currentConversation) {
-      addContextSeparator(currentConversation.id);
+      addContextSeparator(currentConversation.id, trigger);
+      toast.success(t("ai.context-cleared-toast"), {
+        duration: 2000,
+        icon: "✂️",
+        className: "dark:bg-zinc-800 dark:border-zinc-700",
+      });
     }
-  }, [currentConversation, addContextSeparator]);
+  }, [currentConversation, addContextSeparator, t]);
 
   const handleParrotChange = useCallback(
     (parrot: ParrotAgentI18n | null) => {
@@ -688,6 +697,25 @@ const AIChat = () => {
       window.removeEventListener("aichat-send-message", handler as EventListener);
     };
   }, [handleSend]);
+
+  // Keyboard shortcuts: Cmd/Ctrl+K to clear context
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K or Ctrl+K
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        // Only clear context if in chat view
+        if (currentConversation && viewMode === "chat") {
+          handleClearContext("shortcut");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentConversation, handleClearContext]);
 
   // View mode determination
   const viewMode = aiChat.state.viewMode;

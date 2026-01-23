@@ -210,7 +210,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     }));
   }, []);
 
-  const addContextSeparator = useCallback((conversationId: string) => {
+  const addContextSeparator = useCallback((conversationId: string, trigger: "manual" | "auto" | "shortcut" = "manual") => {
+    const separatorId = generateId();
     setState((prev) => ({
       ...prev,
       conversations: prev.conversations.map((c) => {
@@ -218,7 +219,10 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
         const separator: ContextSeparator = {
           type: "context-separator",
+          id: separatorId, // Future: sync ID for conversation storage
           timestamp: Date.now(),
+          synced: false, // Future: sync status
+          trigger,
         };
 
         return {
@@ -228,6 +232,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         };
       }),
     }));
+    return separatorId;
   }, []);
 
   // Referenced content actions

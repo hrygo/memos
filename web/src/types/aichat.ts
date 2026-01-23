@@ -24,10 +24,18 @@ export interface ConversationMessage {
 
 /**
  * Context separator type for clearing conversation context
+ *
+ * Design Notes:
+ * - `id`: Unique identifier for sync with backend (future)
+ * - `synced`: Whether this separator is synced to server (future)
+ * - `trigger`: How the context was cleared (for analytics)
  */
 export interface ContextSeparator {
   type: "context-separator";
+  id?: string; // Future: sync ID for conversation storage
   timestamp: number;
+  synced?: boolean; // Future: sync status
+  trigger?: "manual" | "auto" | "shortcut"; // How context was cleared
 }
 
 /**
@@ -130,7 +138,7 @@ export interface AIChatContextValue {
   updateMessage: (conversationId: string, messageId: string, updates: Partial<ConversationMessage>) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   clearMessages: (conversationId: string) => void;
-  addContextSeparator: (conversationId: string) => void;
+  addContextSeparator: (conversationId: string, trigger?: "manual" | "auto" | "shortcut") => string;
 
   // Referenced content actions
   addReferencedMemos: (conversationId: string, memos: ReferencedMemo[]) => void;
