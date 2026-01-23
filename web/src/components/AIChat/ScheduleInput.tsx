@@ -329,7 +329,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ScheduleErrorBoundary>
-          <DialogContent className="max-w-md overflow-hidden">
+          <DialogContent className="max-w-md overflow-hidden sm:max-w-md min-w-[300px]">
             <DialogTitle>{isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}</DialogTitle>
             <DialogDescription>{isEditMode ? "" : t("schedule.natural-language-hint")}</DialogDescription>
 
