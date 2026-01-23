@@ -106,7 +106,7 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1">
                       <div className="flex items-baseline gap-2 mb-1">
                         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{parrot.displayName}</h3>
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">{parrot.displayNameAlt}</span>

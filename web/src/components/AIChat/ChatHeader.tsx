@@ -25,7 +25,7 @@ export function ChatHeader({ parrot, isThinking = false, onBack, onClearContext,
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 -ml-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-all active:scale-90 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="p-2 -ml-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-all active:scale-90 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
           aria-label="Go back to hub"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -60,7 +60,7 @@ export function ChatHeader({ parrot, isThinking = false, onBack, onClearContext,
         {(onClearContext || onClearChat) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-90" aria-label="More options">
+              <button className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-90 cursor-pointer" aria-label="More options">
                 <MoreHorizontal className="w-5 h-5 text-zinc-500" />
               </button>
             </DropdownMenuTrigger>

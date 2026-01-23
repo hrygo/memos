@@ -214,7 +214,7 @@ export function ResizablePanel({
     return (
       <div className="absolute inset-0 z-50 pointer-events-none">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer" onClick={() => onOpenChange(false)} aria-hidden="true" />
 
         {/* Resizable Panel */}
         <div
@@ -265,7 +265,7 @@ export function ResizablePanel({
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => onOpenChange(false)} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer" onClick={() => onOpenChange(false)} aria-hidden="true" />
 
       {/* Resizable Panel */}
       <div

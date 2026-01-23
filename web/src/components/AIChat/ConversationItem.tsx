@@ -129,7 +129,7 @@ function ActionMenu({ conversationId, conversationTitle, isPinned, onResetContex
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-10 cursor-pointer" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 min-w-[140px]">
             <button
               onClick={() => {

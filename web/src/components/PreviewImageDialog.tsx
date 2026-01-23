@@ -72,7 +72,7 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls, initialIndex = 0 }: P
         </div>
 
         {/* Image container */}
-        <div className="w-full h-full flex items-center justify-center p-4 sm:p-8 overflow-auto" onClick={handleBackdropClick}>
+        <div className="w-full h-full flex items-center justify-center p-4 sm:p-8 overflow-auto cursor-pointer" onClick={handleBackdropClick}>
           <img
             src={imgUrls[safeIndex]}
             alt={`Preview image ${safeIndex + 1} of ${imgUrls.length}`}

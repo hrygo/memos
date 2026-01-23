@@ -150,7 +150,7 @@ function NewChatButton({ onStartChat }: NewChatButtonProps) {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-10 cursor-pointer" onClick={() => setIsOpen(false)} />
           <div className="absolute bottom-full left-0 mb-2 z-20 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 min-w-[160px]">
             {parrots.map((parrot) => (
               <button

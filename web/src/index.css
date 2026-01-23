@@ -25,6 +25,26 @@
     outline: none;
   }
 
+  /* ========================================
+   * Cursor Consistency for Interactive Elements
+   * All interactive elements should use pointer cursor
+   * ======================================== */
+
+  /* Interactive elements get pointer cursor */
+  button,
+  a,
+  [role="button"],
+  [onclick],
+  [tabIndex]:not([tabIndex="-1"]) {
+    cursor: pointer;
+  }
+
+  /* Disabled state uses not-allowed cursor */
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   body {
     @apply font-sans bg-background text-foreground;
   }

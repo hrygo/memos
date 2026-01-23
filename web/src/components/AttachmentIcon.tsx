@@ -99,7 +99,7 @@ const AttachmentIcon = (props: Props) => {
   };
 
   return (
-    <div onClick={previewResource} className={cn(className, "max-w-16 opacity-50")}>
+    <div onClick={previewResource} className={cn(className, "max-w-16 opacity-50 cursor-pointer")}>
       {getAttachmentIcon()}
     </div>
   );
