@@ -1,5 +1,4 @@
-import { Eraser, MoreHorizontal, Pencil, Pin, PinOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Scissors } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ConversationSummary } from "@/types/aichat";
@@ -10,12 +9,11 @@ interface ConversationItemProps {
   isActive: boolean;
   onSelect: (id: string) => void;
   onResetContext: (id: string) => void;
-  onRename: (id: string, newTitle: string) => void;
-  onTogglePin: (id: string) => void;
   className?: string;
 }
 
-export function ConversationItem({ conversation, isActive, onSelect, onResetContext, onRename, onTogglePin, className }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, onSelect, onResetContext, className }: ConversationItemProps) {
+  const { t } = useTranslation();
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
   const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.DEFAULT;
@@ -30,7 +28,7 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
     >
       <button
         onClick={() => onSelect(conversation.id)}
-        className="w-full text-left p-3"
+        className="w-full text-left p-3 pr-12"
         aria-label={`Select conversation: ${conversation.title}`}
       >
         <div className="flex items-start gap-3">
@@ -45,143 +43,63 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{conversation.title}</h3>
-              {conversation.pinned && <Pin className="w-3 h-3 text-blue-500 shrink-0" />}
-            </div>
+            <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{conversation.title}</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              {conversation.messageCount} messages · {formatTime(conversation.updatedAt)}
+              {t("ai.aichat.sidebar.message-count", { count: conversation.messageCount })} · {formatTime(conversation.updatedAt, t)}
             </p>
           </div>
         </div>
       </button>
 
-      {/* Action Menu */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ActionMenu
+      {/* Clear Context Button - Compact icon-only, expands on hover */}
+      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+        <ClearContextButton
           conversationId={conversation.id}
-          conversationTitle={conversation.title}
-          isPinned={conversation.pinned}
           onResetContext={onResetContext}
-          onRename={onRename}
-          onTogglePin={onTogglePin}
         />
       </div>
     </div>
   );
 }
 
-interface ActionMenuProps {
+interface ClearContextButtonProps {
   conversationId: string;
-  conversationTitle: string;
-  isPinned: boolean;
   onResetContext: (id: string) => void;
-  onRename: (id: string, newTitle: string) => void;
-  onTogglePin: (id: string) => void;
 }
 
-function ActionMenu({ conversationId, conversationTitle, isPinned, onResetContext, onRename, onTogglePin }: ActionMenuProps) {
+function ClearContextButton({ conversationId, onResetContext }: ClearContextButtonProps) {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(conversationTitle);
-
-  useEffect(() => {
-    setEditValue(conversationTitle);
-  }, [conversationTitle]);
-
-  const handleRename = () => {
-    if (editValue.trim() && editValue !== conversationTitle) {
-      onRename(conversationId, editValue.trim());
-    }
-    setIsEditing(false);
-  };
-
-  if (isEditing) {
-    return (
-      <div className="flex items-center gap-1 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 p-1">
-        <input
-          type="text"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleRename();
-            if (e.key === "Escape") setIsEditing(false);
-          }}
-          onBlur={handleRename}
-          className="w-32 px-2 py-1 text-xs bg-transparent border-0 outline-none text-zinc-900 dark:text-zinc-100"
-          autoFocus
-          aria-label="Rename conversation"
-        />
-      </div>
-    );
-  }
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-        aria-label={t("ai.more-options")}
-      >
-        <MoreHorizontal className="w-4 h-4 text-zinc-500" />
-      </button>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-10 cursor-pointer" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 min-w-[140px]">
-            <button
-              onClick={() => {
-                onTogglePin(conversationId);
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              aria-label={isPinned ? "Unpin conversation" : "Pin conversation"}
-            >
-              {isPinned ? (
-                <>
-                  <PinOff className="w-3.5 h-3.5" />
-                  Unpin
-                </>
-              ) : (
-                <>
-                  <Pin className="w-3.5 h-3.5" />
-                  Pin
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setIsEditing(true);
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              aria-label="Rename conversation"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Rename
-            </button>
-            <div className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
-            <button
-              onClick={() => {
-                onResetContext(conversationId);
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-              aria-label="Reset context"
-            >
-              <Eraser className="w-3.5 h-3.5" />
-              {t("ai.clear-context")}
-            </button>
-          </div>
-        </>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onResetContext(conversationId);
+      }}
+      className={cn(
+        "flex items-center justify-center",
+        "w-8 h-8 rounded-lg",
+        "text-zinc-400 dark:text-zinc-500",
+        "hover:text-zinc-600 dark:hover:text-zinc-300",
+        "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+        "transition-all duration-200",
+        "group/btn",
+        // Expand on hover
+        "hover:w-auto hover:px-2 hover:gap-1.5",
+        "overflow-hidden",
       )}
-    </div>
+      aria-label={t("ai.clear-context")}
+      title={t("ai.clear-context-shortcut")}
+    >
+      <Scissors className="w-3.5 h-3.5 shrink-0 rotate-[-45deg]" />
+      <span className="hidden text-xs font-medium whitespace-nowrap group-hover/btn:inline">
+        {t("ai.clear")}
+      </span>
+    </button>
   );
 }
 
-function formatTime(timestamp: number): string {
+function formatTime(timestamp: number, t: (key: string, options?: any) => string): string {
   const date = new Date(timestamp);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -189,10 +107,10 @@ function formatTime(timestamp: number): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) return t("ai.aichat.sidebar.time-just-now");
+  if (diffMins < 60) return t("ai.aichat.sidebar.time-minutes-ago", { count: diffMins });
+  if (diffHours < 24) return t("ai.aichat.sidebar.time-hours-ago", { count: diffHours });
+  if (diffDays < 7) return t("ai.aichat.sidebar.time-days-ago", { count: diffDays });
 
   return date.toLocaleDateString();
 }
