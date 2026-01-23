@@ -112,10 +112,10 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">{parrot.displayNameAlt}</span>
                       </div>
 
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2">{parrot.description}</p>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mb-3 leading-relaxed">{parrot.description}</p>
 
                       {/* Suggested Prompts - clean style */}
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {(parrot.examplePrompts || []).slice(0, 2).map((prompt, idx) => (
                           <button
                             key={idx}
@@ -125,12 +125,17 @@ function HubView({ onSelectParrot, isCreating = false }: HubViewProps) {
                             }}
                             disabled={isCreating}
                             className={cn(
-                              "block w-full text-left px-3 py-2 rounded-lg text-xs border",
-                              "hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-[0.97]",
-                              "border-zinc-200 dark:border-zinc-700",
+                              "block w-full text-left px-3 py-2 rounded-lg text-xs font-medium",
+                              "border border-zinc-200 dark:border-zinc-700",
+                              "bg-white/50 dark:bg-zinc-800/50",
                               "text-zinc-700 dark:text-zinc-300",
+                              "hover:bg-zinc-100 dark:hover:bg-zinc-700",
+                              "hover:border-zinc-300 dark:hover:border-zinc-600",
+                              "active:scale-[0.97]",
                               "disabled:opacity-50 disabled:cursor-not-allowed",
                               "transition-all duration-200",
+                              "shadow-sm hover:shadow",
+                              "cursor-pointer",
                             )}
                           >
                             {prompt}
@@ -223,10 +228,10 @@ function ChatView({
         Hi, I'm {currentParrot.displayName}
         <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
       </h3>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mb-4">{currentParrot.description}</p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md mb-4 leading-relaxed">{currentParrot.description}</p>
 
       {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
           {currentParrot.examplePrompts.slice(0, 3).map((prompt, idx) => (
             <button
               key={idx}
@@ -234,9 +239,15 @@ function ChatView({
                 onSend(prompt);
               }}
               className={cn(
-                "hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95",
-                theme.iconText,
-                "hover:opacity-90",
+                "px-4 py-2 rounded-lg text-sm font-medium",
+                "border border-zinc-200 dark:border-zinc-700",
+                "bg-white dark:bg-zinc-800",
+                "text-zinc-700 dark:text-zinc-300",
+                "hover:bg-zinc-100 dark:hover:bg-zinc-700",
+                "hover:border-zinc-300 dark:hover:border-zinc-600",
+                "active:scale-95 cursor-pointer",
+                "transition-all duration-200",
+                "shadow-sm hover:shadow",
               )}
             >
               {prompt}
