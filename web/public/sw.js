@@ -63,6 +63,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
+          // Only cache successful responses
+          if (!response.ok) return response;
           // Clone response before caching
           const responseClone = response.clone();
           caches.open(API_CACHE).then((cache) => {
@@ -104,6 +106,8 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
+        // Only cache successful responses
+        if (!response.ok) return response;
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(request, responseClone);
