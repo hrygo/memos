@@ -31,7 +31,7 @@ func (s *AIService) getChatEventBus() *aichat.EventBus {
 
 // Chat streams a chat response with AI agents.
 // Emits events for conversation persistence (handled by ConversationService).
-func (s *AIService) Chat(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_ChatServer) error {
+func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer) error {
 	ctx := stream.Context()
 
 	if !s.IsEnabled() {
@@ -97,7 +97,7 @@ func (s *AIService) Chat(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_C
 			IsTempConversation: chatReq.IsTempConversation,
 			Timestamp:         time.Now().Unix(),
 		})
-		return stream.Send(&v1pb.ChatWithMemosResponse{Done: true})
+		return stream.Send(&v1pb.ChatResponse{Done: true})
 	}
 
 	// Emit user message event
@@ -147,7 +147,7 @@ type grpcStreamWrapper struct {
 	stream v1pb.AIService_ChatServer
 }
 
-func (w *grpcStreamWrapper) Send(resp *v1pb.ChatWithMemosResponse) error {
+func (w *grpcStreamWrapper) Send(resp *v1pb.ChatResponse) error {
 	return w.stream.Send(resp)
 }
 
@@ -167,7 +167,7 @@ type eventCollectingStream struct {
 	builder        strings.Builder
 }
 
-func (s *eventCollectingStream) Send(resp *v1pb.ChatWithMemosResponse) error {
+func (s *eventCollectingStream) Send(resp *v1pb.ChatResponse) error {
 	// Collect content from "answer" or "content" events
 	if resp.EventType == "answer" || resp.EventType == "content" {
 		s.mu.Lock()

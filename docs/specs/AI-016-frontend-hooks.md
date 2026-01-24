@@ -47,7 +47,7 @@ export function useRelatedMemos(memoName: string, enabled = true) {
 }
 
 // AI 对话 (需特殊处理流式响应)
-export function useChatWithMemos() {
+export function useChat() {
   // 流式实现，需要使用 grpc-web 流式 API
 }
 ```
@@ -75,13 +75,13 @@ export function useChatWithMemos() {
 ✅ **已完成** - 实现于 [web/src/hooks/useAIQueries.ts](../../web/src/hooks/useAIQueries.ts)
 
 **实现细节**:
-- `useChatWithMemos` 使用 Connect RPC 异步迭代器实现流式接收
+- `useChat` 使用 Connect RPC 异步迭代器实现流式接收
 - 支持 `onContent`, `onSources`, `onDone`, `onError` 回调
 - 返回完整内容 + 来源列表
 
 **使用示例**:
 ```typescript
-const { stream } = useChatWithMemos();
+const { stream } = useChat();
 
 await stream(
   { message: "我最近记录了什么?" },

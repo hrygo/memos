@@ -1,5 +1,11 @@
 # AI 服务重构计划 v2
 
+> **状态**: ✅ 已完成 (2026-01-24)
+>
+> **变更**: `ChatWithMemos` 已重命名为 `Chat`，废弃的 RPC 方法 (`ChatWithScheduleAgent`, `ChatWithMemosIntegrated`) 已删除
+>
+> **相关提交**: feat-ai-chat-session 分支
+
 ## 🎯 核心变更
 
 ### 问题分析

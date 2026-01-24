@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/lithammer/shortuuid/v4"
@@ -166,7 +167,11 @@ func convertAIConversationFromStore(c *store.AIConversation) *v1pb.AIConversatio
 	// Convert ParrotID string to AgentType enum with default fallback
 	parrotId := v1pb.AgentType_value[c.ParrotID]
 	if parrotId == 0 && c.ParrotID != "" && c.ParrotID != "AGENT_TYPE_UNSPECIFIED" {
-		// Unknown value, fallback to DEFAULT
+		// Unknown value, log warning and fallback to DEFAULT
+		slog.Default().Warn("Unknown ParrotID in conversation, falling back to DEFAULT",
+			"conversation_id", c.ID,
+			"parrot_id", c.ParrotID,
+		)
 		parrotId = int32(v1pb.AgentType_AGENT_TYPE_DEFAULT)
 	}
 	return &v1pb.AIConversation{

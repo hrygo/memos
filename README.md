@@ -251,13 +251,14 @@ docker run -d \
 
 ## 📊 Database Support
 
-| Database   | Status         | AI Features                       | Recommended Use  |
-| ---------- | -------------- | --------------------------------- | ---------------- |
-| PostgreSQL | ✅ Full Support | ✅ Vector, BM25, Hybrid, Reranking | Production       |
-| SQLite     | ⚠️ Limited      | ❌ No vector search                | Development only |
-| MySQL      | ❌ Removed      | ❌                                 | N/A              |
+| Database   | Status                    | AI Features                                      | Recommended Use          |
+| ---------- | ------------------------- | ------------------------------------------------ | ------------------------ |
+| PostgreSQL | ✅ Full Support           | ✅ All AI features (Conversation, Vector, Rerank) | Production               |
+| SQLite     | ⚠️ Development Only        | ❌ **AI features NOT supported**                  | Non-AI development only  |
+| MySQL      | ❌ Removed                | ❌                                                | N/A                      |
 
-> **Note**: MySQL support has been removed due to lack of AI features.
+> ⚠️ **Important**: SQLite does NOT support AI features (conversation persistence, vector search, reranking).
+> Use PostgreSQL for production AI features. See [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md) for details.
 
 ---
 

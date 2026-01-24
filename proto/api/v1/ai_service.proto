@@ -28,7 +28,7 @@ service AIService {
   }
 
   // Chat streams a chat response with AI agents.
-  rpc Chat(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+  rpc Chat(ChatRequest) returns (stream ChatResponse) {
     option (google.api.http) = {
       post: "/api/v1/ai/chat"
       body: "*"
@@ -39,22 +39,6 @@ service AIService {
   rpc GetRelatedMemos(GetRelatedMemosRequest) returns (GetRelatedMemosResponse) {
     option (google.api.http) = {
       get: "/api/v1/{name=memos/*}/related"
-    };
-  }
-
-  // ChatWithScheduleAgent streams a chat response using the schedule agent.
-  rpc ChatWithScheduleAgent(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/ai/chat/schedule"
-      body: "*"
-    };
-  }
-
-  // ChatWithMemosIntegrated integrates both RAG and schedule agent.
-  rpc ChatWithMemosIntegrated(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/ai/chat/integrated"
-      body: "*"
     };
   }
 
@@ -193,8 +177,8 @@ enum AgentType {
   AGENT_TYPE_CREATIVE = 4;  // 🦜 Creative Parrot - Creative assistant (Milestone 4)
 }
 
-// ChatWithMemosRequest is the request for ChatWithMemos.
-message ChatWithMemosRequest {
+// ChatRequest is the request for Chat.
+message ChatRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;  // conversation history
   string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
@@ -254,8 +238,8 @@ message DeleteAIConversationRequest {
   int32 id = 1;
 }
 
-// ChatWithMemosResponse is the response for ChatWithMemos.
-message ChatWithMemosResponse {
+// ChatResponse is the response for Chat.
+message ChatResponse {
   string content = 1;                       // streaming content chunk
   repeated string sources = 2;              // citation sources memos/{id}
   bool done = 3;                            // stream end marker

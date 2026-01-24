@@ -11,7 +11,7 @@ import { ChatMessages } from "@/components/AIChat/ChatMessages";
 import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
-import { useChatWithMemos } from "@/hooks/useAIQueries";
+import { useChat } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import type { ParrotAgentI18n } from "@/hooks/useParrots";
 import { getLocalizedParrot, useAvailableParrots } from "@/hooks/useParrots";
@@ -358,7 +358,7 @@ function ChatView({
 // MAIN AI CHAT PAGE
 // ============================================================
 const AIChat = () => {
-  const chatHook = useChatWithMemos();
+  const chatHook = useChat();
   const aiChat = useAIChat();
 
   // Local state

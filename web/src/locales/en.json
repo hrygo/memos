@@ -1010,6 +1010,12 @@
     "creative": {
       "title": "Creative Assistant"
     },
-    "new": "New Chat {{n}}"
-  }
+    "new": "New Chat"
+  },
+  "chat.new": "New Chat",
+  "chat.default.title": "Default Chat",
+  "chat.memo.title": "Memo Chat",
+  "chat.schedule.title": "Schedule Chat",
+  "chat.amazing.title": "Amazing Chat",
+  "chat.creative.title": "Creative Chat"
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,9 +28,9 @@ type ChatEvent struct {
 	// For Separator event
 	SeparatorContent string
 	// Context information
-	ConversationID    int32
+	ConversationID   int32
 	IsTempConversation bool
-	Timestamp         int64
+	Timestamp        int64
 }
 
 // ChatEventType represents the type of chat event.
@@ -47,10 +48,31 @@ const (
 )
 
 // ChatEventListener is a function that processes chat events.
-// It can return a value that will be collected and returned to the publisher.
+//
+// IMPORTANT: Listeners MUST respect context cancellation.
+// The context passed to listeners has a timeout (default 5s).
+// Listeners should check ctx.Done() periodically in long-running operations.
+// Failure to respect context will result in the listener continuing to run
+// in the background after timeout, which is a resource leak.
+//
+// Example:
+//
+//	func myListener(ctx context.Context, event *ChatEvent) (interface{}, error) {
+//		// Check context before expensive operation
+//		select {
+//		case <-ctx.Done():
+//			return nil, ctx.Err()
+//		default:
+//		}
+//		// Do work...
+//		return result, nil
+//	}
 type ChatEventListener func(ctx context.Context, event *ChatEvent) (interface{}, error)
 
 // EventBus manages chat event listeners.
+//
+// Listeners are invoked concurrently with a per-listener timeout.
+// Results are collected and returned as a map indexed by listener index.
 type EventBus struct {
 	listeners map[ChatEventType][]ChatEventListener
 	mu        sync.RWMutex
@@ -80,11 +102,18 @@ func (b *EventBus) Subscribe(eventType ChatEventType, listener ChatEventListener
 }
 
 // Publish emits an event to all registered listeners.
+//
+// Listeners are executed concurrently, each with its own timeout context.
 // Returns a map of listener results indexed by listener index.
 // For conversation_start event, it returns the conversation ID.
+//
+// If any listener returns an error, the first error is returned,
+// but all listeners are still executed (fire-and-forget semantics).
 func (b *EventBus) Publish(ctx context.Context, event *ChatEvent) (map[int]interface{}, error) {
+	// Get listeners for this event type
 	b.mu.RLock()
-	listeners := b.listeners[event.Type]
+	listeners := make([]ChatEventListener, len(b.listeners[event.Type]))
+	copy(listeners, b.listeners[event.Type])
 	b.mu.RUnlock()
 
 	if len(listeners) == 0 {
@@ -93,7 +122,7 @@ func (b *EventBus) Publish(ctx context.Context, event *ChatEvent) (map[int]inter
 
 	results := make(map[int]interface{})
 	var wg sync.WaitGroup
-	var mu sync.Mutex
+	var resultsMu sync.Mutex
 	var firstErr error
 	var errOnce sync.Once
 
@@ -102,63 +131,77 @@ func (b *EventBus) Publish(ctx context.Context, event *ChatEvent) (map[int]inter
 		go func(index int, l ChatEventListener) {
 			defer wg.Done()
 
-			// Create timeout context for each listener
+			// Panic recovery: prevent one listener's panic from affecting others
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Default().Error("Event listener panic",
+						"event_type", event.Type,
+						"listener_index", index,
+						"panic", r,
+					)
+					errOnce.Do(func() { firstErr = fmt.Errorf("listener panic: %v", r) })
+				}
+			}()
+
+			// Create timeout context for this listener
 			listenerCtx, cancel := context.WithTimeout(ctx, b.timeout)
 			defer cancel()
 
-			// Channel to receive result (buffered to avoid blocking)
-			resultChan := make(chan listenerResult, 1)
+			// Execute listener directly (no nested goroutine)
+			// The listener MUST respect listenerCtx cancellation
+			result, err := l(listenerCtx, event)
 
-			// Execute listener in separate goroutine
-			go func() {
-				defer close(resultChan)
-				result, err := l(listenerCtx, event)
-				resultChan <- listenerResult{result: result, err: err}
-			}()
+			// Check if timeout occurred (listener ran too long)
+			if listenerCtx.Err() == context.DeadlineExceeded {
+				slog.Default().Warn("Event listener timeout",
+					"event_type", event.Type,
+					"listener_index", index,
+					"timeout", b.timeout,
+					"had_result", result != nil,
+				)
+				errOnce.Do(func() { firstErr = fmt.Errorf("listener timeout") })
+				// Still store result if available (listener completed just after timeout)
+				if result != nil {
+					resultsMu.Lock()
+					results[index] = result
+					resultsMu.Unlock()
+				}
+				return
+			}
 
-			// Wait for result or timeout
-			select {
-			case <-listenerCtx.Done():
-				if listenerCtx.Err() == context.DeadlineExceeded {
-					slog.Default().Warn("Event listener timeout",
-						"event_type", event.Type,
-						"listener_index", index,
-					)
-					errOnce.Do(func() { firstErr = fmt.Errorf("listener timeout") })
-				}
-				// Drain resultChan synchronously to avoid goroutine leak
-				// The listener goroutine will exit after sending or closing
-				for range resultChan {
-				}
-			case res, ok := <-resultChan:
-				if !ok {
-					// Channel closed without result
-					return
-				}
-				if res.err != nil {
-					slog.Default().Warn("Event listener failed",
-						"event_type", event.Type,
-						"listener_index", index,
-						"error", res.err,
-					)
-					errOnce.Do(func() { firstErr = res.err })
-				} else if res.result != nil {
-					mu.Lock()
-					results[index] = res.result
-					mu.Unlock()
-				}
+			// Check for other context errors (cancellation)
+			if listenerCtx.Err() != nil {
+				slog.Default().Warn("Event listener context error",
+					"event_type", event.Type,
+					"listener_index", index,
+					"error", listenerCtx.Err(),
+				)
+				errOnce.Do(func() { firstErr = listenerCtx.Err() })
+				return
+			}
+
+			// Handle listener errors
+			if err != nil {
+				slog.Default().Warn("Event listener failed",
+					"event_type", event.Type,
+					"listener_index", index,
+					"error", err,
+				)
+				errOnce.Do(func() { firstErr = err })
+				return
+			}
+
+			// Store successful result
+			if result != nil {
+				resultsMu.Lock()
+				results[index] = result
+				resultsMu.Unlock()
 			}
 		}(i, listener)
 	}
+
 	wg.Wait()
-
 	return results, firstErr
-}
-
-// listenerResult wraps the result from a listener.
-type listenerResult struct {
-	result interface{}
-	err    error
 }
 
 // ConversationService handles conversation persistence independently.
@@ -304,10 +347,11 @@ func (s *ConversationService) createTemporaryConversation(ctx context.Context, e
 }
 
 // findOrCreateFixedConversation finds or creates a fixed conversation.
+// Handles race conditions by catching duplicate key errors.
 func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context, event *ChatEvent) (int32, error) {
 	fixedID := calculateFixedConversationID(event.UserID, event.AgentType)
 
-	// Try to find existing
+	// Try to find existing first (fast path)
 	conversations, err := s.store.ListAIConversations(ctx, &store.FindAIConversation{
 		ID:        &fixedID,
 		CreatorID: &event.UserID,
@@ -321,7 +365,7 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 		return fixedID, nil
 	}
 
-	// Create new
+	// Try to create new with fixed ID
 	_, err = s.store.CreateAIConversation(ctx, &store.AIConversation{
 		ID:        fixedID,
 		UID:       shortuuid.New(),
@@ -333,26 +377,37 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 		UpdatedTs: event.Timestamp,
 		RowStatus: store.Normal,
 	})
+
+	// Handle race condition: if another request created it first, fetch it
 	if err != nil {
+		// Check if it's a duplicate key / unique constraint violation
+		if strings.Contains(err.Error(), "duplicate key") ||
+		   strings.Contains(err.Error(), "unique constraint") ||
+		   strings.Contains(err.Error(), "23505") { // PostgreSQL duplicate key code
+			// Race condition - another goroutine created it first
+			// Fetch the existing conversation
+			conversations, err := s.store.ListAIConversations(ctx, &store.FindAIConversation{
+				ID:        &fixedID,
+				CreatorID: &event.UserID,
+			})
+			if err == nil && len(conversations) > 0 {
+				return fixedID, nil
+			}
+			return 0, fmt.Errorf("race condition recovery failed: %w", err)
+		}
 		return 0, fmt.Errorf("create fixed conversation: %w", err)
 	}
+
 	return fixedID, nil
 }
 
 // generateTemporaryTitle generates a title for a temporary conversation.
-// Returns a title key that the frontend should localize.
+// Returns a title key that the frontend should localize and handle numbering.
+// The numbering is handled by the frontend to avoid expensive database queries.
 func (s *ConversationService) generateTemporaryTitle(ctx context.Context, userID int32) string {
-	conversations, _ := s.store.ListAIConversations(ctx, &store.FindAIConversation{
-		CreatorID: &userID,
-	})
-	tempCount := 0
-	for _, c := range conversations {
-		if !c.Pinned {
-			tempCount++
-		}
-	}
-	// Return a title pattern: frontend should localize "chat.new" and substitute {n}
-	return fmt.Sprintf("chat.new.%d", tempCount+1)
+	// Return a simple title key; the frontend will handle display numbering
+	// based on the actual list of conversations it receives.
+	return "chat.new"
 }
 
 // ConversationStore is the interface needed for conversation persistence.
@@ -366,7 +421,20 @@ type ConversationStore interface {
 // calculateFixedConversationID calculates the fixed conversation ID for a user and agent type.
 // Formula: (UserID << 8) | AgentTypeOffset ensures uniqueness by using bit shifting.
 // The lower 8 bits are reserved for agent type offset (max 255 agent types).
+// Safe for userID up to 8,388,607 (int32 max / 256).
 func calculateFixedConversationID(userID int32, agentType AgentType) int32 {
+	// Boundary check: userID << 8 must not overflow int32
+	// Max safe userID = 2^31-1 / 256 = 8388607
+	const maxSafeUserID = 8388607
+	if userID > maxSafeUserID {
+		slog.Default().Warn("User ID exceeds safe range for fixed conversation ID",
+			"user_id", userID,
+			"max_safe", maxSafeUserID,
+		)
+		// Use modulo to prevent overflow while maintaining some uniqueness
+		userID = userID % maxSafeUserID
+	}
+
 	offsets := map[AgentType]int32{
 		AgentTypeDefault:  1,
 		AgentTypeMemo:     2,

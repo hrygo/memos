@@ -97,24 +97,20 @@ func (d *DB) UpdateAIConversation(ctx context.Context, update *store.UpdateAICon
 	}
 
 	args = append(args, update.ID)
-	stmt := `UPDATE ai_conversation SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id`
-	var id int32
-	if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&id); err != nil {
+	// RETURNING all fields to avoid N+1 query
+	stmt := `UPDATE ai_conversation SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id, uid, creator_id, title, parrot_id, pinned, created_ts, updated_ts`
+	result := &store.AIConversation{}
+	err := d.db.QueryRowContext(ctx, stmt, args...).Scan(
+		&result.ID, &result.UID, &result.CreatorID, &result.Title, &result.ParrotID, &result.Pinned, &result.CreatedTs, &result.UpdatedTs,
+	)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("ai_conversation not found")
 		}
 		return nil, fmt.Errorf("failed to update ai_conversation: %w", err)
 	}
 
-	list, err := d.ListAIConversations(ctx, &store.FindAIConversation{ID: &id})
-	if err != nil {
-		return nil, err
-	}
-	if len(list) == 0 {
-		return nil, fmt.Errorf("ai_conversation not found after update")
-	}
-
-	return list[0], nil
+	return result, nil
 }
 
 func (d *DB) DeleteAIConversation(ctx context.Context, delete *store.DeleteAIConversation) error {

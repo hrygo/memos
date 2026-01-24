@@ -79,7 +79,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/ChatWithMemosRequest'
+                            $ref: '#/components/schemas/ChatRequest'
                 required: true
             responses:
                 "200":
@@ -87,57 +87,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/ChatWithMemosResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
-    /api/v1/ai/chat/integrated:
-        post:
-            tags:
-                - AIService
-            description: ChatWithMemosIntegrated integrates both RAG and schedule agent.
-            operationId: AIService_ChatWithMemosIntegrated
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ChatWithMemosRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ChatWithMemosResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
-    /api/v1/ai/chat/schedule:
-        post:
-            tags:
-                - AIService
-            description: ChatWithScheduleAgent streams a chat response using the schedule agent.
-            operationId: AIService_ChatWithScheduleAgent
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ChatWithMemosRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ChatWithMemosResponse'
+                                $ref: '#/components/schemas/ChatResponse'
                 default:
                     description: Default error response
                     content:
@@ -2663,7 +2613,7 @@ components:
                     description: |-
                         Optional. The related memo. Refer to `Memo.name`.
                          Format: memos/{memo}
-        ChatWithMemosRequest:
+        ChatRequest:
             required:
                 - message
             type: object
@@ -2697,8 +2647,8 @@ components:
                     format: int32
                 isTempConversation:
                     type: boolean
-            description: ChatWithMemosRequest is the request for ChatWithMemos.
-        ChatWithMemosResponse:
+            description: ChatRequest is the request for Chat.
+        ChatResponse:
             type: object
             properties:
                 content:
@@ -2718,7 +2668,7 @@ components:
                     description: Agent event signaling (for schedule agent integration)
                 eventData:
                     type: string
-            description: ChatWithMemosResponse is the response for ChatWithMemos.
+            description: ChatResponse is the response for Chat.
         CheckConflictRequest:
             required:
                 - startTs

@@ -9,15 +9,17 @@
 - **Maintained**: Actively maintained and tested
 - **Port**: 25432 (development)
 
-### SQLite (Limited Support)
+### SQLite (Development Only - No AI Features)
 - **Status**: Development and testing only
-- **AI Features**: Limited support (basic vector search, no BM25 hybrid search)
-- **Recommended for**: Local development, single-user instances, testing
+- **AI Features**: **NOT SUPPORTED** - Conversation persistence, vector search, reranking disabled
+- **Recommended for**: Local development of non-AI features only
 - **Limitations**:
+  - No AI conversation persistence (use PostgreSQL for AI features)
+  - No vector search, BM25, hybrid search, or reranking
   - No concurrent write support
-  - No advanced AI features (BM25, hybrid search, reranking)
   - No full-text search (FTS5 not guaranteed)
-- **Maintained**: Best-effort basis only
+- **Maintained**: Best-effort basis for non-AI features only
+- **Migration**: Use PostgreSQL for production AI features
 
 ### MySQL (Removed)
 - **Status**: **NOT SUPPORTED** - All MySQL support has been removed

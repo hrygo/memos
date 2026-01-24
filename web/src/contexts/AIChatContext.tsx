@@ -69,21 +69,31 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // Helper to localize conversation title from backend key to display title
   const localizeTitle = useCallback((titleKey: string): string => {
-    // Handle title keys from backend
-    if (!titleKey.startsWith("chat.")) {
+    // Handle non-key strings (e.g., user custom titles)
+    if (!titleKey || !titleKey.startsWith("chat.")) {
       return titleKey;
     }
 
-    // Handle "chat.new.N" format - extract number for interpolation
-    const newChatMatch = titleKey.match(/^chat\.new\.(\d+)$/);
-    if (newChatMatch) {
-      const n = newChatMatch[1];
-      return t("chat.new", { n });
-    }
+    try {
+      // Handle "chat.new" - backend now returns just "chat.new"
+      // Numbering is handled by frontend based on conversation position
+      if (titleKey === "chat.new") {
+        return t("chat.new");
+      }
 
-    // Handle other "chat.*.title" format (e.g., "chat.default.title")
-    if (titleKey.endsWith(".title")) {
-      return t(titleKey, titleKey); // Fallback to original key if translation missing
+      // Handle legacy "chat.new.N" format for backward compatibility
+      const newChatMatch = titleKey.match(/^chat\.new\.(\d+)$/);
+      if (newChatMatch) {
+        return t("chat.new");
+      }
+
+      // Handle other "chat.*.title" format (e.g., "chat.default.title")
+      if (titleKey.endsWith(".title")) {
+        return t(titleKey, titleKey); // Fallback to original key if translation missing
+      }
+    } catch (err) {
+      // Fallback to original key if parsing or translation fails
+      console.warn("Failed to localize title key:", titleKey, err);
     }
 
     return titleKey;

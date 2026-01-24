@@ -1010,6 +1010,12 @@
     "creative": {
       "title": "灵灵 - 创意助手"
     },
-    "new": "新对话 {{n}}"
-  }
+    "new": "新对话"
+  },
+  "chat.new": "新对话",
+  "chat.default.title": "默认对话",
+  "chat.memo.title": "笔记对话",
+  "chat.schedule.title": "日程对话",
+  "chat.amazing.title": "惊奇对话",
+  "chat.creative.title": "创意对话"
 }

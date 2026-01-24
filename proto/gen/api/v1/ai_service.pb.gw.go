@@ -91,7 +91,7 @@ func local_request_AIService_SuggestTags_0(ctx context.Context, marshaler runtim
 
 func request_AIService_Chat_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (AIService_ChatClient, runtime.ServerMetadata, error) {
 	var (
-		protoReq ChatWithMemosRequest
+		protoReq ChatRequest
 		metadata runtime.ServerMetadata
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
@@ -163,52 +163,6 @@ func local_request_AIService_GetRelatedMemos_0(ctx context.Context, marshaler ru
 	}
 	msg, err := server.GetRelatedMemos(ctx, &protoReq)
 	return msg, metadata, err
-}
-
-func request_AIService_ChatWithScheduleAgent_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (AIService_ChatWithScheduleAgentClient, runtime.ServerMetadata, error) {
-	var (
-		protoReq ChatWithMemosRequest
-		metadata runtime.ServerMetadata
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if req.Body != nil {
-		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	stream, err := client.ChatWithScheduleAgent(ctx, &protoReq)
-	if err != nil {
-		return nil, metadata, err
-	}
-	header, err := stream.Header()
-	if err != nil {
-		return nil, metadata, err
-	}
-	metadata.HeaderMD = header
-	return stream, metadata, nil
-}
-
-func request_AIService_ChatWithMemosIntegrated_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (AIService_ChatWithMemosIntegratedClient, runtime.ServerMetadata, error) {
-	var (
-		protoReq ChatWithMemosRequest
-		metadata runtime.ServerMetadata
-	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if req.Body != nil {
-		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	stream, err := client.ChatWithMemosIntegrated(ctx, &protoReq)
-	if err != nil {
-		return nil, metadata, err
-	}
-	header, err := stream.Header()
-	if err != nil {
-		return nil, metadata, err
-	}
-	metadata.HeaderMD = header
-	return stream, metadata, nil
 }
 
 func request_AIService_GetParrotSelfCognition_0(ctx context.Context, marshaler runtime.Marshaler, client AIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -569,20 +523,6 @@ func RegisterAIServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 		}
 		forward_AIService_GetRelatedMemos_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-
-	mux.Handle(http.MethodPost, pattern_AIService_ChatWithScheduleAgent_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
-		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-		return
-	})
-
-	mux.Handle(http.MethodPost, pattern_AIService_ChatWithMemosIntegrated_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
-		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-		return
-	})
 	mux.Handle(http.MethodGet, pattern_AIService_GetParrotSelfCognition_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -868,40 +808,6 @@ func RegisterAIServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 		}
 		forward_AIService_GetRelatedMemos_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_AIService_ChatWithScheduleAgent_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.AIService/ChatWithScheduleAgent", runtime.WithHTTPPathPattern("/api/v1/ai/chat/schedule"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_AIService_ChatWithScheduleAgent_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_AIService_ChatWithScheduleAgent_0(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodPost, pattern_AIService_ChatWithMemosIntegrated_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/memos.api.v1.AIService/ChatWithMemosIntegrated", runtime.WithHTTPPathPattern("/api/v1/ai/chat/integrated"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_AIService_ChatWithMemosIntegrated_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_AIService_ChatWithMemosIntegrated_0(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-	})
 	mux.Handle(http.MethodGet, pattern_AIService_GetParrotSelfCognition_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1025,35 +931,31 @@ func RegisterAIServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_AIService_SemanticSearch_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "search"}, ""))
-	pattern_AIService_SuggestTags_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "suggest-tags"}, ""))
-	pattern_AIService_Chat_0                    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "chat"}, ""))
-	pattern_AIService_GetRelatedMemos_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3, 2, 4}, []string{"api", "v1", "memos", "name", "related"}, ""))
-	pattern_AIService_ChatWithScheduleAgent_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "ai", "chat", "schedule"}, ""))
-	pattern_AIService_ChatWithMemosIntegrated_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "ai", "chat", "integrated"}, ""))
-	pattern_AIService_GetParrotSelfCognition_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "ai", "parrots", "agent_type", "self-cognition"}, ""))
-	pattern_AIService_ListParrots_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "parrots"}, ""))
-	pattern_AIService_ListAIConversations_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "conversations"}, ""))
-	pattern_AIService_GetAIConversation_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
-	pattern_AIService_CreateAIConversation_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "conversations"}, ""))
-	pattern_AIService_UpdateAIConversation_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
-	pattern_AIService_DeleteAIConversation_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
+	pattern_AIService_SemanticSearch_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "search"}, ""))
+	pattern_AIService_SuggestTags_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "suggest-tags"}, ""))
+	pattern_AIService_Chat_0                   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "chat"}, ""))
+	pattern_AIService_GetRelatedMemos_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 2, 5, 3, 2, 4}, []string{"api", "v1", "memos", "name", "related"}, ""))
+	pattern_AIService_GetParrotSelfCognition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "ai", "parrots", "agent_type", "self-cognition"}, ""))
+	pattern_AIService_ListParrots_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "parrots"}, ""))
+	pattern_AIService_ListAIConversations_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "conversations"}, ""))
+	pattern_AIService_GetAIConversation_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
+	pattern_AIService_CreateAIConversation_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "ai", "conversations"}, ""))
+	pattern_AIService_UpdateAIConversation_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
+	pattern_AIService_DeleteAIConversation_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "ai", "conversations", "id"}, ""))
 )
 
 var (
-	forward_AIService_SemanticSearch_0          = runtime.ForwardResponseMessage
-	forward_AIService_SuggestTags_0             = runtime.ForwardResponseMessage
-	forward_AIService_Chat_0                    = runtime.ForwardResponseStream
-	forward_AIService_GetRelatedMemos_0         = runtime.ForwardResponseMessage
-	forward_AIService_ChatWithScheduleAgent_0   = runtime.ForwardResponseStream
-	forward_AIService_ChatWithMemosIntegrated_0 = runtime.ForwardResponseStream
-	forward_AIService_GetParrotSelfCognition_0  = runtime.ForwardResponseMessage
-	forward_AIService_ListParrots_0             = runtime.ForwardResponseMessage
-	forward_AIService_ListAIConversations_0     = runtime.ForwardResponseMessage
-	forward_AIService_GetAIConversation_0       = runtime.ForwardResponseMessage
-	forward_AIService_CreateAIConversation_0    = runtime.ForwardResponseMessage
-	forward_AIService_UpdateAIConversation_0    = runtime.ForwardResponseMessage
-	forward_AIService_DeleteAIConversation_0    = runtime.ForwardResponseMessage
+	forward_AIService_SemanticSearch_0         = runtime.ForwardResponseMessage
+	forward_AIService_SuggestTags_0            = runtime.ForwardResponseMessage
+	forward_AIService_Chat_0                   = runtime.ForwardResponseStream
+	forward_AIService_GetRelatedMemos_0        = runtime.ForwardResponseMessage
+	forward_AIService_GetParrotSelfCognition_0 = runtime.ForwardResponseMessage
+	forward_AIService_ListParrots_0            = runtime.ForwardResponseMessage
+	forward_AIService_ListAIConversations_0    = runtime.ForwardResponseMessage
+	forward_AIService_GetAIConversation_0      = runtime.ForwardResponseMessage
+	forward_AIService_CreateAIConversation_0   = runtime.ForwardResponseMessage
+	forward_AIService_UpdateAIConversation_0   = runtime.ForwardResponseMessage
+	forward_AIService_DeleteAIConversation_0   = runtime.ForwardResponseMessage
 )
 
 // RegisterScheduleAgentServiceHandlerFromEndpoint is same as RegisterScheduleAgentServiceHandler but

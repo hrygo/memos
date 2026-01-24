@@ -133,13 +133,13 @@ func (s *ConnectServiceHandler) GetRelatedMemos(ctx context.Context, req *connec
 	return connect.NewResponse(resp), nil
 }
 
-func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
+func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ChatRequest], stream *connect.ServerStream[v1pb.ChatResponse]) error {
 	if s.AIService == nil || !s.AIService.IsEnabled() {
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 
 	// Log entry for debugging
-	slog.Info("ConnectServiceHandler: Chat called",
+	slog.Debug("ConnectServiceHandler: Chat called",
 		"message", truncateStringForLog(req.Msg.Message, 50),
 		"agent_type", req.Msg.AgentType.String(),
 		"agent_type_value", int(req.Msg.AgentType),
@@ -155,11 +155,11 @@ func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v
 
 // connectStreamAdapter wraps Connect ServerStream to implement AIService_ChatServer
 type connectStreamAdapter struct {
-	stream *connect.ServerStream[v1pb.ChatWithMemosResponse]
+	stream *connect.ServerStream[v1pb.ChatResponse]
 	ctx    context.Context
 }
 
-func (a *connectStreamAdapter) Send(resp *v1pb.ChatWithMemosResponse) error {
+func (a *connectStreamAdapter) Send(resp *v1pb.ChatResponse) error {
 	return a.stream.Send(resp)
 }
 
@@ -168,7 +168,7 @@ func (a *connectStreamAdapter) Context() context.Context {
 }
 
 func (a *connectStreamAdapter) SendMsg(m any) error {
-	if resp, ok := m.(*v1pb.ChatWithMemosResponse); ok {
+	if resp, ok := m.(*v1pb.ChatResponse); ok {
 		return a.Send(resp)
 	}
 	return fmt.Errorf("invalid message type: %T", m)
@@ -256,80 +256,6 @@ func (s *ConnectServiceHandler) ParseAndCreateSchedule(ctx context.Context, req 
 		return nil, convertGRPCError(err)
 	}
 	return connect.NewResponse(resp), nil
-}
-
-// ChatWithScheduleAgent streams a chat response using the schedule agent.
-func (s *ConnectServiceHandler) ChatWithScheduleAgent(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
-	if s.ScheduleAgentService == nil {
-		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("schedule agent service is not available"))
-	}
-
-	// Create schedule agent request
-	agentReq := &v1pb.ScheduleAgentChatRequest{
-		Message:      req.Msg.Message,
-		UserTimezone: req.Msg.UserTimezone,
-	}
-
-	// Create a stream adapter that wraps the Connect stream
-	grpcStream := &chatStreamToScheduleAgentAdapter{
-		connectStream: stream,
-		ctx:           ctx,
-	}
-
-	// Call the schedule agent's streaming implementation
-	return s.ScheduleAgentService.ChatStream(agentReq, grpcStream)
-}
-
-// ChatWithMemosIntegrated integrates both RAG and schedule agent.
-// For now, this is an alias to Chat.
-func (s *ConnectServiceHandler) ChatWithMemosIntegrated(ctx context.Context, req *connect.Request[v1pb.ChatWithMemosRequest], stream *connect.ServerStream[v1pb.ChatWithMemosResponse]) error {
-	// TODO: Implement true integration with schedule agent
-	// For now, just use the existing Chat implementation
-	return s.Chat(ctx, req, stream)
-}
-
-// chatStreamToScheduleAgentAdapter adapts Connect ChatWithMemosResponse stream to ScheduleAgentStreamResponse
-type chatStreamToScheduleAgentAdapter struct {
-	connectStream *connect.ServerStream[v1pb.ChatWithMemosResponse]
-	ctx           context.Context
-}
-
-func (a *chatStreamToScheduleAgentAdapter) Context() context.Context {
-	return a.ctx
-}
-
-func (a *chatStreamToScheduleAgentAdapter) Send(resp *v1pb.ScheduleAgentStreamResponse) error {
-	// Convert ScheduleAgentStreamResponse to ChatWithMemosResponse
-	chatResp := &v1pb.ChatWithMemosResponse{
-		Content: resp.Content,
-		Done:    resp.Done,
-		// Sources field doesn't exist in ScheduleAgentStreamResponse
-		// The agent response in Content field should contain all necessary information
-	}
-	return a.connectStream.Send(chatResp)
-}
-
-func (a *chatStreamToScheduleAgentAdapter) SendMsg(m any) error {
-	if resp, ok := m.(*v1pb.ScheduleAgentStreamResponse); ok {
-		return a.Send(resp)
-	}
-	return fmt.Errorf("invalid message type: %T", m)
-}
-
-func (a *chatStreamToScheduleAgentAdapter) RecvMsg(m any) error {
-	return fmt.Errorf("RecvMsg not supported for server streaming")
-}
-
-func (a *chatStreamToScheduleAgentAdapter) SetHeader(md metadata.MD) error {
-	return nil
-}
-
-func (a *chatStreamToScheduleAgentAdapter) SendHeader(md metadata.MD) error {
-	return nil
-}
-
-func (a *chatStreamToScheduleAgentAdapter) SetTrailer(md metadata.MD) {
-	// Connect doesn't support gRPC metadata trailers
 }
 
 // ScheduleAgentServiceConnectHandler implements ScheduleAgentServiceHandler interface
