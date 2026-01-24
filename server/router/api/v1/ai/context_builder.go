@@ -160,10 +160,12 @@ func (b *ContextBuilder) BuildContext(
 		// Only include messages after last separator
 		if lastSeparatorIdx == -1 {
 			contextMessages = allMessages
+		} else if lastSeparatorIdx+1 < len(allMessages) {
+			// Normal case: there are messages after the separator
+			contextMessages = allMessages[lastSeparatorIdx+1:]
 		} else {
-			if lastSeparatorIdx+1 < len(allMessages) {
-				contextMessages = allMessages[lastSeparatorIdx+1:]
-			}
+			// Separator is the last message, no context after it
+			contextMessages = []Message{}
 		}
 	}
 

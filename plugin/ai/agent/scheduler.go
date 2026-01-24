@@ -518,10 +518,8 @@ func (a *SchedulerAgent) getFullSystemPrompt() string {
 // buildSystemPrompt creates the enhanced system prompt with few-shot examples and chain of thought.
 func (a *SchedulerAgent) buildSystemPrompt() string {
 	nowLocal := time.Now().In(a.timezoneLoc)
-	today := nowLocal.Format("2006-01-02")
-	tomorrow := nowLocal.AddDate(0, 0, 1).Format("2006-01-02")
-	dayAfter := nowLocal.AddDate(0, 0, 2).Format("2006-01-02")
-	timeNow := nowLocal.Format("15:04")
+	// Get timezone offset dynamically (e.g., "+08:00", "-05:00")
+	tzOffset := nowLocal.Format("-07:00")
 
 	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
 当前系统时间: %s (%s)
@@ -539,28 +537,28 @@ func (a *SchedulerAgent) buildSystemPrompt() string {
 ### 场景1: 创建日程
 用户: 明天下午3点开会
 TOOL: schedule_query
-INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
+INPUT: {"start_time": "2026-01-26T00:00:00%s", "end_time": "2026-01-26T23:59:59%s"}
 Tool result: No schedules found.
 明天下午3点没有其他安排。
 TOOL: schedule_add
-INPUT: {"title": "开会", "start_time": "%sT15:00:00+08:00"}
-✓ 已创建: 开会 (%s 15:00 - 16:00)
+INPUT: {"title": "开会", "start_time": "2026-01-26T15:00:00%s"}
+✓ 已创建: 开会 (2026-01-26 15:00 - 16:00)
 
 ### 场景2: 处理冲突
 用户: 后天上午10点开会
 TOOL: schedule_query
-INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
-Tool result: Found 1 schedule: 产品评审会 (%s 10:00 - 11:30)
+INPUT: {"start_time": "2026-01-27T00:00:00%s", "end_time": "2026-01-27T23:59:59%s"}
+Tool result: Found 1 schedule: 产品评审会 (2026-01-27 10:00 - 11:30)
 发现冲突，让我找其他时间。
 TOOL: find_free_time
-INPUT: {"date": "%s"}
-Tool result: %sT09:00:00+08:00
+INPUT: {"date": "2026-01-27"}
+Tool result: 2026-01-27T09:00:00%s
 后天上午9点有空，要安排吗？
 
 ### 场景3: 查询日程
 用户: 今天有什么安排
 TOOL: schedule_query
-INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
+INPUT: {"start_time": "2026-01-25T00:00:00%s", "end_time": "2026-01-25T23:59:59%s"}
 [返回结果后简练总结]
 
 ## 重要说明
@@ -569,14 +567,9 @@ INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
 - 冲突时主动提供替代方案`,
 		nowLocal.Format("2006-01-02 15:04"),
 		a.timezone,
-		tomorrow, tomorrow,
-		tomorrow+"T15:00:00+08:00",
-		tomorrow+" "+timeNow,
-		dayAfter, dayAfter,
-		dayAfter+" 10:00",
-		dayAfter,
-		dayAfter+"T09:00:00+08:00",
-		today, today,
+		tzOffset, tzOffset, tzOffset,
+		tzOffset, tzOffset, tzOffset, tzOffset,
+		tzOffset,
 	)
 }
 

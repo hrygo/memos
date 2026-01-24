@@ -15,14 +15,6 @@ import (
 	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 )
 
-// contextBuilderMu protects the contextBuilder instance
-var contextBuilderMu sync.RWMutex
-var contextBuilder *aichat.ContextBuilder
-
-// conversationSummarizerMu protects the conversationSummarizer instance
-var conversationSummarizerMu sync.RWMutex
-var conversationSummarizer *aichat.ConversationSummarizer
-
 // getChatEventBus returns the chat event bus, initializing it on first use.
 func (s *AIService) getChatEventBus() *aichat.EventBus {
 	s.chatEventBusMu.Lock()
@@ -39,28 +31,28 @@ func (s *AIService) getChatEventBus() *aichat.EventBus {
 
 // getContextBuilder returns the context builder, initializing it on first use.
 func (s *AIService) getContextBuilder() *aichat.ContextBuilder {
-	contextBuilderMu.Lock()
-	defer contextBuilderMu.Unlock()
+	s.contextBuilderMu.Lock()
+	defer s.contextBuilderMu.Unlock()
 
-	if contextBuilder == nil {
-		contextBuilder = aichat.NewContextBuilder(s.Store)
+	if s.contextBuilder == nil {
+		s.contextBuilder = aichat.NewContextBuilder(s.Store)
 	}
-	return contextBuilder
+	return s.contextBuilder
 }
 
 // getConversationSummarizer returns the conversation summarizer, initializing on first use.
 func (s *AIService) getConversationSummarizer() *aichat.ConversationSummarizer {
-	conversationSummarizerMu.Lock()
-	defer conversationSummarizerMu.Unlock()
+	s.conversationSummarizerMu.Lock()
+	defer s.conversationSummarizerMu.Unlock()
 
-	if conversationSummarizer == nil {
-		conversationSummarizer = aichat.NewConversationSummarizerWithStore(
+	if s.conversationSummarizer == nil {
+		s.conversationSummarizer = aichat.NewConversationSummarizerWithStore(
 			s.Store,
 			s.LLMService,
 			11, // Default threshold
 		)
 	}
-	return conversationSummarizer
+	return s.conversationSummarizer
 }
 
 // Chat streams a chat response with AI agents.

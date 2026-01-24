@@ -2,11 +2,13 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
 
 	"github.com/lithammer/shortuuid/v4"
 	"github.com/usememos/memos/store"
@@ -380,10 +382,9 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 
 	// Handle race condition: if another request created it first, fetch it
 	if err != nil {
-		// Check if it's a duplicate key / unique constraint violation
-		if strings.Contains(err.Error(), "duplicate key") ||
-		   strings.Contains(err.Error(), "unique constraint") ||
-		   strings.Contains(err.Error(), "23505") { // PostgreSQL duplicate key code
+		// Check if it's a duplicate key / unique constraint violation using proper type checking
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			// Race condition - another goroutine created it first
 			// Fetch the existing conversation
 			conversations, err := s.store.ListAIConversations(ctx, &store.FindAIConversation{

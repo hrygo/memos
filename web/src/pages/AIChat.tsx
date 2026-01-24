@@ -654,10 +654,9 @@ const AIChat = () => {
 
   const handleClearContext = useCallback((trigger: "manual" | "auto" | "shortcut" = "manual") => {
     if (currentConversation) {
+      // Only call addContextSeparator - it handles both API call and UI refresh
+      // No need to send "---" as a message, that would create a duplicate user message
       addContextSeparator(currentConversation.id, trigger);
-
-      // Also sync to backend by sending the cutting line command
-      handleSend("---");
 
       toast.success(t("ai.context-cleared-toast"), {
         duration: 2000,
@@ -665,7 +664,7 @@ const AIChat = () => {
         className: "dark:bg-zinc-800 dark:border-zinc-700",
       });
     }
-  }, [currentConversation, addContextSeparator, handleSend, t]);
+  }, [currentConversation, addContextSeparator, t]);
 
   const handleParrotChange = useCallback(
     (parrot: ParrotAgentI18n | null) => {

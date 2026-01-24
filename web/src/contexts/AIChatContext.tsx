@@ -376,9 +376,13 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       conversations: prev.conversations.map((c) => {
         if (c.id !== conversationId) return c;
 
+        // Increment messageCount for real messages (not SEPARATOR)
+        const newMessageCount = (c.messageCount ?? 0) + 1;
+
         return {
           ...c,
           messages: [...c.messages, { ...message, id: newMessageId, timestamp: now }],
+          messageCount: newMessageCount, // Update message count for conversation list
           updatedAt: now,
         };
       }),
@@ -424,57 +428,38 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   const clearMessages = useCallback((conversationId: string) => {
     // For cloud persistence, clearing messages is actually adding a separator
-    // or deleting the conversation. Here we treat it as an optimistic clear 
+    // or deleting the conversation. Here we treat it as an optimistic clear
     // but the backend will handle the clear context on the next message
     setState((prev) => ({
       ...prev,
-      conversations: prev.conversations.map((c) => (c.id === conversationId ? { ...c, messages: [], updatedAt: Date.now() } : c)),
+      conversations: prev.conversations.map((c) => (c.id === conversationId ? { ...c, messages: [], messageCount: 0, updatedAt: Date.now() } : c)),
     }));
   }, []);
 
   const addContextSeparator = useCallback((conversationId: string, trigger: "manual" | "auto" | "shortcut" = "manual") => {
     const numericId = parseInt(conversationId);
-    if (!isNaN(numericId)) {
-      // Call backend API to persist the SEPARATOR message
-      aiServiceClient.addContextSeparator({ conversationId: numericId })
-        .then(() => {
-          // After successful creation, refresh the conversation to show the new separator
-          aiServiceClient.getAIConversation({ id: numericId }).then(pb => {
-            const fullConversation = convertConversationFromPb(pb);
-            setState(prev => ({
-              ...prev,
-              conversations: prev.conversations.map(c => c.id === conversationId ? fullConversation : c)
-            }));
-          });
-        })
-        .catch(err => {
-          console.error("Failed to add context separator:", err);
+    if (isNaN(numericId)) return "";
+
+    // Call backend API to persist the SEPARATOR message
+    // Backend is idempotent: won't create duplicate if last message is already SEPARATOR
+    aiServiceClient.addContextSeparator({ conversationId: numericId })
+      .then(() => {
+        // After successful creation, refresh the conversation to show the new separator
+        aiServiceClient.getAIConversation({ id: numericId }).then(pb => {
+          const fullConversation = convertConversationFromPb(pb);
+          setState(prev => ({
+            ...prev,
+            conversations: prev.conversations.map(c => c.id === conversationId ? fullConversation : c)
+          }));
         });
-    }
+      })
+      .catch(err => {
+        console.error("Failed to add context separator:", err);
+      });
 
-    // Optimistically add separator to local state for immediate UI feedback
-    const separatorId = generateId();
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((c) => {
-        if (c.id !== conversationId) return c;
-
-        const separator: ContextSeparator = {
-          type: "context-separator",
-          id: separatorId,
-          timestamp: Date.now(),
-          synced: true, // Now synced to backend
-          trigger,
-        };
-
-        return {
-          ...c,
-          messages: [...c.messages, separator],
-          updatedAt: Date.now(),
-        };
-      }),
-    }));
-    return separatorId;
+    // Note: Removed optimistic update to prevent duplicate SEPARATOR accumulation
+    // Backend refresh is fast enough and the idempotent check prevents duplicates
+    return "";
   }, [convertConversationFromPb]);
 
 // Helper function to merge messages into state (pure function, safe for async callbacks)

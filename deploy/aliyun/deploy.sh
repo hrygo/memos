@@ -141,13 +141,13 @@ get_compose_cmd() {
 
 # 加载环境变量
 load_env() {
-    # 读取数据库配置
-    eval "$(grep "^POSTGRES_DB=" "${ENV_FILE}" 2>/dev/null || echo "POSTGRES_DB=memos")"
-    eval "$(grep "^POSTGRES_USER=" "${ENV_FILE}" 2>/dev/null || echo "POSTGRES_USER=memos")"
-    eval "$(grep "^POSTGRES_PASSWORD=" "${ENV_FILE}" 2>/dev/null)"
+    # 读取数据库配置 (安全的变量解析，避免 eval 注入)
+    POSTGRES_DB=$(grep "^POSTGRES_DB=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- || echo "memos")
+    POSTGRES_USER=$(grep "^POSTGRES_USER=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- || echo "memos")
+    POSTGRES_PASSWORD=$(grep "^POSTGRES_PASSWORD=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2-)
     # 读取自定义镜像配置
-    eval "$(grep "^USER_IMAGE=" "${ENV_FILE}" 2>/dev/null || echo "USER_IMAGE=")"
-    eval "$(grep "^POSTGRES_IMAGE=" "${ENV_FILE}" 2>/dev/null || echo "POSTGRES_IMAGE=")"
+    USER_IMAGE=$(grep "^USER_IMAGE=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2-)
+    POSTGRES_IMAGE=$(grep "^POSTGRES_IMAGE=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- || echo "pgvector/pgvector:pg16")
 
     # 默认值
     POSTGRES_DB=${POSTGRES_DB:-memos}
@@ -431,8 +431,8 @@ backup() {
 
     load_env
     if $compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec -T postgres pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" 2>&1 | gzip > "${backup_file}"; then
-        # 验证备份文件
-        if [ -f "${backup_file}" ] && [ $(stat -f%z "${backup_file}" 2>/dev/null || stat -c%s "${backup_file}" 2>/dev/null || echo 0) -gt 0 ]; then
+        # 验证备份文件 (使用 wc -c 兼容所有平台)
+        if [ -f "${backup_file}" ] && [ $(wc -c < "${backup_file}" 2>/dev/null || echo 0) -gt 0 ]; then
             log_success "备份完成: ${backup_file}"
             # 显示备份文件大小
             local size=$(du -h "${backup_file}" | cut -f1)

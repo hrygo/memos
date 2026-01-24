@@ -169,7 +169,15 @@ func (p *DefaultParrot) ExecuteWithCallback(
 				streamErr = err
 			}
 		case <-ctx.Done():
-			slog.Warn("DefaultParrot: Context timeout",
+			// Context canceled - drain remaining channels to prevent goroutine leaks
+			// Start a goroutine to drain channels since we're exiting
+			go func() {
+				for range contentChan {
+				}
+				for range errChan {
+				}
+			}()
+			slog.Warn("DefaultParrot: Context canceled",
 				"user_id", p.userID,
 				"duration_ms", time.Since(startTime).Milliseconds(),
 			)

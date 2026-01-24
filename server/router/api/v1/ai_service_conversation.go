@@ -310,6 +310,19 @@ func (s *AIService) AddContextSeparator(ctx context.Context, req *v1pb.AddContex
 		return nil, status.Errorf(codes.NotFound, "conversation not found")
 	}
 
+	// Prevent duplicate SEPARATOR: check if the last message is already a SEPARATOR
+	messages, err := s.Store.ListAIMessages(ctx, &store.FindAIMessage{
+		ConversationID: &req.ConversationId,
+	})
+	if err == nil && len(messages) > 0 {
+		// Messages are ordered by created_ts ASC, so last element is the newest
+		lastMessage := messages[len(messages)-1]
+		if lastMessage.Type == store.AIMessageTypeSeparator {
+			// Last message is already a SEPARATOR, silently succeed (idempotent)
+			return &emptypb.Empty{}, nil
+		}
+	}
+
 	// Create SEPARATOR message using the conversation service
 	_, err = s.Store.CreateAIMessage(ctx, &store.AIMessage{
 		UID:            shortuuid.New(),

@@ -71,7 +71,7 @@ export const ScheduleSearchBar = ({ schedules, onFilteredChange, onHasFilterChan
   return (
     <div className={cn("relative w-full", className)} role="search">
       <div className="relative flex items-center">
-        <SearchIcon className="absolute left-2.5 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
         <input
           type="text"
           id="schedule-search-input"

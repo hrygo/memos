@@ -38,6 +38,12 @@ type AIService struct {
 	chatEventBusMu      sync.RWMutex
 	chatEventBus        *aichat.EventBus
 	conversationService *aichat.ConversationService
+
+	// Context builder and summarizer (lazily initialized)
+	contextBuilderMu         sync.RWMutex
+	contextBuilder           *aichat.ContextBuilder
+	conversationSummarizerMu sync.RWMutex
+	conversationSummarizer   *aichat.ConversationSummarizer
 }
 
 // IsEnabled returns whether AI features are enabled.

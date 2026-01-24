@@ -93,7 +93,7 @@ const Schedule = () => {
               schedules={allSchedules}
               onFilteredChange={setFilteredSchedules}
               onHasFilterChange={setHasSearchFilter}
-              className="max-w-xs"
+              className="w-80"
             />
           </div>
         </div>
