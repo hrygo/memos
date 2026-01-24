@@ -43,46 +43,84 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 
 // ensureFixedConversations ensures all 5 fixed conversations exist for the user.
 // This is called on ListAIConversations to guarantee users always see all available parrots.
+// Uses batch query to avoid N+1 problem.
 func (s *AIService) ensureFixedConversations(ctx context.Context, userID int32) {
-	agentTypes := []v1pb.AgentType{
-		v1pb.AgentType_AGENT_TYPE_DEFAULT,
-		v1pb.AgentType_AGENT_TYPE_MEMO,
-		v1pb.AgentType_AGENT_TYPE_SCHEDULE,
-		v1pb.AgentType_AGENT_TYPE_AMAZING,
-		v1pb.AgentType_AGENT_TYPE_CREATIVE,
+	// Calculate all fixed conversation IDs first
+	agentTypes := []struct {
+		agent v1pb.AgentType
+		ai    aichat.AgentType
+	}{
+		{v1pb.AgentType_AGENT_TYPE_DEFAULT, aichat.AgentTypeDefault},
+		{v1pb.AgentType_AGENT_TYPE_MEMO, aichat.AgentTypeMemo},
+		{v1pb.AgentType_AGENT_TYPE_SCHEDULE, aichat.AgentTypeSchedule},
+		{v1pb.AgentType_AGENT_TYPE_AMAZING, aichat.AgentTypeAmazing},
+		{v1pb.AgentType_AGENT_TYPE_CREATIVE, aichat.AgentTypeCreative},
 	}
 
-	for _, agentType := range agentTypes {
-		fixedID := aichat.CalculateFixedConversationID(userID, aichat.AgentType(agentType))
+	fixedIDs := make([]int32, len(agentTypes))
+	idToAgentType := make(map[int32]struct {
+		agent v1pb.AgentType
+		ai    aichat.AgentType
+	})
 
-		// Check if conversation exists
-		existing, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
-			ID:        &fixedID,
-			CreatorID: &userID,
-		})
-		if err == nil && len(existing) > 0 {
-			// Conversation exists, update timestamp
-			now := time.Now().Unix()
-			s.Store.UpdateAIConversation(ctx, &store.UpdateAIConversation{
-				ID:        fixedID,
-				UpdatedTs: &now,
-			})
-			continue
+	for i, at := range agentTypes {
+		id := aichat.CalculateFixedConversationID(userID, at.ai)
+		fixedIDs[i] = id
+		idToAgentType[id] = at
+	}
+
+	// Batch query: get all existing conversations in one call
+	// Using ID IN clause would be ideal, but current API doesn't support it
+	// Fall back to querying by user and filter in-memory
+	existing, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
+		CreatorID: &userID,
+	})
+	if err != nil {
+		slog.Default().Warn("Failed to list conversations for fixed check", "user_id", userID, "error", err)
+	}
+
+	// Build a set of existing fixed conversation IDs
+	existingFixedIDs := make(map[int32]bool, len(existing))
+	for _, c := range existing {
+		if _, ok := idToAgentType[c.ID]; ok {
+			existingFixedIDs[c.ID] = true
+		}
+	}
+
+	// Create missing fixed conversations only
+	now := time.Now().Unix()
+	for _, id := range fixedIDs {
+		if existingFixedIDs[id] {
+			continue // Already exists
 		}
 
-		// Create new fixed conversation
-		title := aichat.GetFixedConversationTitle(aichat.AgentType(agentType))
-		_, _ = s.Store.CreateAIConversation(ctx, &store.AIConversation{
-			ID:        fixedID,
+		at := idToAgentType[id]
+		title := aichat.GetFixedConversationTitle(at.ai)
+
+		conv, err := s.Store.CreateAIConversation(ctx, &store.AIConversation{
+			ID:        id,
 			UID:       shortuuid.New(),
 			CreatorID: userID,
 			Title:     title,
-			ParrotID:  agentType.String(),
+			ParrotID:  at.agent.String(),
 			Pinned:    true,
-			CreatedTs: time.Now().Unix(),
-			UpdatedTs: time.Now().Unix(),
+			CreatedTs: now,
+			UpdatedTs: now,
 			RowStatus: store.Normal,
 		})
+		if err != nil {
+			slog.Default().Warn("Failed to create fixed conversation",
+				"id", id,
+				"agent_type", at.agent.String(),
+				"user_id", userID,
+				"error", err,
+			)
+		} else {
+			slog.Default().Debug("Created fixed conversation",
+				"id", conv.ID,
+				"title", conv.Title,
+			)
+		}
 	}
 }
 

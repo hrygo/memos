@@ -155,38 +155,52 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     };
   }, []);
 
-  const convertConversationFromPb = useCallback((pb: AIConversation): Conversation => {
-    // Convert protobuf numeric AgentType enum to ParrotAgentType string
-    let parrotId: ParrotAgentType;
-    switch (pb.parrotId) {
+  // Helper: Convert protobuf AgentType enum to ParrotAgentType string
+  const convertAgentTypeToParrotId = useCallback((agentType: AgentType): ParrotAgentType => {
+    switch (agentType) {
       case AgentType.MEMO:
-        parrotId = ParrotAgentType.MEMO;
-        break;
+        return ParrotAgentType.MEMO;
       case AgentType.SCHEDULE:
-        parrotId = ParrotAgentType.SCHEDULE;
-        break;
+        return ParrotAgentType.SCHEDULE;
       case AgentType.AMAZING:
-        parrotId = ParrotAgentType.AMAZING;
-        break;
+        return ParrotAgentType.AMAZING;
       case AgentType.CREATIVE:
-        parrotId = ParrotAgentType.CREATIVE;
-        break;
+        return ParrotAgentType.CREATIVE;
       case AgentType.DEFAULT:
       default:
-        parrotId = ParrotAgentType.DEFAULT;
+        return ParrotAgentType.DEFAULT;
     }
+  }, []);
 
+  // Helper: Convert ParrotAgentType string to protobuf AgentType enum
+  const convertParrotIdToAgentType = useCallback((parrotId: ParrotAgentType): AgentType => {
+    switch (parrotId) {
+      case ParrotAgentType.MEMO:
+        return AgentType.MEMO;
+      case ParrotAgentType.SCHEDULE:
+        return AgentType.SCHEDULE;
+      case ParrotAgentType.AMAZING:
+        return AgentType.AMAZING;
+      case ParrotAgentType.CREATIVE:
+        return AgentType.CREATIVE;
+      case ParrotAgentType.DEFAULT:
+      default:
+        return AgentType.DEFAULT;
+    }
+  }, []);
+
+  const convertConversationFromPb = useCallback((pb: AIConversation): Conversation => {
     return {
       id: String(pb.id),
       title: localizeTitle(pb.title),
-      parrotId: parrotId,
+      parrotId: convertAgentTypeToParrotId(pb.parrotId),
       createdAt: Number(pb.createdTs) * 1000,
       updatedAt: Number(pb.updatedTs) * 1000,
       messages: pb.messages.map(m => convertMessageFromPb(m)),
       referencedMemos: [], // Backend managed for RAG, but state can store it if needed
       pinned: pb.pinned,
     };
-  }, [convertMessageFromPb, localizeTitle]);
+  }, [convertMessageFromPb, localizeTitle, convertAgentTypeToParrotId]);
 
   // Sync state with backend
   const refreshConversations = useCallback(async () => {
@@ -204,12 +218,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     console.log("Migrating AI conversations to cloud storage...");
     for (const local of localConversations) {
       try {
-        // Create conversation
-        const parrotId = local.parrotId === ParrotAgentType.MEMO ? AgentType.MEMO :
-          local.parrotId === ParrotAgentType.SCHEDULE ? AgentType.SCHEDULE :
-            local.parrotId === ParrotAgentType.AMAZING ? AgentType.AMAZING :
-              local.parrotId === ParrotAgentType.CREATIVE ? AgentType.CREATIVE :
-                AgentType.DEFAULT;
+        // Use the shared conversion helper
+        const parrotId = convertParrotIdToAgentType(local.parrotId);
 
         const pb = await aiServiceClient.createAIConversation({
           title: local.title,
@@ -230,7 +240,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     }
     // Clear localStorage once migrated
     localStorage.removeItem(AI_STORAGE_KEYS.CONVERSATIONS);
-  }, []);
+  }, [convertParrotIdToAgentType]);
 
   // Conversation actions
   const createConversation = useCallback((parrotId: ParrotAgentType, title?: string): string => {
