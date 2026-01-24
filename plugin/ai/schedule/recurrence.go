@@ -149,9 +149,19 @@ func ParseRecurrenceRule(text string) (*RecurrenceRule, error) {
 }
 
 // GenerateInstances generates all occurrence timestamps within a time range.
-// startTs: The start timestamp of the first occurrence
+// startTs: The start timestamp of the first occurrence (Unix timestamp, always UTC)
 // endTs: The end timestamp for generating instances (0 means no limit)
-// Returns a slice of timestamps for each occurrence.
+// Returns a slice of timestamps for each occurrence (Unix timestamps).
+//
+// Note on timezone handling:
+// - Unix timestamps are always UTC
+// - The startTs is assumed to be pre-converted to UTC by the caller based on user's timezone
+// - For example, if user in Asia/Shanghai (UTC+8) schedules 9:00 AM, startTs is 01:00 UTC
+// - Instances are generated using UTC arithmetic (adding 24h for daily, 7 days for weekly, etc.)
+// - This ensures consistent behavior across timezones and simplifies the implementation
+//
+// For proper timezone-aware scheduling (e.g., "9:00 AM local time" regardless of DST changes),
+// the caller should handle timezone conversion before/after calling this method.
 func (r *RecurrenceRule) GenerateInstances(startTs int64, endTs int64) []int64 {
 	var instances []int64
 
@@ -160,9 +170,8 @@ func (r *RecurrenceRule) GenerateInstances(startTs int64, endTs int64) []int64 {
 		return instances
 	}
 
-	// Preserve the original timezone information
-	// Don't force conversion to UTC to avoid timezone shifts
-	startTime := time.Unix(startTs, 0).UTC()              // Convert to UTC for consistent calculations
+	// Use UTC for consistent calculations
+	startTime := time.Unix(startTs, 0).UTC()
 	endTime := time.Now().UTC().Add(365 * 24 * time.Hour) // Default to 1 year limit
 
 	if endTs > 0 {

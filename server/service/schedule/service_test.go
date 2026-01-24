@@ -21,7 +21,50 @@ func (m *MockStoreForSchedule) CreateSchedule(ctx context.Context, create *store
 }
 
 func (m *MockStoreForSchedule) ListSchedules(ctx context.Context, find *store.FindSchedule) ([]*store.Schedule, error) {
-	return m.schedules, nil
+	result := make([]*store.Schedule, 0)
+
+	for _, sched := range m.schedules {
+		// Filter by creator_id
+		if find.CreatorID != nil && sched.CreatorID != *find.CreatorID {
+			continue
+		}
+
+		// Filter by row_status - only apply if explicitly set in find
+		if find.RowStatus != nil && sched.RowStatus != *find.RowStatus {
+			continue
+		}
+
+		// Filter by ID
+		if find.ID != nil && sched.ID != *find.ID {
+			continue
+		}
+
+		// Filter by UID
+		if find.UID != nil && sched.UID != *find.UID {
+			continue
+		}
+
+		// Time range filtering (simplified - just checking basic overlap)
+		// Note: FindSchedules doesn't set StartTs/EndTs, it does filtering in-memory
+		if find.StartTs != nil || find.EndTs != nil {
+			schedEnd := sched.EndTs
+			if schedEnd == nil {
+				ts := sched.StartTs
+				schedEnd = &ts
+			}
+			// Check if schedule overlaps with query range
+			if find.StartTs != nil && *find.StartTs > *schedEnd {
+				continue
+			}
+			if find.EndTs != nil && *find.EndTs < sched.StartTs {
+				continue
+			}
+		}
+
+		result = append(result, sched)
+	}
+
+	return result, nil
 }
 
 func (m *MockStoreForSchedule) GetSchedule(ctx context.Context, find *store.FindSchedule) (*store.Schedule, error) {
@@ -69,6 +112,10 @@ func TestFindSchedules(t *testing.T) {
 	now := time.Now()
 
 	// Create mock store with test data
+	// Use a fixed time within today to avoid edge cases near midnight
+	scheduleStart := time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.Local)
+	scheduleEnd := time.Date(now.Year(), now.Month(), now.Day(), 15, 0, 0, 0, time.Local)
+
 	mockStore := &MockStoreForSchedule{
 		schedules: []*store.Schedule{
 			{
@@ -76,9 +123,10 @@ func TestFindSchedules(t *testing.T) {
 				UID:       "test-uid-1",
 				CreatorID: userID,
 				Title:     "Test Meeting",
-				StartTs:   now.Add(2 * time.Hour).Unix(),
-				EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+				StartTs:   scheduleStart.Unix(),
+				EndTs:     func() *int64 { ts := scheduleEnd.Unix(); return &ts }(),
 				Timezone:  "Asia/Shanghai",
+				RowStatus: store.Normal,
 			},
 		},
 	}
@@ -201,6 +249,7 @@ func TestCheckConflicts(t *testing.T) {
 		Title:     "Existing Meeting",
 		StartTs:   now.Add(2 * time.Hour).Unix(),
 		EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Normal,
 	}
 
 	mockStore := &MockStoreForSchedule{
@@ -227,6 +276,7 @@ func TestUpdateSchedule(t *testing.T) {
 		Title:     "Original Title",
 		StartTs:   time.Now().Add(2 * time.Hour).Unix(),
 		EndTs:     func() *int64 { ts := time.Now().Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Normal,
 	}
 
 	mockStore := &MockStoreForSchedule{
@@ -256,6 +306,7 @@ func TestDeleteSchedule(t *testing.T) {
 		CreatorID: userID,
 		Title:     "To Be Deleted",
 		StartTs:   time.Now().Add(2 * time.Hour).Unix(),
+		RowStatus: store.Normal,
 	}
 
 	mockStore := &MockStoreForSchedule{
@@ -266,4 +317,200 @@ func TestDeleteSchedule(t *testing.T) {
 	// Delete schedule
 	err := svc.DeleteSchedule(ctx, userID, 1)
 	require.NoError(t, err)
+}
+
+// TestCheckConflicts_WithArchivedSchedules tests that archived schedules don't trigger conflicts.
+func TestCheckConflicts_WithArchivedSchedules(t *testing.T) {
+	ctx := context.Background()
+	userID := int32(1)
+	now := time.Now()
+
+	// Create an archived schedule that overlaps
+	archivedSchedule := &store.Schedule{
+		ID:        1,
+		UID:       "archived-uid",
+		CreatorID: userID,
+		Title:     "Archived Meeting",
+		StartTs:   now.Add(2 * time.Hour).Unix(),
+		EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Archived,
+	}
+
+	mockStore := &MockStoreForSchedule{
+		schedules: []*store.Schedule{archivedSchedule},
+	}
+	svc := &service{store: mockStore}
+
+	// Check for conflicts - should NOT find the archived schedule
+	conflicts, err := svc.CheckConflicts(ctx, userID, now.Add(2*time.Hour).Unix(), func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(), nil)
+	require.NoError(t, err)
+	assert.Len(t, conflicts, 0, "Archived schedules should not trigger conflicts")
+}
+
+// TestCheckConflicts_ActiveScheduleOnly tests that active schedules do trigger conflicts.
+func TestCheckConflicts_ActiveScheduleOnly(t *testing.T) {
+	ctx := context.Background()
+	userID := int32(1)
+	now := time.Now()
+
+	// Create an active schedule that overlaps
+	activeSchedule := &store.Schedule{
+		ID:        1,
+		UID:       "active-uid",
+		CreatorID: userID,
+		Title:     "Active Meeting",
+		StartTs:   now.Add(2 * time.Hour).Unix(),
+		EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Normal,
+	}
+
+	mockStore := &MockStoreForSchedule{
+		schedules: []*store.Schedule{activeSchedule},
+	}
+	svc := &service{store: mockStore}
+
+	// Check for conflicts - SHOULD find the active schedule
+	conflicts, err := svc.CheckConflicts(ctx, userID, now.Add(2*time.Hour).Unix(), func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(), nil)
+	require.NoError(t, err)
+	assert.Len(t, conflicts, 1, "Active schedules should trigger conflicts")
+	assert.Equal(t, "Active Meeting", conflicts[0].Title)
+}
+
+// TestCheckConflicts_ExcludeIDs tests that excluded schedules are ignored.
+func TestCheckConflicts_ExcludeIDs(t *testing.T) {
+	ctx := context.Background()
+	userID := int32(1)
+	now := time.Now()
+
+	schedule1 := &store.Schedule{
+		ID:        1,
+		UID:       "uid-1",
+		CreatorID: userID,
+		Title:     "Meeting 1",
+		StartTs:   now.Add(2 * time.Hour).Unix(),
+		EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Normal,
+	}
+
+	schedule2 := &store.Schedule{
+		ID:        2,
+		UID:       "uid-2",
+		CreatorID: userID,
+		Title:     "Meeting 2",
+		StartTs:   now.Add(2 * time.Hour).Unix(),
+		EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+		RowStatus: store.Normal,
+	}
+
+	mockStore := &MockStoreForSchedule{
+		schedules: []*store.Schedule{schedule1, schedule2},
+	}
+	svc := &service{store: mockStore}
+
+	// Check for conflicts excluding schedule1 - should only find schedule2
+	conflicts, err := svc.CheckConflicts(ctx, userID, now.Add(2*time.Hour).Unix(), func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(), []int32{1})
+	require.NoError(t, err)
+	assert.Len(t, conflicts, 1, "Only non-excluded schedules should trigger conflicts")
+	assert.Equal(t, "Meeting 2", conflicts[0].Title)
+}
+
+// TestCheckConflicts_IntervalConvention tests the [start, end) interval convention.
+func TestCheckConflicts_IntervalConvention(t *testing.T) {
+	ctx := context.Background()
+	userID := int32(1)
+	now := time.Now()
+
+	tests := []struct {
+		name           string
+		existingStart  time.Time
+		existingEnd    time.Time
+		newStart       time.Time
+		newEnd         time.Time
+		expectConflict bool
+	}{
+		{
+			name:           "exact overlap",
+			existingStart:  now.Add(2 * time.Hour),
+			existingEnd:    now.Add(3 * time.Hour),
+			newStart:       now.Add(2 * time.Hour),
+			newEnd:         now.Add(3 * time.Hour),
+			expectConflict: true,
+		},
+		{
+			name:           "partial overlap - new starts during existing",
+			existingStart:  now.Add(2 * time.Hour),
+			existingEnd:    now.Add(3 * time.Hour),
+			newStart:       now.Add(2 * time.Hour + 30*time.Minute),
+			newEnd:         now.Add(3 * time.Hour + 30*time.Minute),
+			expectConflict: true,
+		},
+		{
+			name:           "partial overlap - new ends during existing",
+			existingStart:  now.Add(2 * time.Hour + 30*time.Minute),
+			existingEnd:    now.Add(4 * time.Hour),
+			newStart:       now.Add(2 * time.Hour),
+			newEnd:         now.Add(3 * time.Hour),
+			expectConflict: true,
+		},
+		{
+			name:           "adjacent - new ends when existing starts (no conflict)",
+			existingStart:  now.Add(3 * time.Hour),
+			existingEnd:    now.Add(4 * time.Hour),
+			newStart:       now.Add(2 * time.Hour),
+			newEnd:         now.Add(3 * time.Hour),
+			expectConflict: false, // [2,3) and [3,4) don't overlap
+		},
+		{
+			name:           "adjacent - new starts when existing ends (no conflict)",
+			existingStart:  now.Add(2 * time.Hour),
+			existingEnd:    now.Add(3 * time.Hour),
+			newStart:       now.Add(3 * time.Hour),
+			newEnd:         now.Add(4 * time.Hour),
+			expectConflict: false, // [2,3) and [3,4) don't overlap
+		},
+		{
+			name:           "no overlap - new before existing",
+			existingStart:  now.Add(3 * time.Hour),
+			existingEnd:    now.Add(4 * time.Hour),
+			newStart:       now.Add(1 * time.Hour),
+			newEnd:         now.Add(2 * time.Hour),
+			expectConflict: false,
+		},
+		{
+			name:           "no overlap - new after existing",
+			existingStart:  now.Add(1 * time.Hour),
+			existingEnd:    now.Add(2 * time.Hour),
+			newStart:       now.Add(3 * time.Hour),
+			newEnd:         now.Add(4 * time.Hour),
+			expectConflict: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			existingSchedule := &store.Schedule{
+				ID:        1,
+				UID:       "existing-uid",
+				CreatorID: userID,
+				Title:     "Existing Meeting",
+				StartTs:   tt.existingStart.Unix(),
+				EndTs:     func() *int64 { ts := tt.existingEnd.Unix(); return &ts }(),
+				RowStatus: store.Normal,
+			}
+
+			mockStore := &MockStoreForSchedule{
+				schedules: []*store.Schedule{existingSchedule},
+			}
+			svc := &service{store: mockStore}
+
+			conflicts, err := svc.CheckConflicts(ctx, userID, tt.newStart.Unix(), func() *int64 { ts := tt.newEnd.Unix(); return &ts }(), nil)
+			require.NoError(t, err)
+
+			if tt.expectConflict {
+				assert.Len(t, conflicts, 1, "Expected conflict for: %s", tt.name)
+			} else {
+				assert.Len(t, conflicts, 0, "Expected no conflict for: %s", tt.name)
+			}
+		})
+	}
 }

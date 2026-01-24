@@ -28,6 +28,10 @@ import (
 const (
 	// DefaultConflictCheckWindow is the default time window for conflict checking
 	DefaultConflictCheckWindow = 1 * time.Hour
+
+	// MaxInstancesToCheck is the maximum number of recurring instances to check for conflicts
+	// This prevents excessive computation for infinite recurrence rules
+	MaxInstancesToCheck = 100
 )
 
 // Schedule-specific errors that can be checked with errors.Is.
@@ -61,8 +65,11 @@ func (s *service) FindSchedules(ctx context.Context, userID int32, start, end ti
 	endTs := end.Unix()
 
 	// Find schedule templates from database
+	// Only fetch active (NORMAL) schedules to avoid conflicts with archived ones
+	normalStatus := store.Normal
 	find := &store.FindSchedule{
 		CreatorID: &userID,
+		RowStatus: &normalStatus,
 		// For recurring schedules, we need to query without time constraints
 		// to get the schedule templates, then expand instances
 	}
@@ -229,12 +236,25 @@ func (s *service) CreateSchedule(ctx context.Context, userID int32, create *Crea
 
 	// Check for conflicts before creating (provides better error messages)
 	// The database EXCLUDE constraint provides the final atomic guarantee
+
+	// Step 1: Check conflicts for the first instance (or single event)
 	conflicts, err := s.CheckConflicts(ctx, userID, create.StartTs, create.EndTs, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check conflicts: %w", err)
 	}
 	if len(conflicts) > 0 {
 		return nil, fmt.Errorf("%w: %s", ErrScheduleConflict, buildConflictError(conflicts))
+	}
+
+	// Step 2: For recurring schedules, check conflicts for future instances
+	if create.RecurrenceRule != nil && *create.RecurrenceRule != "" {
+		recurringConflicts, err := s.checkRecurringConflicts(ctx, userID, create)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check recurring conflicts: %w", err)
+		}
+		if len(recurringConflicts) > 0 {
+			return nil, fmt.Errorf("%w: %s", ErrScheduleConflict, buildRecurringConflictError(recurringConflicts))
+		}
 	}
 
 	// Create schedule in database
@@ -377,6 +397,7 @@ func (s *service) DeleteSchedule(ctx context.Context, userID int32, id int32) er
 }
 
 // CheckConflicts checks for schedule conflicts within a time range.
+// Only checks against active (NORMAL) schedules, excluding archived ones.
 func (s *service) CheckConflicts(ctx context.Context, userID int32, startTs int64, endTs *int64, excludeIDs []int32) ([]*store.Schedule, error) {
 	// Determine end time for conflict check
 	checkEndTs := startTs
@@ -388,10 +409,13 @@ func (s *service) CheckConflicts(ctx context.Context, userID int32, startTs int6
 	}
 
 	// Find schedules that might conflict within the time window
+	// Only fetch active (NORMAL) schedules to avoid conflicts with archived ones
+	normalStatus := store.Normal
 	find := &store.FindSchedule{
 		CreatorID: &userID,
 		StartTs:   &startTs,
 		EndTs:     &checkEndTs,
+		RowStatus: &normalStatus,
 	}
 
 	list, err := s.store.ListSchedules(ctx, find)
@@ -492,4 +516,134 @@ func formatTimestamp(ts int64, timezone string) string {
 	}
 
 	return t.In(loc).Format("2006-01-02 15:04")
+}
+
+// checkRecurringConflicts checks for conflicts in recurring schedule instances.
+// Uses batch query for performance: fetches all potentially conflicting schedules once,
+// then checks each instance against them in memory.
+func (s *service) checkRecurringConflicts(ctx context.Context, userID int32, create *CreateScheduleRequest) ([]*RecurringConflict, error) {
+	// Parse recurrence rule
+	rule, err := aischedule.ParseRecurrenceRuleFromJSON(*create.RecurrenceRule)
+	if err != nil {
+		return nil, fmt.Errorf("invalid recurrence rule: %w", err)
+	}
+
+	// Determine the end time for instance generation
+	var endTs int64
+	if create.RecurrenceEndTs != nil && *create.RecurrenceEndTs > 0 {
+		endTs = *create.RecurrenceEndTs
+	} else {
+		// Default to 1 year from start for infinite recurrence
+		endTs = create.StartTs + 365*24*3600
+	}
+
+	// Generate instances
+	instanceTimestamps := rule.GenerateInstances(create.StartTs, endTs)
+
+	// Limit the number of instances to check
+	if len(instanceTimestamps) > MaxInstancesToCheck {
+		slog.Warn("recurring conflict check limited",
+			"total_instances", len(instanceTimestamps),
+			"checking", MaxInstancesToCheck,
+			"user_id", userID)
+		instanceTimestamps = instanceTimestamps[:MaxInstancesToCheck]
+	}
+
+	// Skip first instance - already checked in CreateSchedule
+	if len(instanceTimestamps) > 0 && instanceTimestamps[0] == create.StartTs {
+		instanceTimestamps = instanceTimestamps[1:]
+	}
+
+	if len(instanceTimestamps) == 0 {
+		return nil, nil
+	}
+
+	// Calculate duration for each instance
+	duration := int64(DefaultConflictCheckWindow.Seconds())
+	if create.EndTs != nil && *create.EndTs > create.StartTs {
+		duration = *create.EndTs - create.StartTs
+	}
+
+	// Batch query: fetch all schedules that could potentially conflict
+	// Query range: from first instance start to last instance end
+	firstInstanceStart := instanceTimestamps[0]
+	lastInstanceEnd := instanceTimestamps[len(instanceTimestamps)-1] + duration
+
+	normalStatus := store.Normal
+	find := &store.FindSchedule{
+		CreatorID: &userID,
+		RowStatus: &normalStatus,
+		StartTs:   &firstInstanceStart,
+		EndTs:     &lastInstanceEnd,
+	}
+
+	potentialConflicts, err := s.store.ListSchedules(ctx, find)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list schedules for conflict check: %w", err)
+	}
+
+	// Check each instance against potential conflicts in memory
+	var conflicts []*RecurringConflict
+	for _, instanceTs := range instanceTimestamps {
+		instanceEndTs := instanceTs + duration
+
+		for _, existing := range potentialConflicts {
+			// Skip if existing is the same as first instance (already checked)
+			if instanceTs == create.StartTs {
+				continue
+			}
+
+			// Check if this instance conflicts with existing schedule
+			existingEnd := existing.EndTs
+			if existingEnd == nil {
+				existingEnd = &existing.StartTs
+			}
+
+			// Overlap check: [start, end) convention
+			if instanceTs < *existingEnd && instanceEndTs > existing.StartTs {
+				conflicts = append(conflicts, &RecurringConflict{
+					ExistingSchedule: existing,
+					InstanceStartTs:  instanceTs,
+					InstanceEndTs:    instanceEndTs,
+				})
+				// Return early on first conflict found
+				return conflicts, nil
+			}
+		}
+	}
+
+	return conflicts, nil
+}
+
+// RecurringConflict represents a conflict with a recurring schedule instance.
+type RecurringConflict struct {
+	ExistingSchedule *store.Schedule
+	InstanceStartTs  int64
+	InstanceEndTs    int64
+}
+
+// buildRecurringConflictError builds a human-readable error message for recurring conflicts.
+func buildRecurringConflictError(conflicts []*RecurringConflict) string {
+	if len(conflicts) == 0 {
+		return ""
+	}
+
+	if len(conflicts) == 1 {
+		c := conflicts[0]
+		return fmt.Sprintf("recurring schedule conflicts with existing schedule \"%s\" on %s",
+			c.ExistingSchedule.Title,
+			formatTimestamp(c.InstanceStartTs, c.ExistingSchedule.Timezone))
+	}
+
+	// Multiple conflicts - summarize them
+	var parts []string
+	for _, c := range conflicts {
+		parts = append(parts, fmt.Sprintf("\"%s\" on %s",
+			c.ExistingSchedule.Title,
+			formatTimestamp(c.InstanceStartTs, c.ExistingSchedule.Timezone)))
+	}
+
+	return fmt.Sprintf("recurring schedule conflicts with %d existing schedules: %s",
+		len(conflicts),
+		strings.Join(parts, ", "))
 }
