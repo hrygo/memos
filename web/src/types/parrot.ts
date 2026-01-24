@@ -79,8 +79,10 @@ export const PARROT_SOUND_EFFECTS: Record<ParrotAgentType, Record<string, string
     multi_task: "同时搜索中",
   },
   [ParrotAgentType.DEFAULT]: {
-    thinking: "...",
+    thinking: "嗯...让我想想",
+    insight: "咻~有了",
     done: "✓",
+    analyzing: "看看这个...",
   },
 };
 
@@ -93,7 +95,7 @@ export const PARROT_CATCHPHRASES: Record<ParrotAgentType, string[]> = {
   [ParrotAgentType.SCHEDULE]: ["安排好啦", "时间搞定", "妥妥的"],
   [ParrotAgentType.CREATIVE]: ["灵感来了~", "想想还有", "有意思！"],
   [ParrotAgentType.AMAZING]: ["看看这个...", "综合来看", "发现规律了"],
-  [ParrotAgentType.DEFAULT]: [],
+  [ParrotAgentType.DEFAULT]: ["看看这个...", "综合来看", "发现规律了"],
 };
 
 /**
@@ -105,7 +107,7 @@ export const PARROT_BEHAVIORS: Record<ParrotAgentType, string[]> = {
   [ParrotAgentType.SCHEDULE]: ["用喙整理时间", "精准啄食安排", "展开羽翼规划"],
   [ParrotAgentType.CREATIVE]: ["羽毛变色", "思维跳跃", "自由飞翔想象"],
   [ParrotAgentType.AMAZING]: ["在数据树丛中穿梭", "多维飞行", "综合视野"],
-  [ParrotAgentType.DEFAULT]: [],
+  [ParrotAgentType.DEFAULT]: ["展开羽翼导航", "翱翔在信息天空", "用锐利的目光洞察"],
 };
 
 /**

@@ -212,10 +212,8 @@ func NewRoutingHandler(direct *DirectLLMHandler, parrot *ParrotHandler) *Routing
 
 // Handle implements Handler interface by routing to the appropriate handler.
 func (h *RoutingHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatStream) error {
-	// Route based on agent type
-	if req.AgentType == AgentTypeDefault {
-		return h.directHandler.Handle(ctx, req, stream)
-	}
+	// All agent types (including DEFAULT) now use parrot handler
+	// DEFAULT parrot (羽飞/Navi) is implemented as a standard parrot with pure LLM mode
 	return h.parrotHandler.Handle(ctx, req, stream)
 }
 

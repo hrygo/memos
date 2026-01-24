@@ -654,6 +654,24 @@
             "在笔记和日程间跳跃"
           ]
         },
+        "default": {
+          "sound_effects": {
+            "thinking": "嗯...让我想想",
+            "insight": "咻~有了",
+            "done": "✓",
+            "analyzing": "看看这个..."
+          },
+          "catchphrases": [
+            "看看这个...",
+            "综合来看",
+            "发现规律了"
+          ],
+          "behaviors": [
+            "展开羽翼导航",
+            "翱翔在信息天空",
+            "用锐利的目光洞察"
+          ]
+        },
         "emotional-states": {
           "focused": "专注",
           "curious": "好奇",

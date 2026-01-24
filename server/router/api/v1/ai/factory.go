@@ -94,6 +94,8 @@ func (f *AgentFactory) Create(ctx context.Context, cfg *CreateConfig) (agentpkg.
 	}
 
 	switch cfg.Type {
+	case AgentTypeDefault:
+		return f.createDefaultParrot(cfg)
 	case AgentTypeMemo:
 		return f.createMemoParrot(cfg)
 	case AgentTypeSchedule:
@@ -190,6 +192,19 @@ func (f *AgentFactory) createCreativeParrot(cfg *CreateConfig) (agentpkg.ParrotA
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create creative parrot: %w", err)
+	}
+
+	return agent, nil
+}
+
+// createDefaultParrot creates a default parrot agent (羽飞/Navi).
+func (f *AgentFactory) createDefaultParrot(cfg *CreateConfig) (agentpkg.ParrotAgent, error) {
+	agent, err := agentpkg.NewDefaultParrot(
+		f.llm,
+		cfg.UserID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create default parrot: %w", err)
 	}
 
 	return agent, nil

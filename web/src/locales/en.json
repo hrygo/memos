@@ -654,6 +654,24 @@
             "Jumping between notes and schedules"
           ]
         },
+        "default": {
+          "sound_effects": {
+            "thinking": "Hmm... let me think",
+            "insight": "whoosh~ got it",
+            "done": "✓",
+            "analyzing": "look at this..."
+          },
+          "catchphrases": [
+            "Look at this...",
+            "Overall view",
+            "Found a pattern"
+          ],
+          "behaviors": [
+            "Spreading wings to navigate",
+            "Soaring in the information sky",
+            "Insight with sharp gaze"
+          ]
+        },
         "emotional-states": {
           "focused": "Focused",
           "curious": "Curious",
