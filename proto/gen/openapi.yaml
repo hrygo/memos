@@ -137,6 +137,70 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/conversations/{conversationId}/messages:
+        get:
+            tags:
+                - AIService
+            description: ListMessages returns messages for a conversation with incremental sync support.
+            operationId: AIService_ListMessages
+            parameters:
+                - name: conversationId
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: lastMessageUid
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListMessagesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/conversations/{conversationId}/separator:
+        post:
+            tags:
+                - AIService
+            description: AddContextSeparator adds a context separator marker to a conversation.
+            operationId: AIService_AddContextSeparator
+            parameters:
+                - name: conversationId
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AddContextSeparatorRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/conversations/{id}:
         get:
             tags:
@@ -2487,6 +2551,9 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/AIMessage'
+                messageCount:
+                    type: integer
+                    format: int32
             description: AIConversation represents an AI chat session.
         AIMessage:
             type: object
@@ -2574,6 +2641,18 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/ActivityMemoCommentPayload'
                     description: Memo comment activity payload.
+        AddContextSeparatorRequest:
+            required:
+                - conversationId
+            type: object
+            properties:
+                conversationId:
+                    type: integer
+                    format: int32
+            description: |-
+                AddContextSeparatorRequest adds a separator marker to a conversation.
+                 This marks the point where the conversation context is cleared.
+                 Subsequent chat requests will only include messages after this separator.
         Attachment:
             required:
                 - filename
@@ -3058,6 +3137,23 @@ components:
                     description: |-
                         A token that can be sent as `page_token` to retrieve the next page.
                          If this field is omitted, there are no subsequent pages.
+        ListMessagesResponse:
+            type: object
+            properties:
+                messages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AIMessage'
+                hasMore:
+                    type: boolean
+                totalCount:
+                    type: integer
+                    format: int32
+                latestMessageUid:
+                    type: string
+                syncRequired:
+                    type: boolean
+            description: ListMessagesResponse is the response for ListMessages.
         ListParrotsResponse:
             type: object
             properties:

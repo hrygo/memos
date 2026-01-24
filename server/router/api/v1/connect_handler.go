@@ -133,6 +133,17 @@ func (s *ConnectServiceHandler) GetRelatedMemos(ctx context.Context, req *connec
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) ListMessages(ctx context.Context, req *connect.Request[v1pb.ListMessagesRequest]) (*connect.Response[v1pb.ListMessagesResponse], error) {
+	if s.AIService == nil || !s.AIService.IsEnabled() {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.ListMessages(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *ConnectServiceHandler) Chat(ctx context.Context, req *connect.Request[v1pb.ChatRequest], stream *connect.ServerStream[v1pb.ChatResponse]) error {
 	if s.AIService == nil || !s.AIService.IsEnabled() {
 		return connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
@@ -511,6 +522,17 @@ func (s *ConnectServiceHandler) DeleteAIConversation(ctx context.Context, req *c
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 	resp, err := s.AIService.DeleteAIConversation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) AddContextSeparator(ctx context.Context, req *connect.Request[v1pb.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.AddContextSeparator(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}

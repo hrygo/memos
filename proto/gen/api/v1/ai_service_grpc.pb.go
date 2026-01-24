@@ -31,6 +31,8 @@ const (
 	AIService_CreateAIConversation_FullMethodName   = "/memos.api.v1.AIService/CreateAIConversation"
 	AIService_UpdateAIConversation_FullMethodName   = "/memos.api.v1.AIService/UpdateAIConversation"
 	AIService_DeleteAIConversation_FullMethodName   = "/memos.api.v1.AIService/DeleteAIConversation"
+	AIService_AddContextSeparator_FullMethodName    = "/memos.api.v1.AIService/AddContextSeparator"
+	AIService_ListMessages_FullMethodName           = "/memos.api.v1.AIService/ListMessages"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -61,6 +63,10 @@ type AIServiceClient interface {
 	UpdateAIConversation(ctx context.Context, in *UpdateAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error)
 	// DeleteAIConversation deletes an AI conversation.
 	DeleteAIConversation(ctx context.Context, in *DeleteAIConversationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// AddContextSeparator adds a context separator marker to a conversation.
+	AddContextSeparator(ctx context.Context, in *AddContextSeparatorRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ListMessages returns messages for a conversation with incremental sync support.
+	ListMessages(ctx context.Context, in *ListMessagesRequest, opts ...grpc.CallOption) (*ListMessagesResponse, error)
 }
 
 type aIServiceClient struct {
@@ -190,6 +196,26 @@ func (c *aIServiceClient) DeleteAIConversation(ctx context.Context, in *DeleteAI
 	return out, nil
 }
 
+func (c *aIServiceClient) AddContextSeparator(ctx context.Context, in *AddContextSeparatorRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AIService_AddContextSeparator_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) ListMessages(ctx context.Context, in *ListMessagesRequest, opts ...grpc.CallOption) (*ListMessagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMessagesResponse)
+	err := c.cc.Invoke(ctx, AIService_ListMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
@@ -218,6 +244,10 @@ type AIServiceServer interface {
 	UpdateAIConversation(context.Context, *UpdateAIConversationRequest) (*AIConversation, error)
 	// DeleteAIConversation deletes an AI conversation.
 	DeleteAIConversation(context.Context, *DeleteAIConversationRequest) (*emptypb.Empty, error)
+	// AddContextSeparator adds a context separator marker to a conversation.
+	AddContextSeparator(context.Context, *AddContextSeparatorRequest) (*emptypb.Empty, error)
+	// ListMessages returns messages for a conversation with incremental sync support.
+	ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -260,6 +290,12 @@ func (UnimplementedAIServiceServer) UpdateAIConversation(context.Context, *Updat
 }
 func (UnimplementedAIServiceServer) DeleteAIConversation(context.Context, *DeleteAIConversationRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteAIConversation not implemented")
+}
+func (UnimplementedAIServiceServer) AddContextSeparator(context.Context, *AddContextSeparatorRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddContextSeparator not implemented")
+}
+func (UnimplementedAIServiceServer) ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMessages not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -473,6 +509,42 @@ func _AIService_DeleteAIConversation_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AIService_AddContextSeparator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddContextSeparatorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).AddContextSeparator(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_AddContextSeparator_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).AddContextSeparator(ctx, req.(*AddContextSeparatorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_ListMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMessagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).ListMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_ListMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).ListMessages(ctx, req.(*ListMessagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -519,6 +591,14 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAIConversation",
 			Handler:    _AIService_DeleteAIConversation_Handler,
+		},
+		{
+			MethodName: "AddContextSeparator",
+			Handler:    _AIService_AddContextSeparator_Handler,
+		},
+		{
+			MethodName: "ListMessages",
+			Handler:    _AIService_ListMessages_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

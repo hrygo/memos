@@ -15,6 +15,14 @@ import (
 	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 )
 
+// contextBuilderMu protects the contextBuilder instance
+var contextBuilderMu sync.RWMutex
+var contextBuilder *aichat.ContextBuilder
+
+// conversationSummarizerMu protects the conversationSummarizer instance
+var conversationSummarizerMu sync.RWMutex
+var conversationSummarizer *aichat.ConversationSummarizer
+
 // getChatEventBus returns the chat event bus, initializing it on first use.
 func (s *AIService) getChatEventBus() *aichat.EventBus {
 	s.chatEventBusMu.Lock()
@@ -27,6 +35,32 @@ func (s *AIService) getChatEventBus() *aichat.EventBus {
 	}
 
 	return s.chatEventBus
+}
+
+// getContextBuilder returns the context builder, initializing it on first use.
+func (s *AIService) getContextBuilder() *aichat.ContextBuilder {
+	contextBuilderMu.Lock()
+	defer contextBuilderMu.Unlock()
+
+	if contextBuilder == nil {
+		contextBuilder = aichat.NewContextBuilder(s.Store)
+	}
+	return contextBuilder
+}
+
+// getConversationSummarizer returns the conversation summarizer, initializing on first use.
+func (s *AIService) getConversationSummarizer() *aichat.ConversationSummarizer {
+	conversationSummarizerMu.Lock()
+	defer conversationSummarizerMu.Unlock()
+
+	if conversationSummarizer == nil {
+		conversationSummarizer = aichat.NewConversationSummarizerWithStore(
+			s.Store,
+			s.LLMService,
+			11, // Default threshold
+		)
+	}
+	return conversationSummarizer
 }
 
 // Chat streams a chat response with AI agents.
@@ -111,12 +145,60 @@ func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer
 		Timestamp:         time.Now().Unix(),
 	})
 
+	// Build conversation context from backend
+	// This ensures SEPARATOR filtering is enforced server-side
+	var history []string
+	if chatReq.ConversationID != 0 {
+		builder := s.getContextBuilder()
+		builtContext, err := builder.BuildContext(ctx, chatReq.ConversationID, &aichat.ContextControl{
+			// Pending messages: the current user message (not yet persisted)
+			PendingMessages: []aichat.Message{
+				{
+					Content: req.Message,
+					Role:    "user",
+					Type:    "MESSAGE",
+				},
+			},
+		})
+		if err != nil {
+			slog.Default().Warn("Failed to build context from backend",
+				"conversation_id", chatReq.ConversationID,
+				"error", err,
+			)
+		} else {
+			// Exclude the current message from history (it's the last pending message)
+			if len(builtContext.Messages) > 0 {
+				history = builtContext.Messages[:len(builtContext.Messages)-1]
+			}
+			slog.Default().Debug("Built context from backend",
+				"conversation_id", chatReq.ConversationID,
+				"message_count", len(history),
+				"token_count", builtContext.TokenCount,
+				"separator_pos", builtContext.SeparatorPos,
+				"has_pending", builtContext.HasPending,
+			)
+		}
+	}
+
+	// Fallback to frontend-provided history if backend build failed
+	// This maintains backward compatibility during migration
+	if len(history) == 0 && len(req.History) > 0 {
+		slog.Default().Debug("Using frontend-provided history",
+			"conversation_id", chatReq.ConversationID,
+			"history_count", len(req.History),
+		)
+		history = req.History
+	}
+
+	chatReq.History = history
+
 	// Create handler and process request
 	handler := s.createChatHandler()
 
 	// Wrap stream to collect assistant response
 	collectingStream := &eventCollectingStream{
 		grpcStreamWrapper: &grpcStreamWrapper{stream: stream},
+		service:           s,
 		eventBus:          eventBus,
 		userID:            user.ID,
 		agentType:         chatReq.AgentType,
@@ -158,6 +240,7 @@ func (w *grpcStreamWrapper) Context() context.Context {
 // eventCollectingStream wraps the stream and emits assistant response events.
 type eventCollectingStream struct {
 	*grpcStreamWrapper
+	service        *AIService // Service reference for accessing summarizer
 	eventBus       *aichat.EventBus
 	userID         int32
 	agentType      aichat.AgentType
@@ -191,6 +274,28 @@ func (s *eventCollectingStream) Send(resp *v1pb.ChatResponse) error {
 				IsTempConversation: s.isTemp,
 				Timestamp:         time.Now().Unix(),
 			})
+		}
+
+		// Check if summarization is needed (async, don't block response)
+		// Only summarize for non-temporary conversations
+		if !s.isTemp && s.conversationID != 0 {
+			go func() {
+				summarizer := s.service.getConversationSummarizer()
+				if shouldSummarize, count := summarizer.ShouldSummarize(context.Background(), s.conversationID); shouldSummarize {
+					slog.Default().Info("Conversation threshold reached, triggering summarization",
+						"conversation_id", s.conversationID,
+						"message_count", count,
+					)
+					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+					defer cancel()
+					if err := summarizer.Summarize(ctx, s.conversationID); err != nil {
+						slog.Default().Warn("Failed to summarize conversation",
+							"conversation_id", s.conversationID,
+							"error", err,
+						)
+					}
+				}
+			}()
 		}
 	}
 

@@ -16,6 +16,8 @@ import {
 import { ParrotAgentType } from "@/types/parrot";
 import { AgentType, AIConversation, AIMessage } from "@/types/proto/api/v1/ai_service_pb";
 
+const MESSAGE_CACHE_LIMIT = 100; // Maximum MSG messages to cache per conversation
+
 const generateId = () => `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // Helper function to get default conversation title based on parrot type.
@@ -58,6 +60,31 @@ interface AIChatProviderProps {
 // Helper function to check if item is ContextSeparator
 function isContextSeparator(item: ChatItem): item is ContextSeparator {
   return "type" in item && item.type === "context-separator";
+}
+
+// FIFO: Enforce message cache limit (only counts MSG, keeps SEP between MSG)
+function enforceFIFOMessages(messages: ChatItem[]): ChatItem[] {
+  const reversed = [...messages].reverse();
+  const result: ChatItem[] = [];
+  let msgCount = 0;
+
+  for (const item of reversed) {
+    if (isContextSeparator(item)) {
+      // Keep SEPARATOR only if it's between MSG (i.e., we have MSG after it)
+      if (msgCount > 0 && result.length > 0 && !isContextSeparator(result[0])) {
+        result.unshift(item);
+      }
+    } else {
+      // Regular MSG message
+      if (msgCount < MESSAGE_CACHE_LIMIT) {
+        result.unshift(item);
+        msgCount++;
+      }
+      // Drop excess MSG messages
+    }
+  }
+
+  return result;
 }
 
 export function AIChatProvider({ children, initialState }: AIChatProviderProps) {
@@ -116,7 +143,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         title: c.title,
         parrotId: c.parrotId,
         updatedAt: c.updatedAt,
-        messageCount: getMessageCount(c),
+        // Prefer backend messageCount, fallback to local calculation
+        messageCount: c.messageCount ?? getMessageCount(c),
         pinned: c.pinned || false,
       }))
       .sort((a, b) => {
@@ -135,6 +163,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       return {
         type: "context-separator",
         id: String(m.id),
+        uid: m.uid, // Include UID for incremental sync
         timestamp: Number(m.createdTs) * 1000,
         synced: true,
       };
@@ -148,6 +177,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     }
     return {
       id: String(m.id),
+      uid: m.uid, // Include UID for incremental sync
       role: m.role.toLowerCase() as any,
       content: m.content,
       timestamp: Number(m.createdTs) * 1000,
@@ -199,6 +229,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       messages: pb.messages.map(m => convertMessageFromPb(m)),
       referencedMemos: [], // Backend managed for RAG, but state can store it if needed
       pinned: pb.pinned,
+      messageCount: pb.messageCount, // Use backend-provided message count
     };
   }, [convertMessageFromPb, localizeTitle, convertAgentTypeToParrotId]);
 
@@ -298,21 +329,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       currentConversationId: id,
       viewMode: "chat",
     }));
-
-    // Fetch full conversation with messages if needed
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      aiServiceClient.getAIConversation({ id: numericId }).then(pb => {
-        const fullConversation = convertConversationFromPb(pb);
-        setState(prev => ({
-          ...prev,
-          conversations: prev.conversations.map(c => c.id === id ? fullConversation : c)
-        }));
-      }).catch(e => {
-        console.error("Failed to fetch conversation:", e);
-      });
-    }
-  }, [convertConversationFromPb]);
+  }, []);
 
   const updateConversationTitle = useCallback((id: string, title: string) => {
     const numericId = parseInt(id);
@@ -416,6 +433,26 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const addContextSeparator = useCallback((conversationId: string, trigger: "manual" | "auto" | "shortcut" = "manual") => {
+    const numericId = parseInt(conversationId);
+    if (!isNaN(numericId)) {
+      // Call backend API to persist the SEPARATOR message
+      aiServiceClient.addContextSeparator({ conversationId: numericId })
+        .then(() => {
+          // After successful creation, refresh the conversation to show the new separator
+          aiServiceClient.getAIConversation({ id: numericId }).then(pb => {
+            const fullConversation = convertConversationFromPb(pb);
+            setState(prev => ({
+              ...prev,
+              conversations: prev.conversations.map(c => c.id === conversationId ? fullConversation : c)
+            }));
+          });
+        })
+        .catch(err => {
+          console.error("Failed to add context separator:", err);
+        });
+    }
+
+    // Optimistically add separator to local state for immediate UI feedback
     const separatorId = generateId();
     setState((prev) => ({
       ...prev,
@@ -426,7 +463,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
           type: "context-separator",
           id: separatorId,
           timestamp: Date.now(),
-          synced: false, // Will be synced when the user sends the next message ('---' command)
+          synced: true, // Now synced to backend
           trigger,
         };
 
@@ -438,7 +475,168 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       }),
     }));
     return separatorId;
-  }, []);
+  }, [convertConversationFromPb]);
+
+// Helper function to merge messages into state (pure function, safe for async callbacks)
+function mergeMessagesIntoState(
+  prevState: AIChatState,
+  conversationId: string,
+  response: {
+    messages: AIMessage[];
+    hasMore: boolean;
+    totalCount: number;
+    latestMessageUid: string;
+  },
+  convertMessageFromPb: (m: AIMessage) => ChatItem
+): AIChatState {
+  const newMessages = response.messages.map(m => convertMessageFromPb(m));
+
+  return {
+    ...prevState,
+    conversations: prevState.conversations.map(c => {
+      if (c.id !== conversationId) return c;
+
+      // For first load (no existing cache), use new messages directly
+      if (!c.messageCache) {
+        return {
+          ...c,
+          messages: enforceFIFOMessages(newMessages),
+          messageCache: {
+            lastMessageUid: response.latestMessageUid,
+            totalCount: response.totalCount,
+            hasMore: response.hasMore,
+          },
+        };
+      }
+
+      // For incremental sync, merge with existing messages
+      const existingMessages = c.messages || [];
+      const mergedMessages = [...existingMessages];
+
+      // Append new messages (avoid duplicates by UID)
+      const existingUids = new Set(
+        existingMessages
+          .filter(m => !isContextSeparator(m))
+          .map(m => ("uid" in m ? m.uid : m.id))
+      );
+
+      for (const msg of newMessages) {
+        if (!isContextSeparator(msg)) {
+          const uid = (msg as any).uid || msg.id;
+          if (!existingUids.has(uid)) {
+            mergedMessages.push(msg);
+          }
+        } else {
+          mergedMessages.push(msg);
+        }
+      }
+
+      // Enforce FIFO limit
+      return {
+        ...c,
+        messages: enforceFIFOMessages(mergedMessages),
+        messageCache: {
+          lastMessageUid: response.latestMessageUid,
+          totalCount: response.totalCount,
+          hasMore: response.hasMore,
+        },
+      };
+    }),
+  };
+}
+
+// Message sync actions with incremental sync and FIFO cache
+  const syncMessages = useCallback(async (conversationId: string) => {
+    const numericId = parseInt(conversationId);
+    if (isNaN(numericId)) return;
+
+    // Use functional state update to get current state without creating dependency
+    setState(prev => {
+      const conversation = prev.conversations.find(c => c.id === conversationId);
+      const lastMessageUid = conversation?.messageCache?.lastMessageUid || "";
+      const limit = 100; // Always request 100 messages
+
+      // Fire-and-forget async operation (we can't await in setState updater)
+      aiServiceClient.listMessages({
+        conversationId: numericId,
+        lastMessageUid,
+        limit,
+      }).then(response => {
+        if (response.syncRequired) {
+          // Backend requires full refresh, clear cache and retry
+          setState(innerPrev => ({
+            ...innerPrev,
+            conversations: innerPrev.conversations.map(c => {
+              if (c.id !== conversationId) return c;
+              return { ...c, messages: [], messageCache: undefined };
+            }),
+          }));
+          // Retry with empty lastMessageUid
+          aiServiceClient.listMessages({
+            conversationId: numericId,
+            lastMessageUid: "",
+            limit,
+          }).then(retryResponse => {
+            setState(innerPrev => mergeMessagesIntoState(innerPrev, conversationId, retryResponse, convertMessageFromPb));
+          });
+        } else {
+          setState(innerPrev => mergeMessagesIntoState(innerPrev, conversationId, response, convertMessageFromPb));
+        }
+      })
+        .catch((e: unknown) => {
+          console.error("Failed to sync messages:", e);
+        });
+
+      return prev; // Return previous state unchanged (async update will follow)
+    });
+  }, [convertMessageFromPb]); // Only depends on convertMessageFromPb
+
+  const loadMoreMessages = useCallback(async (conversationId: string) => {
+    const numericId = parseInt(conversationId);
+    if (isNaN(numericId)) return;
+
+    // Use functional state update to avoid stale closure
+    setState(prev => {
+      const conversation = prev.conversations.find(c => c.id === conversationId);
+      if (!conversation?.messageCache?.hasMore) return prev; // No more messages to load
+
+      // Find the oldest message UID for pagination
+      const oldestMessage = conversation.messages.find(m => !isContextSeparator(m));
+      if (!oldestMessage) return prev;
+
+      const oldestUid = (oldestMessage as any).uid || oldestMessage.id;
+
+      // Fire-and-forget async operation
+      aiServiceClient.listMessages({
+        conversationId: numericId,
+        lastMessageUid: oldestUid as string, // Request messages before this UID
+        limit: 100,
+      }).then(response => {
+        // Prepend messages (older messages come first)
+        const olderMessages = response.messages.map(m => convertMessageFromPb(m));
+        setState(innerPrev => ({
+          ...innerPrev,
+          conversations: innerPrev.conversations.map(c => {
+            if (c.id !== conversationId) return c;
+
+            return {
+              ...c,
+              messages: [...olderMessages, ...c.messages],
+              messageCache: c.messageCache ? {
+                ...c.messageCache,
+                hasMore: response.hasMore,
+              } : undefined,
+            };
+          }),
+        }));
+      })
+        .catch((e: unknown) => {
+          console.error("Failed to load more messages:", e);
+        });
+
+      return prev;
+    });
+  }, [convertMessageFromPb]); // Only depends on convertMessageFromPb
 
   // Referenced content actions
   const addReferencedMemos = useCallback((conversationId: string, memos: ReferencedMemo[]) => {
@@ -537,6 +735,17 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sync messages when conversation changes (only for valid numeric IDs)
+  useEffect(() => {
+    if (state.currentConversationId) {
+      const numericId = parseInt(state.currentConversationId);
+      if (!isNaN(numericId)) {
+        syncMessages(state.currentConversationId);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.currentConversationId]);
+
   const contextValue: AIChatContextValue = {
     state,
     currentConversation,
@@ -561,6 +770,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     saveToStorage,
     loadFromStorage,
     clearStorage,
+    syncMessages,
+    loadMoreMessages,
   };
 
   return <AIChatContext.Provider value={contextValue}>{children}</AIChatContext.Provider>;
