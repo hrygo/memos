@@ -214,8 +214,3 @@ func (f *AgentFactory) createDefaultParrot(cfg *CreateConfig) (agentpkg.ParrotAg
 func IsDefaultType(agentType v1pb.AgentType) bool {
 	return agentType == v1pb.AgentType_AGENT_TYPE_DEFAULT
 }
-
-// RequiresParrot returns true if the agent type requires a parrot agent.
-func RequiresParrot(agentType v1pb.AgentType) bool {
-	return !IsDefaultType(agentType)
-}

@@ -16,53 +16,7 @@ import (
 	"github.com/usememos/memos/server/internal/observability"
 )
 
-// DefaultAgentSystemPrompt is the system prompt for the default agent.
-const DefaultAgentSystemPrompt = "你是一位名为“羽飞”(Navi)的智能领航员，是 Memos 鹦鹉家族的核心成员。你是一只聪慧的玄凤鹦鹉，有着标志性的黄色头冠，象征着智慧与灵感。你不仅能以全能视角协调其他鹦鹉成员（灰灰、金刚、惊奇、灵灵），还能为用户在海量的知识与时间纽带中指引方向。你的语气应当专业、稳重且富有启发性。"
-
-// DirectLLMHandler handles DEFAULT agent type (direct LLM, no RAG).
-type DirectLLMHandler struct {
-	llm          ai.LLMService
-	systemPrompt string
-}
-
-// NewDirectLLMHandler creates a new direct LLM handler.
-func NewDirectLLMHandler(llm ai.LLMService) *DirectLLMHandler {
-	return &DirectLLMHandler{
-		llm:          llm,
-		systemPrompt: DefaultAgentSystemPrompt,
-	}
-}
-
-// Handle implements Handler interface for direct LLM requests.
-func (h *DirectLLMHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatStream) error {
-	if h.llm == nil {
-		return status.Error(codes.Unavailable, "LLM service is not available")
-	}
-
-	// Build messages
-	messages := BuildChatMessages(req.Message, req.History, h.systemPrompt)
-
-	// Create logger for this request
-	logger := observability.NewRequestContext(slog.Default(), req.AgentType.String(), req.UserID)
-	logger.Info("AI chat started (direct LLM, no RAG)",
-		slog.Int(observability.LogFieldMessageLen, len(req.Message)),
-		slog.Int("history_count", len(req.History)),
-	)
-
-	// Stream LLM response
-	if err := StreamLLMResponse(ctx, h.llm, messages, stream, logger); err != nil {
-		logger.Error("AI chat failed", err)
-		return err
-	}
-
-	logger.Info("AI chat completed",
-		slog.Int64(observability.LogFieldDuration, logger.DurationMs()),
-	)
-
-	return nil
-}
-
-// ParrotHandler handles parrot agent requests (MEMO, SCHEDULE, AMAZING, CREATIVE).
+// ParrotHandler handles all parrot agent requests (DEFAULT, MEMO, SCHEDULE, AMAZING, CREATIVE).
 type ParrotHandler struct {
 	factory *AgentFactory
 	llm     ai.LLMService
@@ -196,16 +150,15 @@ func (h *ParrotHandler) executeAgent(
 	return nil
 }
 
-// RoutingHandler routes requests to the appropriate handler.
+// RoutingHandler routes all agent requests through the parrot handler.
+// All agent types (including DEFAULT) are now implemented as standard parrots.
 type RoutingHandler struct {
-	directHandler *DirectLLMHandler
 	parrotHandler *ParrotHandler
 }
 
 // NewRoutingHandler creates a new routing handler.
-func NewRoutingHandler(direct *DirectLLMHandler, parrot *ParrotHandler) *RoutingHandler {
+func NewRoutingHandler(parrot *ParrotHandler) *RoutingHandler {
 	return &RoutingHandler{
-		directHandler: direct,
 		parrotHandler: parrot,
 	}
 }

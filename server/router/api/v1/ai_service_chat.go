@@ -89,12 +89,11 @@ func (s *AIService) createChatHandler() ai.Handler {
 		s.Store,
 	)
 
-	// Create individual handlers
-	directHandler := ai.NewDirectLLMHandler(s.LLMService)
+	// Create parrot handler (handles all agent types including DEFAULT)
 	parrotHandler := ai.NewParrotHandler(factory, s.LLMService)
 
 	// Create routing handler
-	return ai.NewRoutingHandler(directHandler, parrotHandler)
+	return ai.NewRoutingHandler(parrotHandler)
 }
 
 // grpcStreamWrapper wraps the gRPC stream to implement ai.ChatStream.
