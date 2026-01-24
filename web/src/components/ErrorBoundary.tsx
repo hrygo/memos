@@ -38,8 +38,8 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="max-w-md w-full p-6 space-y-4">
+        <div className="flex items-center justify-center min-h-screen bg-background p-4">
+          <div className="md:max-w-[500px] w-full p-6 space-y-4">
             <div className="flex items-center gap-3 text-destructive">
               <AlertCircle className="w-8 h-8" />
               <h1 className="text-2xl font-bold">Something went wrong</h1>
@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.error && (
               <details className="bg-muted p-3 rounded-md text-sm">
                 <summary className="cursor-pointer font-medium mb-2">Error details</summary>
-                <pre className="whitespace-pre-wrap break-words text-xs text-foreground/60">{this.state.error.message}</pre>
+                <pre className="whitespace-pre-wrap break-all text-xs text-foreground/60 overflow-x-auto">{this.state.error.message}</pre>
               </details>
             )}
 

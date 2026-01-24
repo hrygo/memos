@@ -30,7 +30,7 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-lg">
+      <DialogContent className="md:max-w-[500px]">
         {/* Header */}
         <div className="flex items-start gap-3">
           <div className="rounded-full bg-orange-100 dark:bg-orange-900/30 p-2.5">
