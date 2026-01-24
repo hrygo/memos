@@ -349,7 +349,7 @@ func (s *ConversationService) createTemporaryConversation(ctx context.Context, e
 // findOrCreateFixedConversation finds or creates a fixed conversation.
 // Handles race conditions by catching duplicate key errors.
 func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context, event *ChatEvent) (int32, error) {
-	fixedID := calculateFixedConversationID(event.UserID, event.AgentType)
+	fixedID := CalculateFixedConversationID(event.UserID, event.AgentType)
 
 	// Try to find existing first (fast path)
 	conversations, err := s.store.ListAIConversations(ctx, &store.FindAIConversation{
@@ -370,7 +370,7 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 		ID:        fixedID,
 		UID:       shortuuid.New(),
 		CreatorID: event.UserID,
-		Title:     getFixedConversationTitle(event.AgentType),
+		Title:     GetFixedConversationTitle(event.AgentType),
 		ParrotID:  event.AgentType.String(),
 		Pinned:    true,
 		CreatedTs: event.Timestamp,
@@ -418,11 +418,11 @@ type ConversationStore interface {
 	CreateAIMessage(ctx context.Context, create *store.AIMessage) (*store.AIMessage, error)
 }
 
-// calculateFixedConversationID calculates the fixed conversation ID for a user and agent type.
+// CalculateFixedConversationID calculates the fixed conversation ID for a user and agent type.
 // Formula: (UserID << 8) | AgentTypeOffset ensures uniqueness by using bit shifting.
 // The lower 8 bits are reserved for agent type offset (max 255 agent types).
 // Safe for userID up to 8,388,607 (int32 max / 256).
-func calculateFixedConversationID(userID int32, agentType AgentType) int32 {
+func CalculateFixedConversationID(userID int32, agentType AgentType) int32 {
 	// Boundary check: userID << 8 must not overflow int32
 	// Max safe userID = 2^31-1 / 256 = 8388607
 	const maxSafeUserID = 8388607
@@ -449,9 +449,9 @@ func calculateFixedConversationID(userID int32, agentType AgentType) int32 {
 	return (userID << 8) | offset
 }
 
-// getFixedConversationTitle returns the default title for a fixed conversation.
+// GetFixedConversationTitle returns the default title for a fixed conversation.
 // Returns a title key that the frontend should localize.
-func getFixedConversationTitle(agentType AgentType) string {
+func GetFixedConversationTitle(agentType AgentType) string {
 	// Title keys for frontend localization
 	titles := map[AgentType]string{
 		AgentTypeDefault:  "chat.default.title",

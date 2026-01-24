@@ -156,14 +156,30 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const convertConversationFromPb = useCallback((pb: AIConversation): Conversation => {
+    // Convert protobuf numeric AgentType enum to ParrotAgentType string
+    let parrotId: ParrotAgentType;
+    switch (pb.parrotId) {
+      case AgentType.MEMO:
+        parrotId = ParrotAgentType.MEMO;
+        break;
+      case AgentType.SCHEDULE:
+        parrotId = ParrotAgentType.SCHEDULE;
+        break;
+      case AgentType.AMAZING:
+        parrotId = ParrotAgentType.AMAZING;
+        break;
+      case AgentType.CREATIVE:
+        parrotId = ParrotAgentType.CREATIVE;
+        break;
+      case AgentType.DEFAULT:
+      default:
+        parrotId = ParrotAgentType.DEFAULT;
+    }
+
     return {
       id: String(pb.id),
       title: localizeTitle(pb.title),
-      parrotId: pb.parrotId === AgentType.MEMO ? ParrotAgentType.MEMO :
-        pb.parrotId === AgentType.SCHEDULE ? ParrotAgentType.SCHEDULE :
-          pb.parrotId === AgentType.AMAZING ? ParrotAgentType.AMAZING :
-            pb.parrotId === AgentType.CREATIVE ? ParrotAgentType.CREATIVE :
-              ParrotAgentType.DEFAULT,
+      parrotId: parrotId,
       createdAt: Number(pb.createdTs) * 1000,
       updatedAt: Number(pb.updatedTs) * 1000,
       messages: pb.messages.map(m => convertMessageFromPb(m)),

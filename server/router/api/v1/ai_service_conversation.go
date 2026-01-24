@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 	"github.com/usememos/memos/store"
 )
 
@@ -19,6 +20,9 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
+
+	// Ensure all fixed conversations exist for the user
+	s.ensureFixedConversations(ctx, user.ID)
 
 	conversations, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
 		CreatorID: &user.ID,
@@ -35,6 +39,51 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 	}
 
 	return response, nil
+}
+
+// ensureFixedConversations ensures all 5 fixed conversations exist for the user.
+// This is called on ListAIConversations to guarantee users always see all available parrots.
+func (s *AIService) ensureFixedConversations(ctx context.Context, userID int32) {
+	agentTypes := []v1pb.AgentType{
+		v1pb.AgentType_AGENT_TYPE_DEFAULT,
+		v1pb.AgentType_AGENT_TYPE_MEMO,
+		v1pb.AgentType_AGENT_TYPE_SCHEDULE,
+		v1pb.AgentType_AGENT_TYPE_AMAZING,
+		v1pb.AgentType_AGENT_TYPE_CREATIVE,
+	}
+
+	for _, agentType := range agentTypes {
+		fixedID := aichat.CalculateFixedConversationID(userID, aichat.AgentType(agentType))
+
+		// Check if conversation exists
+		existing, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
+			ID:        &fixedID,
+			CreatorID: &userID,
+		})
+		if err == nil && len(existing) > 0 {
+			// Conversation exists, update timestamp
+			now := time.Now().Unix()
+			s.Store.UpdateAIConversation(ctx, &store.UpdateAIConversation{
+				ID:        fixedID,
+				UpdatedTs: &now,
+			})
+			continue
+		}
+
+		// Create new fixed conversation
+		title := aichat.GetFixedConversationTitle(aichat.AgentType(agentType))
+		_, _ = s.Store.CreateAIConversation(ctx, &store.AIConversation{
+			ID:        fixedID,
+			UID:       shortuuid.New(),
+			CreatorID: userID,
+			Title:     title,
+			ParrotID:  agentType.String(),
+			Pinned:    true,
+			CreatedTs: time.Now().Unix(),
+			UpdatedTs: time.Now().Unix(),
+			RowStatus: store.Normal,
+		})
+	}
 }
 
 func (s *AIService) GetAIConversation(ctx context.Context, req *v1pb.GetAIConversationRequest) (*v1pb.AIConversation, error) {
