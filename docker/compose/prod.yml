@@ -1,5 +1,15 @@
-# Memos Production Environment
-# Optimized for 2C2G (2 vCPU, 2GB RAM) server
+# =============================================================================
+# Memos 生产环境 (2C2G 服务器)
+# =============================================================================
+#
+# 包含: PostgreSQL + Memos
+#
+# 使用方式:
+#   cp .env.example .env.prod
+#   docker-compose -f prod.yml --env-file .env.prod up -d
+#
+# =============================================================================
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -9,22 +19,24 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-memos}
       POSTGRES_USER: ${POSTGRES_USER:-memos}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # Memory settings for 2GB RAM
+      # 内存优化 (2G 服务器，PostgreSQL 使用 ~512M)
       POSTGRES_SHARED_BUFFERS: 128MB
       POSTGRES_EFFECTIVE_CACHE_SIZE: 384MB
       POSTGRES_MAINTENANCE_WORK_MEM: 32MB
       POSTGRES_WORK_MEM: 4MB
       POSTGRES_MAX_CONNECTIONS: 50
-    ports:
-      - "127.0.0.1:25432:5432"  # Only listen on localhost
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # 数据库初始化脚本 (仅首次创建时执行)
+      - ../../store/migration/postgres:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT_MAPPING:-}"  # 可选: 127.0.0.1:25432:5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memos}"]
       interval: 30s
       timeout: 10s
       retries: 3
-    # Resource limits for 2C2G (leave 1 core for Memos app)
+    # 资源限制 (2C2G)
     deploy:
       resources:
         limits:
@@ -33,38 +45,69 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
-    command: [
-      "-c", "shared_buffers=128MB",
-      "-c", "effective_cache_size=384MB",
-      "-c", "maintenance_work_mem=32MB",
-      "-c", "work_mem=4MB",
-      "-c", "max_connections=50",
-      "-c", "shared_preload_libraries=vector"
-    ]
+    command:
+      [
+        "-c", "shared_buffers=128MB",
+        "-c", "effective_cache_size=384MB",
+        "-c", "maintenance_work_mem=32MB",
+        "-c", "work_mem=4MB",
+        "-c", "max_connections=50",
+        "-c", "shared_preload_libraries=vector"
+      ]
     networks:
       - memos_network
 
-  # memos service is removed as we are using the binary file.
-  # See instructions for running the binary on the host.
+  memos:
+    image: memos:latest
+    container_name: memos
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # 运行模式
+      - MEMOS_MODE=prod
+      - MEMOS_PORT=5230
+      - MEMOS_ADDR=0.0.0.0
 
-  # Optional: Nginx reverse proxy for HTTPS
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: memos-nginx
-  #   restart: always
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./ssl:/etc/nginx/ssl:ro
-  #   # depends_on:
-  #   #   - memos # memos is now a binary on host
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.5'
-  #         memory: 128M
+      # 数据库配置
+      - MEMOS_DRIVER=postgres
+      - MEMOS_DSN=postgres://${POSTGRES_USER:-memos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-memos}?sslmode=disable
+
+      # 实例 URL
+      - MEMOS_INSTANCE_URL=${MEMOS_INSTANCE_URL}
+
+      # AI 功能
+      - MEMOS_AI_ENABLED=${MEMOS_AI_ENABLED:-true}
+      - MEMOS_AI_EMBEDDING_PROVIDER=${MEMOS_AI_EMBEDDING_PROVIDER:-siliconflow}
+      - MEMOS_AI_EMBEDDING_MODEL=${MEMOS_AI_EMBEDDING_MODEL:-BAAI/bge-m3}
+      - MEMOS_AI_SILICONFLOW_API_KEY=${MEMOS_AI_SILICONFLOW_API_KEY}
+      - MEMOS_AI_OPENAI_API_KEY=${MEMOS_AI_OPENAI_API_KEY}
+      - MEMOS_AI_LLM_PROVIDER=${MEMOS_AI_LLM_PROVIDER:-deepseek}
+      - MEMOS_AI_LLM_MODEL=${MEMOS_AI_LLM_MODEL:-deepseek-chat}
+      - MEMOS_AI_DEEPSEEK_API_KEY=${MEMOS_AI_DEEPSEEK_API_KEY}
+      - MEMOS_AI_RERANK_MODEL=${MEMOS_AI_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+    ports:
+      - "${MEMOS_PORT:-5230}:5230"
+    volumes:
+      - memos_data:/var/opt/memos
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'cat < /dev/null > /dev/tcp/127.0.0.1/5230 || exit 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # 资源限制 (2C2G)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    networks:
+      - memos_network
 
 networks:
   memos_network:
@@ -72,4 +115,4 @@ networks:
 
 volumes:
   postgres_data:
-
+  memos_data:

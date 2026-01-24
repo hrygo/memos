@@ -6,7 +6,9 @@ RUN apk add --no-cache git ca-certificates
 
 # Copy go mod files and download dependencies (cached layer)
 COPY go.mod go.sum ./
+# Use Go proxy for China (fallback to direct)
 RUN --mount=type=cache,target=/go/pkg/mod \
+    GOPROXY=https://goproxy.cn,https://goproxy.io,direct \
     go mod download
 
 # Copy source code (use .dockerignore to exclude unnecessary files)
