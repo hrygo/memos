@@ -35,7 +35,10 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 		Conversations: make([]*v1pb.AIConversation, 0, len(conversations)),
 	}
 	for _, c := range conversations {
-		response.Conversations = append(response.Conversations, convertAIConversationFromStore(c))
+		// Only return pinned (fixed) conversations to hide legacy/temporary conversations
+		if c.Pinned {
+			response.Conversations = append(response.Conversations, convertAIConversationFromStore(c))
+		}
 	}
 
 	return response, nil
