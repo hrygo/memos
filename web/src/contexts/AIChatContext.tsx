@@ -81,6 +81,32 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, [state.conversations, getMessageCount]);
 
   // Helpers to convert from Protobuf to local types
+  // Note: convertMessageFromPb must be defined before convertConversationFromPb
+  const convertMessageFromPb = useCallback((m: AIMessage): ChatItem => {
+    if (m.type === "SEPARATOR") {
+      return {
+        type: "context-separator",
+        id: String(m.id),
+        timestamp: Number(m.createdTs) * 1000,
+        synced: true,
+      };
+    }
+    // Safe JSON parse with fallback
+    let metadata = {};
+    try {
+      metadata = JSON.parse(m.metadata || "{}");
+    } catch {
+      console.warn("Failed to parse message metadata", m.metadata);
+    }
+    return {
+      id: String(m.id),
+      role: m.role.toLowerCase() as any,
+      content: m.content,
+      timestamp: Number(m.createdTs) * 1000,
+      metadata,
+    };
+  }, []);
+
   const convertConversationFromPb = useCallback((pb: AIConversation): Conversation => {
     return {
       id: String(pb.id),
@@ -96,25 +122,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       referencedMemos: [], // Backend managed for RAG, but state can store it if needed
       pinned: pb.pinned,
     };
-  }, []);
-
-  const convertMessageFromPb = useCallback((m: AIMessage): ChatItem => {
-    if (m.type === "SEPARATOR") {
-      return {
-        type: "context-separator",
-        id: String(m.id),
-        timestamp: Number(m.createdTs) * 1000,
-        synced: true,
-      };
-    }
-    return {
-      id: String(m.id),
-      role: m.role.toLowerCase() as any,
-      content: m.content,
-      timestamp: Number(m.createdTs) * 1000,
-      metadata: JSON.parse(m.metadata || "{}"),
-    };
-  }, []);
+  }, [convertMessageFromPb]);
 
   // Sync state with backend
   const refreshConversations = useCallback(async () => {
@@ -220,6 +228,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
           ...prev,
           conversations: prev.conversations.map(c => c.id === id ? fullConversation : c)
         }));
+      }).catch(e => {
+        console.error("Failed to fetch conversation:", e);
       });
     }
   }, [convertConversationFromPb]);

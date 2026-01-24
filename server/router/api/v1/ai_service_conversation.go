@@ -157,12 +157,18 @@ func (s *AIService) DeleteAIConversation(ctx context.Context, req *v1pb.DeleteAI
 }
 
 func convertAIConversationFromStore(c *store.AIConversation) *v1pb.AIConversation {
+	// Convert ParrotID string to AgentType enum with default fallback
+	parrotId := v1pb.AgentType_value[c.ParrotID]
+	if parrotId == 0 && c.ParrotID != "" && c.ParrotID != "AGENT_TYPE_UNSPECIFIED" {
+		// Unknown value, fallback to DEFAULT
+		parrotId = int32(v1pb.AgentType_AGENT_TYPE_DEFAULT)
+	}
 	return &v1pb.AIConversation{
 		Id:        c.ID,
 		Uid:       c.UID,
 		CreatorId: c.CreatorID,
 		Title:     c.Title,
-		ParrotId:  v1pb.AgentType(v1pb.AgentType_value[c.ParrotID]),
+		ParrotId:  v1pb.AgentType(parrotId),
 		Pinned:    c.Pinned,
 		CreatedTs: c.CreatedTs,
 		UpdatedTs: c.UpdatedTs,
