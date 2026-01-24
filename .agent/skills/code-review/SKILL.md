@@ -1,165 +1,120 @@
 ---
 name: code-review
 description: |
-  Pre-commit/Pre-merge Code Review. Analyzes code changes to detect security 
-  vulnerabilities, bugs, and anti-patterns. Outputs structured Markdown report.
-  Read-only analysis, never modifies code.
-allowed-tools: Bash, Read, Grep, View
+  Code review expert: audit changes for security, stability, performance, and architecture.
+  Output structured report with table summary and detailed analysis.
+allowed-tools: Bash, Read, Grep, Glob
 disable-model-invocation: false
 ---
 
-# 🔍 Code Review Skill
+# Code Review
 
-> **职责**: 只读审查 → 结构化报告 → 开发者决策
-
----
-
-## 🧠 AI 科学原则
-
-本 Skill 应用以下技术提升精准度、降低幻觉：
-
-| 技术                  | 应用                          |
-| --------------------- | ----------------------------- |
-| **Chain-of-Thought**  | 分步推理，先分析后结论        |
-| **Grounding**         | 基于实际 diff 内容，引用行号  |
-| **Self-Verification** | 输出前自检，确认问题真实存在  |
-| **Structured Output** | 强制表格格式，减少自由发挥    |
-| **Confidence Score**  | 标注置信度，区分确定/疑似问题 |
+审计代码变更，输出结构化报告。
 
 ---
 
-## 执行流程
+## 执行
 
-```
-1. 范围 → 2. 规则 → 3. Diff → 4. 推理 → 5. 验证 → 6. 自检 → 7. 报告
-```
-
-### Step 1-3: 数据收集
-
-```bash
-git diff --cached --name-only || git diff --name-only
-```
-
-### Step 4: Chain-of-Thought 推理
-
-对每个文件：
-```
-思考过程：
-1. 这是什么语言/框架？
-2. 变更了什么功能？
-3. 逐行检查：
-   - 安全性：是否涉及用户输入、数据库、认证？
-   - Bug：是否有空值、资源、边界问题？
-   - 规范：是否符合语言惯用法？
-4. 只有当我**确信**存在问题时才报告
-```
-
-### Step 5: 执行验证
-
-| 语言       | 验证命令                         |
-| ---------- | -------------------------------- |
-| Go         | `go build ./... && go vet ./...` |
-| TypeScript | `npx tsc --noEmit`               |
-
-### Step 6: Self-Verification (关键!)
-
-输出前自问：
-```
-□ 我报告的每个问题，是否在 diff 中有对应代码？
-□ 行号是否准确？
-□ 问题描述是否基于事实而非推测？
-□ 建议是否可行？
-```
-
-**原则**: 宁可漏报，不可误报。
-
-### Step 7: 生成报告
+1. **获取变更**: `git diff --cached` 或 `git diff`
+2. **加载上下文**: 读取 `.code-review.yaml` (如有)
+3. **运行检查**: 执行语言对应的 linter
+4. **深度审计**: 安全/稳定性/性能/架构
+5. **输出报告**: 遵循下方格式
 
 ---
 
-## 输出格式
+## 报告格式
 
-```markdown
-# 📋 Code Review Report
+### 通过
+```
+✅ Code Review 通过
+审查文件: 5 个 | 静态检查: 通过
+```
 
-**时间**: YYYY-MM-DD HH:mm
-**范围**: staged | working | branch
-**文件数**: N
+### 发现问题
+```
+🚨 发现 4 个审计项 (严重: 1, 高危: 2, 中等: 1)
 
-## � 发现问题
+┌───────────┬──────────┬─────────────────────┬──────────────┐
+│ 级别      │ 类别     │ 位置                │ 问题 (置信度) │
+├───────────┼──────────┼─────────────────────┼──────────────┤
+│ 🔴 严重   │ 安全     │ pkg/db/query.go:42  │ SQL 注入 (高) │
+│ 🟠 高危   │ 性能     │ api/handler.go:78   │ N+1 查询 (中) │
+│ 🟠 高危   │ 稳定性   │ store/mem.go:105    │ nil 风险 (高) │
+│ 🟡 中等   │ 架构     │ router/routes.go:23 │ 循环依赖 (中) │
+└───────────┴──────────┴─────────────────────┴──────────────┘
 
-### 🔒 Critical [置信度: 高/中]
-| 文件    | 行  | 问题     | 证据                     | 建议         |
-| ------- | --- | -------- | ------------------------ | ------------ |
-| file.go | 42  | SQL 注入 | `query := "..." + input` | 用参数化查询 |
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### ⚠️ High [置信度: 高/中]
-| 文件 | 行  | 问题 | 证据 | 建议 |
-| ---- | --- | ---- | ---- | ---- |
+[🔴 严重] 安全 - SQL 注入
+├─ pkg/db/query.go:42
+├─ 证据: `query := "SELECT * FROM users WHERE id = " + userId`
+├─ 影响: 攻击者可执行任意 SQL
+└─ 修复: db.Query("SELECT ... WHERE id = ?", userId)
 
-### 💡 Medium
-| 文件 | 行  | 问题 | 建议 |
-| ---- | --- | ---- | ---- |
+[🟠 高危] 性能 - N+1 查询
+├─ api/handler.go:78
+├─ 证据: 循环中调用 repo.GetPosts(user.ID)
+├─ 影响: N 用户 → N+1 次查询
+└─ 修复: 使用 WHERE IN 预加载
 
-## ✅ 验证通过
-- [x] `go build` ✓
-- [x] `go vet` ✓
+[🟠 高危] 稳定性 - nil 指针风险
+├─ store/mem.go:105
+├─ 证据: `return s.cache[id].Value` (未检查 key 存在)
+├─ 影响: key 不存在时 panic
+└─ 修复: 先检查 `ok := s.cache[id]`
 
-## 📊 统计
-Critical: X | High: Y | Medium: Z
-
-## 结论
-✅ 可提交 / 🚨 需修复
+[🟡 中等] 架构 - 循环依赖
+├─ router/routes.go:23
+├─ 证据: import "myapp/handler" (handler 反向 import router)
+├─ 影响: 编译循环依赖
+└─ 修复: 提取接口到独立包
 ```
 
 ---
 
-## 置信度标准
+## 审计标准
 
-| 级别   | 定义         | 条件                     |
-| ------ | ------------ | ------------------------ |
-| **高** | 确定存在问题 | 代码模式明确匹配已知漏洞 |
-| **中** | 可能存在问题 | 需开发者确认上下文       |
+| 级别   | 判据                           |
+| ------ | ------------------------------ |
+| 🔴 严重 | 可利用漏洞、确认崩溃、数据丢失 |
+| 🟠 高危 | 明确 bug、可复现、重大反模式   |
+| 🟡 中等 | 潜在问题、上下文依赖           |
+| 🟢 低危 | 风格、次要优化                 |
 
-> **只报告"高"置信度的 Critical 问题**
-
----
-
-## 降幻觉策略
-
-| 策略           | 实现                         |
-| -------------- | ---------------------------- |
-| **引用证据**   | 每个问题必须引用实际代码片段 |
-| **标注行号**   | 必须提供准确行号             |
-| **不推测**     | 只分析 diff 中实际存在的代码 |
-| **不假设**     | 不假设 diff 外的代码逻辑     |
-| **承认不确定** | 用"可能"而非"一定"           |
+| 类别 | 覆盖范围                        |
+| ---- | ------------------------------- |
+| 安全 | 注入、加密、授权、XSS、凭据泄露 |
+| 稳定 | 竞态、泄漏、错误处理、边界条件  |
+| 性能 | 算法复杂度、N+1 查询、阻塞 I/O  |
+| 架构 | 语言惯用法、耦合度、可维护性    |
 
 ---
 
-## 项目规则 (可选)
+## 约束
 
-如存在 `.code-review.yaml`：
+- **只读**: 绝不修改代码
+- **证据驱动**: 每个问题必须包含 file:line 和代码片段
+- **拒绝幻觉**: 无直接证据不报告
+
+---
+
+## 项目上下文
+
+`.code-review.yaml` (可选):
 
 ```yaml
-exclude: [vendor/, node_modules/]
-checks:
-  i18n: "make check-i18n"
+overrides:
+  security:
+    ignore:
+      - "demo/* 允许不安全示例"
+      - "test/* 允许测试凭证"
+  architecture:
+    conventions:
+      go:
+        - "错误绝不静默忽略"
+        - "包名小写单词"
+      typescript:
+        - "组件 PascalCase"
+        - "Hooks use 前缀"
 ```
-
----
-
-## 协作
-
-| 场景     | 协作              |
-| -------- | ----------------- |
-| 审查通过 | → `atomic-commit` |
-| 需修复   | → 开发者手动      |
-
----
-
-## 不做什么
-
-- ❌ 修改代码
-- ❌ 推测 diff 外的问题
-- ❌ 报告不确定的问题为 Critical

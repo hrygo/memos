@@ -27,7 +27,7 @@ export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
   ({ className, src, alt, lazy = true, widthHint, heightHint, ...props }, ref) => {
     const [isLoaded, setIsLoaded] = React.useState(false);
-    const [hasError, setHasError] = React.useState(false);
+    const [_hasError, setHasError] = React.useState(false);
 
     return (
       <img

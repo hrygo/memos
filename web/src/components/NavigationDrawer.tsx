@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useInstance } from "@/contexts/InstanceContext";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { Routes } from "@/router";
 import Navigation from "./Navigation";
 
 const NavigationDrawer = () => {

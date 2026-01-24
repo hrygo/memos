@@ -102,7 +102,6 @@ const Navigation = (props: Props) => {
                   : "border-transparent hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-border opacity-80",
               )
             }
-            aria-current={({ isActive }) => (isActive ? "page" : undefined)}
             aria-label={navLink.title}
             key={navLink.id}
             to={navLink.path}

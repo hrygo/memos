@@ -172,7 +172,7 @@ export function QuickTemplates({ onSelect, className, templates = DEFAULT_TEMPLA
     <div className={cn("flex flex-wrap gap-1.5", className)}>
       {templates.map((template) => {
         const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
-        const displayTitle = template.i18nKey ? (t(template.i18nKey) || template.title) : template.title;
+        const displayTitle = template.i18nKey ? (t(template.i18nKey as any) || template.title) : template.title;
 
         return (
           <button
@@ -270,7 +270,7 @@ export function QuickTemplateDropdown({ onSelect, className, open, onToggle, dis
       <div className="flex flex-col gap-0.5" role="presentation">
         {DEFAULT_TEMPLATES.map((template) => {
           const IconComponent = ICON_MAP[template.icon] || ICON_MAP.users;
-          const displayTitle = template.i18nKey ? (t(template.i18nKey) || template.title) : template.title;
+          const displayTitle = template.i18nKey ? (t(template.i18nKey as any) || template.title) : template.title;
 
           return (
             <button

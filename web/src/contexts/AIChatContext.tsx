@@ -111,10 +111,10 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     return {
       id: String(pb.id),
       title: pb.title,
-      parrotId: pb.parrotId === AgentType.AGENT_TYPE_MEMO ? ParrotAgentType.MEMO :
-        pb.parrotId === AgentType.AGENT_TYPE_SCHEDULE ? ParrotAgentType.SCHEDULE :
-          pb.parrotId === AgentType.AGENT_TYPE_AMAZING ? ParrotAgentType.AMAZING :
-            pb.parrotId === AgentType.AGENT_TYPE_CREATIVE ? ParrotAgentType.CREATIVE :
+      parrotId: pb.parrotId === AgentType.MEMO ? ParrotAgentType.MEMO :
+        pb.parrotId === AgentType.SCHEDULE ? ParrotAgentType.SCHEDULE :
+          pb.parrotId === AgentType.AMAZING ? ParrotAgentType.AMAZING :
+            pb.parrotId === AgentType.CREATIVE ? ParrotAgentType.CREATIVE :
               ParrotAgentType.DEFAULT,
       createdAt: Number(pb.createdTs) * 1000,
       updatedAt: Number(pb.updatedTs) * 1000,
@@ -141,11 +141,11 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     for (const local of localConversations) {
       try {
         // Create conversation
-        const parrotId = local.parrotId === ParrotAgentType.MEMO ? AgentType.AGENT_TYPE_MEMO :
-          local.parrotId === ParrotAgentType.SCHEDULE ? AgentType.AGENT_TYPE_SCHEDULE :
-            local.parrotId === ParrotAgentType.AMAZING ? AgentType.AGENT_TYPE_AMAZING :
-              local.parrotId === ParrotAgentType.CREATIVE ? AgentType.AGENT_TYPE_CREATIVE :
-                AgentType.AGENT_TYPE_DEFAULT;
+        const parrotId = local.parrotId === ParrotAgentType.MEMO ? AgentType.MEMO :
+          local.parrotId === ParrotAgentType.SCHEDULE ? AgentType.SCHEDULE :
+            local.parrotId === ParrotAgentType.AMAZING ? AgentType.AMAZING :
+              local.parrotId === ParrotAgentType.CREATIVE ? AgentType.CREATIVE :
+                AgentType.DEFAULT;
 
         const pb = await aiServiceClient.createAIConversation({
           title: local.title,
@@ -173,11 +173,11 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     const tempId = generateId(); // Temporary ID for UI
 
     // Asynchronously create on backend
-    const agentType = parrotId === ParrotAgentType.MEMO ? AgentType.AGENT_TYPE_MEMO :
-      parrotId === ParrotAgentType.SCHEDULE ? AgentType.AGENT_TYPE_SCHEDULE :
-        parrotId === ParrotAgentType.AMAZING ? AgentType.AGENT_TYPE_AMAZING :
-          parrotId === ParrotAgentType.CREATIVE ? AgentType.AGENT_TYPE_CREATIVE :
-            AgentType.AGENT_TYPE_DEFAULT;
+    const agentType = parrotId === ParrotAgentType.MEMO ? AgentType.MEMO :
+      parrotId === ParrotAgentType.SCHEDULE ? AgentType.SCHEDULE :
+        parrotId === ParrotAgentType.AMAZING ? AgentType.AMAZING :
+          parrotId === ParrotAgentType.CREATIVE ? AgentType.CREATIVE :
+            AgentType.DEFAULT;
 
     aiServiceClient.createAIConversation({
       title: title || getDefaultTitle(parrotId),

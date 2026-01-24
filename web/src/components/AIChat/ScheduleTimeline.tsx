@@ -24,10 +24,11 @@ interface DateStripProps {
   onDateSelect: (date: Dayjs) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
-  t: (key: string) => string;
 }
 
-const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevWeek, onNextWeek, t }: DateStripProps) => {
+const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevWeek, onNextWeek }: DateStripProps) => {
+  const t = useTranslate();
+
   const todayStr = dayjs().format("YYYY-MM-DD");
   const startOfWeek = currentDate.startOf("week");
 
@@ -168,7 +169,6 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
           onDateSelect={handleDateSelect}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
-          t={t}
         />
       </div>
 

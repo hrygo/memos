@@ -134,8 +134,8 @@ export function useScheduleFlow(options: UseScheduleFlowOptions = {}): UseSchedu
         "assistant",
         t
           ? (t("schedule.quick-input.template-applied-message") as string)
-              .replace("{title}", template.title)
-              .replace("{duration}", String(template.duration))
+            .replace("{title}", template.title)
+            .replace("{duration}", String(template.duration))
           : `Applied "${template.title}" template, duration ${template.duration} minutes`,
       );
 
@@ -202,14 +202,14 @@ export function generatePromptForStep(
     case "location":
       return (t?.("schedule.flow.ask-location") as string) ?? "";
     case "confirmation": {
-      const title = scheduleData.title || (t?.("schedule.quick-input.default-title") as string) ?? "";
+      const title = scheduleData.title || ((t?.("schedule.quick-input.default-title") as string) ?? "");
       const timeStr = scheduleData.startTs
         ? new Date(Number(scheduleData.startTs) * 1000).toLocaleString("zh-CN", {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
         : (t?.("schedule.time.tbd") as string) ?? "";
       return `${(t?.("schedule.quick-input.confirm-create") as string) ?? ""}：${title}\n${(t?.("schedule.time.label") as string) ?? ""}：${timeStr}`;
     }
