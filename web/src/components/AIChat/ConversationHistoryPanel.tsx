@@ -24,6 +24,13 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     selectConversation,
   } = useAIChat();
 
+  // Track which conversations have been loaded (have non-empty messages)
+  const loadedConversationIds = new Set(
+    conversations
+      .filter(c => c.messages.length > 0)
+      .map(c => c.id)
+  );
+
   const handleSelectConversation = (id: string) => {
     selectConversation(id);
     onSelectConversation?.(id);
@@ -74,6 +81,7 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
                 isActive={conversation.id === state.currentConversationId}
                 onSelect={handleSelectConversation}
                 onResetContext={handleResetContext}
+                isLoaded={loadedConversationIds.has(conversation.id)}
               />
             ))}
           </div>
