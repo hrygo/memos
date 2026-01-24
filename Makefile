@@ -13,6 +13,7 @@ endif
 .PHONY: logs-backend logs-frontend logs-postgres logs-follow-backend logs-follow-frontend logs-follow-postgres
 .PHONY: git-status git-diff git-log git-push
 .PHONY: check-branch check-build check-test check-i18n check-i18n-hardcode
+.PHONY: prod-build prod-deploy prod-logs prod-status prod-backup prod-stop prod-restart
 
 .DEFAULT_GOAL := help
 
@@ -264,6 +265,48 @@ check-i18n-hardcode: ## 检查前端硬编码文本
 check-all: check-build check-test check-i18n ## 运行所有检查
 
 # ===================================================================
+# 生产部署 (2C2G 单机)
+# ===================================================================
+
+##@ 生产部署
+
+DEPLOY_DIR := deploy/aliyun
+DEPLOY_SCRIPT := $(DEPLOY_DIR)/deploy.sh
+
+prod-build: ## 构建生产镜像
+	@echo "Building production image..."
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) build
+
+prod-deploy: ## 部署到生产环境
+	@echo "Deploying to production..."
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) deploy
+
+prod-restart: ## 重启生产服务
+	@echo "Restarting production services..."
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) restart
+
+prod-stop: ## 停止生产服务
+	@echo "Stopping production services..."
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) stop
+
+prod-logs: ## 查看生产服务日志
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) logs
+
+prod-status: ## 查看生产服务状态
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) status
+
+prod-backup: ## 备份生产数据库
+	@echo "Backing up production database..."
+	@chmod +x $(DEPLOY_SCRIPT)
+	@$(DEPLOY_SCRIPT) backup
+
+# ===================================================================
 # 帮助
 # ===================================================================
 
@@ -325,6 +368,14 @@ help: ## 显示此帮助信息
 	@printf "  check-i18n           检查 i18n 翻译完整性 (强制)\n"
 	@printf "  check-i18n-hardcode  检查前端硬编码文本\n"
 	@printf "  check-all            运行所有检查\n"
+	@printf "\n\033[1m生产部署 (2C2G 单机):\033[0m\n"
+	@printf "  prod-build           构建生产镜像\n"
+	@printf "  prod-deploy          部署到生产环境\n"
+	@printf "  prod-restart         重启生产服务\n"
+	@printf "  prod-stop            停止生产服务\n"
+	@printf "  prod-logs            查看生产服务日志\n"
+	@printf "  prod-status          查看生产服务状态\n"
+	@printf "  prod-backup          备份生产数据库\n"
 	@printf "\n\033[1mQuick Start:\033[0m\n"
 	@printf "  1. make docker-up               # 启动 PostgreSQL\n"
 	@printf "  2. make start                   # 启动后端 + 前端\n"
