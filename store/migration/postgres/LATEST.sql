@@ -267,3 +267,9 @@ CREATE TRIGGER trigger_ai_conversation_updated_ts
   BEFORE UPDATE ON ai_conversation
   FOR EACH ROW
   EXECUTE FUNCTION update_ai_conversation_updated_ts();
+-- =============================================================================
+-- 版本记录
+-- =============================================================================
+INSERT INTO system_setting (name, value, description) VALUES
+('schema_version', '0.51.0', '数据库 schema 版本')
+ON CONFLICT (name) DO NOTHING;
