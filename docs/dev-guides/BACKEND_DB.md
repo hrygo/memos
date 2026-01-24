@@ -7,6 +7,7 @@
 - **AI Features**: Full support (pgvector, hybrid search, reranking)
 - **Recommended for**: All production deployments
 - **Maintained**: Actively maintained and tested
+- **Port**: 25432 (development)
 
 ### SQLite (Limited Support)
 - **Status**: Development and testing only
@@ -18,15 +19,17 @@
   - No full-text search (FTS5 not guaranteed)
 - **Maintained**: Best-effort basis only
 
-### MySQL (Deprecated - Unsupported)
+### MySQL (Removed)
 - **Status**: **NOT SUPPORTED** - All MySQL support has been removed
 - **Migration**: Use PostgreSQL for production or SQLite for development
-- **Historical**: MySQL support was removed due to lack of AI features and maintenance burden
+- **Reason**: MySQL support was removed due to lack of AI features and maintenance burden
 
 ## Backend Development
 
-- **Style**: Standard Go Project Layout
-- **Logging**: Use `log/slog`
+### Tech Stack
+- **Language**: Go 1.25+
+- **Framework**: Echo (HTTP) + Connect RPC (gRPC-HTTP transcoding)
+- **Logging**: `log/slog`
 - **Configuration**: Viper for environment variables
 
 ### API Design Pattern
@@ -49,6 +52,7 @@
 - `make start` / `make stop`: Start/stop all services
 - `make status`: Check service status
 - `make logs [backend|postgres]`: View logs
+- `make logs-follow-backend`: Real-time backend logs
 - `make run` / `make dev`: Start backend only (requires DB running first)
 - `make web`: Start frontend only
 
@@ -99,3 +103,24 @@ MEMOS_AI_DEEPSEEK_API_KEY=your_key
 1. System environment variables (direnv supported)
 2. `.env` file
 3. Code defaults
+
+## Key Components
+
+### AI Agent Routing
+All AI chat logic routes through `ParrotRouter` in `plugin/ai/agent/`:
+- **MemoParrot** (灰灰): Memo search and retrieval
+- **ScheduleParrot** (金刚): Schedule management via `scheduler.go`
+- **AmazingParrot** (惊奇): Combined memo + schedule
+- **CreativeParrot** (灵灵): Creative writing
+
+### Query Engine
+Located in `server/queryengine/`:
+- Intent detection and routing
+- Smart query strategies based on time keywords
+- Adaptive retrieval selection
+
+### Retrieval System
+Located in `server/retrieval/`:
+- Hybrid BM25 + Vector search
+- Reranking pipeline
+- Caching layer

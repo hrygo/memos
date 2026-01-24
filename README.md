@@ -24,11 +24,9 @@ Memos uses a **multi-agent architecture** where specialized AI assistants (model
 | ⭐ `AMAZING`  | **惊奇** | 亚马逊鹦鹉 (Amazon)       | Comprehensive Assistant | Parallel memo + schedule retrieval, integrated analysis           |
 | 💡 `CREATIVE` | **灵灵** | 虎皮鹦鹉 (Budgerigar)     | Creative Writing        | Brainstorming, content generation, text improvement               |
 
-### Agent Interaction
+### Agent Selection
 
-- **@ Symbol Trigger**: Type `@` in the chat to invoke agent selection menu
-- **Quick Action Cards**: Click agent cards in the Parrot Hub for instant switching
-- **Metacognition**: Each parrot has self-awareness of its capabilities, limitations, and personality
+Use the `@` symbol in the AI chat to switch between agents, or click agent cards in the Parrot Hub.
 
 ### Agent Technical Details
 
@@ -267,34 +265,57 @@ docker run -d \
 
 ```
 memos/
-├── server/                    # Go backend
-│   ├── router/api/v1/        # API handlers
-│   └── ...
-├── plugin/ai/                # AI components
-│   ├── agent/                # Parrot agents
+├── cmd/memos/                # Main application entry point
+├── server/                   # Go backend
+│   ├── router/api/v1/       # API handlers (Connect RPC)
+│   ├── queryengine/         # Query routing & intent detection
+│   ├── retrieval/           # Adaptive retrieval (BM25 + Vector)
+│   ├── runner/              # Background task runners
+│   ├── scheduler/           # Schedule management
+│   └── service/             # Business logic layer
+├── plugin/ai/               # AI components
+│   ├── agent/               # Parrot agents
 │   │   ├── memo_parrot.go
 │   │   ├── schedule_parrot.go
 │   │   ├── amazing_parrot.go
-│   │   └── creative_parrot.go
-│   ├── embedding/            # Embedding service
-│   ├── reranker/             # Reranking service
-│   └── llm/                  # LLM service
-├── server/queryengine/       # Query routing
-├── server/retrieval/         # Adaptive retrieval
-├── web/                      # React frontend
-│   └── src/components/AIChat/ # Chat UI components
-├── proto/                    # Protocol buffers
-└── docs/                     # Documentation
+│   │   ├── creative_parrot.go
+│   │   ├── scheduler.go     # Schedule agent orchestrator
+│   │   └── tools/           # Agent tools (scheduler, memo_search)
+│   ├── embedding.go         # Embedding service
+│   ├── reranker.go          # Reranking service
+│   └── llm.go               # LLM service
+├── store/                   # Data storage layer
+│   └── db/                  # Database implementations
+│       ├── postgres/        # PostgreSQL (production)
+│       └── sqlite/          # SQLite (development)
+├── proto/                   # Protocol buffers
+├── web/                     # React frontend
+│   └── src/
+│       ├── components/      # UI components
+│       ├── layouts/         # Page layouts
+│       ├── pages/           # Route pages
+│       └── hooks/           # React hooks
+├── docs/                    # Documentation
+│   └── dev-guides/          # Developer guides
+└── scripts/                 # Development & deployment scripts
 ```
 
 ---
 
 ## 📖 Documentation
 
+### Developer Guides
+| Document                                  | Description                                     |
+| ----------------------------------------- | ----------------------------------------------- |
+| [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)   | Backend development & database policy           |
+| [FRONTEND.md](docs/dev-guides/FRONTEND.md)       | Frontend architecture & layout patterns         |
+| [ARCHITECTURE.md](docs/dev-guides/ARCHITECTURE.md) | Project architecture & Parrot Agent details     |
+| [QUICKSTART_AGENT.md](docs/dev-guides/QUICKSTART_AGENT.md) | Agent quick start guide                         |
+
+### Design Documents
 | Document                                                                            | Description                                     |
 | ----------------------------------------------------------------------------------- | ----------------------------------------------- |
 | [MEMOS_REFACTOR_PLAN.md](docs/MEMOS_REFACTOR_PLAN.md)                               | Full refactoring roadmap (6-8 months, 5 phases) |
-| [PARROT_AGENTS_IMPLEMENTATION_PLAN.md](docs/PARROT_AGENTS_IMPLEMENTATION_PLAN.md)   | Detailed implementation plan                    |
 | [parrot-agents-final-technical-spec.md](docs/parrot-agents-final-technical-spec.md) | Technical specification v2.0                    |
 | [parrot-agents-executive-summary-v2.md](docs/parrot-agents-executive-summary-v2.md) | Executive summary                               |
 

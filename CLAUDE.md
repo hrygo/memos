@@ -47,11 +47,20 @@
 | **Backend & DB** | `docs/dev-guides/BACKEND_DB.md`   | API Design, DB Policy, Docker workflows, Config (.env), Commands. |
 | **Frontend**     | `docs/dev-guides/FRONTEND.md`     | Layout Architecture (Feature Layouts), Styling, Commands.         |
 | **Architecture** | `docs/dev-guides/ARCHITECTURE.md` | Project Structure, Core Components, **Parrot Agent** details.     |
+| **Agent Dev**    | `docs/dev-guides/QUICKSTART_AGENT.md` | Agent quick start guide and testing.                            |
 
 ### Quick Path Reference
 
 *   **API Handlers**: `server/router/api/v1/`
 *   **AI Agents**: `plugin/ai/agent/`
+*   **Query Engine**: `server/queryengine/`
+*   **Retrieval**: `server/retrieval/`
 *   **Frontend Pages**: `web/src/pages/`
 *   **Layouts**: `web/src/layouts/`
 *   **DB Models**: `store/db/postgres/`
+
+### Key Files
+
+*   **Agent Routing**: `plugin/ai/agent/parrot_router.go`
+*   **Scheduler Agent**: `plugin/ai/agent/scheduler.go`
+*   **AI Chat Handler**: `server/router/api/v1/ai_service_chat.go`

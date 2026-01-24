@@ -256,6 +256,6 @@ go test ./server/service/schedule/... -cover
 
 ## 📚 更多文档
 
-- [完整实施报告](docs/agent_architecture/agent_scheduler/COMPLETION_REPORT.md)
-- [手动执行详细指南](docs/agent_architecture/agent_scheduler/MANUAL_EXECUTION_GUIDE.md)
-- [架构设计文档](docs/agent_architecture/RP_001_schedule_agent_refactor.md)
+- [架构文档](ARCHITECTURE.md) - 项目架构和 Parrot Agent 详情
+- [后端开发指南](BACKEND_DB.md) - 后端开发和数据库策略
+- [前端开发指南](FRONTEND.md) - 前端架构和布局模式

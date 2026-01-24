@@ -1,15 +1,20 @@
 # Frontend Development Guide
 
+## Tech Stack
+- **Framework**: React 18 with Vite 7
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4, Radix UI components
+- **State**: TanStack Query (React Query)
+- **Internationalization**: `web/src/locales/` (i18next)
+- **Markdown**: React Markdown with KaTeX, Mermaid, GFM support
+- **Calendar**: FullCalendar for schedule visualization
+
 ## Workflow
 - **Commands** (run in `web/` directory):
-  - `pnpm dev`: Start dev server
+  - `pnpm dev`: Start dev server (port 25173)
   - `pnpm build`: Build for production
   - `pnpm lint`: Run TypeScript and Biome checks
   - `pnpm lint:fix`: Auto-fix linting issues
-- **Styling**: Tailwind CSS 4 (primary), Radix UI components
-- **State**: TanStack Query (React Query)
-- **Internationalization**: `web/src/locales/`
-- **Markdown**: React Markdown with KaTeX, Mermaid, GFM support
 
 ## Layout Architecture
 
@@ -27,6 +32,12 @@ RootLayout (global Nav + auth)
     └── ScheduleLayout (fixed sidebar: ScheduleCalendar)
         └── /schedule
 ```
+
+### Layout Files
+- `web/src/layouts/RootLayout.tsx` - Global navigation and auth
+- `web/src/layouts/MainLayout.tsx` - Collapsible sidebar for memos
+- `web/src/layouts/AIChatLayout.tsx` - Fixed sidebar for AI chat
+- `web/src/layouts/ScheduleLayout.tsx` - Fixed sidebar for schedules
 
 ### Feature Layout Template
 
