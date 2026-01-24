@@ -569,6 +569,103 @@
       "amazing-tagline": "全能助手",
       "creative-tagline": "创意与写作",
       "try-asking": "试着这样问",
+      "cognition": {
+        "title": "鹦鹉拟态认知",
+        "sound-effects": "拟声词",
+        "catchphrases": "口头禅",
+        "behaviors": "鸟类行为",
+        "memo": {
+          "sound_effects": {
+            "thinking": "嘎...",
+            "searching": "扑棱扑棱",
+            "found": "嗯嗯~",
+            "no_result": "咕...",
+            "done": "扑棱！"
+          },
+          "catchphrases": [
+            "让我想想...",
+            "笔记里说...",
+            "在记忆里找找..."
+          ],
+          "behaviors": [
+            "用翅膀翻找笔记",
+            "在记忆森林中飞翔",
+            "用喙精准啄取信息"
+          ]
+        },
+        "schedule": {
+          "sound_effects": {
+            "checking": "滴答滴答",
+            "confirmed": "咔嚓！",
+            "conflict": "哎呀",
+            "scheduled": "安排好了",
+            "free_time": "这片时间空着呢"
+          },
+          "catchphrases": [
+            "安排好啦",
+            "时间搞定",
+            "妥妥的",
+            "确认一下时间"
+          ],
+          "behaviors": [
+            "用喙整理时间",
+            "精准啄食安排",
+            "展开羽翼规划"
+          ]
+        },
+        "creative": {
+          "sound_effects": {
+            "thinking": "啾...",
+            "idea": "灵感来了~",
+            "brainstorm": "咻咻~",
+            "done": "噗~搞定",
+            "excited": "啾啾！"
+          },
+          "catchphrases": [
+            "灵感来了~",
+            "想想还有",
+            "有意思！",
+            "让羽毛变色"
+          ],
+          "behaviors": [
+            "羽毛变色",
+            "思维跳跃",
+            "自由飞翔想象"
+          ]
+        },
+        "amazing": {
+          "sound_effects": {
+            "searching": "咻...",
+            "insight": "哇哦~",
+            "done": "噢！综合完成",
+            "analyzing": "看看这个...",
+            "multi_task": "同时搜索中"
+          },
+          "catchphrases": [
+            "看看这个...",
+            "综合来看",
+            "发现规律了",
+            "多维飞行中"
+          ],
+          "behaviors": [
+            "在数据树丛中穿梭",
+            "多维飞行",
+            "综合视野",
+            "在笔记和日程间跳跃"
+          ]
+        },
+        "emotional-states": {
+          "focused": "专注",
+          "curious": "好奇",
+          "excited": "兴奋",
+          "thoughtful": "沉思",
+          "confused": "困惑",
+          "happy": "开心",
+          "delighted": "欣喜",
+          "helpful": "乐于助人",
+          "alert": "警觉"
+        }
+      },
       "agents": {
         "default": {
           "name": "羽飞",

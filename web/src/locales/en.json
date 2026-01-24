@@ -569,6 +569,103 @@
       "amazing-tagline": "All-in-One",
       "creative-tagline": "Create & Write",
       "try-asking": "Try asking",
+      "cognition": {
+        "title": "Parrot Cognition",
+        "sound-effects": "Sound Effects",
+        "catchphrases": "Catchphrases",
+        "behaviors": "Avian Behaviors",
+        "memo": {
+          "sound_effects": {
+            "thinking": "Hmm...",
+            "searching": "flutter flutter",
+            "found": "Oh~",
+            "no_result": "hmm...",
+            "done": "flap!"
+          },
+          "catchphrases": [
+            "Let me think...",
+            "Notes say...",
+            "Searching my memory..."
+          ],
+          "behaviors": [
+            "Fluttering wings through notes",
+            "Soaring through memory forest",
+            "Pecking precisely with beak"
+          ]
+        },
+        "schedule": {
+          "sound_effects": {
+            "checking": "tick tock",
+            "confirmed": "click!",
+            "conflict": "oops",
+            "scheduled": "arranged",
+            "free_time": "this slot is free"
+          },
+          "catchphrases": [
+            "All arranged",
+            "Time handled",
+            "Got it",
+            "Checking the time"
+          ],
+          "behaviors": [
+            "Organizing time with beak",
+            "Precise pecking arrangements",
+            "Spreading wings to plan"
+          ]
+        },
+        "creative": {
+          "sound_effects": {
+            "thinking": "chirp...",
+            "idea": "inspiration coming~",
+            "brainstorm": "whoosh~",
+            "done": "pop~ done",
+            "excited": "chirp chirp!"
+          },
+          "catchphrases": [
+            "Inspiration coming~",
+            "What else...",
+            "Interesting!",
+            "Changing feather colors"
+          ],
+          "behaviors": [
+            "Feather color changing",
+            "Mind jumping",
+            "Flying freely in imagination"
+          ]
+        },
+        "amazing": {
+          "sound_effects": {
+            "searching": "whoosh...",
+            "insight": "wow~",
+            "done": "oh! synthesis complete",
+            "analyzing": "look at this...",
+            "multi_task": "searching simultaneously"
+          },
+          "catchphrases": [
+            "Look at this...",
+            "Overall view",
+            "Found a pattern",
+            "Multi-dimensional flight"
+          ],
+          "behaviors": [
+            "Navigating through data bushes",
+            "Multi-dimensional flight",
+            "Comprehensive vision",
+            "Jumping between notes and schedules"
+          ]
+        },
+        "emotional-states": {
+          "focused": "Focused",
+          "curious": "Curious",
+          "excited": "Excited",
+          "thoughtful": "Thoughtful",
+          "confused": "Confused",
+          "happy": "Happy",
+          "delighted": "Delighted",
+          "helpful": "Helpful",
+          "alert": "Alert"
+        }
+      },
       "agents": {
         "default": {
           "name": "Navi",

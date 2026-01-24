@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { ChatItem, ConversationMessage } from "@/types/aichat";
 import { PARROT_ICONS, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
+type CodeComponentProps = React.ComponentProps<"code"> & { inline?: boolean };
+
 interface ChatMessagesProps {
   items: ChatItem[];
   isTyping?: boolean;
@@ -284,8 +286,7 @@ function MessageBubble({
                         ),
                         p: ({ node, ...props }) => <p {...props} className="mb-1 last:mb-0 text-sm leading-relaxed" />,
                         pre: ({ node, ...props }) => <CodeBlock {...props} />,
-                        code: ({ className, children, ...props }: any) => {
-                          const inline = props.inline;
+                        code: ({ className, children, inline, ...props }: CodeComponentProps) => {
                           return inline ? (
                             <code className={cn("px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs", className)} {...props}>
                               {children}

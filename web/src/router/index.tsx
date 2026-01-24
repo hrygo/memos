@@ -1,8 +1,9 @@
 import type { ComponentType } from "react";
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 import Spinner from "@/components/Spinner";
 import { ScheduleProvider } from "@/contexts/ScheduleContext";
 import AIChatLayout from "@/layouts/AIChatLayout";
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
         path: Routes.ROOT,
         element: <RootLayout />,
         children: [
+          { index: true, element: <Navigate to={Routes.CHAT} replace /> },
           {
             element: <MainLayout />,
             children: [

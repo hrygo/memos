@@ -13,6 +13,102 @@ export enum ParrotAgentType {
 }
 
 /**
+ * Emotional state of a parrot
+ * 鹦鹉的情感状态
+ */
+export type EmotionalState = "focused" | "curious" | "excited" | "thoughtful" | "confused" | "happy" | "delighted" | "helpful" | "alert";
+
+/**
+ * Parrot cognition configuration from backend
+ * 鹦鹉认知配置（来自后端）
+ */
+export interface ParrotCognition {
+  emotional_expression?: {
+    default_mood: EmotionalState;
+    sound_effects: Record<string, string>;
+    catchphrases: string[];
+    mood_triggers?: Record<string, EmotionalState>;
+  };
+  avian_behaviors?: string[];
+}
+
+/**
+ * Event to emotional state mapping for frontend inference
+ * 前端推断的事件到情感状态映射
+ */
+export const EVENT_TO_MOOD: Record<string, EmotionalState> = {
+  thinking: "focused",
+  tool_use: "curious",
+  memo_query_result: "excited",
+  schedule_query_result: "happy",
+  schedule_updated: "happy",
+  error: "confused",
+};
+
+/**
+ * Sound effects for each parrot by context
+ * 每只鹦鹉的拟声词（按上下文）
+ */
+export const PARROT_SOUND_EFFECTS: Record<ParrotAgentType, Record<string, string>> = {
+  [ParrotAgentType.MEMO]: {
+    thinking: "嘎...",
+    searching: "扑棱扑棱",
+    found: "嗯嗯~",
+    no_result: "咕...",
+    done: "扑棱！",
+  },
+  [ParrotAgentType.SCHEDULE]: {
+    checking: "滴答滴答",
+    confirmed: "咔嚓！",
+    conflict: "哎呀",
+    scheduled: "安排好了",
+    free_time: "这片时间空着呢",
+  },
+  [ParrotAgentType.CREATIVE]: {
+    thinking: "啾...",
+    idea: "灵感来了~",
+    brainstorm: "咻咻~",
+    done: "噗~搞定",
+    excited: "啾啾！",
+  },
+  [ParrotAgentType.AMAZING]: {
+    searching: "咻...",
+    insight: "哇哦~",
+    done: "噢！综合完成",
+    analyzing: "看看这个...",
+    multi_task: "同时搜索中",
+  },
+  [ParrotAgentType.DEFAULT]: {
+    thinking: "...",
+    done: "✓",
+  },
+};
+
+/**
+ * Catchphrases for each parrot
+ * 每只鹦鹉的口头禅
+ */
+export const PARROT_CATCHPHRASES: Record<ParrotAgentType, string[]> = {
+  [ParrotAgentType.MEMO]: ["让我想想...", "笔记里说...", "在记忆里找找..."],
+  [ParrotAgentType.SCHEDULE]: ["安排好啦", "时间搞定", "妥妥的"],
+  [ParrotAgentType.CREATIVE]: ["灵感来了~", "想想还有", "有意思！"],
+  [ParrotAgentType.AMAZING]: ["看看这个...", "综合来看", "发现规律了"],
+  [ParrotAgentType.DEFAULT]: [],
+};
+
+/**
+ * Avian behaviors for each parrot
+ * 每只鹦鹉的鸟类行为描述
+ */
+export const PARROT_BEHAVIORS: Record<ParrotAgentType, string[]> = {
+  [ParrotAgentType.MEMO]: ["用翅膀翻找笔记", "在记忆森林中飞翔", "用喙精准啄取信息"],
+  [ParrotAgentType.SCHEDULE]: ["用喙整理时间", "精准啄食安排", "展开羽翼规划"],
+  [ParrotAgentType.CREATIVE]: ["羽毛变色", "思维跳跃", "自由飞翔想象"],
+  [ParrotAgentType.AMAZING]: ["在数据树丛中穿梭", "多维飞行", "综合视野"],
+  [ParrotAgentType.DEFAULT]: [],
+};
+
+/**
  * Convert AgentType enum from proto to ParrotAgentType
  * 将 proto 的 AgentType 枚举转换为 ParrotAgentType
  */

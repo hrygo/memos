@@ -101,15 +101,14 @@ func (s *APIV1Service) CreateAttachment(ctx context.Context, request *v1pb.Creat
 		slog.Error("failed to get instance storage setting", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to get instance storage setting")
 	}
-	size := binary.Size(request.Attachment.Content)
 	uploadSizeLimit := int(instanceStorageSetting.UploadSizeLimitMb) * MebiByte
 	if uploadSizeLimit == 0 {
 		uploadSizeLimit = MaxUploadBufferSizeBytes
 	}
-	if size > uploadSizeLimit {
+	if binary.Size(request.Attachment.Content) > uploadSizeLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "file size exceeds the limit")
 	}
-	create.Size = int64(size)
+	create.Size = int64(binary.Size(request.Attachment.Content))
 	create.Blob = request.Attachment.Content
 
 	if err := SaveAttachmentBlob(ctx, s.Profile, s.Store, create); err != nil {

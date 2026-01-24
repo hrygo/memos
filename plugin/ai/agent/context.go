@@ -5,6 +5,7 @@ package agent
 
 import (
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -425,18 +426,9 @@ func (s *ContextStore) CleanupOld(maxAge time.Duration) int {
 
 // Helper functions
 
+// lower converts a string to lowercase using the standard library for proper Unicode support.
 func lower(s string) string {
-	// Simple toLower for common ASCII
-	result := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c >= 'A' && c <= 'Z' {
-			result[i] = c + 32
-		} else {
-			result[i] = c
-		}
-	}
-	return string(result)
+	return strings.ToLower(s)
 }
 
 func contains(s string, substrings []string) bool {

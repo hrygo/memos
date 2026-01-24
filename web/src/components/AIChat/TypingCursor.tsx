@@ -1,11 +1,24 @@
 import { cn } from "@/lib/utils";
 import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
+import "./animations.css";
 
 interface TypingCursorProps {
   active?: boolean;
   parrotId?: ParrotAgentType;
-  variant?: "cursor" | "dots" | "wave";
+  variant?: "cursor" | "dots" | "wave" | "parrot";
 }
+
+/**
+ * Parrot-specific animation name mapping
+ * 鹦鹉特定的动画名称映射
+ */
+const PARROT_ANIMATIONS: Record<string, string> = {
+  [ParrotAgentType.MEMO]: "memoFloat",
+  [ParrotAgentType.SCHEDULE]: "scheduleTick",
+  [ParrotAgentType.CREATIVE]: "creativeSpark",
+  [ParrotAgentType.AMAZING]: "amazingSpin",
+  [ParrotAgentType.DEFAULT]: "defaultPulse",
+};
 
 /**
  * AI Native Typing Indicator
@@ -33,19 +46,32 @@ const TypingCursor = ({ active = true, parrotId, variant = "dots" }: TypingCurso
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className={cn("w-1 h-3 rounded-full", theme.iconBg.replace("bg-", "text-").split(" ")[0])}
+            className={cn("w-1 h-3 rounded-full", theme.iconBg)}
             style={{
-              animation: `wave 1.2s ease-in-out infinite`,
+              animation: "wave 1.2s ease-in-out infinite",
               animationDelay: `${i * 0.15}s`,
             }}
           />
         ))}
-        <style>{`
-          @keyframes wave {
-            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
-            50% { transform: scaleY(1.5); opacity: 1; }
-          }
-        `}</style>
+      </span>
+    );
+  }
+
+  // Parrot variant - uses parrot-specific animations
+  if (variant === "parrot") {
+    const animationName = PARROT_ANIMATIONS[parrotId || ParrotAgentType.DEFAULT];
+    return (
+      <span className="inline-flex items-center gap-1 ml-2">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className={cn("w-2 h-2 rounded-full inline-block", theme.iconBg)}
+            style={{
+              animation: `${animationName} 1.2s ease-in-out infinite`,
+              animationDelay: `${i * 0.2}s`,
+            }}
+          />
+        ))}
       </span>
     );
   }

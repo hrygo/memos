@@ -146,224 +146,44 @@ func NewSchedulerAgent(llm ai.LLMService, scheduleSvc schedule.Service, userID i
 	return agent, nil
 }
 
-// Execute runs the agent with the given user input.
-func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string, error) {
-	if strings.TrimSpace(userInput) == "" {
-		return "", fmt.Errorf("user input cannot be empty")
-	}
-
-	// Add timeout protection for the entire agent execution
-	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
-	defer cancel()
-
-	startTime := time.Now()
-
-	// Get full system prompt (cached with thread-safe refresh)
-	fullPrompt := a.getFullSystemPrompt()
-
-	// ReAct loop
-	messages := []ai.Message{
-		ai.SystemPrompt(fullPrompt),
-		ai.UserMessage(userInput),
-	}
-
-	var iteration int
-	var finalResponse string
-
-	// Track recent tool calls to detect loops (tool name + input hash)
-	type toolCallKey struct {
-		name      string
-		inputHash string
-	}
-	recentToolCalls := make([]toolCallKey, 0, 5)
-
-	for iteration = 0; iteration < timeout.MaxIterations; iteration++ {
-		// Check for context cancellation
-		select {
-		case <-ctx.Done():
-			return "", fmt.Errorf("agent execution cancelled: %w", ctx.Err())
-		default:
-		}
-
-		// Get LLM response
-		response, err := a.llm.Chat(ctx, messages)
-		if err != nil {
-			return "", fmt.Errorf("LLM chat failed (iteration %d): %w", iteration+1, err)
-		}
-
-		// Check if LLM wants to use a tool
-		_, toolCall, toolInput, err := a.parseToolCall(response)
-		if err != nil {
-			// No tool call, this is the final answer
-			finalResponse = response
-			break
-		}
-
-		// Detect loops: check if we've seen this exact tool call before
-		callKey := toolCallKey{name: toolCall, inputHash: toolInput}
-		repeatedCount := 0
-		for _, prevCall := range recentToolCalls {
-			if prevCall == callKey {
-				repeatedCount++
-			}
-		}
-		if repeatedCount > 0 {
-			slog.Warn("detected repeated tool call, forcing completion",
-				"user_id", a.userID,
-				"tool", toolCall,
-				"repeat_count", repeatedCount,
-				"iteration", iteration+1,
-			)
-			// Return a synthesized response instead of continuing the loop
-			finalResponse = fmt.Sprintf("I've completed your request. The %s tool has been executed multiple times, which suggests the operation was successful.", toolCall)
-			break
-		}
-
-		// Track this tool call (keep last timeout.MaxRecentToolCalls)
-		recentToolCalls = append(recentToolCalls, callKey)
-		if len(recentToolCalls) > timeout.MaxRecentToolCalls {
-			recentToolCalls = recentToolCalls[1:]
-		}
-
-		// Execute tool
-		tool, ok := a.tools[toolCall]
-		if !ok {
-			errorMsg := fmt.Sprintf("Unknown tool: %s. Available tools: %s", toolCall, a.getToolNames())
-			messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-			continue
-		}
-
-		toolResult, err := tool.Execute(ctx, toolInput)
-
-		if err != nil {
-			// Classify the error to determine retry strategy
-			classified := ClassifyError(err)
-
-			// Check for repeated failures based on error class
-			a.failureMutex.Lock()
-			a.failureCount[toolCall]++
-			failCount := a.failureCount[toolCall]
-			a.failureMutex.Unlock()
-
-			// Log tool failure with classification
-			slog.Warn("tool execution failed",
-				"user_id", a.userID,
-				"tool", toolCall,
-				"error_class", classified.Class,
-				"failure_count", failCount,
-				"error", err,
-				"input", truncateString(toolInput, timeout.MaxTruncateLength),
-			)
-
-			// Handle based on error class
-			switch classified.Class {
-			case ErrorClassConflict:
-				// Conflict errors are permanent for this tool call
-				// Reset failure count and continue - let LLM try a different approach
-				a.failureMutex.Lock()
-				a.failureCount[toolCall] = 0
-				a.failureMutex.Unlock()
-
-				// Provide a helpful error message to the LLM
-				errorMsg := fmt.Sprintf("Tool %s failed due to schedule conflict. Please use find_free_time to check availability or suggest a different time.", toolCall)
-				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-				continue
-
-			case ErrorClassPermanent:
-				// Permanent errors should not be retried - abort immediately
-				return "", fmt.Errorf("tool %s failed with permanent error: %w", toolCall, err)
-
-			case ErrorClassTransient:
-				// Transient errors can be retried with exponential backoff
-				if failCount >= timeout.MaxToolFailures {
-					return "", fmt.Errorf("tool %s failed repeatedly (%d times) with transient errors: %w", toolCall, failCount, err)
-				}
-
-				// Add delay before retry for transient errors
-				if classified.RetryAfter > 0 {
-					select {
-					case <-time.After(classified.RetryAfter):
-						// Continue with retry
-					case <-ctx.Done():
-						return "", fmt.Errorf("retry cancelled: %w", ctx.Err())
-					}
-				}
-
-				errorMsg := fmt.Sprintf("Tool %s failed: %v. Retrying...", toolCall, err)
-				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-				continue
-
-			default:
-				// Unknown error - treat as permanent
-				return "", fmt.Errorf("tool %s failed with unknown error: %w", toolCall, err)
-			}
-		}
-
-		// Reset failure count on success
-		a.failureMutex.Lock()
-		a.failureCount[toolCall] = 0
-		a.failureMutex.Unlock()
-
-		// Add tool result to conversation
-		messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(fmt.Sprintf("Tool result: %s", toolResult)))
-	}
-
-	if iteration >= timeout.MaxIterations {
-		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", timeout.MaxIterations)
-	}
-
-	// Log execution metrics
-	duration := time.Since(startTime)
-	cacheHits := atomic.LoadInt64(&a.cacheHits)
-	cacheMisses := atomic.LoadInt64(&a.cacheMisses)
-	cacheHitRate := float64(cacheHits) / float64(cacheHits+cacheMisses+1) * 100
-
-	slog.Debug("agent execution completed",
-		"user_id", a.userID,
-		"iterations", iteration+1,
-		"duration_ms", duration.Milliseconds(),
-		"cache_hits", cacheHits,
-		"cache_misses", cacheMisses,
-		"cache_hit_rate", fmt.Sprintf("%.2f%%", cacheHitRate),
-	)
-
-	return finalResponse, nil
+// executionConfig holds optional configuration for agent execution.
+type executionConfig struct {
+	history  []string
+	callback func(event string, data string)
+	verbose  bool // Enable verbose logging
 }
 
-// ExecuteWithCallback runs the agent with callback support for real-time feedback.
-func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput string, history []string, callback func(event string, data string)) (string, error) {
+// executeInternal is the core execution logic shared by Execute and ExecuteWithCallback.
+func (a *SchedulerAgent) executeInternal(ctx context.Context, userInput string, cfg executionConfig) (string, error) {
 	if strings.TrimSpace(userInput) == "" {
 		return "", fmt.Errorf("user input cannot be empty")
 	}
 
-	// Add timeout protection for the entire agent execution
+	// Add timeout protection
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentTimeout)
 	defer cancel()
 
 	startTime := time.Now()
-
-	// Log execution start
-	truncatedInput := truncateString(userInput, 100)
-	slog.Info("SchedulerAgent: ExecuteWithCallback started",
-		"user_id", a.userID,
-		"timezone", a.timezone,
-		"input", truncatedInput,
-		"history_count", len(history),
-	)
-
-	// Get full system prompt (cached with thread-safe refresh)
-	fullPrompt := a.getFullSystemPrompt()
-
-	messages := []ai.Message{
-		ai.SystemPrompt(fullPrompt),
+	if cfg.verbose {
+		slog.Info("SchedulerAgent: Execution started",
+			"user_id", a.userID,
+			"timezone", a.timezone,
+			"input", truncateString(userInput, 100),
+			"history_count", len(cfg.history),
+		)
 	}
 
-	// Add history (skip empty messages to avoid LLM API errors)
-	for i := 0; i < len(history)-1; i += 2 {
-		if i+1 < len(history) {
-			userMsg := history[i]
-			assistantMsg := history[i+1]
-			// Only add non-empty messages
+	// Get full system prompt
+	fullPrompt := a.getFullSystemPrompt()
+
+	// Build messages
+	messages := []ai.Message{ai.SystemPrompt(fullPrompt)}
+
+	// Add history if provided
+	for i := 0; i < len(cfg.history)-1; i += 2 {
+		if i+1 < len(cfg.history) {
+			userMsg := cfg.history[i]
+			assistantMsg := cfg.history[i+1]
 			if userMsg != "" && assistantMsg != "" {
 				messages = append(messages, ai.Message{Role: "user", Content: userMsg})
 				messages = append(messages, ai.Message{Role: "assistant", Content: assistantMsg})
@@ -372,12 +192,12 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	}
 
 	// Add current user input
-	messages = append(messages, ai.Message{Role: "user", Content: userInput})
+	messages = append(messages, ai.UserMessage(userInput))
 
 	var iteration int
 	var finalResponse string
 
-	// Track recent tool calls to detect loops (tool name + input hash)
+	// Track tool calls for loop detection
 	type toolCallKey struct {
 		name      string
 		inputHash string
@@ -385,122 +205,95 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 	recentToolCalls := make([]toolCallKey, 0, 5)
 
 	for iteration = 0; iteration < timeout.MaxIterations; iteration++ {
-		// Check for context cancellation
 		select {
 		case <-ctx.Done():
-			errorMsg := fmt.Sprintf("execution timeout: %v", ctx.Err())
-			if callback != nil {
-				callback("error", errorMsg)
+			if cfg.callback != nil {
+				cfg.callback("error", fmt.Sprintf("execution timeout: %v", ctx.Err()))
 			}
 			return "", fmt.Errorf("agent execution cancelled: %w", ctx.Err())
 		default:
 		}
 
-		// Notify thinking
-		if callback != nil {
-			callback("thinking", "Agent is thinking...")
+		if cfg.callback != nil {
+			cfg.callback("thinking", "Agent is thinking...")
 		}
 
-		// Log LLM call
-		slog.Debug("SchedulerAgent: Calling LLM",
-			"iteration", iteration+1,
-			"messages_count", len(messages),
-		)
+		if cfg.verbose {
+			slog.Debug("SchedulerAgent: Calling LLM", "iteration", iteration+1, "messages_count", len(messages))
+		}
 
-		// Get LLM response
 		response, err := a.llm.Chat(ctx, messages)
 		if err != nil {
-			slog.Error("SchedulerAgent: LLM chat failed",
-				"iteration", iteration+1,
-				"error", err,
-			)
+			if cfg.verbose {
+				slog.Error("SchedulerAgent: LLM chat failed", "iteration", iteration+1, "error", err)
+			}
 			return "", fmt.Errorf("LLM chat failed (iteration %d): %w", iteration+1, err)
 		}
 
-		slog.Info("SchedulerAgent: LLM response received",
-			"iteration", iteration+1,
-			"response_length", len(response),
-			"response_preview", truncateString(response, 200),
-		)
-
-		// Check if LLM wants to use a tool
 		cleanText, toolCall, toolInput, parseErr := a.parseToolCall(response)
 
 		if parseErr != nil {
-			slog.Info("SchedulerAgent: No tool call detected",
-				"iteration", iteration+1,
-				"parse_error", parseErr.Error(),
-				"response_preview", truncateString(response, 300),
-			)
-			// No tool call, this is the final answer.
-			// If we have content in response, send it (stripping any broken tool markers)
-			finalResponse = response
-
-			// Notify streaming start
-			if callback != nil {
-				// We still use ChatStream for the final response to provide that "live" feel
-				// unless the response is already complete and short.
-				// But to be safe and consistent with previous turns, we stream it.
+			// No tool call - final answer
+			if cfg.verbose {
+				slog.Info("SchedulerAgent: No tool call detected", "iteration", iteration+1)
 			}
 
-			// Note: We use the context with AgentTimeout
-			contentChan, errChan := a.llm.ChatStream(ctx, messages)
-			var fullContent strings.Builder
+			// If callback provided, stream the response
+			if cfg.callback != nil {
+				contentChan, errChan := a.llm.ChatStream(ctx, messages)
+				var fullContent strings.Builder
 
-			for {
-				select {
-				case chunk, ok := <-contentChan:
-					if !ok {
-						return fullContent.String(), nil
-					}
-					fullContent.WriteString(chunk)
-					if callback != nil {
-						callback("answer", chunk)
-					}
-				case err := <-errChan:
-					if err != nil {
-						if callback != nil {
-							callback("error", fmt.Sprintf("Streaming error: %v", err))
+				for {
+					select {
+					case chunk, ok := <-contentChan:
+						if !ok {
+							return fullContent.String(), nil
 						}
-						return fullContent.String(), err
+						fullContent.WriteString(chunk)
+						cfg.callback("answer", chunk)
+					case streamErr := <-errChan:
+						if streamErr != nil {
+							cfg.callback("error", fmt.Sprintf("Streaming error: %v", streamErr))
+							return fullContent.String(), streamErr
+						}
+					case <-ctx.Done():
+						return fullContent.String(), ctx.Err()
 					}
-				case <-ctx.Done():
-					return fullContent.String(), ctx.Err()
 				}
 			}
+
+			finalResponse = response
+			break
 		}
 
-		// Log tool call
-		slog.Info("SchedulerAgent: Tool call parsed",
-			"iteration", iteration+1,
-			"tool", toolCall,
-			"clean_text_len", len(cleanText),
-			"input", truncateString(toolInput, 200),
-		)
-
-		// Notify user of progress with pleasantries if present
-		if cleanText != "" && callback != nil {
-			// Send the pleasantry part as an answer chunk
-			callback("answer", cleanText+"\n")
+		if cfg.verbose {
+			slog.Info("SchedulerAgent: Tool call parsed", "iteration", iteration+1, "tool", toolCall)
 		}
 
-		// Notify tool use
-		if callback != nil {
-			var action string
+		// Send pleasantry if present
+		if cleanText != "" && cfg.callback != nil {
+			cfg.callback("answer", cleanText+"\n")
+		}
+
+		// Notify tool use with localized key
+		if cfg.callback != nil {
+			var actionKey string
 			switch toolCall {
 			case "schedule_query":
-				action = "正在查询日程..."
+				actionKey = "schedule.querying"
 			case "schedule_add":
-				action = "正在创建新日程..."
+				actionKey = "schedule.creating"
 			case "schedule_update":
-				action = "正在更新日程..."
+				actionKey = "schedule.updating"
+			case "find_free_time":
+				actionKey = "schedule.finding_free_time"
 			default:
-				action = fmt.Sprintf("正在执行: %s", toolCall)
+				actionKey = fmt.Sprintf("schedule.executing:%s", toolCall)
 			}
-			callback("tool_use", action)
+			cfg.callback("tool_use", actionKey)
 		}
 
-		// Detect loops: check if we've seen this exact tool call before executing
+		// Detect repeated tool calls
 		callKey := toolCallKey{name: toolCall, inputHash: toolInput}
 		repeatedCount := 0
 		for _, prevCall := range recentToolCalls {
@@ -508,39 +301,34 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 				repeatedCount++
 			}
 		}
+
 		if repeatedCount > 0 {
-			slog.Warn("detected repeated tool call in ExecuteWithCallback, forcing completion",
-				"user_id", a.userID,
-				"tool", toolCall,
-				"repeat_count", repeatedCount,
+			slog.Warn("detected repeated tool call, forcing completion",
+				"user_id", a.userID, "tool", toolCall, "repeat_count", repeatedCount,
 				"iteration", iteration+1,
 			)
-			// Return the last tool result as the final answer instead of executing again
-			// Find the last assistant message and extract tool result from it
+			// Extract last tool result
 			for i := len(messages) - 1; i >= 0; i-- {
 				if messages[i].Role == "assistant" && strings.Contains(messages[i].Content, "Tool result:") {
-					// Extract tool result more precisely
 					parts := strings.SplitN(messages[i].Content, "Tool result:", 2)
 					if len(parts) == 2 {
 						finalResponse = strings.TrimSpace(parts[1])
-						if callback != nil {
-							callback("answer", finalResponse)
+						if cfg.callback != nil {
+							cfg.callback("answer", finalResponse)
 						}
 					}
 					break
 				}
 			}
 			if finalResponse == "" {
-				// Fallback: synthesized message
 				finalResponse = fmt.Sprintf("I've completed your request. The %s tool was executed successfully.", toolCall)
-				if callback != nil {
-					callback("answer", finalResponse)
+				if cfg.callback != nil {
+					cfg.callback("answer", finalResponse)
 				}
 			}
 			break
 		}
 
-		// Track this tool call (keep last timeout.MaxRecentToolCalls)
 		recentToolCalls = append(recentToolCalls, callKey)
 		if len(recentToolCalls) > timeout.MaxRecentToolCalls {
 			recentToolCalls = recentToolCalls[1:]
@@ -551,88 +339,63 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 		if !ok {
 			errorMsg := fmt.Sprintf("Unknown tool: %s. Available tools: %s", toolCall, a.getToolNames())
 			messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-			if callback != nil {
-				callback("error", errorMsg)
+			if cfg.callback != nil {
+				cfg.callback("error", errorMsg)
 			}
 			continue
 		}
 
-		slog.Debug("SchedulerAgent: Executing tool",
-			"iteration", iteration+1,
-			"tool", toolCall,
-			"input", truncateString(toolInput, 200),
-		)
-
 		toolResult, err := tool.Execute(ctx, toolInput)
 
 		if err != nil {
-			slog.Warn("SchedulerAgent: Tool execution failed",
-				"iteration", iteration+1,
-				"tool", toolCall,
-				"error", err,
-			)
-			// Classify the error to determine retry strategy
 			classified := ClassifyError(err)
 
-			// Check for repeated failures based on error class
 			a.failureMutex.Lock()
 			a.failureCount[toolCall]++
 			failCount := a.failureCount[toolCall]
 			a.failureMutex.Unlock()
 
-			// Log tool failure with classification
 			slog.Warn("tool execution failed",
-				"user_id", a.userID,
-				"tool", toolCall,
-				"error_class", classified.Class,
-				"failure_count", failCount,
-				"error", err,
-				"input", truncateString(toolInput, timeout.MaxTruncateLength),
+				"user_id", a.userID, "tool", toolCall,
+				"error_class", classified.Class, "failure_count", failCount,
 			)
 
-			// Handle based on error class
 			switch classified.Class {
 			case ErrorClassConflict:
-				// Conflict errors are permanent for this tool call
-				// Reset failure count and continue - let LLM try a different approach
 				a.failureMutex.Lock()
 				a.failureCount[toolCall] = 0
 				a.failureMutex.Unlock()
 
 				errorMsg := fmt.Sprintf("Tool %s failed due to schedule conflict. Please use find_free_time to check availability.", toolCall)
 				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-				if callback != nil {
-					callback("error", errorMsg)
+				if cfg.callback != nil {
+					cfg.callback("error", errorMsg)
 				}
 				continue
 
 			case ErrorClassPermanent:
-				// Permanent errors should not be retried - abort immediately
 				errorMsg := fmt.Sprintf("Tool %s failed with permanent error: %v", toolCall, err)
-				if callback != nil {
-					callback("error", errorMsg)
+				if cfg.callback != nil {
+					cfg.callback("error", errorMsg)
 				}
 				return "", fmt.Errorf("tool %s failed with permanent error: %w", toolCall, err)
 
 			case ErrorClassTransient:
-				// Transient errors can be retried
 				if failCount >= timeout.MaxToolFailures {
 					errorMsg := fmt.Sprintf("tool %s failed repeatedly (%d times) with transient errors: %v", toolCall, failCount, err)
-					if callback != nil {
-						callback("error", errorMsg)
+					if cfg.callback != nil {
+						cfg.callback("error", errorMsg)
 					}
 					return "", fmt.Errorf("tool %s failed repeatedly (%d times): %w", toolCall, failCount, err)
 				}
 
-				// Add delay before retry for transient errors
 				if classified.RetryAfter > 0 {
 					select {
 					case <-time.After(classified.RetryAfter):
-						// Continue with retry
 					case <-ctx.Done():
 						errorMsg := fmt.Sprintf("Retry cancelled: %v", ctx.Err())
-						if callback != nil {
-							callback("error", errorMsg)
+						if cfg.callback != nil {
+							cfg.callback("error", errorMsg)
 						}
 						return "", ctx.Err()
 					}
@@ -640,66 +403,73 @@ func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput stri
 
 				errorMsg := fmt.Sprintf("Tool %s failed: %v. Retrying...", toolCall, err)
 				messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(errorMsg))
-				if callback != nil {
-					callback("error", errorMsg)
+				if cfg.callback != nil {
+					cfg.callback("error", errorMsg)
 				}
 				continue
 
 			default:
-				// Unknown error - treat as permanent
 				errorMsg := fmt.Sprintf("Tool %s failed with unknown error: %v", toolCall, err)
-				if callback != nil {
-					callback("error", errorMsg)
+				if cfg.callback != nil {
+					cfg.callback("error", errorMsg)
 				}
 				return "", fmt.Errorf("tool %s failed with unknown error: %w", toolCall, err)
 			}
 		}
 
-		// Reset failure count on success
 		a.failureMutex.Lock()
 		a.failureCount[toolCall] = 0
 		a.failureMutex.Unlock()
 
-		slog.Info("SchedulerAgent: Tool executed successfully",
-			"iteration", iteration+1,
-			"tool", toolCall,
-			"result_length", len(toolResult),
-			"result_preview", truncateString(toolResult, 150),
-		)
-
-		// Notify tool result
-		if callback != nil {
-			callback("tool_result", toolResult)
+		if cfg.callback != nil {
+			cfg.callback("tool_result", toolResult)
 		}
 
-		// Add tool result to conversation
 		messages = append(messages, ai.AssistantMessage(response), ai.UserMessage(fmt.Sprintf("Tool result: %s", toolResult)))
 	}
 
 	if iteration >= timeout.MaxIterations {
-		slog.Error("SchedulerAgent: Max iterations exceeded",
-			"user_id", a.userID,
-			"max_iterations", timeout.MaxIterations,
-		)
+		slog.Error("SchedulerAgent: Max iterations exceeded", "user_id", a.userID, "max_iterations", timeout.MaxIterations)
 		return "", fmt.Errorf("agent exceeded maximum iterations (%d), possible infinite loop", timeout.MaxIterations)
 	}
 
-	// Log execution metrics
+	// Log metrics
 	duration := time.Since(startTime)
 	cacheHits := atomic.LoadInt64(&a.cacheHits)
 	cacheMisses := atomic.LoadInt64(&a.cacheMisses)
-	cacheHitRate := float64(cacheHits) / float64(cacheHits+cacheMisses+1) * 100
 
-	slog.Info("SchedulerAgent: Execution completed",
-		"user_id", a.userID,
-		"iterations", iteration+1,
-		"duration_ms", duration.Milliseconds(),
-		"cache_hits", cacheHits,
-		"cache_misses", cacheMisses,
-		"cache_hit_rate", fmt.Sprintf("%.2f%%", cacheHitRate),
-	)
+	if cfg.verbose {
+		slog.Info("SchedulerAgent: Execution completed",
+			"user_id", a.userID, "iterations", iteration+1,
+			"duration_ms", duration.Milliseconds(),
+			"cache_hits", cacheHits, "cache_misses", cacheMisses,
+		)
+	} else {
+		slog.Debug("agent execution completed",
+			"user_id", a.userID, "iterations", iteration+1,
+			"duration_ms", duration.Milliseconds(),
+		)
+	}
 
 	return finalResponse, nil
+}
+
+// Execute runs the agent with the given user input.
+func (a *SchedulerAgent) Execute(ctx context.Context, userInput string) (string, error) {
+	return a.executeInternal(ctx, userInput, executionConfig{
+		history:  nil,
+		callback: nil,
+		verbose:  false,
+	})
+}
+
+// ExecuteWithCallback runs the agent with callback support for real-time feedback.
+func (a *SchedulerAgent) ExecuteWithCallback(ctx context.Context, userInput string, history []string, callback func(event string, data string)) (string, error) {
+	return a.executeInternal(ctx, userInput, executionConfig{
+		history:  history,
+		callback: callback,
+		verbose:  true,
+	})
 }
 
 // getFullSystemPrompt returns the full system prompt (system prompt + tools description).

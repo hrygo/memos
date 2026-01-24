@@ -38,6 +38,14 @@ type ParrotSelfCognition struct {
 	// 鸟类身份认知 - "我是一只鹦鹉"
 	AvianIdentity *AvianIdentity `json:"avian_identity"`
 
+	// EmotionalExpression describes how the parrot expresses emotions
+	// 情感表达 - 拟声词、口头禅、情感触发
+	EmotionalExpression *EmotionalExpression `json:"emotional_expression,omitempty"`
+
+	// AvianBehaviors describes bird-like behaviors the parrot exhibits
+	// 鸟类行为 - 描述鹦鹉展示的鸟类行为
+	AvianBehaviors []string `json:"avian_behaviors,omitempty"`
+
 	// Personality describes the parrot's character traits
 	Personality []string `json:"personality"`
 
@@ -77,6 +85,23 @@ type AvianIdentity struct {
 
 	// AvianPhilosophy is the parrot's philosophy about being a bird AI
 	AvianPhilosophy string `json:"avian_philosophy"` // e.g., "我是一只飞在数据世界中的鹦鹉"
+}
+
+// EmotionalExpression defines how a parrot expresses emotions.
+// EmotionalExpression 定义鹦鹉的情感表达方式。
+type EmotionalExpression struct {
+	// DefaultMood is the parrot's baseline emotional state
+	DefaultMood string `json:"default_mood"` // e.g., "focused", "curious", "happy"
+
+	// SoundEffects are onomatopoeic sounds the parrot makes
+	// Sounds are keyed by context (e.g., "thinking", "searching", "found")
+	SoundEffects map[string]string `json:"sound_effects"`
+
+	// Catchphrases are recurring phrases the parrot uses
+	Catchphrases []string `json:"catchphrases"`
+
+	// MoodTriggers map events to emotional responses
+	MoodTriggers map[string]string `json:"mood_triggers,omitempty"`
 }
 
 // EventCallback is the callback function type for agent events.
