@@ -46,12 +46,6 @@ const (
 	// AIServiceGetRelatedMemosProcedure is the fully-qualified name of the AIService's GetRelatedMemos
 	// RPC.
 	AIServiceGetRelatedMemosProcedure = "/memos.api.v1.AIService/GetRelatedMemos"
-	// AIServiceChatWithScheduleAgentProcedure is the fully-qualified name of the AIService's
-	// ChatWithScheduleAgent RPC.
-	AIServiceChatWithScheduleAgentProcedure = "/memos.api.v1.AIService/ChatWithScheduleAgent"
-	// AIServiceChatWithMemosIntegratedProcedure is the fully-qualified name of the AIService's
-	// ChatWithMemosIntegrated RPC.
-	AIServiceChatWithMemosIntegratedProcedure = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
 	// AIServiceGetParrotSelfCognitionProcedure is the fully-qualified name of the AIService's
 	// GetParrotSelfCognition RPC.
 	AIServiceGetParrotSelfCognitionProcedure = "/memos.api.v1.AIService/GetParrotSelfCognition"
@@ -72,6 +66,11 @@ const (
 	// AIServiceDeleteAIConversationProcedure is the fully-qualified name of the AIService's
 	// DeleteAIConversation RPC.
 	AIServiceDeleteAIConversationProcedure = "/memos.api.v1.AIService/DeleteAIConversation"
+	// AIServiceAddContextSeparatorProcedure is the fully-qualified name of the AIService's
+	// AddContextSeparator RPC.
+	AIServiceAddContextSeparatorProcedure = "/memos.api.v1.AIService/AddContextSeparator"
+	// AIServiceListMessagesProcedure is the fully-qualified name of the AIService's ListMessages RPC.
+	AIServiceListMessagesProcedure = "/memos.api.v1.AIService/ListMessages"
 	// ScheduleAgentServiceChatProcedure is the fully-qualified name of the ScheduleAgentService's Chat
 	// RPC.
 	ScheduleAgentServiceChatProcedure = "/memos.api.v1.ScheduleAgentService/Chat"
@@ -87,13 +86,9 @@ type AIServiceClient interface {
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(context.Context, *connect.Request[v1.SuggestTagsRequest]) (*connect.Response[v1.SuggestTagsResponse], error)
 	// Chat streams a chat response with AI agents.
-	Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
+	Chat(context.Context, *connect.Request[v1.ChatRequest]) (*connect.ServerStreamForClient[v1.ChatResponse], error)
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
-	// ChatWithScheduleAgent streams a chat response using the schedule agent.
-	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
-	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
-	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error)
 	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
@@ -108,6 +103,10 @@ type AIServiceClient interface {
 	UpdateAIConversation(context.Context, *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
 	// DeleteAIConversation deletes an AI conversation.
 	DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error)
+	// AddContextSeparator adds a context separator marker to a conversation.
+	AddContextSeparator(context.Context, *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error)
+	// ListMessages returns messages for a conversation with incremental sync support.
+	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
 }
 
 // NewAIServiceClient constructs a client for the memos.api.v1.AIService service. By default, it
@@ -133,7 +132,7 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("SuggestTags")),
 			connect.WithClientOptions(opts...),
 		),
-		chat: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
+		chat: connect.NewClient[v1.ChatRequest, v1.ChatResponse](
 			httpClient,
 			baseURL+AIServiceChatProcedure,
 			connect.WithSchema(aIServiceMethods.ByName("Chat")),
@@ -143,18 +142,6 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			httpClient,
 			baseURL+AIServiceGetRelatedMemosProcedure,
 			connect.WithSchema(aIServiceMethods.ByName("GetRelatedMemos")),
-			connect.WithClientOptions(opts...),
-		),
-		chatWithScheduleAgent: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
-			httpClient,
-			baseURL+AIServiceChatWithScheduleAgentProcedure,
-			connect.WithSchema(aIServiceMethods.ByName("ChatWithScheduleAgent")),
-			connect.WithClientOptions(opts...),
-		),
-		chatWithMemosIntegrated: connect.NewClient[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse](
-			httpClient,
-			baseURL+AIServiceChatWithMemosIntegratedProcedure,
-			connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
 			connect.WithClientOptions(opts...),
 		),
 		getParrotSelfCognition: connect.NewClient[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse](
@@ -199,24 +186,36 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("DeleteAIConversation")),
 			connect.WithClientOptions(opts...),
 		),
+		addContextSeparator: connect.NewClient[v1.AddContextSeparatorRequest, emptypb.Empty](
+			httpClient,
+			baseURL+AIServiceAddContextSeparatorProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("AddContextSeparator")),
+			connect.WithClientOptions(opts...),
+		),
+		listMessages: connect.NewClient[v1.ListMessagesRequest, v1.ListMessagesResponse](
+			httpClient,
+			baseURL+AIServiceListMessagesProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ListMessages")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aIServiceClient implements AIServiceClient.
 type aIServiceClient struct {
-	semanticSearch          *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
-	suggestTags             *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
-	chat                    *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
-	getRelatedMemos         *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
-	chatWithScheduleAgent   *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
-	chatWithMemosIntegrated *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
-	getParrotSelfCognition  *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
-	listParrots             *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
-	listAIConversations     *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
-	getAIConversation       *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
-	createAIConversation    *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
-	updateAIConversation    *connect.Client[v1.UpdateAIConversationRequest, v1.AIConversation]
-	deleteAIConversation    *connect.Client[v1.DeleteAIConversationRequest, emptypb.Empty]
+	semanticSearch         *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
+	suggestTags            *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
+	chat                   *connect.Client[v1.ChatRequest, v1.ChatResponse]
+	getRelatedMemos        *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
+	getParrotSelfCognition *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
+	listParrots            *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
+	listAIConversations    *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
+	getAIConversation      *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
+	createAIConversation   *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
+	updateAIConversation   *connect.Client[v1.UpdateAIConversationRequest, v1.AIConversation]
+	deleteAIConversation   *connect.Client[v1.DeleteAIConversationRequest, emptypb.Empty]
+	addContextSeparator    *connect.Client[v1.AddContextSeparatorRequest, emptypb.Empty]
+	listMessages           *connect.Client[v1.ListMessagesRequest, v1.ListMessagesResponse]
 }
 
 // SemanticSearch calls memos.api.v1.AIService.SemanticSearch.
@@ -230,23 +229,13 @@ func (c *aIServiceClient) SuggestTags(ctx context.Context, req *connect.Request[
 }
 
 // Chat calls memos.api.v1.AIService.Chat.
-func (c *aIServiceClient) Chat(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
+func (c *aIServiceClient) Chat(ctx context.Context, req *connect.Request[v1.ChatRequest]) (*connect.ServerStreamForClient[v1.ChatResponse], error) {
 	return c.chat.CallServerStream(ctx, req)
 }
 
 // GetRelatedMemos calls memos.api.v1.AIService.GetRelatedMemos.
 func (c *aIServiceClient) GetRelatedMemos(ctx context.Context, req *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {
 	return c.getRelatedMemos.CallUnary(ctx, req)
-}
-
-// ChatWithScheduleAgent calls memos.api.v1.AIService.ChatWithScheduleAgent.
-func (c *aIServiceClient) ChatWithScheduleAgent(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
-	return c.chatWithScheduleAgent.CallServerStream(ctx, req)
-}
-
-// ChatWithMemosIntegrated calls memos.api.v1.AIService.ChatWithMemosIntegrated.
-func (c *aIServiceClient) ChatWithMemosIntegrated(ctx context.Context, req *connect.Request[v1.ChatWithMemosRequest]) (*connect.ServerStreamForClient[v1.ChatWithMemosResponse], error) {
-	return c.chatWithMemosIntegrated.CallServerStream(ctx, req)
 }
 
 // GetParrotSelfCognition calls memos.api.v1.AIService.GetParrotSelfCognition.
@@ -284,6 +273,16 @@ func (c *aIServiceClient) DeleteAIConversation(ctx context.Context, req *connect
 	return c.deleteAIConversation.CallUnary(ctx, req)
 }
 
+// AddContextSeparator calls memos.api.v1.AIService.AddContextSeparator.
+func (c *aIServiceClient) AddContextSeparator(ctx context.Context, req *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.addContextSeparator.CallUnary(ctx, req)
+}
+
+// ListMessages calls memos.api.v1.AIService.ListMessages.
+func (c *aIServiceClient) ListMessages(ctx context.Context, req *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
+	return c.listMessages.CallUnary(ctx, req)
+}
+
 // AIServiceHandler is an implementation of the memos.api.v1.AIService service.
 type AIServiceHandler interface {
 	// SemanticSearch performs semantic search on memos.
@@ -291,13 +290,9 @@ type AIServiceHandler interface {
 	// SuggestTags suggests tags for memo content.
 	SuggestTags(context.Context, *connect.Request[v1.SuggestTagsRequest]) (*connect.Response[v1.SuggestTagsResponse], error)
 	// Chat streams a chat response with AI agents.
-	Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
+	Chat(context.Context, *connect.Request[v1.ChatRequest], *connect.ServerStream[v1.ChatResponse]) error
 	// GetRelatedMemos finds memos related to a specific memo.
 	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
-	// ChatWithScheduleAgent streams a chat response using the schedule agent.
-	ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
-	// ChatWithMemosIntegrated integrates both RAG and schedule agent.
-	ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error
 	// GetParrotSelfCognition returns the metacognitive information of a parrot agent.
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
@@ -312,6 +307,10 @@ type AIServiceHandler interface {
 	UpdateAIConversation(context.Context, *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
 	// DeleteAIConversation deletes an AI conversation.
 	DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error)
+	// AddContextSeparator adds a context separator marker to a conversation.
+	AddContextSeparator(context.Context, *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error)
+	// ListMessages returns messages for a conversation with incremental sync support.
+	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
 }
 
 // NewAIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -343,18 +342,6 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		AIServiceGetRelatedMemosProcedure,
 		svc.GetRelatedMemos,
 		connect.WithSchema(aIServiceMethods.ByName("GetRelatedMemos")),
-		connect.WithHandlerOptions(opts...),
-	)
-	aIServiceChatWithScheduleAgentHandler := connect.NewServerStreamHandler(
-		AIServiceChatWithScheduleAgentProcedure,
-		svc.ChatWithScheduleAgent,
-		connect.WithSchema(aIServiceMethods.ByName("ChatWithScheduleAgent")),
-		connect.WithHandlerOptions(opts...),
-	)
-	aIServiceChatWithMemosIntegratedHandler := connect.NewServerStreamHandler(
-		AIServiceChatWithMemosIntegratedProcedure,
-		svc.ChatWithMemosIntegrated,
-		connect.WithSchema(aIServiceMethods.ByName("ChatWithMemosIntegrated")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aIServiceGetParrotSelfCognitionHandler := connect.NewUnaryHandler(
@@ -399,6 +386,18 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("DeleteAIConversation")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceAddContextSeparatorHandler := connect.NewUnaryHandler(
+		AIServiceAddContextSeparatorProcedure,
+		svc.AddContextSeparator,
+		connect.WithSchema(aIServiceMethods.ByName("AddContextSeparator")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceListMessagesHandler := connect.NewUnaryHandler(
+		AIServiceListMessagesProcedure,
+		svc.ListMessages,
+		connect.WithSchema(aIServiceMethods.ByName("ListMessages")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AIServiceSemanticSearchProcedure:
@@ -409,10 +408,6 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceChatHandler.ServeHTTP(w, r)
 		case AIServiceGetRelatedMemosProcedure:
 			aIServiceGetRelatedMemosHandler.ServeHTTP(w, r)
-		case AIServiceChatWithScheduleAgentProcedure:
-			aIServiceChatWithScheduleAgentHandler.ServeHTTP(w, r)
-		case AIServiceChatWithMemosIntegratedProcedure:
-			aIServiceChatWithMemosIntegratedHandler.ServeHTTP(w, r)
 		case AIServiceGetParrotSelfCognitionProcedure:
 			aIServiceGetParrotSelfCognitionHandler.ServeHTTP(w, r)
 		case AIServiceListParrotsProcedure:
@@ -427,6 +422,10 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceUpdateAIConversationHandler.ServeHTTP(w, r)
 		case AIServiceDeleteAIConversationProcedure:
 			aIServiceDeleteAIConversationHandler.ServeHTTP(w, r)
+		case AIServiceAddContextSeparatorProcedure:
+			aIServiceAddContextSeparatorHandler.ServeHTTP(w, r)
+		case AIServiceListMessagesProcedure:
+			aIServiceListMessagesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -444,20 +443,12 @@ func (UnimplementedAIServiceHandler) SuggestTags(context.Context, *connect.Reque
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.SuggestTags is not implemented"))
 }
 
-func (UnimplementedAIServiceHandler) Chat(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
+func (UnimplementedAIServiceHandler) Chat(context.Context, *connect.Request[v1.ChatRequest], *connect.ServerStream[v1.ChatResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.Chat is not implemented"))
 }
 
 func (UnimplementedAIServiceHandler) GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetRelatedMemos is not implemented"))
-}
-
-func (UnimplementedAIServiceHandler) ChatWithScheduleAgent(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithScheduleAgent is not implemented"))
-}
-
-func (UnimplementedAIServiceHandler) ChatWithMemosIntegrated(context.Context, *connect.Request[v1.ChatWithMemosRequest], *connect.ServerStream[v1.ChatWithMemosResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ChatWithMemosIntegrated is not implemented"))
 }
 
 func (UnimplementedAIServiceHandler) GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error) {
@@ -486,6 +477,14 @@ func (UnimplementedAIServiceHandler) UpdateAIConversation(context.Context, *conn
 
 func (UnimplementedAIServiceHandler) DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.DeleteAIConversation is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) AddContextSeparator(context.Context, *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.AddContextSeparator is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListMessages is not implemented"))
 }
 
 // ScheduleAgentServiceClient is a client for the memos.api.v1.ScheduleAgentService service.

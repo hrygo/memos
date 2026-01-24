@@ -3,10 +3,12 @@ package v1
 import (
 	"context"
 	"fmt"
+	"sync"
 
-	"github.com/usememos/memos/plugin/ai"
+	pluginai "github.com/usememos/memos/plugin/ai"
 	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/server/middleware"
 	"github.com/usememos/memos/server/retrieval"
@@ -22,15 +24,20 @@ type AIService struct {
 
 	Store *store.Store
 
-	EmbeddingService ai.EmbeddingService
-	RerankerService  ai.RerankerService
-	LLMService       ai.LLMService
+	EmbeddingService pluginai.EmbeddingService
+	RerankerService  pluginai.RerankerService
+	LLMService       pluginai.LLMService
 
 	// Adaptive retriever for RAG operations
 	AdaptiveRetriever *retrieval.AdaptiveRetriever
 
 	// 鹦鹉系统（Milestone 1）
 	ParrotRouter *agentpkg.ParrotRouter
+
+	// Chat event bus and conversation service (lazily initialized)
+	chatEventBusMu      sync.RWMutex
+	chatEventBus        *aichat.EventBus
+	conversationService *aichat.ConversationService
 }
 
 // IsEnabled returns whether AI features are enabled.

@@ -1,4 +1,4 @@
-# AI-013: ChatWithMemos API
+# AI-013: Chat API
 
 ## 概述
 
@@ -10,14 +10,14 @@
 
 ## 交付物
 
-- `server/router/api/v1/ai_service.go` (扩展 ChatWithMemos 方法)
+- `server/router/api/v1/ai_service.go` (扩展 Chat 方法)
 
 ## 实现规格
 
 ### API 实现
 
 ```go
-func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.AIService_ChatWithMemosServer) error {
+func (s *AIService) Chat(req *apiv1.ChatRequest, stream apiv1.AIService_ChatServer) error {
     ctx := stream.Context()
 
     if !s.IsEnabled() {
@@ -95,7 +95,7 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
     contentChan, errChan := s.LLMService.ChatStream(ctx, messages)
     
     // 先发送来源信息
-    if err := stream.Send(&apiv1.ChatWithMemosResponse{
+    if err := stream.Send(&apiv1.ChatResponse{
         Sources: sources,
     }); err != nil {
         return err
@@ -108,11 +108,11 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
             if !ok {
                 contentChan = nil // 标记为已关闭
                 if errChan == nil {
-                    return stream.Send(&apiv1.ChatWithMemosResponse{Done: true})
+                    return stream.Send(&apiv1.ChatResponse{Done: true})
                 }
                 continue
             }
-            if err := stream.Send(&apiv1.ChatWithMemosResponse{
+            if err := stream.Send(&apiv1.ChatResponse{
                 Content: content,
             }); err != nil {
                 return err
@@ -122,7 +122,7 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
             if !ok {
                 errChan = nil // 标记为已关闭
                 if contentChan == nil {
-                    return stream.Send(&apiv1.ChatWithMemosResponse{Done: true})
+                    return stream.Send(&apiv1.ChatResponse{Done: true})
                 }
                 continue
             }
@@ -172,7 +172,7 @@ func (s *AIService) ChatWithMemos(req *apiv1.ChatWithMemosRequest, stream apiv1.
 # gRPC 流式测试 (需要 grpcurl)
 grpcurl -d '{"message": "我最近记录了什么?"}' \
   -H "Authorization: Bearer $TOKEN" \
-  localhost:28081 memos.api.v1.AIService/ChatWithMemos
+  localhost:28081 memos.api.v1.AIService/Chat
 ```
 
 ## 依赖

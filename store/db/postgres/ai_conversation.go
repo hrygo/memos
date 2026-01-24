@@ -10,15 +10,28 @@ import (
 )
 
 func (d *DB) CreateAIConversation(ctx context.Context, create *store.AIConversation) (*store.AIConversation, error) {
-	fields := []string{"uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
-	args := []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+	// If ID is specified, use it (for fixed conversations)
+	// Otherwise, let the database generate it
+	var fields []string
+	var args []any
 
-	stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
-		VALUES (` + placeholders(len(args)) + `)
-		RETURNING id`
-
-	if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&create.ID); err != nil {
-		return nil, fmt.Errorf("failed to create ai_conversation: %w", err)
+	if create.ID != 0 {
+		fields = []string{"id", "uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
+		args = []any{create.ID, create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
+			VALUES (` + placeholders(len(args)) + `)`
+		if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation with fixed id: %w", err)
+		}
+	} else {
+		fields = []string{"uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
+		args = []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
+			VALUES (` + placeholders(len(args)) + `)
+			RETURNING id`
+		if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&create.ID); err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation: %w", err)
+		}
 	}
 
 	return create, nil
@@ -84,24 +97,20 @@ func (d *DB) UpdateAIConversation(ctx context.Context, update *store.UpdateAICon
 	}
 
 	args = append(args, update.ID)
-	stmt := `UPDATE ai_conversation SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id`
-	var id int32
-	if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&id); err != nil {
+	// RETURNING all fields to avoid N+1 query
+	stmt := `UPDATE ai_conversation SET ` + strings.Join(set, ", ") + ` WHERE id = ` + placeholder(len(args)) + ` RETURNING id, uid, creator_id, title, parrot_id, pinned, created_ts, updated_ts`
+	result := &store.AIConversation{}
+	err := d.db.QueryRowContext(ctx, stmt, args...).Scan(
+		&result.ID, &result.UID, &result.CreatorID, &result.Title, &result.ParrotID, &result.Pinned, &result.CreatedTs, &result.UpdatedTs,
+	)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("ai_conversation not found")
 		}
 		return nil, fmt.Errorf("failed to update ai_conversation: %w", err)
 	}
 
-	list, err := d.ListAIConversations(ctx, &store.FindAIConversation{ID: &id})
-	if err != nil {
-		return nil, err
-	}
-	if len(list) == 0 {
-		return nil, fmt.Errorf("ai_conversation not found after update")
-	}
-
-	return list[0], nil
+	return result, nil
 }
 
 func (d *DB) DeleteAIConversation(ctx context.Context, delete *store.DeleteAIConversation) error {

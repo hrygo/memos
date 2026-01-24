@@ -11,24 +11,14 @@ import { ChatMessages } from "@/components/AIChat/ChatMessages";
 import { ParrotQuickActions } from "@/components/AIChat/ParrotQuickActions";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
-import { useChatWithMemos } from "@/hooks/useAIQueries";
+import { useChat } from "@/hooks/useAIQueries";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import type { ParrotAgentI18n } from "@/hooks/useParrots";
 import { getLocalizedParrot, useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
-import type { ChatItem, ContextSeparator, ConversationMessage } from "@/types/aichat";
-import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
+import type { ChatItem } from "@/types/aichat";
+import type { MemoQueryResultData, ParrotChatParams, ScheduleQueryResultData } from "@/types/parrot";
 import { PARROT_AGENTS, PARROT_ICONS, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
-
-// Helper function to check if item is ContextSeparator
-function isContextSeparator(item: ChatItem): item is ContextSeparator {
-  return "type" in item && item.type === "context-separator";
-}
-
-// Helper function to check if item is ConversationMessage
-function isConversationMessage(item: ChatItem): item is ConversationMessage {
-  return !isContextSeparator(item);
-}
 
 // ============================================================
 // HUB VIEW - Agent Selection (Accessible when no conversation)
@@ -358,7 +348,7 @@ function ChatView({
 // MAIN AI CHAT PAGE
 // ============================================================
 const AIChat = () => {
-  const chatHook = useChatWithMemos();
+  const chatHook = useChat();
   const aiChat = useAIChat();
 
   // Local state
@@ -450,7 +440,7 @@ const AIChat = () => {
 
   // Handle parrot chat with callbacks
   const handleParrotChat = useCallback(
-    async (conversationId: string, parrotId: ParrotAgentType, userMessage: string, history: string[]) => {
+    async (conversationId: string, parrotId: ParrotAgentType, userMessage: string, conversationIdNum: number) => {
       setIsTyping(true);
       setIsThinking(true);
       setMemoQueryResults([]);
@@ -458,14 +448,12 @@ const AIChat = () => {
       const _messageId = ++messageIdRef.current;
 
       try {
-        await chatHook.stream(
-          {
-            message: userMessage,
-            history,
-            agentType: parrotId,
-            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          },
-          {
+        await chatHook.stream({
+          message: userMessage,
+          conversationId: conversationIdNum,
+          agentType: parrotId,
+          userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        } as ParrotChatParams, {
             onThinking: (msg) => {
               if (lastAssistantMessageIdRef.current) {
                 updateMessage(conversationId, lastAssistantMessageIdRef.current, {
@@ -600,7 +588,8 @@ const AIChat = () => {
         setInput("");
         // Optimization: UI already shows the message, backend will persist SEPARATOR.
         // We trigger handleParrotChat to ensure the backend sees the command.
-        await handleParrotChat(targetConversationId, targetParrotId, userMessage, []);
+        const targetConversationIdNum = parseInt(targetConversationId, 10);
+        await handleParrotChat(targetConversationId, targetParrotId, userMessage, targetConversationIdNum);
         return;
       }
 
@@ -626,20 +615,20 @@ const AIChat = () => {
 
       setInput("");
 
-      // Build history: only include messages after the last context separator
-      const lastSeparatorIndex = items.findLastIndex((item) => isContextSeparator(item));
-      const messagesAfterSeparator = lastSeparatorIndex === -1 ? items : items.slice(lastSeparatorIndex + 1);
-      const contextMessages = messagesAfterSeparator.filter(isConversationMessage);
-      const history = contextMessages.map((m) => m.content);
+      // Backend now handles context building, including SEPARATOR filtering
+      // We only need to pass the conversationId
+      const targetConversationIdNum = parseInt(targetConversationId, 10);
+      const conversationIdNum = isNaN(targetConversationIdNum) ? 0 : targetConversationIdNum;
 
       console.debug("[AI Chat] handleSend: calling handleParrotChat", {
         targetConversationId,
+        targetConversationIdNum: conversationIdNum,
         targetParrotId,
-        historyCount: history.length,
       });
 
       // Execute chat with explicit conversationId and parrotId
-      await handleParrotChat(targetConversationId, targetParrotId, userMessage, history);
+      // Backend will build history from database, filtering SEPARATOR messages
+      await handleParrotChat(targetConversationId, targetParrotId, userMessage, conversationIdNum);
     },
     [
       input,

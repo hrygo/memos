@@ -27,8 +27,8 @@
 *   **Verify**: Run `make check-i18n` before committing.
 
 ### 2. Database Policy
-*   **PostgreSQL**: **Primary**. Supports ALL AI features (vector search, reranking).
-*   **SQLite**: **Limited**. Dev/Testing only. No complex AI/Hybrid search.
+*   **PostgreSQL**: **Primary**. Supports ALL AI features (conversation, vector search, reranking).
+*   **SQLite**: **Development Only**. ❌ AI features NOT supported (no conversation persistence, vector search, reranking). Use for non-AI development only.
 *   **MySQL**: **UNSUPPORTED**. Do not implement or suggest.
 
 ### 3. Code Style

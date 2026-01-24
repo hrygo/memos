@@ -348,10 +348,10 @@ enum AgentType {
 }
 ```
 
-### ChatWithMemosRequest (保持不变)
+### ChatRequest (保持不变)
 
 ```protobuf
-message ChatWithMemosRequest {
+message ChatRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;
   string user_timezone = 3;
@@ -362,10 +362,10 @@ message ChatWithMemosRequest {
 }
 ```
 
-### ChatWithMemosResponse (复用现有字段)
+### ChatResponse (复用现有字段)
 
 ```protobuf
-message ChatWithMemosResponse {
+message ChatResponse {
   string content = 1;
   repeated string sources = 2;
   bool done = 3;
@@ -442,6 +442,36 @@ message ChatWithMemosResponse {
   }
 }
 ```
+
+### 消息类型处理规则
+
+会话消息分为三种类型，每种类型有不同的处理规则：
+
+```
+┌──────┬─────────┬────────────┬────────────┬─────────────────────────────────┐
+│ TYPE │  计数   │ 返回前端   │ 发给LLM    │  说明                           │
+├──────┼─────────┼────────────┼────────────┼─────────────────────────────────┤
+│ MSG  │   ✓     │     ✓      │     ✓      │ 用户/助手消息，计入100条上限   │
+│ SEP  │   ✗     │     ✓      │     ✗      │ 分割点，无内容，不计数，前端显示│
+│ SUMM │   ✗     │     ✗      │     ✓      │ 摘要内容，不计数，前端不可见    │
+└──────┴─────────┴────────────┴────────────┴─────────────────────────────────┘
+```
+
+**说明：**
+- **MSG (MESSAGE)**: 用户或助手的实际对话消息
+  - 计入 100 条消息上限
+  - 返回前端显示
+  - 发送给 LLM 作为上下文
+
+- **SEP (SEPARATOR)**: 上下文分割点标记
+  - 不计入消息上限
+  - 返回前端显示为分割线
+  - 不发送给 LLM（标记上下文裁剪点）
+
+- **SUMM (SUMMARY)**: 会话摘要（自动生成）
+  - 不计入消息上限
+  - 不返回前端（对用户不可见）
+  - 发送给 LLM 作为上下文前缀
 
 ---
 
@@ -1318,7 +1348,7 @@ const (
     ToolExecutionTimeout  = 30 * time.Second // 工具执行超时
 )
 
-type SendFunc = func(resp *apiv1.ChatWithMemosResponse) error
+type SendFunc = func(resp *apiv1.ChatResponse) error
 
 // ParrotRouter 鹦鹉路由器
 type ParrotRouter struct {
@@ -1411,7 +1441,7 @@ func (r *ParrotRouter) handleDefault(
         return fmt.Errorf("default LLM chat failed: %w", err)
     }
 
-    resp := &apiv1.ChatWithMemosResponse{
+    resp := &apiv1.ChatResponse{
         EventType: "answer",
         EventData:  response,
         Done:      true,
@@ -1433,8 +1463,8 @@ func (r *ParrotRouter) handleMemo(
         Name:   "灰灰",
         Avatar: "🦜",
         Parrot: memoParrot,
-        ResultParser: func(event string, data string) (*apiv1.ChatWithMemosResponse, error) {
-            resp := &apiv1.ChatWithMemosResponse{
+        ResultParser: func(event string, data string) (*apiv1.ChatResponse, error) {
+            resp := &apiv1.ChatResponse{
                 EventType: event,
                 EventData:  data,
             }
@@ -1456,7 +1486,7 @@ type AgentConfig struct {
     Name         string
     Avatar       string
     Parrot       ParrotAgent
-    ResultParser func(event string, data string) (*apiv1.ChatWithMemosResponse, error)
+    ResultParser func(event string, data string) (*apiv1.ChatResponse, error)
 }
 
 // handleParrotWithCallback 通用的鹦鹉处理函数 (✅ 新增: 消除重复代码)
@@ -1474,7 +1504,7 @@ func (r *ParrotRouter) handleParrotWithCallback(
     }
     switchEventData, _ := json.Marshal(switchEvent)
 
-    resp := &apiv1.ChatWithMemosResponse{
+    resp := &apiv1.ChatResponse{
         EventType: "agent_switch",
         EventData:  string(switchEventData),
     }
@@ -1489,7 +1519,7 @@ func (r *ParrotRouter) handleParrotWithCallback(
         if parseErr != nil {
             slog.Error("failed to parse event", "event", event, "error", parseErr)
             // 发送错误事件
-            errorResp := &apiv1.ChatWithMemosResponse{
+            errorResp := &apiv1.ChatResponse{
                 EventType: "error",
                 EventData:  parseErr.Error(),
             }
@@ -1886,7 +1916,7 @@ export const ParrotQuickActions = ({ onAction, currentAgent }: ParrotQuickAction
 
 import { create } from "@bufbuild/protobuf";
 import { aiServiceClient } from "@/connect";
-import { ChatWithMemosRequestSchema } from "@/types/proto/api/v1/ai_service_pb";
+import { ChatRequestSchema } from "@/types/proto/api/v1/ai_service_pb";
 import { isValidParrotAgentType, ParrotAgentType } from "@/types/parrot";
 
 export function useParrotChat() {
@@ -1913,7 +1943,7 @@ export function useParrotChat() {
       throw error;
     }
 
-    const request = create(ChatWithMemosRequestSchema, {
+    const request = create(ChatRequestSchema, {
       message: params.message,
       history: params.history ?? [],
       agentType: params.agentType as any, // ✅ 已通过类型守卫验证
@@ -2206,7 +2236,7 @@ func TestParrotRouter_Integration(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            err := router.RouteWithStream(ctx, tt.agentType, tt.input, func(resp *apiv1.ChatWithMemosResponse) error {
+            err := router.RouteWithStream(ctx, tt.agentType, tt.input, func(resp *apiv1.ChatResponse) error {
                 return nil
             })
 

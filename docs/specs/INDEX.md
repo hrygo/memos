@@ -36,7 +36,7 @@
 | AI-010 | [LLM 服务](./AI-010-llm-service.md)                       | ✅ 已完成 | AI-007                         |
 | AI-011 | [向量生成后台任务](./AI-011-embedding-runner.md)          | ✅ 已完成 | AI-008, AI-006                 |
 | AI-012 | [SemanticSearch API](./AI-012-semantic-search-api.md)     | ✅ 已完成 | AI-001, AI-006, AI-008, AI-009 |
-| AI-013 | [ChatWithMemos API](./AI-013-chat-api.md)                 | ✅ 已完成 | AI-012, AI-010                 |
+| AI-013 | [Chat API](./AI-013-chat-api.md)                 | ✅ 已完成 | AI-012, AI-010                 |
 | AI-014 | [SuggestTags API](./AI-014-suggest-tags-api.md)           | ✅ 已完成 | AI-010                         |
 | AI-015 | [GetRelatedMemos API](./AI-015-related-memos-api.md)      | ✅ 已完成 | AI-006, AI-008                 |
 | AI-016 | [前端 AI Hooks](./AI-016-frontend-hooks.md)               | ✅ 已完成 | AI-012, AI-013, AI-014, AI-015 |

@@ -993,5 +993,29 @@
     "send-reply": "发送回复",
     "cancel-chat": "取消对话",
     "schedule-preview": "日程预览"
-  }
+  },
+  "chat": {
+    "default": {
+      "title": "羽飞 - 领航员"
+    },
+    "memo": {
+      "title": "灰灰 - 笔记助手"
+    },
+    "schedule": {
+      "title": "金刚 - 日程助手"
+    },
+    "amazing": {
+      "title": "惊奇 - 综合助手"
+    },
+    "creative": {
+      "title": "灵灵 - 创意助手"
+    },
+    "new": "新对话"
+  },
+  "chat.new": "新对话",
+  "chat.default.title": "默认对话",
+  "chat.memo.title": "笔记对话",
+  "chat.schedule.title": "日程对话",
+  "chat.amazing.title": "惊奇对话",
+  "chat.creative.title": "创意对话"
 }

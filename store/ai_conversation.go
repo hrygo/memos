@@ -46,6 +46,7 @@ type AIMessageType string
 const (
 	AIMessageTypeMessage   AIMessageType = "MESSAGE"
 	AIMessageTypeSeparator AIMessageType = "SEPARATOR"
+	AIMessageTypeSummary   AIMessageType = "SUMMARY" // Conversation summary (invisible to frontend)
 )
 
 type AIMessage struct {

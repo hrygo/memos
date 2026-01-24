@@ -43,7 +43,7 @@ service AIService {
   }
 
   // AI 对话 (流式)
-  rpc ChatWithMemos(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+  rpc Chat(ChatRequest) returns (stream ChatResponse) {
     option (google.api.http) = {
       post: "/api/v1/ai/chat"
       body: "*"
@@ -86,12 +86,12 @@ message SuggestTagsResponse {
   repeated string tags = 1;
 }
 
-message ChatWithMemosRequest {
+message ChatRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;  // 对话历史
 }
 
-message ChatWithMemosResponse {
+message ChatResponse {
   string content = 1;           // 流式内容块
   repeated string sources = 2;  // 引用来源 memos/{id}
   bool done = 3;                // 流结束标记

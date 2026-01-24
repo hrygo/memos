@@ -13,6 +13,37 @@ Memos is a **privacy-first, AI-powered personal intelligence assistant** that co
 
 ---
 
+## 💬 AI Chat Session
+
+Memos provides **persistent AI chat sessions** with intelligent message management:
+
+### Message Types
+
+| Type   | Count | Frontend | LLM Context | Description                           |
+| ------ | ----- | -------- | ----------- | ------------------------------------- |
+| MSG    | ✓     | ✓        | ✓           | User/Assistant messages (100 limit)   |
+| SEP    | ✗     | ✓        | ✗           | Context separator (visual divider)     |
+| SUMMARY | ✗   | ✗        | ✓           | Auto-generated summary (invisible)   |
+
+### Key Features
+
+- **Persistent Conversations** – All chat sessions are stored in PostgreSQL
+- **Incremental Sync** – Efficiently load messages with UID-based pagination
+- **FIFO Cache** – Frontend maintains 100 MSG cache per conversation
+- **Context Separator** – Manually clear conversation context with `---`
+- **Auto Summarization** – Conversations are automatically summarized after 11 messages
+- **Multi-Device Sync** – Chat state synchronized across devices
+
+### Message Sync Flow
+
+```
+First Load          → Latest 100 MSG (SEP included)
+Incremental Load    → Messages after lastMessageUid (max 100 MSG)
+UID Not Found       → sync_required flag triggers full refresh
+```
+
+---
+
 ## 🦜 Parrot AI Agents
 
 Memos uses a **multi-agent architecture** where specialized AI assistants (modeled after parrot species) handle different tasks:
@@ -251,13 +282,14 @@ docker run -d \
 
 ## 📊 Database Support
 
-| Database   | Status         | AI Features                       | Recommended Use  |
-| ---------- | -------------- | --------------------------------- | ---------------- |
-| PostgreSQL | ✅ Full Support | ✅ Vector, BM25, Hybrid, Reranking | Production       |
-| SQLite     | ⚠️ Limited      | ❌ No vector search                | Development only |
-| MySQL      | ❌ Removed      | ❌                                 | N/A              |
+| Database   | Status                    | AI Features                                      | Recommended Use          |
+| ---------- | ------------------------- | ------------------------------------------------ | ------------------------ |
+| PostgreSQL | ✅ Full Support           | ✅ All AI features (Conversation, Vector, Rerank) | Production               |
+| SQLite     | ⚠️ Development Only        | ❌ **AI features NOT supported**                  | Non-AI development only  |
+| MySQL      | ❌ Removed                | ❌                                                | N/A                      |
 
-> **Note**: MySQL support has been removed due to lack of AI features.
+> ⚠️ **Important**: SQLite does NOT support AI features (conversation persistence, vector search, reranking).
+> Use PostgreSQL for production AI features. See [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md) for details.
 
 ---
 
@@ -268,6 +300,9 @@ memos/
 ├── cmd/memos/                # Main application entry point
 ├── server/                   # Go backend
 │   ├── router/api/v1/       # API handlers (Connect RPC)
+│   │   └── ai/              # AI chat components
+│   │       ├── context_builder.go     # Context building for LLM
+│   │       └── conversation_summarizer.go  # Auto-summarization
 │   ├── queryengine/         # Query routing & intent detection
 │   ├── retrieval/           # Adaptive retrieval (BM25 + Vector)
 │   ├── runner/              # Background task runners
@@ -292,8 +327,11 @@ memos/
 ├── web/                     # React frontend
 │   └── src/
 │       ├── components/      # UI components
+│       ├── contexts/        # React contexts
+│       │   └── AIChatContext.tsx  # AI chat state management
 │       ├── layouts/         # Page layouts
 │       ├── pages/           # Route pages
+│       │   └── AIChat.tsx    # AI chat page
 │       └── hooks/           # React hooks
 ├── docs/                    # Documentation
 │   └── dev-guides/          # Developer guides

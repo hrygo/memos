@@ -16,6 +16,12 @@ import (
 	"github.com/usememos/memos/server/internal/observability"
 )
 
+// ChatStream represents the streaming response interface for AI chat.
+type ChatStream interface {
+	Send(*v1pb.ChatResponse) error
+	Context() context.Context
+}
+
 // ParrotHandler handles all parrot agent requests (DEFAULT, MEMO, SCHEDULE, AMAZING, CREATIVE).
 type ParrotHandler struct {
 	factory *AgentFactory
@@ -116,7 +122,7 @@ func (h *ParrotHandler) executeAgent(
 		streamMu.Lock()
 		defer streamMu.Unlock()
 
-		return stream.Send(&v1pb.ChatWithMemosResponse{
+		return stream.Send(&v1pb.ChatResponse{
 			EventType: eventType,
 			EventData: dataStr,
 		})
@@ -135,7 +141,7 @@ func (h *ParrotHandler) executeAgent(
 	// Send done marker
 	streamMu.Lock()
 	defer streamMu.Unlock()
-	if err := stream.Send(&v1pb.ChatWithMemosResponse{
+	if err := stream.Send(&v1pb.ChatResponse{
 		Done: true,
 	}); err != nil {
 		return err
@@ -171,12 +177,14 @@ func (h *RoutingHandler) Handle(ctx context.Context, req *ChatRequest, stream Ch
 }
 
 // ToChatRequest converts a protobuf request to an internal ChatRequest.
-func ToChatRequest(pbReq *v1pb.ChatWithMemosRequest) *ChatRequest {
+func ToChatRequest(pbReq *v1pb.ChatRequest) *ChatRequest {
 	return &ChatRequest{
-		Message:   pbReq.Message,
-		History:   pbReq.History,
-		AgentType: AgentTypeFromProto(pbReq.AgentType),
-		Timezone:  pbReq.UserTimezone,
+		Message:         pbReq.Message,
+		History:         pbReq.History,
+		AgentType:       AgentTypeFromProto(pbReq.AgentType),
+		Timezone:        pbReq.UserTimezone,
+		ConversationID:  pbReq.ConversationId,
+		IsTempConversation: pbReq.IsTempConversation,
 	}
 }
 

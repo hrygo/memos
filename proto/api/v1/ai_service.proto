@@ -28,7 +28,7 @@ service AIService {
   }
 
   // Chat streams a chat response with AI agents.
-  rpc Chat(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
+  rpc Chat(ChatRequest) returns (stream ChatResponse) {
     option (google.api.http) = {
       post: "/api/v1/ai/chat"
       body: "*"
@@ -39,22 +39,6 @@ service AIService {
   rpc GetRelatedMemos(GetRelatedMemosRequest) returns (GetRelatedMemosResponse) {
     option (google.api.http) = {
       get: "/api/v1/{name=memos/*}/related"
-    };
-  }
-
-  // ChatWithScheduleAgent streams a chat response using the schedule agent.
-  rpc ChatWithScheduleAgent(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/ai/chat/schedule"
-      body: "*"
-    };
-  }
-
-  // ChatWithMemosIntegrated integrates both RAG and schedule agent.
-  rpc ChatWithMemosIntegrated(ChatWithMemosRequest) returns (stream ChatWithMemosResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/ai/chat/integrated"
-      body: "*"
     };
   }
 
@@ -106,6 +90,21 @@ service AIService {
   rpc DeleteAIConversation(DeleteAIConversationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/api/v1/ai/conversations/{id}"
+    };
+  }
+
+  // AddContextSeparator adds a context separator marker to a conversation.
+  rpc AddContextSeparator(AddContextSeparatorRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/conversations/{conversation_id}/separator"
+      body: "*"
+    };
+  }
+
+  // ListMessages returns messages for a conversation with incremental sync support.
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/conversations/{conversation_id}/messages"
     };
   }
 }
@@ -193,14 +192,15 @@ enum AgentType {
   AGENT_TYPE_CREATIVE = 4;  // 🦜 Creative Parrot - Creative assistant (Milestone 4)
 }
 
-// ChatWithMemosRequest is the request for ChatWithMemos.
-message ChatWithMemosRequest {
+// ChatRequest is the request for Chat.
+message ChatRequest {
   string message = 1 [(google.api.field_behavior) = REQUIRED];
   repeated string history = 2;  // conversation history
   string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
   ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
   AgentType agent_type = 5;     // Agent type (optional, defaults to DEFAULT)
   int32 conversation_id = 6;    // Conversation ID to persist message to
+  bool is_temp_conversation = 7; // Whether to create a temporary conversation (true) or fixed conversation (false)
 }
 
 // AIConversation represents an AI chat session.
@@ -214,6 +214,7 @@ message AIConversation {
   int64 created_ts = 7;
   int64 updated_ts = 8;
   repeated AIMessage messages = 9;
+  int32 message_count = 10;  // Total message count (excludes SEPARATOR messages)
 }
 
 // AIMessage represents a single message in an AI conversation.
@@ -253,8 +254,31 @@ message DeleteAIConversationRequest {
   int32 id = 1;
 }
 
-// ChatWithMemosResponse is the response for ChatWithMemos.
-message ChatWithMemosResponse {
+// AddContextSeparatorRequest adds a separator marker to a conversation.
+// This marks the point where the conversation context is cleared.
+// Subsequent chat requests will only include messages after this separator.
+message AddContextSeparatorRequest {
+  int32 conversation_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// ListMessagesRequest is the request for ListMessages.
+message ListMessagesRequest {
+  int32 conversation_id = 1 [(google.api.field_behavior) = REQUIRED];  // Conversation ID
+  int32 limit = 2;   // Max messages to return (default: 100, max: 100)
+  string last_message_uid = 3;  // Last message UID from previous page (for incremental sync)
+}
+
+// ListMessagesResponse is the response for ListMessages.
+message ListMessagesResponse {
+  repeated AIMessage messages = 1;      // Messages in the conversation
+  bool has_more = 2;                    // Whether more messages exist before this page
+  int32 total_count = 3;                // Total count of MSG messages (excludes SEP/SUMMARY)
+  string latest_message_uid = 4;        // UID of the latest message for sync validation
+  bool sync_required = 5;               // Whether client should re-sync (UID not found)
+}
+
+// ChatResponse is the response for Chat.
+message ChatResponse {
   string content = 1;                       // streaming content chunk
   repeated string sources = 2;              // citation sources memos/{id}
   bool done = 3;                            // stream end marker

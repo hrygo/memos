@@ -10,13 +10,17 @@ interface ConversationItemProps {
   onSelect: (id: string) => void;
   onResetContext: (id: string) => void;
   className?: string;
+  isLoaded?: boolean; // Whether this conversation has been loaded with messages
 }
 
-export function ConversationItem({ conversation, isActive, onSelect, onResetContext, className }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, onSelect, onResetContext, className, isLoaded = false }: ConversationItemProps) {
   const { t } = useTranslation();
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
   const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.DEFAULT;
+
+  // Display message count: show "..." if not loaded yet, 0 if truly empty
+  const displayMessageCount = isLoaded ? conversation.messageCount : "...";
 
   return (
     <div
@@ -45,19 +49,23 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{conversation.title}</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              {t("ai.aichat.sidebar.message-count", { count: conversation.messageCount })} · {formatTime(conversation.updatedAt, t)}
+              {displayMessageCount === "..."
+                ? t("ai.aichat.sidebar.message-count", { count: 0 })
+                : t("ai.aichat.sidebar.message-count", { count: displayMessageCount })} · {formatTime(conversation.updatedAt, t)}
             </p>
           </div>
         </div>
       </button>
 
-      {/* Clear Context Button - Compact icon-only, expands on hover */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2">
-        <ClearContextButton
-          conversationId={conversation.id}
-          onResetContext={onResetContext}
-        />
-      </div>
+      {/* Clear Context Button - Only show if conversation is loaded */}
+      {isLoaded && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <ClearContextButton
+            conversationId={conversation.id}
+            onResetContext={onResetContext}
+          />
+        </div>
+      )}
     </div>
   );
 }

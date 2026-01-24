@@ -10,6 +10,7 @@ export type MessageRole = "user" | "assistant" | "system";
  */
 export interface ConversationMessage {
   id: string;
+  uid?: string; // Backend UID for incremental sync
   role: MessageRole;
   content: string;
   timestamp: number;
@@ -77,6 +78,15 @@ export type ConversationViewMode = "hub" | "chat";
 export type SidebarTab = "history" | "memos";
 
 /**
+ * Message cache state for incremental sync
+ */
+export interface MessageCache {
+  lastMessageUid: string; // Latest message UID from backend
+  totalCount: number; // Total MSG count from backend
+  hasMore: boolean; // Whether more messages exist before the first cached message
+}
+
+/**
  * Single conversation
  */
 export interface Conversation {
@@ -88,6 +98,8 @@ export interface Conversation {
   messages: ChatItem[];
   referencedMemos: ReferencedMemo[];
   pinned?: boolean;
+  messageCount?: number; // Optional: backend-provided message count (excludes SEPARATOR)
+  messageCache?: MessageCache; // Local message cache state for incremental sync
 }
 
 /**
@@ -139,6 +151,8 @@ export interface AIChatContextValue {
   deleteMessage: (conversationId: string, messageId: string) => void;
   clearMessages: (conversationId: string) => void;
   addContextSeparator: (conversationId: string, trigger?: "manual" | "auto" | "shortcut") => string;
+  syncMessages: (conversationId: string) => Promise<void>; // Incremental message sync with FIFO cache
+  loadMoreMessages: (conversationId: string) => Promise<void>; // Load older messages (paginate back)
 
   // Referenced content actions
   addReferencedMemos: (conversationId: string, memos: ReferencedMemo[]) => void;

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiServiceClient } from "@/connect";
 import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 import {
-  ChatWithMemosRequestSchema,
+  ChatRequestSchema,
   GetRelatedMemosRequestSchema,
   SemanticSearchRequestSchema,
   SuggestTagsRequestSchema,
@@ -78,12 +78,12 @@ export function useRelatedMemos(name: string, options: { enabled?: boolean; limi
 }
 
 /**
- * useChatWithMemos streams a chat response using memos as context.
+ * useChat streams a chat response using AI agents.
  * Uses Connect RPC streaming to receive responses in real-time.
  *
  * @returns An object with stream function and callbacks
  */
-export function useChatWithMemos() {
+export function useChat() {
   const queryClient = useQueryClient();
 
   return {
@@ -127,7 +127,7 @@ export function useChatWithMemos() {
         }) => void;
       },
     ) => {
-      const request = create(ChatWithMemosRequestSchema, {
+      const request = create(ChatRequestSchema, {
         message: params.message,
         history: params.history ?? [],
         agentType: params.agentType !== undefined ? parrotToProtoAgentType(params.agentType) : undefined,

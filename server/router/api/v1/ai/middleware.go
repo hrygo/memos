@@ -3,36 +3,26 @@ package ai
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strconv"
-	"strings"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/usememos/memos/plugin/ai"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/server/internal/errors"
-	"github.com/usememos/memos/server/internal/observability"
 	"github.com/usememos/memos/server/middleware"
 )
 
 // ChatRequest represents a chat request.
 type ChatRequest struct {
-	Message        string
-	History        []string
-	AgentType      AgentType
-	UserID         int32
-	Timezone       string
-	ConversationID int32
-}
-
-// ChatStream represents the streaming response interface.
-type ChatStream interface {
-	Send(*v1pb.ChatWithMemosResponse) error
-	Context() context.Context
+	Message            string
+	History            []string
+	AgentType          AgentType
+	UserID             int32
+	Timezone           string
+	ConversationID     int32
+	IsTempConversation bool
 }
 
 // Handler is the interface for handling chat requests.
@@ -73,42 +63,17 @@ func (h *validationHandler) Handle(ctx context.Context, req *ChatRequest, stream
 }
 
 // AuthMiddleware authenticates the user.
-type AuthMiddleware struct {
-	store  Store
-	logger *observability.RequestContext
-}
-
-// Store is the minimal interface needed for authentication.
-type Store interface {
-	GetUser(ctx context.Context, find *FindUser) (*User, error)
-}
-
-// FindUser represents user search criteria.
-type FindUser struct {
-	ID *int32
-}
-
-// User represents a user.
-type User struct {
-	ID       int32
-	Username string
-}
+type AuthMiddleware struct{}
 
 // NewAuthMiddleware creates a new auth middleware.
-func NewAuthMiddleware(store Store, logger *observability.RequestContext) Middleware {
+func NewAuthMiddleware() Middleware {
 	return func(next Handler) Handler {
-		return &authHandler{
-			store:  store,
-			logger: logger,
-			next:   next,
-		}
+		return &authHandler{next: next}
 	}
 }
 
 type authHandler struct {
-	store  Store
-	logger *observability.RequestContext
-	next   Handler
+	next Handler
 }
 
 func (h *authHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatStream) error {
@@ -125,15 +90,13 @@ func (h *authHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatS
 // RateLimitMiddleware applies rate limiting.
 type RateLimitMiddleware struct {
 	limiter *middleware.RateLimiter
-	logger  *observability.RequestContext
 }
 
 // NewRateLimitMiddleware creates a new rate limit middleware.
-func NewRateLimitMiddleware(limiter *middleware.RateLimiter, logger *observability.RequestContext) Middleware {
+func NewRateLimitMiddleware(limiter *middleware.RateLimiter) Middleware {
 	return func(next Handler) Handler {
 		return &rateLimitHandler{
 			limiter: limiter,
-			logger:  logger,
 			next:    next,
 		}
 	}
@@ -141,7 +104,6 @@ func NewRateLimitMiddleware(limiter *middleware.RateLimiter, logger *observabili
 
 type rateLimitHandler struct {
 	limiter *middleware.RateLimiter
-	logger  *observability.RequestContext
 	next    Handler
 }
 
@@ -251,62 +213,3 @@ func BuildChatMessages(message string, history []string, systemPrompt string) []
 	return messages
 }
 
-// StreamLLMResponse streams LLM responses to the client.
-func StreamLLMResponse(
-	ctx context.Context,
-	llm ai.LLMService,
-	messages []ai.Message,
-	stream ChatStream,
-	logger *observability.RequestContext,
-) error {
-	llmStart := time.Now()
-	contentChan, errChan := llm.ChatStream(ctx, messages)
-
-	// Use strings.Builder for efficient string concatenation
-	var fullContent strings.Builder
-	var totalChunks int
-
-	for {
-		select {
-		case content, ok := <-contentChan:
-			if !ok {
-				contentChan = nil
-				if errChan == nil {
-					logger.Debug("LLM stream completed",
-						slog.Int64(observability.LogFieldDuration, time.Since(llmStart).Milliseconds()),
-						slog.Int("output_length", fullContent.Len()),
-						slog.Int("total_chunks", totalChunks),
-					)
-					// Send done marker
-					return stream.Send(&v1pb.ChatWithMemosResponse{Done: true})
-				}
-				continue
-			}
-			totalChunks++
-			fullContent.WriteString(content)
-			if err := stream.Send(&v1pb.ChatWithMemosResponse{Content: content}); err != nil {
-				return err
-			}
-
-		case err, ok := <-errChan:
-			if !ok {
-				errChan = nil
-				if contentChan == nil {
-					logger.Debug("LLM stream completed",
-						slog.Int64(observability.LogFieldDuration, time.Since(llmStart).Milliseconds()),
-						slog.Int("output_length", fullContent.Len()),
-						slog.Int("total_chunks", totalChunks),
-					)
-					return stream.Send(&v1pb.ChatWithMemosResponse{Done: true})
-				}
-				continue
-			}
-			if err != nil {
-				return status.Error(codes.Internal, fmt.Sprintf("LLM error: %v", err))
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}

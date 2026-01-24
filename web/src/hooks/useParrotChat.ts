@@ -10,11 +10,10 @@ import {
   parrotToProtoAgentType,
   ScheduleQueryResultData,
 } from "@/types/parrot";
-import { ChatWithMemosRequestSchema } from "@/types/proto/api/v1/ai_service_pb";
+import { ChatRequestSchema } from "@/types/proto/api/v1/ai_service_pb";
 
 /**
  * useParrotChat provides a hook for chatting with parrot agents.
- * useParrotChat 提供与鹦鹉代理聊天的 Hook。
  *
  * @example
  * ```tsx
@@ -41,19 +40,23 @@ export function useParrotChat() {
   return {
     /**
      * Stream chat with a parrot agent.
-     * 使用鹦鹉代理进行流式聊天。
      *
      * @param params - Chat parameters including agent type and message
      * @param callbacks - Optional callbacks for streaming events
      * @returns A promise that resolves when streaming completes
      */
     streamChat: async (params: ParrotChatParams, callbacks?: ParrotChatCallbacks) => {
-      const request = create(ChatWithMemosRequestSchema, {
+      const request = create(ChatRequestSchema, {
         message: params.message,
-        history: params.history ?? [],
+        history: params.history ?? [],  // Deprecated: will be removed after migration
         agentType: parrotToProtoAgentType(params.agentType),
         userTimezone: params.userTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
+
+      // Manually set conversationId since it may not be in the generated schema
+      if (params.conversationId) {
+        (request as any).conversationId = params.conversationId;
+      }
 
       try {
         // Use the streaming method from Connect RPC client
@@ -97,7 +100,6 @@ export function useParrotChat() {
 
     /**
      * Invalidate parrot-related queries after chat
-     * 聊天后使鹦鹉相关查询失效
      */
     invalidate: async () => {
       await queryClient.invalidateQueries({ queryKey: ["parrot"] });
@@ -107,7 +109,6 @@ export function useParrotChat() {
 
 /**
  * Handle parrot-specific events from the server.
- * 处理来自服务器的鹦鹉特定事件。
  *
  * @param eventType - The type of event
  * @param eventData - The event data (JSON string or plain text)
@@ -173,7 +174,6 @@ function handleParrotEvent(eventType: string, eventData: string, callbacks?: Par
 
 /**
  * Query keys factory for parrot-related queries
- * 鹦鹉相关查询的查询键工厂
  */
 export const parrotKeys = {
   all: ["parrot"] as const,

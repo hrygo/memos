@@ -993,5 +993,29 @@
     "send-reply": "Send reply",
     "cancel-chat": "Cancel chat",
     "schedule-preview": "Schedule preview"
-  }
+  },
+  "chat": {
+    "default": {
+      "title": "Default Assistant"
+    },
+    "memo": {
+      "title": "Memo Assistant"
+    },
+    "schedule": {
+      "title": "Schedule Assistant"
+    },
+    "amazing": {
+      "title": "Amazing Assistant"
+    },
+    "creative": {
+      "title": "Creative Assistant"
+    },
+    "new": "New Chat"
+  },
+  "chat.new": "New Chat",
+  "chat.default.title": "Default Chat",
+  "chat.memo.title": "Memo Chat",
+  "chat.schedule.title": "Schedule Chat",
+  "chat.amazing.title": "Amazing Chat",
+  "chat.creative.title": "Creative Chat"
 }

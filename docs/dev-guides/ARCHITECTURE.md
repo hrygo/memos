@@ -4,7 +4,7 @@
 
 Memos is a privacy-first, lightweight note-taking service with AI-powered parrot agents.
 - **Core Architecture**: Go backend (Echo/Connect RPC) + React frontend (Vite/Tailwind)
-- **Data Storage**: PostgreSQL (production, full AI support), SQLite (limited, dev/testing only)
+- **Data Storage**: PostgreSQL (production, full AI support), SQLite (development only, **no AI features**)
 - **Key Features**: Multi-agent AI system, semantic search, schedule assistant, self-hosted with no telemetry
 - **Ports**: Backend 28081, Frontend 25173, PostgreSQL 25432 (development)
 
@@ -14,7 +14,7 @@ Memos is a privacy-first, lightweight note-taking service with AI-powered parrot
 | -------- | ------------------------------------------------------------------- |
 | Backend  | Go 1.25, Echo, Connect RPC, pgvector                                |
 | Frontend | React 18, Vite 7, TypeScript, Tailwind CSS 4, Radix UI, React Query |
-| Database | PostgreSQL (production), SQLite (dev/testing only)                  |
+| Database | PostgreSQL (production with AI), SQLite (dev only, **no AI**)       |
 | AI       | DeepSeek (LLM), SiliconFlow (Embedding, Reranker)                   |
 
 ## Project Architecture
@@ -99,7 +99,7 @@ if req.AgentType != v1pb.AgentType_AGENT_TYPE_DEFAULT {
 // Otherwise: DEFAULT agent path (legacy RAG)
 ```
 
-**Frontend Usage**: Set `agentType` in `ChatWithMemosRequest` to route to specific agent.
+**Frontend Usage**: Set `agentType` in `ChatRequest` to route to specific agent.
 
 ### Schedule Agent
 
