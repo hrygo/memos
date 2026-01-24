@@ -150,9 +150,16 @@ func (t *ScheduleQueryTool) Name() string {
 
 // Description returns the tool description for the LLM.
 func (t *ScheduleQueryTool) Description() string {
-	return `Search for schedule events within a specific time range.
-Inputs must be ISO8601 format time strings (e.g., "2026-01-21T09:00:00Z").
-Returns a list of existing events with their titles, times, and locations.`
+	return `[MUST USE FIRST] Query existing schedules BEFORE creating any new schedule.
+
+IMPORTANT USAGE RULE:
+- ALWAYS call this tool BEFORE schedule_add to check for conflicts
+- Call this first when user asks about their schedule
+
+Input: {"start_time": "ISO8601", "end_time": "ISO8601"}
+Example: {"start_time": "2026-01-25T00:00:00+08:00", "end_time": "2026-01-26T00:00:00+08:00"}
+
+Returns: List of existing schedules or "No schedules found"`
 }
 
 // InputType returns the expected input type schema.
@@ -381,15 +388,17 @@ func (t *ScheduleQueryTool) RunWithStructuredResult(ctx context.Context, inputJS
 
 // ScheduleAddTool creates a new schedule event.
 type ScheduleAddTool struct {
-	service      schedule.Service
-	userIDGetter func(ctx context.Context) int32
+	service          schedule.Service
+	userIDGetter     func(ctx context.Context) int32
+	conflictResolver *schedule.ConflictResolver
 }
 
 // NewScheduleAddTool creates a new schedule add tool.
 func NewScheduleAddTool(service schedule.Service, userIDGetter func(ctx context.Context) int32) *ScheduleAddTool {
 	return &ScheduleAddTool{
-		service:      service,
-		userIDGetter: userIDGetter,
+		service:          service,
+		userIDGetter:     userIDGetter,
+		conflictResolver: schedule.NewConflictResolver(service),
 	}
 }
 
@@ -400,9 +409,17 @@ func (t *ScheduleAddTool) Name() string {
 
 // Description returns the tool description for the LLM.
 func (t *ScheduleAddTool) Description() string {
-	return `Create a new schedule event.
-IMPORTANT: Only use this tool after verifying availability or when the user explicitly ignores conflicts.
-All times must be in ISO8601 format (e.g., "2026-01-21T09:00:00Z").`
+	return `Create a NEW schedule AFTER checking for conflicts with schedule_query.
+
+REQUIRED WORKFLOW:
+1. First: Call schedule_query to check availability
+2. Only if no conflict: Call schedule_add
+3. If conflict exists: Call find_free_time instead
+
+Input: {"title": "event name", "start_time": "ISO8601", "end_time": "ISO8601"}
+Example: {"title": "Team Meeting", "start_time": "2026-01-25T15:00:00+08:00", "end_time": "2026-01-25T16:00:00+08:00"}
+
+Note: end_time can be omitted for 1-hour default duration. Auto-adjusts conflicts if enabled.`
 }
 
 // InputType returns the expected input type schema.
@@ -514,32 +531,41 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 			"requested_start", startTime.Unix(),
 		)
 
-		// Find next available slot
+		// Calculate duration
 		durationSec := int64(3600)
 		if endTime != nil {
 			durationSec = *endTime - startTime.Unix()
 		}
-		nextSlot, slotErr := t.findNextAvailableSlot(ctx, userID, startTime, durationSec)
-		if slotErr != nil {
-			return "", fmt.Errorf("failed to create schedule: %w (and no alternative slots available: %v)", err, slotErr)
+		duration := time.Duration(durationSec) * time.Second
+
+		// Use ConflictResolver to find best alternative
+		resolution, resErr := t.conflictResolver.Resolve(ctx, userID, startTime, time.Time{}, duration)
+		if resErr != nil {
+			return "", fmt.Errorf("failed to create schedule: %w (and failed to find alternatives: %v)", err, resErr)
 		}
 
-		// Update request with new time
-		newStartTs := nextSlot.Unix()
-		newEndTs := newStartTs + durationSec
-		createReq.StartTs = newStartTs
-		createReq.EndTs = &newEndTs
+		// If auto-resolved slot available, retry with that time
+		if resolution.AutoResolved != nil {
+			newStartTs := resolution.AutoResolved.Start.Unix()
+			newEndTs := resolution.AutoResolved.End.Unix()
+			createReq.StartTs = newStartTs
+			createReq.EndTs = &newEndTs
 
-		slog.Info("schedule_add: retrying with auto-resolved time",
-			"user_id", userID,
-			"original_start", startTime.Unix(),
-			"new_start", newStartTs,
-		)
+			slog.Info("schedule_add: retrying with auto-resolved time",
+				"user_id", userID,
+				"original_start", startTime.Unix(),
+				"new_start", newStartTs,
+			)
 
-		// Retry creation with new time
-		created, err = t.service.CreateSchedule(ctx, userID, createReq)
-		if err != nil {
-			return "", fmt.Errorf("failed to create schedule even with alternative time: %w", err)
+			// Retry creation with new time
+			created, err = t.service.CreateSchedule(ctx, userID, createReq)
+			if err != nil {
+				// Still failed, provide alternatives in error
+				return t.formatConflictError(resolution, err)
+			}
+		} else {
+			// No auto-resolved slot available, provide alternatives
+			return t.formatConflictError(resolution, err)
 		}
 	} else if err != nil {
 		return "", fmt.Errorf("failed to create schedule: %w", err)
@@ -587,85 +613,38 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 	return result, nil
 }
 
-// findNextAvailableSlot finds the next available time slot after the requested time.
-// Returns the start time of the next available slot (in RFC3339 format).
-func (t *ScheduleAddTool) findNextAvailableSlot(ctx context.Context, userID int32, requestedStart time.Time, durationSec int64) (time.Time, error) {
-	const hourStart = 8              // 8 AM
-	const hourEnd = 22               // 10 PM (last slot starts at 22:00)
-	const slotDuration = int64(3600) // 1 hour
-
-	// Start searching from the requested time
-	searchStart := requestedStart.Add(time.Duration(durationSec))
-	if searchStart.Hour() < hourStart {
-		searchStart = time.Date(searchStart.Year(), searchStart.Month(), searchStart.Day(), hourStart, 0, 0, 0, searchStart.Location())
+// formatConflictError formats a conflict error with available alternative slots.
+// Returns structured error for i18n support in the frontend.
+func (t *ScheduleAddTool) formatConflictError(resolution *schedule.ConflictResolution, originalErr error) (string, error) {
+	if len(resolution.Alternatives) == 0 {
+		return "", fmt.Errorf("failed to create schedule: %w (no alternative slots available)", originalErr)
 	}
 
-	// Search for up to 7 days
-	for dayOffset := 0; dayOffset < 7; dayOffset++ {
-		// Check for context cancellation before processing each day
-		select {
-		case <-ctx.Done():
-			return time.Time{}, ctx.Err()
-		default:
-		}
-
-		slotDate := searchStart.Add(time.Duration(dayOffset) * 24 * time.Hour)
-		slotStart := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(), hourStart, 0, 0, 0, searchStart.Location())
-
-		// Get schedules for this day
-		endOfDay := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(), 23, 59, 59, 0, slotStart.Location())
-		schedules, err := t.service.FindSchedules(ctx, userID, slotStart, endOfDay)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("failed to query schedules: %w", err)
-		}
-
-		// Calculate the starting hour offset
-		// On the first day (dayOffset == 0), start checking from searchStart's hour
-		// On subsequent days, start from hourStart (8 AM)
-		startHourOffset := 0
-		if dayOffset == 0 {
-			hourOfDay := searchStart.Hour()
-			if hourOfDay > hourStart {
-				startHourOffset = hourOfDay - hourStart
-			}
-			// If searchStart is exactly at a slot boundary, start from the next slot
-			if searchStart.Minute() > 0 || searchStart.Second() > 0 {
-				startHourOffset++
-			}
-		}
-
-		// Check each hour slot
-		for hour := startHourOffset; hour <= (hourEnd - hourStart); hour++ {
-			currentSlotStart := slotStart.Add(time.Duration(hour) * time.Hour)
-			slotEnd := currentSlotStart.Add(time.Duration(slotDuration))
-
-			// Check for conflicts
-			hasConflict := false
-			for _, existing := range schedules {
-				var existingEndTs int64
-				if existing.EndTs != nil && *existing.EndTs > 0 {
-					existingEndTs = *existing.EndTs
-				} else {
-					existingEndTs = existing.StartTs + 3600 // Default 1 hour
-				}
-
-				// Check overlap: (StartA < EndB) && (EndA > StartB)
-				slotStartTs := currentSlotStart.Unix()
-				slotEndTs := slotEnd.Unix()
-
-				if (slotStartTs < existingEndTs) && (slotEndTs > existing.StartTs) {
-					hasConflict = true
-					break
-				}
-			}
-
-			if !hasConflict {
-				return currentSlotStart, nil
-			}
-		}
+	// Convert to structured alternatives (top 3)
+	maxSlots := 3
+	if len(resolution.Alternatives) < maxSlots {
+		maxSlots = len(resolution.Alternatives)
 	}
 
-	return time.Time{}, fmt.Errorf("no available time slots in the next 7 days")
+	alternatives := make([]schedule.TimeSlotAlternative, 0, maxSlots)
+	for i := 0; i < maxSlots; i++ {
+		alt := resolution.Alternatives[i]
+		alternatives = append(alternatives, schedule.TimeSlotAlternative{
+			StartTs: alt.Start.Unix(),
+			EndTs:   alt.End.Unix(),
+			Reason:  alt.Reason,
+		})
+	}
+
+	// Wrap in structured error for frontend i18n
+	conflictErr := schedule.NewConflictError(
+		alternatives,
+		len(resolution.Conflicts),
+		resolution.OriginalStart.Unix(),
+	)
+
+	// Return with base error for compatibility
+	return "", fmt.Errorf("%w: %s", schedule.ErrScheduleConflict, conflictErr.Error())
 }
 
 // Validate runs before execution to check input validity.
@@ -740,15 +719,19 @@ func (t *FindFreeTimeTool) SetTimezone(timezone string) {
 
 // Description returns the tool description for the LLM.
 func (t *FindFreeTimeTool) Description() string {
-	return `Find an available 1-hour time slot on a specific date.
-Searches for free slots between 8 AM - 10 PM within the specified date.
+	return `Find available 1-hour time slots when schedule_query detects conflicts.
 
-Input: {"date": "2026-01-23"} (date in YYYY-MM-DD format)
+WHEN TO USE:
+- After schedule_query returns conflicting schedules
+- User asks "when am I free" or similar
 
-Returns: ISO8601 format START time if available (e.g., "2026-01-23T10:00:00+08:00")
-Important: You must add 1 hour to get the end time (e.g., if it returns "10:00", the slot is 10:00-11:00)
+Input: {"date": "YYYY-MM-DD"}
+Example: {"date": "2026-01-25"}
 
-Error: "no available time slots on [date] (all slots from 8 AM to 10 PM are occupied)"`
+Returns: ISO8601 start time of available slot (you must add 1 hour for end time)
+Error: Returns error message if no slots available (all 8AM-10PM occupied)
+
+IMPORTANT: The returned time is the START only. End time = start + 1 hour.`
 }
 
 // InputType returns the expected input type schema.
