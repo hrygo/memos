@@ -2042,13 +2042,18 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
 	"\n" +
-	"\x06STRICT\x10\x02*\x82\x01\n" +
+	"\x06STRICT\x10\x02*\xa6\x02\n" +
 	"\tAgentType\x12\x16\n" +
 	"\x12AGENT_TYPE_DEFAULT\x10\x00\x12\x13\n" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\xaa\v\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x04\x12\x1f\n" +
+	"\x1bAGENT_TYPE_ADVANCED_DEFAULT\x10\x05\x12\x1c\n" +
+	"\x18AGENT_TYPE_ADVANCED_MEMO\x10\x06\x12 \n" +
+	"\x1cAGENT_TYPE_ADVANCED_SCHEDULE\x10\a\x12\x1f\n" +
+	"\x1bAGENT_TYPE_ADVANCED_AMAZING\x10\b\x12 \n" +
+	"\x1cAGENT_TYPE_ADVANCED_CREATIVE\x10\t2\xaa\v\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12[\n" +

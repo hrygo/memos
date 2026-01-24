@@ -251,16 +251,34 @@ func (s *AIService) DeleteAIConversation(ctx context.Context, req *v1pb.DeleteAI
 }
 
 func convertAIConversationFromStore(c *store.AIConversation) *v1pb.AIConversation {
-	// Convert ParrotID string to AgentType enum with default fallback
-	parrotId := v1pb.AgentType_value[c.ParrotID]
-	if parrotId == 0 && c.ParrotID != "" && c.ParrotID != "AGENT_TYPE_UNSPECIFIED" {
-		// Unknown value, log warning and fallback to DEFAULT
-		slog.Default().Warn("Unknown ParrotID in conversation, falling back to DEFAULT",
-			"conversation_id", c.ID,
-			"parrot_id", c.ParrotID,
-		)
-		parrotId = int32(v1pb.AgentType_AGENT_TYPE_DEFAULT)
+	// Convert ParrotID string to AgentType enum
+	// Handle both short format ("MEMO") and long format ("AGENT_TYPE_MEMO")
+	var parrotId int32
+
+	// Try direct lookup first (long format like "AGENT_TYPE_MEMO")
+	if val, ok := v1pb.AgentType_value[c.ParrotID]; ok {
+		parrotId = val
+	} else {
+		// Try short format lookup ("MEMO" → "AGENT_TYPE_MEMO")
+		shortToLong := map[string]v1pb.AgentType{
+			"DEFAULT":  v1pb.AgentType_AGENT_TYPE_DEFAULT,
+			"MEMO":     v1pb.AgentType_AGENT_TYPE_MEMO,
+			"SCHEDULE":  v1pb.AgentType_AGENT_TYPE_SCHEDULE,
+			"AMAZING":   v1pb.AgentType_AGENT_TYPE_AMAZING,
+			"CREATIVE":  v1pb.AgentType_AGENT_TYPE_CREATIVE,
+		}
+		if val, ok := shortToLong[c.ParrotID]; ok {
+			parrotId = int32(val)
+		} else {
+			// Unknown value, log warning and fallback to DEFAULT
+			slog.Default().Warn("Unknown ParrotID in conversation, falling back to DEFAULT",
+				"conversation_id", c.ID,
+				"parrot_id", c.ParrotID,
+			)
+			parrotId = int32(v1pb.AgentType_AGENT_TYPE_DEFAULT)
+		}
 	}
+
 	return &v1pb.AIConversation{
 		Id:        c.ID,
 		Uid:       c.UID,
