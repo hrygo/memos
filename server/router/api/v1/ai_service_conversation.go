@@ -149,6 +149,12 @@ func (s *AIService) DeleteAIConversation(ctx context.Context, req *v1pb.DeleteAI
 		return nil, status.Errorf(codes.NotFound, "conversation not found")
 	}
 
+	// Prevent deletion of fixed (pinned) conversations
+	conversation := conversations[0]
+	if conversation.Pinned {
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot delete fixed conversation")
+	}
+
 	if err := s.Store.DeleteAIConversation(ctx, &store.DeleteAIConversation{ID: req.Id}); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete conversation: %v", err)
 	}

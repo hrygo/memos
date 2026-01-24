@@ -2695,6 +2695,8 @@ components:
                 conversationId:
                     type: integer
                     format: int32
+                isTempConversation:
+                    type: boolean
             description: ChatWithMemosRequest is the request for ChatWithMemos.
         ChatWithMemosResponse:
             type: object

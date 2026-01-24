@@ -21,12 +21,13 @@ import (
 
 // ChatRequest represents a chat request.
 type ChatRequest struct {
-	Message        string
-	History        []string
-	AgentType      AgentType
-	UserID         int32
-	Timezone       string
-	ConversationID int32
+	Message             string
+	History             []string
+	AgentType           AgentType
+	UserID              int32
+	Timezone            string
+	ConversationID      int32
+	IsTempConversation  bool
 }
 
 // ChatStream represents the streaming response interface.

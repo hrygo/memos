@@ -10,15 +10,28 @@ import (
 )
 
 func (d *DB) CreateAIConversation(ctx context.Context, create *store.AIConversation) (*store.AIConversation, error) {
-	fields := []string{"uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
-	args := []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+	// If ID is specified, use it (for fixed conversations)
+	// Otherwise, let the database generate it
+	var fields []string
+	var args []any
 
-	stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
-		VALUES (` + placeholders(len(args)) + `)
-		RETURNING id`
-
-	if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&create.ID); err != nil {
-		return nil, fmt.Errorf("failed to create ai_conversation: %w", err)
+	if create.ID != 0 {
+		fields = []string{"id", "uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
+		args = []any{create.ID, create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
+			VALUES (` + placeholders(len(args)) + `)`
+		if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation with fixed id: %w", err)
+		}
+	} else {
+		fields = []string{"uid", "creator_id", "title", "parrot_id", "pinned", "created_ts", "updated_ts"}
+		args = []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := `INSERT INTO ai_conversation (` + strings.Join(fields, ", ") + `)
+			VALUES (` + placeholders(len(args)) + `)
+			RETURNING id`
+		if err := d.db.QueryRowContext(ctx, stmt, args...).Scan(&create.ID); err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation: %w", err)
+		}
 	}
 
 	return create, nil

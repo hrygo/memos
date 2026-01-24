@@ -201,6 +201,7 @@ message ChatWithMemosRequest {
   ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
   AgentType agent_type = 5;     // Agent type (optional, defaults to DEFAULT)
   int32 conversation_id = 6;    // Conversation ID to persist message to
+  bool is_temp_conversation = 7; // Whether to create a temporary conversation (true) or fixed conversation (false)
 }
 
 // AIConversation represents an AI chat session.

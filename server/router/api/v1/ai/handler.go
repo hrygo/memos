@@ -173,10 +173,12 @@ func (h *RoutingHandler) Handle(ctx context.Context, req *ChatRequest, stream Ch
 // ToChatRequest converts a protobuf request to an internal ChatRequest.
 func ToChatRequest(pbReq *v1pb.ChatWithMemosRequest) *ChatRequest {
 	return &ChatRequest{
-		Message:   pbReq.Message,
-		History:   pbReq.History,
-		AgentType: AgentTypeFromProto(pbReq.AgentType),
-		Timezone:  pbReq.UserTimezone,
+		Message:         pbReq.Message,
+		History:         pbReq.History,
+		AgentType:       AgentTypeFromProto(pbReq.AgentType),
+		Timezone:        pbReq.UserTimezone,
+		ConversationID:  pbReq.ConversationId,
+		IsTempConversation: pbReq.IsTempConversation,
 	}
 }
 

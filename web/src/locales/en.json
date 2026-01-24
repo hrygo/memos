@@ -993,5 +993,23 @@
     "send-reply": "Send reply",
     "cancel-chat": "Cancel chat",
     "schedule-preview": "Schedule preview"
+  },
+  "chat": {
+    "default": {
+      "title": "Default Assistant"
+    },
+    "memo": {
+      "title": "Memo Assistant"
+    },
+    "schedule": {
+      "title": "Schedule Assistant"
+    },
+    "amazing": {
+      "title": "Amazing Assistant"
+    },
+    "creative": {
+      "title": "Creative Assistant"
+    },
+    "new": "New Chat {{n}}"
   }
 }

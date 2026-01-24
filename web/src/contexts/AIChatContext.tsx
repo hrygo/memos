@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { aiServiceClient } from "@/connect";
 import {
   AI_STORAGE_KEYS,
@@ -16,6 +17,20 @@ import { ParrotAgentType } from "@/types/parrot";
 import { AgentType, AIConversation, AIMessage } from "@/types/proto/api/v1/ai_service_pb";
 
 const generateId = () => `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+// Helper function to get default conversation title based on parrot type.
+// Note: This returns a fallback English title. The actual display titles are
+// localized by the backend using title keys (e.g., "chat.default.title").
+function getDefaultTitle(parrotId: ParrotAgentType): string {
+  const titles: Record<string, string> = {
+    [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
+    [ParrotAgentType.MEMO]: "Chat with Memo",
+    [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
+    [ParrotAgentType.AMAZING]: "Chat with Amazing",
+    [ParrotAgentType.CREATIVE]: "Chat with Creative",
+  };
+  return titles[parrotId] || "AI Chat";
+}
 
 const DEFAULT_STATE: AIChatState = {
   conversations: [],
@@ -46,10 +61,33 @@ function isContextSeparator(item: ChatItem): item is ContextSeparator {
 }
 
 export function AIChatProvider({ children, initialState }: AIChatProviderProps) {
+  const { t } = useTranslation();
   const [state, setState] = useState<AIChatState>(() => ({
     ...DEFAULT_STATE,
     ...initialState,
   }));
+
+  // Helper to localize conversation title from backend key to display title
+  const localizeTitle = useCallback((titleKey: string): string => {
+    // Handle title keys from backend
+    if (!titleKey.startsWith("chat.")) {
+      return titleKey;
+    }
+
+    // Handle "chat.new.N" format - extract number for interpolation
+    const newChatMatch = titleKey.match(/^chat\.new\.(\d+)$/);
+    if (newChatMatch) {
+      const n = newChatMatch[1];
+      return t("chat.new", { n });
+    }
+
+    // Handle other "chat.*.title" format (e.g., "chat.default.title")
+    if (titleKey.endsWith(".title")) {
+      return t(titleKey, titleKey); // Fallback to original key if translation missing
+    }
+
+    return titleKey;
+  }, [t]);
 
   // Helper to get message count
   const getMessageCount = useCallback((conversation: Conversation): number => {
@@ -110,7 +148,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   const convertConversationFromPb = useCallback((pb: AIConversation): Conversation => {
     return {
       id: String(pb.id),
-      title: pb.title,
+      title: localizeTitle(pb.title),
       parrotId: pb.parrotId === AgentType.MEMO ? ParrotAgentType.MEMO :
         pb.parrotId === AgentType.SCHEDULE ? ParrotAgentType.SCHEDULE :
           pb.parrotId === AgentType.AMAZING ? ParrotAgentType.AMAZING :
@@ -122,7 +160,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       referencedMemos: [], // Backend managed for RAG, but state can store it if needed
       pinned: pb.pinned,
     };
-  }, [convertMessageFromPb]);
+  }, [convertMessageFromPb, localizeTitle]);
 
   // Sync state with backend
   const refreshConversations = useCallback(async () => {
@@ -186,6 +224,10 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       refreshConversations().then(() => {
         setState(prev => ({ ...prev, currentConversationId: String(pb.id) }));
       });
+    }).catch(err => {
+      console.error("Failed to create conversation:", err);
+      // Rollback to hub view on error
+      setState(prev => ({ ...prev, viewMode: "hub" }));
     });
 
     return tempId;
@@ -196,6 +238,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     if (!isNaN(numericId)) {
       aiServiceClient.deleteAIConversation({ id: numericId }).then(() => {
         refreshConversations();
+      }).catch(err => {
+        console.error("Failed to delete conversation:", err);
       });
     }
 
@@ -451,10 +495,11 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     return () => clearTimeout(timer);
   }, [state, saveToStorage]);
 
-  // Load from storage on mount
+  // Load from storage on mount (only once)
   useEffect(() => {
     loadFromStorage();
-  }, [loadFromStorage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const contextValue: AIChatContextValue = {
     state,
@@ -483,17 +528,4 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   };
 
   return <AIChatContext.Provider value={contextValue}>{children}</AIChatContext.Provider>;
-}
-
-// Helper function to get default conversation title based on parrot type
-// Returns English default; localization should be handled by caller via useTranslation hook
-function getDefaultTitle(parrotId: ParrotAgentType): string {
-  const titles: Record<string, string> = {
-    [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
-    [ParrotAgentType.MEMO]: "Chat with Memo",
-    [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
-    [ParrotAgentType.AMAZING]: "Chat with Amazing",
-    [ParrotAgentType.CREATIVE]: "Chat with Creative",
-  };
-  return titles[parrotId] || "AI Chat";
 }

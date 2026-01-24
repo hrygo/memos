@@ -547,15 +547,16 @@ func (x *SuggestTagsResponse) GetTags() []string {
 
 // ChatWithMemosRequest is the request for ChatWithMemos.
 type ChatWithMemosRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Message           string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	History           []string               `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`                                                                                     // conversation history
-	UserTimezone      string                 `protobuf:"bytes,3,opt,name=user_timezone,json=userTimezone,proto3" json:"user_timezone,omitempty"`                                                       // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
-	ScheduleQueryMode ScheduleQueryMode      `protobuf:"varint,4,opt,name=schedule_query_mode,json=scheduleQueryMode,proto3,enum=memos.api.v1.ScheduleQueryMode" json:"schedule_query_mode,omitempty"` // Schedule query mode (optional, defaults to AUTO)
-	AgentType         AgentType              `protobuf:"varint,5,opt,name=agent_type,json=agentType,proto3,enum=memos.api.v1.AgentType" json:"agent_type,omitempty"`                                   // Agent type (optional, defaults to DEFAULT)
-	ConversationId    int32                  `protobuf:"varint,6,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`                                                // Conversation ID to persist message to
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Message            string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	History            []string               `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`                                                                                     // conversation history
+	UserTimezone       string                 `protobuf:"bytes,3,opt,name=user_timezone,json=userTimezone,proto3" json:"user_timezone,omitempty"`                                                       // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
+	ScheduleQueryMode  ScheduleQueryMode      `protobuf:"varint,4,opt,name=schedule_query_mode,json=scheduleQueryMode,proto3,enum=memos.api.v1.ScheduleQueryMode" json:"schedule_query_mode,omitempty"` // Schedule query mode (optional, defaults to AUTO)
+	AgentType          AgentType              `protobuf:"varint,5,opt,name=agent_type,json=agentType,proto3,enum=memos.api.v1.AgentType" json:"agent_type,omitempty"`                                   // Agent type (optional, defaults to DEFAULT)
+	ConversationId     int32                  `protobuf:"varint,6,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`                                                // Conversation ID to persist message to
+	IsTempConversation bool                   `protobuf:"varint,7,opt,name=is_temp_conversation,json=isTempConversation,proto3" json:"is_temp_conversation,omitempty"`                                  // Whether to create a temporary conversation (true) or fixed conversation (false)
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ChatWithMemosRequest) Reset() {
@@ -628,6 +629,13 @@ func (x *ChatWithMemosRequest) GetConversationId() int32 {
 		return x.ConversationId
 	}
 	return 0
+}
+
+func (x *ChatWithMemosRequest) GetIsTempConversation() bool {
+	if x != nil {
+		return x.IsTempConversation
+	}
+	return false
 }
 
 // AIConversation represents an AI chat session.
@@ -1921,7 +1929,7 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\acontent\x18\x01 \x01(\tB\x03\xe0A\x02R\acontent\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\")\n" +
 	"\x13SuggestTagsResponse\x12\x12\n" +
-	"\x04tags\x18\x01 \x03(\tR\x04tags\"\xa6\x02\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tags\"\xd8\x02\n" +
 	"\x14ChatWithMemosRequest\x12\x1d\n" +
 	"\amessage\x18\x01 \x01(\tB\x03\xe0A\x02R\amessage\x12\x18\n" +
 	"\ahistory\x18\x02 \x03(\tR\ahistory\x12#\n" +
@@ -1929,7 +1937,8 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x13schedule_query_mode\x18\x04 \x01(\x0e2\x1f.memos.api.v1.ScheduleQueryModeR\x11scheduleQueryMode\x126\n" +
 	"\n" +
 	"agent_type\x18\x05 \x01(\x0e2\x17.memos.api.v1.AgentTypeR\tagentType\x12'\n" +
-	"\x0fconversation_id\x18\x06 \x01(\x05R\x0econversationId\"\xa8\x02\n" +
+	"\x0fconversation_id\x18\x06 \x01(\x05R\x0econversationId\x120\n" +
+	"\x14is_temp_conversation\x18\a \x01(\bR\x12isTempConversation\"\xa8\x02\n" +
 	"\x0eAIConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\tR\x03uid\x12\x1d\n" +

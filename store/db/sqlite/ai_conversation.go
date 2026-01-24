@@ -9,22 +9,36 @@ import (
 )
 
 func (d *DB) CreateAIConversation(ctx context.Context, create *store.AIConversation) (*store.AIConversation, error) {
-	fields := []string{"`uid`", "`creator_id`", "`title`", "`parrot_id`", "`pinned`", "`created_ts`", "`updated_ts`"}
-	placeholder := []string{"?", "?", "?", "?", "?", "?", "?"}
-	args := []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+	var fields []string
+	var placeholder []string
+	var args []any
 
-	stmt := "INSERT INTO `ai_conversation` (" + strings.Join(fields, ", ") + ") VALUES (" + strings.Join(placeholder, ", ") + ")"
-	res, err := d.db.ExecContext(ctx, stmt, args...)
-	if err != nil {
-		return nil, err
+	// If ID is specified, use it (for fixed conversations)
+	// Otherwise, let the database generate it
+	if create.ID != 0 {
+		fields = []string{"`id`", "`uid`", "`creator_id`", "`title`", "`parrot_id`", "`pinned`", "`created_ts`", "`updated_ts`"}
+		placeholder = []string{"?", "?", "?", "?", "?", "?", "?", "?"}
+		args = []any{create.ID, create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := "INSERT INTO `ai_conversation` (" + strings.Join(fields, ", ") + ") VALUES (" + strings.Join(placeholder, ", ") + ")"
+		if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation with fixed id: %w", err)
+		}
+	} else {
+		fields = []string{"`uid`", "`creator_id`", "`title`", "`parrot_id`", "`pinned`", "`created_ts`", "`updated_ts`"}
+		placeholder = []string{"?", "?", "?", "?", "?", "?", "?"}
+		args = []any{create.UID, create.CreatorID, create.Title, create.ParrotID, create.Pinned, create.CreatedTs, create.UpdatedTs}
+		stmt := "INSERT INTO `ai_conversation` (" + strings.Join(fields, ", ") + ") VALUES (" + strings.Join(placeholder, ", ") + ")"
+		res, err := d.db.ExecContext(ctx, stmt, args...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create ai_conversation: %w", err)
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get last insert id: %w", err)
+		}
+		create.ID = int32(id)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-
-	create.ID = int32(id)
 	return create, nil
 }
 
@@ -47,7 +61,7 @@ func (d *DB) ListAIConversations(ctx context.Context, find *store.FindAIConversa
 	query := "SELECT `id`, `uid`, `creator_id`, `title`, `parrot_id`, `pinned`, `created_ts`, `updated_ts` FROM `ai_conversation` WHERE " + strings.Join(where, " AND ") + " ORDER BY `pinned` DESC, `updated_ts` DESC"
 	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list ai_conversations: %w", err)
 	}
 	defer rows.Close()
 
@@ -55,13 +69,13 @@ func (d *DB) ListAIConversations(ctx context.Context, find *store.FindAIConversa
 	for rows.Next() {
 		c := &store.AIConversation{}
 		if err := rows.Scan(&c.ID, &c.UID, &c.CreatorID, &c.Title, &c.ParrotID, &c.Pinned, &c.CreatedTs, &c.UpdatedTs); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan ai_conversation: %w", err)
 		}
 		list = append(list, c)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to iterate ai_conversations: %w", err)
 	}
 
 	return list, nil
@@ -90,12 +104,12 @@ func (d *DB) UpdateAIConversation(ctx context.Context, update *store.UpdateAICon
 	args = append(args, update.ID)
 	stmt := "UPDATE `ai_conversation` SET " + strings.Join(set, ", ") + " WHERE `id` = ?"
 	if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update ai_conversation: %w", err)
 	}
 
 	list, err := d.ListAIConversations(ctx, &store.FindAIConversation{ID: &update.ID})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query updated ai_conversation: %w", err)
 	}
 	if len(list) == 0 {
 		return nil, fmt.Errorf("ai_conversation not found")
@@ -107,11 +121,11 @@ func (d *DB) UpdateAIConversation(ctx context.Context, update *store.UpdateAICon
 func (d *DB) DeleteAIConversation(ctx context.Context, delete *store.DeleteAIConversation) error {
 	// Delete messages first
 	if _, err := d.db.ExecContext(ctx, "DELETE FROM `ai_message` WHERE `conversation_id` = ?", delete.ID); err != nil {
-		return err
+		return fmt.Errorf("failed to delete ai_messages: %w", err)
 	}
 	// Delete conversation
 	if _, err := d.db.ExecContext(ctx, "DELETE FROM `ai_conversation` WHERE `id` = ?", delete.ID); err != nil {
-		return err
+		return fmt.Errorf("failed to delete ai_conversation: %w", err)
 	}
 	return nil
 }
@@ -124,12 +138,12 @@ func (d *DB) CreateAIMessage(ctx context.Context, create *store.AIMessage) (*sto
 	stmt := "INSERT INTO `ai_message` (" + strings.Join(fields, ", ") + ") VALUES (" + strings.Join(placeholder, ", ") + ")"
 	res, err := d.db.ExecContext(ctx, stmt, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ai_message: %w", err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get last insert id: %w", err)
 	}
 
 	create.ID = int32(id)
@@ -152,7 +166,7 @@ func (d *DB) ListAIMessages(ctx context.Context, find *store.FindAIMessage) ([]*
 	query := "SELECT `id`, `uid`, `conversation_id`, `type`, `role`, `content`, `metadata`, `created_ts` FROM `ai_message` WHERE " + strings.Join(where, " AND ") + " ORDER BY `created_ts` ASC"
 	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list ai_messages: %w", err)
 	}
 	defer rows.Close()
 
@@ -161,7 +175,7 @@ func (d *DB) ListAIMessages(ctx context.Context, find *store.FindAIMessage) ([]*
 		m := &store.AIMessage{}
 		var msgType, role string
 		if err := rows.Scan(&m.ID, &m.UID, &m.ConversationID, &msgType, &role, &m.Content, &m.Metadata, &m.CreatedTs); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan ai_message: %w", err)
 		}
 		m.Type = store.AIMessageType(msgType)
 		m.Role = store.AIMessageRole(role)
@@ -169,7 +183,7 @@ func (d *DB) ListAIMessages(ctx context.Context, find *store.FindAIMessage) ([]*
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to iterate ai_messages: %w", err)
 	}
 
 	return list, nil
@@ -191,7 +205,7 @@ func (d *DB) DeleteAIMessage(ctx context.Context, delete *store.DeleteAIMessage)
 
 	stmt := "DELETE FROM `ai_message` WHERE " + strings.Join(where, " AND ")
 	if _, err := d.db.ExecContext(ctx, stmt, args...); err != nil {
-		return err
+		return fmt.Errorf("failed to delete ai_message: %w", err)
 	}
 
 	return nil
