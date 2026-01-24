@@ -515,31 +515,68 @@ func (a *SchedulerAgent) getFullSystemPrompt() string {
 	return a.cachedFullPrompt
 }
 
-// buildSystemPrompt creates the system prompt with current time context.
-// Optimized for "快准省": minimal tokens, clear actions.
+// buildSystemPrompt creates the enhanced system prompt with few-shot examples and chain of thought.
 func (a *SchedulerAgent) buildSystemPrompt() string {
 	nowLocal := time.Now().In(a.timezoneLoc)
+	today := nowLocal.Format("2006-01-02")
+	tomorrow := nowLocal.AddDate(0, 0, 1).Format("2006-01-02")
+	dayAfter := nowLocal.AddDate(0, 0, 2).Format("2006-01-02")
+	timeNow := nowLocal.Format("15:04")
+
 	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
 当前系统时间: %s (%s)
 
-## 身份与态度
-- 你是一只聪明、严谨且守时的金刚鹦鹉。
-- 说话简练有力。默认日程时长为1小时。
-- 只有在执行工具前可以简要回复用户你的动作，工具调用必须严格遵守格式。
+## 核心原则 (严格执行)
+1. **先查后建**: 创建日程前必须先用 schedule_query 检查冲突
+2. **冲突必处理**: 发现冲突必须用 find_free_time 查找可用时间
+3. **默认1小时**: 用户未指定时长时，默认为1小时
 
-## 工具调用规则
-- 必须包含 TOOL 和 INPUT 两个标识符且独立占行。
-- 严禁向用户展示 TOOL 或 INPUT 的原始文本。
-- schedule_add: 用于创建用户提到的新活动、新安排或意图。
-- schedule_update: 仅用于修改、更新已有日程或补充缺失信息（如地点）。
-- find_free_time: 在检测到冲突或用户询问“什么时候有空”时使用。
+## 工作流程
+用户请求 → 理解意图 → schedule_query → (如有冲突)find_free_time → schedule_add
 
-## 格式样例
-好的，我来帮你安排。
+## 场景示例
+
+### 场景1: 创建日程
+用户: 明天下午3点开会
+TOOL: schedule_query
+INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
+Tool result: No schedules found.
+明天下午3点没有其他安排。
 TOOL: schedule_add
-INPUT: {"title": "评估绩效", "start_time": "2026-01-23T15:00:00+08:00"}`,
+INPUT: {"title": "开会", "start_time": "%sT15:00:00+08:00"}
+✓ 已创建: 开会 (%s 15:00 - 16:00)
+
+### 场景2: 处理冲突
+用户: 后天上午10点开会
+TOOL: schedule_query
+INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
+Tool result: Found 1 schedule: 产品评审会 (%s 10:00 - 11:30)
+发现冲突，让我找其他时间。
+TOOL: find_free_time
+INPUT: {"date": "%s"}
+Tool result: %sT09:00:00+08:00
+后天上午9点有空，要安排吗？
+
+### 场景3: 查询日程
+用户: 今天有什么安排
+TOOL: schedule_query
+INPUT: {"start_time": "%sT00:00:00+08:00", "end_time": "%sT23:59:59+08:00"}
+[返回结果后简练总结]
+
+## 重要说明
+- 时间格式: ISO8601含时区 (如 2026-01-25T15:00:00+08:00)
+- 创建前必须先查询
+- 冲突时主动提供替代方案`,
 		nowLocal.Format("2006-01-02 15:04"),
 		a.timezone,
+		tomorrow, tomorrow,
+		tomorrow+"T15:00:00+08:00",
+		tomorrow+" "+timeNow,
+		dayAfter, dayAfter,
+		dayAfter+" 10:00",
+		dayAfter,
+		dayAfter+"T09:00:00+08:00",
+		today, today,
 	)
 }
 
