@@ -521,6 +521,10 @@ func (a *SchedulerAgent) buildSystemPrompt() string {
 	// Get timezone offset dynamically (e.g., "+08:00", "-05:00")
 	tzOffset := nowLocal.Format("-07:00")
 
+	// Note: Dates in few-shot examples below are static (2026-01-25/26/27) for consistency.
+	// The LLM should use actual dates from "当前系统时间" in real queries.
+	// These examples demonstrate the format and workflow, not specific dates.
+
 	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
 当前系统时间: %s (%s)
 

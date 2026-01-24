@@ -170,12 +170,40 @@ func (p *DefaultParrot) ExecuteWithCallback(
 			}
 		case <-ctx.Done():
 			// Context canceled - drain remaining channels to prevent goroutine leaks
-			// Start a goroutine to drain channels since we're exiting
+			// Use a timeout to prevent indefinite blocking if channels don't close
 			go func() {
-				for range contentChan {
+				// Drain string channel
+				drainStringChan := func(ch <-chan string) {
+					defer func() { recover() }() // Prevent panic if channel is closed
+					for {
+						select {
+						case _, ok := <-ch:
+							if !ok {
+								return
+							}
+						case <-time.After(5 * time.Second):
+							// Timeout - give up on draining
+							return
+						}
+					}
 				}
-				for range errChan {
+				// Drain error channel
+				drainErrorChan := func(ch <-chan error) {
+					defer func() { recover() }() // Prevent panic if channel is closed
+					for {
+						select {
+						case _, ok := <-ch:
+							if !ok {
+								return
+							}
+						case <-time.After(5 * time.Second):
+							// Timeout - give up on draining
+							return
+						}
+					}
 				}
+				drainStringChan(contentChan)
+				drainErrorChan(errChan)
 			}()
 			slog.Warn("DefaultParrot: Context canceled",
 				"user_id", p.userID,
