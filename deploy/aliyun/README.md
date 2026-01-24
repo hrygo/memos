@@ -233,19 +233,19 @@ POSTGRES_PORT_MAPPING=127.0.0.1:25432:5432
 
 ```
 store/migration/postgres/
-├── VERSION           # 当前代码版本 (0.51.0)
+├── VERSION           # 当前代码版本 (0.52.0)
 ├── LATEST.sql        # 全量 Schema (首次部署使用)
 └── V*.sql            # 增量迁移脚本 (升级使用)
 ```
 
 ### 首次部署
 
-PostgreSQL 容器首次启动时自动执行 `LATEST.sql`，初始化数据库并写入版本号 `0.51.0`。
+PostgreSQL 容器首次启动时自动执行 `LATEST.sql`，初始化数据库并写入版本号 `0.52.0`。
 
 ### 版本升级
 
 1. **创建迁移脚本** - 放在 `store/migration/postgres/V{version}__{feature}.sql`
-2. **更新 VERSION** - `echo "0.51.0" > store/migration/postgres/VERSION`
+2. **更新 VERSION** - `echo "0.52.0" > store/migration/postgres/VERSION`
 3. **执行升级** - `./deploy.sh upgrade`
 
 升级流程：

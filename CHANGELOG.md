@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.52.0] - 2026-01-25
+
+### 💬 AI Chat Session Persistence
+
+- **Conversation Memory**: AI conversations now persist across sessions with automatic context management
+- **Context Separators**: Clear conversation context with visual separators (✂️) - prevents duplicate creation
+- **Fixed Conversations**: 5 pinned conversations always visible in history (MEMO, SCHEDULE, AMAZING, CREATIVE, DEFAULT)
+- **Real-time Message Count**: Message count updates immediately in conversation list (no page refresh needed)
+
+### 📅 Schedule Optimization
+
+- **Intelligent Conflict Resolution**: Auto-rescheduling with smart time slot suggestions
+- **Enhanced Conflict Detection**: Improved detection of overlapping schedules
+- **Recurrence Support**: Better handling of recurring events
+
+### 🛡️ Security & Stability
+
+- **Shell Hardening**: Deploy script now uses `tr` and `xargs` to sanitize environment variables
+- **Goroutine Safety**: Added 5-second timeout protection for channel draining
+- **Cross-platform**: Consistent file size checking using `wc -c` instead of `stat`
+
+### 🔧 Refactoring
+
+- **Parrot Framework**: Migrated DEFAULT parrot to standard parrot framework
+- **Migration Consolidation**: PostgreSQL migrations consolidated to 0.51.0 baseline
+- **Error Handling**: Improved error logging and DRY compliance
+
+### 🚀 Deployment
+
+- **Aliyun Production Scripts**: Complete deployment automation for Aliyun
+- **China-Friendly Mirrors**: Docker registry and npm mirror configurations
+
+---
+
 ## [v0.51.0] - 2026-01-23
 
 ### 📱 Mobile UI & UX Overhaul
