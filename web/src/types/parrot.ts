@@ -78,12 +78,13 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.DEFAULT]: {
     id: ParrotAgentType.DEFAULT,
     name: "default",
-    icon: "/images/parrots/icons/memo_icon.webp",
-    displayName: "Default Assistant",
-    description: "Default AI assistant with RAG system",
-    color: "gray",
+    icon: "/images/parrots/icons/navi_icon.webp",
+    displayName: "Navi",
+    description: "Universal Navigator directly connected to top-tier LLMs, providing boundless creative inspiration",
+    color: "indigo",
     available: true,
-    examplePrompts: ["Summarize recent memos", "Search for Python content", "What's on my schedule today"],
+    examplePrompts: ["Help me build a logical framework", "Draft a formal communication email"],
+    backgroundImage: "/images/parrots/navi_bg.webp",
   },
   [ParrotAgentType.MEMO]: {
     id: ParrotAgentType.MEMO,
@@ -236,7 +237,7 @@ export enum ParrotEventType {
 
 /**
  * Parrot theme configuration
- * 鹦鹉主题配置 - 信息清晰优先设计
+ * 鹦鹉主题配置 - 信息清晰优先 design
  *
  * 设计原则:
  * - 信息清晰优先于视觉效果
@@ -246,20 +247,20 @@ export enum ParrotEventType {
  */
 export const PARROT_THEMES = {
   DEFAULT: {
-    // 默认助手 - 中性灰
-    bubbleUser: "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800",
+    // 默认助手 - 领航员 (Navi) - 靛青色 (Indigo)
+    bubbleUser: "bg-indigo-600 dark:bg-indigo-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-zinc-200 dark:border-zinc-700",
-    text: "text-zinc-800 dark:text-zinc-100",
-    textSecondary: "text-zinc-600 dark:text-zinc-400",
-    iconBg: "bg-zinc-100 dark:bg-zinc-700",
-    iconText: "text-zinc-700 dark:text-zinc-300",
-    inputBg: "bg-zinc-50 dark:bg-zinc-900",
-    inputBorder: "border-zinc-200 dark:border-zinc-700",
-    inputFocus: "focus:ring-zinc-500 focus:border-zinc-500",
+    bubbleBorder: "border-indigo-200 dark:border-indigo-700",
+    text: "text-slate-800 dark:text-indigo-50",
+    textSecondary: "text-slate-600 dark:text-indigo-200",
+    iconBg: "bg-indigo-50 dark:bg-indigo-900/30",
+    iconText: "text-indigo-700 dark:text-indigo-300",
+    inputBg: "bg-indigo-50/50 dark:bg-indigo-950/20",
+    inputBorder: "border-indigo-200 dark:border-indigo-700",
+    inputFocus: "focus:ring-indigo-500 focus:border-indigo-500",
     cardBg: "bg-white dark:bg-zinc-800",
-    cardBorder: "border-zinc-200 dark:border-zinc-700",
-    accent: "bg-zinc-500",
+    cardBorder: "border-indigo-200 dark:border-indigo-700",
+    accent: "bg-indigo-500",
     accentText: "text-white",
   },
   // 灰灰 - 非洲灰鹦鹉 (African Grey Parrot)
@@ -341,7 +342,7 @@ export const PARROT_THEMES = {
  * 每个鹦鹉的图标
  */
 export const PARROT_ICONS: Record<string, string> = {
-  DEFAULT: "/images/parrots/icons/memo_icon.webp",
+  DEFAULT: "/images/parrots/icons/navi_icon.webp",
   MEMO: "/images/parrots/icons/memo_icon.webp",
   SCHEDULE: "/images/parrots/icons/schedule_icon.webp",
   AMAZING: "/images/parrots/icons/amazing_icon.webp",

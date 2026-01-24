@@ -571,13 +571,12 @@
       "try-asking": "Try asking",
       "agents": {
         "default": {
-          "name": "Default Assistant",
-          "nameAlt": "默认助手",
-          "description": "Default AI assistant with RAG system",
+          "name": "Navi",
+          "nameAlt": "羽飞",
+          "description": "Universal Navigator directly connected to top-tier LLMs, providing boundless creative inspiration, logical reasoning, and global knowledge insights.",
           "examples": [
-            "Summarize recent memos",
-            "Search for Python content",
-            "What's on my schedule today"
+            "Help me build a logical framework for solving a complex problem",
+            "Draft a formal communication email based on my initial thoughts"
           ]
         },
         "memo": {

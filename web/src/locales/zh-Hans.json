@@ -571,13 +571,12 @@
       "try-asking": "试着这样问",
       "agents": {
         "default": {
-          "name": "默认助手",
-          "nameAlt": "Default Assistant",
-          "description": "默认 AI 助手，使用 RAG 系统回答问题。",
+          "name": "羽飞",
+          "nameAlt": "Navi",
+          "description": "直连顶级大模型的全能领航员，为您提供无边界的创意启发、逻辑推演与全球知识洞察。",
           "examples": [
-            "总结最近的笔记",
-            "帮我搜索关于 Python 的内容",
-            "今天有什么安排"
+            "帮我构建一个复杂问题的思考逻辑框架",
+            "根据我的初步想法起草一份正式的沟通邮件"
           ]
         },
         "memo": {
