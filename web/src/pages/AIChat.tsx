@@ -595,6 +595,15 @@ const AIChat = () => {
         content: userMessage,
       });
 
+      // Special handling for cutting line (context separator)
+      if (userMessage === "---") {
+        setInput("");
+        // Optimization: UI already shows the message, backend will persist SEPARATOR.
+        // We trigger handleParrotChat to ensure the backend sees the command.
+        await handleParrotChat(targetConversationId, targetParrotId, userMessage, []);
+        return;
+      }
+
       // Add empty assistant message that will be filled during streaming
       const newMessage = {
         role: "assistant" as const,
@@ -657,13 +666,17 @@ const AIChat = () => {
   const handleClearContext = useCallback((trigger: "manual" | "auto" | "shortcut" = "manual") => {
     if (currentConversation) {
       addContextSeparator(currentConversation.id, trigger);
+
+      // Also sync to backend by sending the cutting line command
+      handleSend("---");
+
       toast.success(t("ai.context-cleared-toast"), {
         duration: 2000,
         icon: "✂️",
         className: "dark:bg-zinc-800 dark:border-zinc-700",
       });
     }
-  }, [currentConversation, addContextSeparator, t]);
+  }, [currentConversation, addContextSeparator, handleSend, t]);
 
   const handleParrotChange = useCallback(
     (parrot: ParrotAgentI18n | null) => {

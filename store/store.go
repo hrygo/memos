@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"time"
 
 	"github.com/usememos/memos/internal/profile"
@@ -54,4 +55,32 @@ func (s *Store) Close() error {
 	s.userSettingCache.Close()
 
 	return s.driver.Close()
+}
+
+func (s *Store) CreateAIConversation(ctx context.Context, create *AIConversation) (*AIConversation, error) {
+	return s.driver.CreateAIConversation(ctx, create)
+}
+
+func (s *Store) ListAIConversations(ctx context.Context, find *FindAIConversation) ([]*AIConversation, error) {
+	return s.driver.ListAIConversations(ctx, find)
+}
+
+func (s *Store) UpdateAIConversation(ctx context.Context, update *UpdateAIConversation) (*AIConversation, error) {
+	return s.driver.UpdateAIConversation(ctx, update)
+}
+
+func (s *Store) DeleteAIConversation(ctx context.Context, delete *DeleteAIConversation) error {
+	return s.driver.DeleteAIConversation(ctx, delete)
+}
+
+func (s *Store) CreateAIMessage(ctx context.Context, create *AIMessage) (*AIMessage, error) {
+	return s.driver.CreateAIMessage(ctx, create)
+}
+
+func (s *Store) ListAIMessages(ctx context.Context, find *FindAIMessage) ([]*AIMessage, error) {
+	return s.driver.ListAIMessages(ctx, find)
+}
+
+func (s *Store) DeleteAIMessage(ctx context.Context, delete *DeleteAIMessage) error {
+	return s.driver.DeleteAIMessage(ctx, delete)
 }

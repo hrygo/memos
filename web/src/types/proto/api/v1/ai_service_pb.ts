@@ -6,13 +6,15 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_google_api_annotations } from "../../google/api/annotations_pb";
 import { file_google_api_field_behavior } from "../../google/api/field_behavior_pb";
+import type { EmptySchema } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIr8BChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUi+QEKFUNoYXRXaXRoTWVtb3NSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg8KB3NvdXJjZXMYAiADKAkSDAoEZG9uZRgDIAEoCBJGChhzY2hlZHVsZV9jcmVhdGlvbl9pbnRlbnQYBCABKAsyJC5tZW1vcy5hcGkudjEuU2NoZWR1bGVDcmVhdGlvbkludGVudBJAChVzY2hlZHVsZV9xdWVyeV9yZXN1bHQYBSABKAsyIS5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeVJlc3VsdBISCgpldmVudF90eXBlGAYgASgJEhIKCmV2ZW50X2RhdGEYByABKAkiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQi3QEKE1BhcnJvdFNlbGZDb2duaXRpb24SDAoEbmFtZRgBIAEoCRINCgVlbW9qaRgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtwZXJzb25hbGl0eRgEIAMoCRIUCgxjYXBhYmlsaXRpZXMYBSADKAkSEwoLbGltaXRhdGlvbnMYBiADKAkSFQoNd29ya2luZ19zdHlsZRgHIAEoCRIWCg5mYXZvcml0ZV90b29scxgIIAMoCRIZChFzZWxmX2ludHJvZHVjdGlvbhgJIAEoCRIQCghmdW5fZmFjdBgKIAEoCSJRCh1HZXRQYXJyb3RTZWxmQ29nbml0aW9uUmVxdWVzdBIwCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZUID4EECIlsKHkdldFBhcnJvdFNlbGZDb2duaXRpb25SZXNwb25zZRI5Cg5zZWxmX2NvZ25pdGlvbhgBIAEoCzIhLm1lbW9zLmFwaS52MS5QYXJyb3RTZWxmQ29nbml0aW9uIhQKEkxpc3RQYXJyb3RzUmVxdWVzdCJAChNMaXN0UGFycm90c1Jlc3BvbnNlEikKB3BhcnJvdHMYASADKAsyGC5tZW1vcy5hcGkudjEuUGFycm90SW5mbyKCAQoKUGFycm90SW5mbxIrCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZRIMCgRuYW1lGAIgASgJEjkKDnNlbGZfY29nbml0aW9uGAMgASgLMiEubWVtb3MuYXBpLnYxLlBhcnJvdFNlbGZDb2duaXRpb24qNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIqggEKCUFnZW50VHlwZRIWChJBR0VOVF9UWVBFX0RFRkFVTFQQABITCg9BR0VOVF9UWVBFX01FTU8QARIXChNBR0VOVF9UWVBFX1NDSEVEVUxFEAISFgoSQUdFTlRfVFlQRV9BTUFaSU5HEAMSFwoTQUdFTlRfVFlQRV9DUkVBVElWRRAEMqwICglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSbQoEQ2hhdBIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZBKHAQoVQ2hhdFdpdGhTY2hlZHVsZUFnZW50EiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NoYXQvc2NoZWR1bGUwARKLAQoXQ2hhdFdpdGhNZW1vc0ludGVncmF0ZWQSIi5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlIiWC0+STAh86ASoiGi9hcGkvdjEvYWkvY2hhdC9pbnRlZ3JhdGVkMAESqwEKFkdldFBhcnJvdFNlbGZDb2duaXRpb24SKy5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlcXVlc3QaLC5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlIjaC0+STAjASLi9hcGkvdjEvYWkvcGFycm90cy97YWdlbnRfdHlwZX0vc2VsZi1jb2duaXRpb24SbgoLTGlzdFBhcnJvdHMSIC5tZW1vcy5hcGkudjEuTGlzdFBhcnJvdHNSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLkxpc3RQYXJyb3RzUmVzcG9uc2UiGoLT5JMCFBISL2FwaS92MS9haS9wYXJyb3RzMqoCChRTY2hlZHVsZUFnZW50U2VydmljZRJ/CgRDaGF0EiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBonLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlIiaC0+STAiA6ASoiGy9hcGkvdjEvc2NoZWR1bGUtYWdlbnQvY2hhdBKQAQoKQ2hhdFN0cmVhbRImLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50Q2hhdFJlcXVlc3QaKS5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudFN0cmVhbVJlc3BvbnNlIi2C0+STAic6ASoiIi9hcGkvdjEvc2NoZWR1bGUtYWdlbnQvY2hhdC9zdHJlYW0wAUKmAQoQY29tLm1lbW9zLmFwaS52MUIOQWlTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJItgBChRDaGF0V2l0aE1lbW9zUmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUSFwoPY29udmVyc2F0aW9uX2lkGAYgASgFItsBCg5BSUNvbnZlcnNhdGlvbhIKCgJpZBgBIAEoBRILCgN1aWQYAiABKAkSEgoKY3JlYXRvcl9pZBgDIAEoBRINCgV0aXRsZRgEIAEoCRIqCglwYXJyb3RfaWQYBSABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlEg4KBnBpbm5lZBgGIAEoCBISCgpjcmVhdGVkX3RzGAcgASgDEhIKCnVwZGF0ZWRfdHMYCCABKAMSKQoIbWVzc2FnZXMYCSADKAsyFy5tZW1vcy5hcGkudjEuQUlNZXNzYWdlIpABCglBSU1lc3NhZ2USCgoCaWQYASABKAUSCwoDdWlkGAIgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgDIAEoBRIMCgR0eXBlGAQgASgJEgwKBHJvbGUYBSABKAkSDwoHY29udGVudBgGIAEoCRIQCghtZXRhZGF0YRgHIAEoCRISCgpjcmVhdGVkX3RzGAggASgDIhwKGkxpc3RBSUNvbnZlcnNhdGlvbnNSZXF1ZXN0IlIKG0xpc3RBSUNvbnZlcnNhdGlvbnNSZXNwb25zZRIzCg1jb252ZXJzYXRpb25zGAEgAygLMhwubWVtb3MuYXBpLnYxLkFJQ29udmVyc2F0aW9uIiYKGEdldEFJQ29udmVyc2F0aW9uUmVxdWVzdBIKCgJpZBgBIAEoBSJYChtDcmVhdGVBSUNvbnZlcnNhdGlvblJlcXVlc3QSDQoFdGl0bGUYASABKAkSKgoJcGFycm90X2lkGAIgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZSJnChtVcGRhdGVBSUNvbnZlcnNhdGlvblJlcXVlc3QSCgoCaWQYASABKAUSEgoFdGl0bGUYAiABKAlIAIgBARITCgZwaW5uZWQYAyABKAhIAYgBAUIICgZfdGl0bGVCCQoHX3Bpbm5lZCIpChtEZWxldGVBSUNvbnZlcnNhdGlvblJlcXVlc3QSCgoCaWQYASABKAUi+QEKFUNoYXRXaXRoTWVtb3NSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg8KB3NvdXJjZXMYAiADKAkSDAoEZG9uZRgDIAEoCBJGChhzY2hlZHVsZV9jcmVhdGlvbl9pbnRlbnQYBCABKAsyJC5tZW1vcy5hcGkudjEuU2NoZWR1bGVDcmVhdGlvbkludGVudBJAChVzY2hlZHVsZV9xdWVyeV9yZXN1bHQYBSABKAsyIS5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeVJlc3VsdBISCgpldmVudF90eXBlGAYgASgJEhIKCmV2ZW50X2RhdGEYByABKAkiWwoWU2NoZWR1bGVDcmVhdGlvbkludGVudBIQCghkZXRlY3RlZBgBIAEoCBIcChRzY2hlZHVsZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglyZWFzb25pbmcYAyABKAkijQEKE1NjaGVkdWxlUXVlcnlSZXN1bHQSEAoIZGV0ZWN0ZWQYASABKAgSMAoJc2NoZWR1bGVzGAIgAygLMh0ubWVtb3MuYXBpLnYxLlNjaGVkdWxlU3VtbWFyeRIeChZ0aW1lX3JhbmdlX2Rlc2NyaXB0aW9uGAMgASgJEhIKCnF1ZXJ5X3R5cGUYBCABKAkimwEKD1NjaGVkdWxlU3VtbWFyeRILCgN1aWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc3RhcnRfdHMYAyABKAMSDgoGZW5kX3RzGAQgASgDEg8KB2FsbF9kYXkYBSABKAgSEAoIbG9jYXRpb24YBiABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAcgASgJEg4KBnN0YXR1cxgIIAEoCSI6ChZHZXRSZWxhdGVkTWVtb3NSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAhINCgVsaW1pdBgCIAEoBSJEChdHZXRSZWxhdGVkTWVtb3NSZXNwb25zZRIpCgVtZW1vcxgBIAMoCzIaLm1lbW9zLmFwaS52MS5TZWFyY2hSZXN1bHQi3QEKE1BhcnJvdFNlbGZDb2duaXRpb24SDAoEbmFtZRgBIAEoCRINCgVlbW9qaRgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtwZXJzb25hbGl0eRgEIAMoCRIUCgxjYXBhYmlsaXRpZXMYBSADKAkSEwoLbGltaXRhdGlvbnMYBiADKAkSFQoNd29ya2luZ19zdHlsZRgHIAEoCRIWCg5mYXZvcml0ZV90b29scxgIIAMoCRIZChFzZWxmX2ludHJvZHVjdGlvbhgJIAEoCRIQCghmdW5fZmFjdBgKIAEoCSJRCh1HZXRQYXJyb3RTZWxmQ29nbml0aW9uUmVxdWVzdBIwCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZUID4EECIlsKHkdldFBhcnJvdFNlbGZDb2duaXRpb25SZXNwb25zZRI5Cg5zZWxmX2NvZ25pdGlvbhgBIAEoCzIhLm1lbW9zLmFwaS52MS5QYXJyb3RTZWxmQ29nbml0aW9uIhQKEkxpc3RQYXJyb3RzUmVxdWVzdCJAChNMaXN0UGFycm90c1Jlc3BvbnNlEikKB3BhcnJvdHMYASADKAsyGC5tZW1vcy5hcGkudjEuUGFycm90SW5mbyKCAQoKUGFycm90SW5mbxIrCgphZ2VudF90eXBlGAEgASgOMhcubWVtb3MuYXBpLnYxLkFnZW50VHlwZRIMCgRuYW1lGAIgASgJEjkKDnNlbGZfY29nbml0aW9uGAMgASgLMiEubWVtb3MuYXBpLnYxLlBhcnJvdFNlbGZDb2duaXRpb24qNwoRU2NoZWR1bGVRdWVyeU1vZGUSCAoEQVVUTxAAEgwKCFNUQU5EQVJEEAESCgoGU1RSSUNUEAIqggEKCUFnZW50VHlwZRIWChJBR0VOVF9UWVBFX0RFRkFVTFQQABITCg9BR0VOVF9UWVBFX01FTU8QARIXChNBR0VOVF9UWVBFX1NDSEVEVUxFEAISFgoSQUdFTlRfVFlQRV9BTUFaSU5HEAMSFwoTQUdFTlRfVFlQRV9DUkVBVElWRRAEMtQNCglBSVNlcnZpY2USeQoOU2VtYW50aWNTZWFyY2gSIy5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXF1ZXN0GiQubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVzcG9uc2UiHILT5JMCFjoBKiIRL2FwaS92MS9haS9zZWFyY2gSdgoLU3VnZ2VzdFRhZ3MSIC5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVzcG9uc2UiIoLT5JMCHDoBKiIXL2FwaS92MS9haS9zdWdnZXN0LXRhZ3MSbQoEQ2hhdBIiLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVxdWVzdBojLm1lbW9zLmFwaS52MS5DaGF0V2l0aE1lbW9zUmVzcG9uc2UiGoLT5JMCFDoBKiIPL2FwaS92MS9haS9jaGF0MAEShgEKD0dldFJlbGF0ZWRNZW1vcxIkLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXF1ZXN0GiUubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlIiaC0+STAiASHi9hcGkvdjEve25hbWU9bWVtb3MvKn0vcmVsYXRlZBKHAQoVQ2hhdFdpdGhTY2hlZHVsZUFnZW50EiIubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoYXRXaXRoTWVtb3NSZXNwb25zZSIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NoYXQvc2NoZWR1bGUwARKLAQoXQ2hhdFdpdGhNZW1vc0ludGVncmF0ZWQSIi5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hhdFdpdGhNZW1vc1Jlc3BvbnNlIiWC0+STAh86ASoiGi9hcGkvdjEvYWkvY2hhdC9pbnRlZ3JhdGVkMAESqwEKFkdldFBhcnJvdFNlbGZDb2duaXRpb24SKy5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlcXVlc3QaLC5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlIjaC0+STAjASLi9hcGkvdjEvYWkvcGFycm90cy97YWdlbnRfdHlwZX0vc2VsZi1jb2duaXRpb24SbgoLTGlzdFBhcnJvdHMSIC5tZW1vcy5hcGkudjEuTGlzdFBhcnJvdHNSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLkxpc3RQYXJyb3RzUmVzcG9uc2UiGoLT5JMCFBISL2FwaS92MS9haS9wYXJyb3RzEowBChNMaXN0QUlDb252ZXJzYXRpb25zEigubWVtb3MuYXBpLnYxLkxpc3RBSUNvbnZlcnNhdGlvbnNSZXF1ZXN0GikubWVtb3MuYXBpLnYxLkxpc3RBSUNvbnZlcnNhdGlvbnNSZXNwb25zZSIggtPkkwIaEhgvYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMSgAEKEUdldEFJQ29udmVyc2F0aW9uEiYubWVtb3MuYXBpLnYxLkdldEFJQ29udmVyc2F0aW9uUmVxdWVzdBocLm1lbW9zLmFwaS52MS5BSUNvbnZlcnNhdGlvbiIlgtPkkwIfEh0vYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMve2lkfRKEAQoUQ3JlYXRlQUlDb252ZXJzYXRpb24SKS5tZW1vcy5hcGkudjEuQ3JlYXRlQUlDb252ZXJzYXRpb25SZXF1ZXN0GhwubWVtb3MuYXBpLnYxLkFJQ29udmVyc2F0aW9uIiOC0+STAh06ASoiGC9hcGkvdjEvYWkvY29udmVyc2F0aW9ucxKJAQoUVXBkYXRlQUlDb252ZXJzYXRpb24SKS5tZW1vcy5hcGkudjEuVXBkYXRlQUlDb252ZXJzYXRpb25SZXF1ZXN0GhwubWVtb3MuYXBpLnYxLkFJQ29udmVyc2F0aW9uIiiC0+STAiI6ASoyHS9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97aWR9EoABChREZWxldGVBSUNvbnZlcnNhdGlvbhIpLm1lbW9zLmFwaS52MS5EZWxldGVBSUNvbnZlcnNhdGlvblJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiJYLT5JMCHyodL2FwaS92MS9haS9jb252ZXJzYXRpb25zL3tpZH0yqgIKFFNjaGVkdWxlQWdlbnRTZXJ2aWNlEn8KBENoYXQSJi5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXF1ZXN0GicubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVzcG9uc2UiJoLT5JMCIDoBKiIbL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0EpABCgpDaGF0U3RyZWFtEiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBopLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50U3RyZWFtUmVzcG9uc2UiLYLT5JMCJzoBKiIiL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0L3N0cmVhbTABQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior, file_google_protobuf_empty]);
 
 /**
  * ScheduleAgentChatRequest is the request for schedule agent chat.
@@ -261,6 +263,13 @@ export type ChatWithMemosRequest = Message<"memos.api.v1.ChatWithMemosRequest"> 
    * @generated from field: memos.api.v1.AgentType agent_type = 5;
    */
   agentType: AgentType;
+
+  /**
+   * Conversation ID to persist message to
+   *
+   * @generated from field: int32 conversation_id = 6;
+   */
+  conversationId: number;
 };
 
 /**
@@ -269,6 +278,238 @@ export type ChatWithMemosRequest = Message<"memos.api.v1.ChatWithMemosRequest"> 
  */
 export const ChatWithMemosRequestSchema: GenMessage<ChatWithMemosRequest> = /*@__PURE__*/
   messageDesc(file_api_v1_ai_service, 8);
+
+/**
+ * AIConversation represents an AI chat session.
+ *
+ * @generated from message memos.api.v1.AIConversation
+ */
+export type AIConversation = Message<"memos.api.v1.AIConversation"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string uid = 2;
+   */
+  uid: string;
+
+  /**
+   * @generated from field: int32 creator_id = 3;
+   */
+  creatorId: number;
+
+  /**
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * @generated from field: memos.api.v1.AgentType parrot_id = 5;
+   */
+  parrotId: AgentType;
+
+  /**
+   * @generated from field: bool pinned = 6;
+   */
+  pinned: boolean;
+
+  /**
+   * @generated from field: int64 created_ts = 7;
+   */
+  createdTs: bigint;
+
+  /**
+   * @generated from field: int64 updated_ts = 8;
+   */
+  updatedTs: bigint;
+
+  /**
+   * @generated from field: repeated memos.api.v1.AIMessage messages = 9;
+   */
+  messages: AIMessage[];
+};
+
+/**
+ * Describes the message memos.api.v1.AIConversation.
+ * Use `create(AIConversationSchema)` to create a new message.
+ */
+export const AIConversationSchema: GenMessage<AIConversation> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 9);
+
+/**
+ * AIMessage represents a single message in an AI conversation.
+ *
+ * @generated from message memos.api.v1.AIMessage
+ */
+export type AIMessage = Message<"memos.api.v1.AIMessage"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string uid = 2;
+   */
+  uid: string;
+
+  /**
+   * @generated from field: int32 conversation_id = 3;
+   */
+  conversationId: number;
+
+  /**
+   * "MESSAGE" or "SEPARATOR"
+   *
+   * @generated from field: string type = 4;
+   */
+  type: string;
+
+  /**
+   * "USER", "ASSISTANT", or "SYSTEM"
+   *
+   * @generated from field: string role = 5;
+   */
+  role: string;
+
+  /**
+   * @generated from field: string content = 6;
+   */
+  content: string;
+
+  /**
+   * JSON string
+   *
+   * @generated from field: string metadata = 7;
+   */
+  metadata: string;
+
+  /**
+   * @generated from field: int64 created_ts = 8;
+   */
+  createdTs: bigint;
+};
+
+/**
+ * Describes the message memos.api.v1.AIMessage.
+ * Use `create(AIMessageSchema)` to create a new message.
+ */
+export const AIMessageSchema: GenMessage<AIMessage> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 10);
+
+/**
+ * @generated from message memos.api.v1.ListAIConversationsRequest
+ */
+export type ListAIConversationsRequest = Message<"memos.api.v1.ListAIConversationsRequest"> & {
+};
+
+/**
+ * Describes the message memos.api.v1.ListAIConversationsRequest.
+ * Use `create(ListAIConversationsRequestSchema)` to create a new message.
+ */
+export const ListAIConversationsRequestSchema: GenMessage<ListAIConversationsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 11);
+
+/**
+ * @generated from message memos.api.v1.ListAIConversationsResponse
+ */
+export type ListAIConversationsResponse = Message<"memos.api.v1.ListAIConversationsResponse"> & {
+  /**
+   * @generated from field: repeated memos.api.v1.AIConversation conversations = 1;
+   */
+  conversations: AIConversation[];
+};
+
+/**
+ * Describes the message memos.api.v1.ListAIConversationsResponse.
+ * Use `create(ListAIConversationsResponseSchema)` to create a new message.
+ */
+export const ListAIConversationsResponseSchema: GenMessage<ListAIConversationsResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 12);
+
+/**
+ * @generated from message memos.api.v1.GetAIConversationRequest
+ */
+export type GetAIConversationRequest = Message<"memos.api.v1.GetAIConversationRequest"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+};
+
+/**
+ * Describes the message memos.api.v1.GetAIConversationRequest.
+ * Use `create(GetAIConversationRequestSchema)` to create a new message.
+ */
+export const GetAIConversationRequestSchema: GenMessage<GetAIConversationRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 13);
+
+/**
+ * @generated from message memos.api.v1.CreateAIConversationRequest
+ */
+export type CreateAIConversationRequest = Message<"memos.api.v1.CreateAIConversationRequest"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: memos.api.v1.AgentType parrot_id = 2;
+   */
+  parrotId: AgentType;
+};
+
+/**
+ * Describes the message memos.api.v1.CreateAIConversationRequest.
+ * Use `create(CreateAIConversationRequestSchema)` to create a new message.
+ */
+export const CreateAIConversationRequestSchema: GenMessage<CreateAIConversationRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 14);
+
+/**
+ * @generated from message memos.api.v1.UpdateAIConversationRequest
+ */
+export type UpdateAIConversationRequest = Message<"memos.api.v1.UpdateAIConversationRequest"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: optional string title = 2;
+   */
+  title?: string;
+
+  /**
+   * @generated from field: optional bool pinned = 3;
+   */
+  pinned?: boolean;
+};
+
+/**
+ * Describes the message memos.api.v1.UpdateAIConversationRequest.
+ * Use `create(UpdateAIConversationRequestSchema)` to create a new message.
+ */
+export const UpdateAIConversationRequestSchema: GenMessage<UpdateAIConversationRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 15);
+
+/**
+ * @generated from message memos.api.v1.DeleteAIConversationRequest
+ */
+export type DeleteAIConversationRequest = Message<"memos.api.v1.DeleteAIConversationRequest"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+};
+
+/**
+ * Describes the message memos.api.v1.DeleteAIConversationRequest.
+ * Use `create(DeleteAIConversationRequestSchema)` to create a new message.
+ */
+export const DeleteAIConversationRequestSchema: GenMessage<DeleteAIConversationRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 16);
 
 /**
  * ChatWithMemosResponse is the response for ChatWithMemos.
@@ -333,7 +574,7 @@ export type ChatWithMemosResponse = Message<"memos.api.v1.ChatWithMemosResponse"
  * Use `create(ChatWithMemosResponseSchema)` to create a new message.
  */
 export const ChatWithMemosResponseSchema: GenMessage<ChatWithMemosResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 9);
+  messageDesc(file_api_v1_ai_service, 17);
 
 /**
  * ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
@@ -368,7 +609,7 @@ export type ScheduleCreationIntent = Message<"memos.api.v1.ScheduleCreationInten
  * Use `create(ScheduleCreationIntentSchema)` to create a new message.
  */
 export const ScheduleCreationIntentSchema: GenMessage<ScheduleCreationIntent> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 10);
+  messageDesc(file_api_v1_ai_service, 18);
 
 /**
  * ScheduleQueryResult contains the result of schedule query intent detection and the queried schedules.
@@ -410,7 +651,7 @@ export type ScheduleQueryResult = Message<"memos.api.v1.ScheduleQueryResult"> & 
  * Use `create(ScheduleQueryResultSchema)` to create a new message.
  */
 export const ScheduleQueryResultSchema: GenMessage<ScheduleQueryResult> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 11);
+  messageDesc(file_api_v1_ai_service, 19);
 
 /**
  * ScheduleSummary represents a simplified schedule for query results.
@@ -481,7 +722,7 @@ export type ScheduleSummary = Message<"memos.api.v1.ScheduleSummary"> & {
  * Use `create(ScheduleSummarySchema)` to create a new message.
  */
 export const ScheduleSummarySchema: GenMessage<ScheduleSummary> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 12);
+  messageDesc(file_api_v1_ai_service, 20);
 
 /**
  * GetRelatedMemosRequest is the request for GetRelatedMemos.
@@ -509,7 +750,7 @@ export type GetRelatedMemosRequest = Message<"memos.api.v1.GetRelatedMemosReques
  * Use `create(GetRelatedMemosRequestSchema)` to create a new message.
  */
 export const GetRelatedMemosRequestSchema: GenMessage<GetRelatedMemosRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 13);
+  messageDesc(file_api_v1_ai_service, 21);
 
 /**
  * GetRelatedMemosResponse is the response for GetRelatedMemos.
@@ -528,7 +769,7 @@ export type GetRelatedMemosResponse = Message<"memos.api.v1.GetRelatedMemosRespo
  * Use `create(GetRelatedMemosResponseSchema)` to create a new message.
  */
 export const GetRelatedMemosResponseSchema: GenMessage<GetRelatedMemosResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 14);
+  messageDesc(file_api_v1_ai_service, 22);
 
 /**
  * ParrotSelfCognition represents a parrot's metacognitive understanding of itself.
@@ -612,7 +853,7 @@ export type ParrotSelfCognition = Message<"memos.api.v1.ParrotSelfCognition"> & 
  * Use `create(ParrotSelfCognitionSchema)` to create a new message.
  */
 export const ParrotSelfCognitionSchema: GenMessage<ParrotSelfCognition> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 15);
+  messageDesc(file_api_v1_ai_service, 23);
 
 /**
  * GetParrotSelfCognitionRequest is the request for GetParrotSelfCognition.
@@ -633,7 +874,7 @@ export type GetParrotSelfCognitionRequest = Message<"memos.api.v1.GetParrotSelfC
  * Use `create(GetParrotSelfCognitionRequestSchema)` to create a new message.
  */
 export const GetParrotSelfCognitionRequestSchema: GenMessage<GetParrotSelfCognitionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 16);
+  messageDesc(file_api_v1_ai_service, 24);
 
 /**
  * GetParrotSelfCognitionResponse is the response for GetParrotSelfCognition.
@@ -654,7 +895,7 @@ export type GetParrotSelfCognitionResponse = Message<"memos.api.v1.GetParrotSelf
  * Use `create(GetParrotSelfCognitionResponseSchema)` to create a new message.
  */
 export const GetParrotSelfCognitionResponseSchema: GenMessage<GetParrotSelfCognitionResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 17);
+  messageDesc(file_api_v1_ai_service, 25);
 
 /**
  * ListParrotsRequest is the request for ListParrots.
@@ -669,7 +910,7 @@ export type ListParrotsRequest = Message<"memos.api.v1.ListParrotsRequest"> & {
  * Use `create(ListParrotsRequestSchema)` to create a new message.
  */
 export const ListParrotsRequestSchema: GenMessage<ListParrotsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 18);
+  messageDesc(file_api_v1_ai_service, 26);
 
 /**
  * ListParrotsResponse is the response for ListParrots.
@@ -690,7 +931,7 @@ export type ListParrotsResponse = Message<"memos.api.v1.ListParrotsResponse"> & 
  * Use `create(ListParrotsResponseSchema)` to create a new message.
  */
 export const ListParrotsResponseSchema: GenMessage<ListParrotsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 19);
+  messageDesc(file_api_v1_ai_service, 27);
 
 /**
  * ParrotInfo represents basic information about a parrot.
@@ -725,7 +966,7 @@ export type ParrotInfo = Message<"memos.api.v1.ParrotInfo"> & {
  * Use `create(ParrotInfoSchema)` to create a new message.
  */
 export const ParrotInfoSchema: GenMessage<ParrotInfo> = /*@__PURE__*/
-  messageDesc(file_api_v1_ai_service, 20);
+  messageDesc(file_api_v1_ai_service, 28);
 
 /**
  * ScheduleQueryMode specifies the query mode for schedule filtering.
@@ -894,6 +1135,56 @@ export const AIService: GenService<{
     methodKind: "unary";
     input: typeof ListParrotsRequestSchema;
     output: typeof ListParrotsResponseSchema;
+  },
+  /**
+   * ListAIConversations returns a list of AI conversations.
+   *
+   * @generated from rpc memos.api.v1.AIService.ListAIConversations
+   */
+  listAIConversations: {
+    methodKind: "unary";
+    input: typeof ListAIConversationsRequestSchema;
+    output: typeof ListAIConversationsResponseSchema;
+  },
+  /**
+   * GetAIConversation returns a specific AI conversation with its messages.
+   *
+   * @generated from rpc memos.api.v1.AIService.GetAIConversation
+   */
+  getAIConversation: {
+    methodKind: "unary";
+    input: typeof GetAIConversationRequestSchema;
+    output: typeof AIConversationSchema;
+  },
+  /**
+   * CreateAIConversation creates a new AI conversation.
+   *
+   * @generated from rpc memos.api.v1.AIService.CreateAIConversation
+   */
+  createAIConversation: {
+    methodKind: "unary";
+    input: typeof CreateAIConversationRequestSchema;
+    output: typeof AIConversationSchema;
+  },
+  /**
+   * UpdateAIConversation updates an AI conversation.
+   *
+   * @generated from rpc memos.api.v1.AIService.UpdateAIConversation
+   */
+  updateAIConversation: {
+    methodKind: "unary";
+    input: typeof UpdateAIConversationRequestSchema;
+    output: typeof AIConversationSchema;
+  },
+  /**
+   * DeleteAIConversation deletes an AI conversation.
+   *
+   * @generated from rpc memos.api.v1.AIService.DeleteAIConversation
+   */
+  deleteAIConversation: {
+    methodKind: "unary";
+    input: typeof DeleteAIConversationRequestSchema;
+    output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_ai_service, 0);

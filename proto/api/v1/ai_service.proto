@@ -4,8 +4,10 @@ package memos.api.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "gen/api/v1";
+
 
 // AIService provides AI-powered features for memo management.
 service AIService {
@@ -69,7 +71,45 @@ service AIService {
       get: "/api/v1/ai/parrots"
     };
   }
+
+  // ListAIConversations returns a list of AI conversations.
+  rpc ListAIConversations(ListAIConversationsRequest) returns (ListAIConversationsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/conversations"
+    };
+  }
+
+  // GetAIConversation returns a specific AI conversation with its messages.
+  rpc GetAIConversation(GetAIConversationRequest) returns (AIConversation) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/conversations/{id}"
+    };
+  }
+
+  // CreateAIConversation creates a new AI conversation.
+  rpc CreateAIConversation(CreateAIConversationRequest) returns (AIConversation) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/conversations"
+      body: "*"
+    };
+  }
+
+  // UpdateAIConversation updates an AI conversation.
+  rpc UpdateAIConversation(UpdateAIConversationRequest) returns (AIConversation) {
+    option (google.api.http) = {
+      patch: "/api/v1/ai/conversations/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteAIConversation deletes an AI conversation.
+  rpc DeleteAIConversation(DeleteAIConversationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/ai/conversations/{id}"
+    };
+  }
 }
+
 
 // ScheduleAgentService provides schedule-specific AI agent functionality.
 service ScheduleAgentService {
@@ -160,6 +200,57 @@ message ChatWithMemosRequest {
   string user_timezone = 3;     // User's timezone in IANA format (e.g., "Asia/Shanghai"). Defaults to UTC if not provided.
   ScheduleQueryMode schedule_query_mode = 4;  // Schedule query mode (optional, defaults to AUTO)
   AgentType agent_type = 5;     // Agent type (optional, defaults to DEFAULT)
+  int32 conversation_id = 6;    // Conversation ID to persist message to
+}
+
+// AIConversation represents an AI chat session.
+message AIConversation {
+  int32 id = 1;
+  string uid = 2;
+  int32 creator_id = 3;
+  string title = 4;
+  AgentType parrot_id = 5;
+  bool pinned = 6;
+  int64 created_ts = 7;
+  int64 updated_ts = 8;
+  repeated AIMessage messages = 9;
+}
+
+// AIMessage represents a single message in an AI conversation.
+message AIMessage {
+  int32 id = 1;
+  string uid = 2;
+  int32 conversation_id = 3;
+  string type = 4; // "MESSAGE" or "SEPARATOR"
+  string role = 5; // "USER", "ASSISTANT", or "SYSTEM"
+  string content = 6;
+  string metadata = 7; // JSON string
+  int64 created_ts = 8;
+}
+
+message ListAIConversationsRequest {}
+
+message ListAIConversationsResponse {
+  repeated AIConversation conversations = 1;
+}
+
+message GetAIConversationRequest {
+  int32 id = 1;
+}
+
+message CreateAIConversationRequest {
+  string title = 1;
+  AgentType parrot_id = 2;
+}
+
+message UpdateAIConversationRequest {
+  int32 id = 1;
+  optional string title = 2;
+  optional bool pinned = 3;
+}
+
+message DeleteAIConversationRequest {
+  int32 id = 1;
 }
 
 // ChatWithMemosResponse is the response for ChatWithMemos.
@@ -174,6 +265,7 @@ message ChatWithMemosResponse {
   string event_type = 6;                    // Event type: "thinking", "tool_use", "tool_result", "answer", "error", "schedule_updated"
   string event_data = 7;                    // Event data (JSON or plain text depending on event type)
 }
+
 
 // ScheduleCreationIntent represents AI's analysis of user's intent to create a schedule.
 message ScheduleCreationIntent {

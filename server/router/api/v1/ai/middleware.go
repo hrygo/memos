@@ -12,20 +12,21 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/usememos/memos/plugin/ai"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/server/internal/errors"
 	"github.com/usememos/memos/server/internal/observability"
 	"github.com/usememos/memos/server/middleware"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
 // ChatRequest represents a chat request.
 type ChatRequest struct {
-	Message   string
-	History   []string
-	AgentType AgentType
-	UserID    int32
-	Timezone  string
+	Message        string
+	History        []string
+	AgentType      AgentType
+	UserID         int32
+	Timezone       string
+	ConversationID int32
 }
 
 // ChatStream represents the streaming response interface.

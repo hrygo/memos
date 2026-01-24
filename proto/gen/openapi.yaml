@@ -144,6 +144,128 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/conversations:
+        get:
+            tags:
+                - AIService
+            description: ListAIConversations returns a list of AI conversations.
+            operationId: AIService_ListAIConversations
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListAIConversationsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - AIService
+            description: CreateAIConversation creates a new AI conversation.
+            operationId: AIService_CreateAIConversation
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateAIConversationRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AIConversation'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/conversations/{id}:
+        get:
+            tags:
+                - AIService
+            description: GetAIConversation returns a specific AI conversation with its messages.
+            operationId: AIService_GetAIConversation
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AIConversation'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - AIService
+            description: DeleteAIConversation deletes an AI conversation.
+            operationId: AIService_DeleteAIConversation
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - AIService
+            description: UpdateAIConversation updates an AI conversation.
+            operationId: AIService_UpdateAIConversation
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateAIConversationRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AIConversation'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/parrots:
         get:
             tags:
@@ -2383,6 +2505,61 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        AIConversation:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int32
+                uid:
+                    type: string
+                creatorId:
+                    type: integer
+                    format: int32
+                title:
+                    type: string
+                parrotId:
+                    enum:
+                        - AGENT_TYPE_DEFAULT
+                        - AGENT_TYPE_MEMO
+                        - AGENT_TYPE_SCHEDULE
+                        - AGENT_TYPE_AMAZING
+                        - AGENT_TYPE_CREATIVE
+                    type: string
+                    format: enum
+                pinned:
+                    type: boolean
+                createdTs:
+                    type: string
+                updatedTs:
+                    type: string
+                messages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AIMessage'
+            description: AIConversation represents an AI chat session.
+        AIMessage:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int32
+                uid:
+                    type: string
+                conversationId:
+                    type: integer
+                    format: int32
+                type:
+                    type: string
+                role:
+                    type: string
+                content:
+                    type: string
+                metadata:
+                    type: string
+                createdTs:
+                    type: string
+            description: AIMessage represents a single message in an AI conversation.
         Activity:
             type: object
             properties:
@@ -2515,6 +2692,9 @@ components:
                         - AGENT_TYPE_CREATIVE
                     type: string
                     format: enum
+                conversationId:
+                    type: integer
+                    format: int32
             description: ChatWithMemosRequest is the request for ChatWithMemos.
         ChatWithMemosResponse:
             type: object
@@ -2559,6 +2739,20 @@ components:
                     items:
                         $ref: '#/components/schemas/Schedule'
             description: CheckConflictResponse is the response for CheckConflict.
+        CreateAIConversationRequest:
+            type: object
+            properties:
+                title:
+                    type: string
+                parrotId:
+                    enum:
+                        - AGENT_TYPE_DEFAULT
+                        - AGENT_TYPE_MEMO
+                        - AGENT_TYPE_SCHEDULE
+                        - AGENT_TYPE_AMAZING
+                        - AGENT_TYPE_CREATIVE
+                    type: string
+                    format: enum
         CreatePersonalAccessTokenRequest:
             required:
                 - parent
@@ -2793,6 +2987,13 @@ components:
                         - $ref: '#/components/schemas/StorageSetting_S3Config'
                     description: The S3 config.
             description: Storage configuration settings for instance attachments.
+        ListAIConversationsResponse:
+            type: object
+            properties:
+                conversations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AIConversation'
         ListActivitiesResponse:
             type: object
             properties:
@@ -3652,6 +3853,16 @@ components:
                     items:
                         type: string
             description: SuggestTagsResponse is the response for SuggestTags.
+        UpdateAIConversationRequest:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int32
+                title:
+                    type: string
+                pinned:
+                    type: boolean
         UpdateScheduleRequest:
             required:
                 - schedule

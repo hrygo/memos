@@ -533,3 +533,60 @@ func getParrotNameByAgentType(agentType v1pb.AgentType) string {
 		return "默认助手"
 	}
 }
+
+// AIConversation Connect wrappers
+
+func (s *ConnectServiceHandler) ListAIConversations(ctx context.Context, req *connect.Request[v1pb.ListAIConversationsRequest]) (*connect.Response[v1pb.ListAIConversationsResponse], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.ListAIConversations(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetAIConversation(ctx context.Context, req *connect.Request[v1pb.GetAIConversationRequest]) (*connect.Response[v1pb.AIConversation], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.GetAIConversation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateAIConversation(ctx context.Context, req *connect.Request[v1pb.CreateAIConversationRequest]) (*connect.Response[v1pb.AIConversation], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.CreateAIConversation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateAIConversation(ctx context.Context, req *connect.Request[v1pb.UpdateAIConversationRequest]) (*connect.Response[v1pb.AIConversation], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.UpdateAIConversation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteAIConversation(ctx context.Context, req *connect.Request[v1pb.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.DeleteAIConversation(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}

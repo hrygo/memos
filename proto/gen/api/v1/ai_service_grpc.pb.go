@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -27,6 +28,11 @@ const (
 	AIService_ChatWithMemosIntegrated_FullMethodName = "/memos.api.v1.AIService/ChatWithMemosIntegrated"
 	AIService_GetParrotSelfCognition_FullMethodName  = "/memos.api.v1.AIService/GetParrotSelfCognition"
 	AIService_ListParrots_FullMethodName             = "/memos.api.v1.AIService/ListParrots"
+	AIService_ListAIConversations_FullMethodName     = "/memos.api.v1.AIService/ListAIConversations"
+	AIService_GetAIConversation_FullMethodName       = "/memos.api.v1.AIService/GetAIConversation"
+	AIService_CreateAIConversation_FullMethodName    = "/memos.api.v1.AIService/CreateAIConversation"
+	AIService_UpdateAIConversation_FullMethodName    = "/memos.api.v1.AIService/UpdateAIConversation"
+	AIService_DeleteAIConversation_FullMethodName    = "/memos.api.v1.AIService/DeleteAIConversation"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -51,6 +57,16 @@ type AIServiceClient interface {
 	GetParrotSelfCognition(ctx context.Context, in *GetParrotSelfCognitionRequest, opts ...grpc.CallOption) (*GetParrotSelfCognitionResponse, error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(ctx context.Context, in *ListParrotsRequest, opts ...grpc.CallOption) (*ListParrotsResponse, error)
+	// ListAIConversations returns a list of AI conversations.
+	ListAIConversations(ctx context.Context, in *ListAIConversationsRequest, opts ...grpc.CallOption) (*ListAIConversationsResponse, error)
+	// GetAIConversation returns a specific AI conversation with its messages.
+	GetAIConversation(ctx context.Context, in *GetAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error)
+	// CreateAIConversation creates a new AI conversation.
+	CreateAIConversation(ctx context.Context, in *CreateAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error)
+	// UpdateAIConversation updates an AI conversation.
+	UpdateAIConversation(ctx context.Context, in *UpdateAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error)
+	// DeleteAIConversation deletes an AI conversation.
+	DeleteAIConversation(ctx context.Context, in *DeleteAIConversationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type aIServiceClient struct {
@@ -168,6 +184,56 @@ func (c *aIServiceClient) ListParrots(ctx context.Context, in *ListParrotsReques
 	return out, nil
 }
 
+func (c *aIServiceClient) ListAIConversations(ctx context.Context, in *ListAIConversationsRequest, opts ...grpc.CallOption) (*ListAIConversationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAIConversationsResponse)
+	err := c.cc.Invoke(ctx, AIService_ListAIConversations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) GetAIConversation(ctx context.Context, in *GetAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AIConversation)
+	err := c.cc.Invoke(ctx, AIService_GetAIConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) CreateAIConversation(ctx context.Context, in *CreateAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AIConversation)
+	err := c.cc.Invoke(ctx, AIService_CreateAIConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) UpdateAIConversation(ctx context.Context, in *UpdateAIConversationRequest, opts ...grpc.CallOption) (*AIConversation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AIConversation)
+	err := c.cc.Invoke(ctx, AIService_UpdateAIConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) DeleteAIConversation(ctx context.Context, in *DeleteAIConversationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AIService_DeleteAIConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
@@ -190,6 +256,16 @@ type AIServiceServer interface {
 	GetParrotSelfCognition(context.Context, *GetParrotSelfCognitionRequest) (*GetParrotSelfCognitionResponse, error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error)
+	// ListAIConversations returns a list of AI conversations.
+	ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error)
+	// GetAIConversation returns a specific AI conversation with its messages.
+	GetAIConversation(context.Context, *GetAIConversationRequest) (*AIConversation, error)
+	// CreateAIConversation creates a new AI conversation.
+	CreateAIConversation(context.Context, *CreateAIConversationRequest) (*AIConversation, error)
+	// UpdateAIConversation updates an AI conversation.
+	UpdateAIConversation(context.Context, *UpdateAIConversationRequest) (*AIConversation, error)
+	// DeleteAIConversation deletes an AI conversation.
+	DeleteAIConversation(context.Context, *DeleteAIConversationRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -223,6 +299,21 @@ func (UnimplementedAIServiceServer) GetParrotSelfCognition(context.Context, *Get
 }
 func (UnimplementedAIServiceServer) ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListParrots not implemented")
+}
+func (UnimplementedAIServiceServer) ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAIConversations not implemented")
+}
+func (UnimplementedAIServiceServer) GetAIConversation(context.Context, *GetAIConversationRequest) (*AIConversation, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAIConversation not implemented")
+}
+func (UnimplementedAIServiceServer) CreateAIConversation(context.Context, *CreateAIConversationRequest) (*AIConversation, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAIConversation not implemented")
+}
+func (UnimplementedAIServiceServer) UpdateAIConversation(context.Context, *UpdateAIConversationRequest) (*AIConversation, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAIConversation not implemented")
+}
+func (UnimplementedAIServiceServer) DeleteAIConversation(context.Context, *DeleteAIConversationRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteAIConversation not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -368,6 +459,96 @@ func _AIService_ListParrots_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AIService_ListAIConversations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAIConversationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).ListAIConversations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_ListAIConversations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).ListAIConversations(ctx, req.(*ListAIConversationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_GetAIConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAIConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetAIConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetAIConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetAIConversation(ctx, req.(*GetAIConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_CreateAIConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAIConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).CreateAIConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_CreateAIConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).CreateAIConversation(ctx, req.(*CreateAIConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_UpdateAIConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAIConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).UpdateAIConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_UpdateAIConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).UpdateAIConversation(ctx, req.(*UpdateAIConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_DeleteAIConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAIConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).DeleteAIConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_DeleteAIConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).DeleteAIConversation(ctx, req.(*DeleteAIConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -394,6 +575,26 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListParrots",
 			Handler:    _AIService_ListParrots_Handler,
+		},
+		{
+			MethodName: "ListAIConversations",
+			Handler:    _AIService_ListAIConversations_Handler,
+		},
+		{
+			MethodName: "GetAIConversation",
+			Handler:    _AIService_GetAIConversation_Handler,
+		},
+		{
+			MethodName: "CreateAIConversation",
+			Handler:    _AIService_CreateAIConversation_Handler,
+		},
+		{
+			MethodName: "UpdateAIConversation",
+			Handler:    _AIService_UpdateAIConversation_Handler,
+		},
+		{
+			MethodName: "DeleteAIConversation",
+			Handler:    _AIService_DeleteAIConversation_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

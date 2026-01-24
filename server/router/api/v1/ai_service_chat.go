@@ -3,12 +3,15 @@ package v1
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/server/router/api/v1/ai"
+	"github.com/lithammer/shortuuid/v4"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	"github.com/usememos/memos/server/router/api/v1/ai"
+	"github.com/usememos/memos/store"
 )
 
 // Chat streams a chat response with AI agents.
@@ -55,6 +58,20 @@ func (s *AIService) Chat(req *v1pb.ChatWithMemosRequest, stream v1pb.AIService_C
 	// Create handler and process request
 	handler := s.createChatHandler()
 	wrappedStream := &grpcStreamWrapper{stream: stream}
+
+	// Persist cutting line if message is a command to clear context
+	// Note: Modern frontend sends '---' or similar to clear context
+	if req.Message == "---" && chatReq.ConversationID != 0 {
+		_, _ = s.Store.CreateAIMessage(ctx, &store.AIMessage{
+			UID:            shortuuid.New(),
+			ConversationID: chatReq.ConversationID,
+			Type:           store.AIMessageTypeSeparator,
+			Role:           store.AIMessageRoleSystem,
+			Content:        "Context cleared",
+			Metadata:       "{}",
+			CreatedTs:      time.Now().Unix(),
+		})
+	}
 
 	if err := handler.Handle(ctx, chatReq, wrappedStream); err != nil {
 		return ai.HandleError(err)

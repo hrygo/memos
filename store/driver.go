@@ -88,4 +88,15 @@ type Driver interface {
 	ListSchedules(ctx context.Context, find *FindSchedule) ([]*Schedule, error)
 	UpdateSchedule(ctx context.Context, update *UpdateSchedule) error
 	DeleteSchedule(ctx context.Context, delete *DeleteSchedule) error
+
+	// AIConversation model related methods.
+	CreateAIConversation(ctx context.Context, create *AIConversation) (*AIConversation, error)
+	ListAIConversations(ctx context.Context, find *FindAIConversation) ([]*AIConversation, error)
+	UpdateAIConversation(ctx context.Context, update *UpdateAIConversation) (*AIConversation, error)
+	DeleteAIConversation(ctx context.Context, delete *DeleteAIConversation) error
+
+	// AIMessage model related methods.
+	CreateAIMessage(ctx context.Context, create *AIMessage) (*AIMessage, error)
+	ListAIMessages(ctx context.Context, find *FindAIMessage) ([]*AIMessage, error)
+	DeleteAIMessage(ctx context.Context, delete *DeleteAIMessage) error
 }

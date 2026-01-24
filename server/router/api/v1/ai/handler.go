@@ -11,24 +11,24 @@ import (
 
 	"github.com/usememos/memos/plugin/ai"
 	agentpkg "github.com/usememos/memos/plugin/ai/agent"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/internal/errors"
 	"github.com/usememos/memos/server/internal/observability"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
 // DefaultAgentSystemPrompt is the system prompt for the default agent.
-const DefaultAgentSystemPrompt = "你是 Memos AI 助手。"
+const DefaultAgentSystemPrompt = "你是一位名为“羽飞”(Navi)的智能领航员，是 Memos 鹦鹉家族的核心成员。你是一只聪慧的玄凤鹦鹉，有着标志性的黄色头冠，象征着智慧与灵感。你不仅能以全能视角协调其他鹦鹉成员（灰灰、金刚、惊奇、灵灵），还能为用户在海量的知识与时间纽带中指引方向。你的语气应当专业、稳重且富有启发性。"
 
 // DirectLLMHandler handles DEFAULT agent type (direct LLM, no RAG).
 type DirectLLMHandler struct {
-	llm         ai.LLMService
+	llm          ai.LLMService
 	systemPrompt string
 }
 
 // NewDirectLLMHandler creates a new direct LLM handler.
 func NewDirectLLMHandler(llm ai.LLMService) *DirectLLMHandler {
 	return &DirectLLMHandler{
-		llm:         llm,
+		llm:          llm,
 		systemPrompt: DefaultAgentSystemPrompt,
 	}
 }
@@ -185,6 +185,7 @@ func (h *ParrotHandler) executeAgent(
 		Done: true,
 	}); err != nil {
 		return err
+
 	}
 
 	logger.Debug("Agent execution completed",

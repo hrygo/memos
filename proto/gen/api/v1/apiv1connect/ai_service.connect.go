@@ -9,6 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	v1 "github.com/usememos/memos/proto/gen/api/v1"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -56,6 +57,21 @@ const (
 	AIServiceGetParrotSelfCognitionProcedure = "/memos.api.v1.AIService/GetParrotSelfCognition"
 	// AIServiceListParrotsProcedure is the fully-qualified name of the AIService's ListParrots RPC.
 	AIServiceListParrotsProcedure = "/memos.api.v1.AIService/ListParrots"
+	// AIServiceListAIConversationsProcedure is the fully-qualified name of the AIService's
+	// ListAIConversations RPC.
+	AIServiceListAIConversationsProcedure = "/memos.api.v1.AIService/ListAIConversations"
+	// AIServiceGetAIConversationProcedure is the fully-qualified name of the AIService's
+	// GetAIConversation RPC.
+	AIServiceGetAIConversationProcedure = "/memos.api.v1.AIService/GetAIConversation"
+	// AIServiceCreateAIConversationProcedure is the fully-qualified name of the AIService's
+	// CreateAIConversation RPC.
+	AIServiceCreateAIConversationProcedure = "/memos.api.v1.AIService/CreateAIConversation"
+	// AIServiceUpdateAIConversationProcedure is the fully-qualified name of the AIService's
+	// UpdateAIConversation RPC.
+	AIServiceUpdateAIConversationProcedure = "/memos.api.v1.AIService/UpdateAIConversation"
+	// AIServiceDeleteAIConversationProcedure is the fully-qualified name of the AIService's
+	// DeleteAIConversation RPC.
+	AIServiceDeleteAIConversationProcedure = "/memos.api.v1.AIService/DeleteAIConversation"
 	// ScheduleAgentServiceChatProcedure is the fully-qualified name of the ScheduleAgentService's Chat
 	// RPC.
 	ScheduleAgentServiceChatProcedure = "/memos.api.v1.ScheduleAgentService/Chat"
@@ -82,6 +98,16 @@ type AIServiceClient interface {
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
+	// ListAIConversations returns a list of AI conversations.
+	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
+	// GetAIConversation returns a specific AI conversation with its messages.
+	GetAIConversation(context.Context, *connect.Request[v1.GetAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// CreateAIConversation creates a new AI conversation.
+	CreateAIConversation(context.Context, *connect.Request[v1.CreateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// UpdateAIConversation updates an AI conversation.
+	UpdateAIConversation(context.Context, *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// DeleteAIConversation deletes an AI conversation.
+	DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAIServiceClient constructs a client for the memos.api.v1.AIService service. By default, it
@@ -143,6 +169,36 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
 			connect.WithClientOptions(opts...),
 		),
+		listAIConversations: connect.NewClient[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse](
+			httpClient,
+			baseURL+AIServiceListAIConversationsProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ListAIConversations")),
+			connect.WithClientOptions(opts...),
+		),
+		getAIConversation: connect.NewClient[v1.GetAIConversationRequest, v1.AIConversation](
+			httpClient,
+			baseURL+AIServiceGetAIConversationProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetAIConversation")),
+			connect.WithClientOptions(opts...),
+		),
+		createAIConversation: connect.NewClient[v1.CreateAIConversationRequest, v1.AIConversation](
+			httpClient,
+			baseURL+AIServiceCreateAIConversationProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("CreateAIConversation")),
+			connect.WithClientOptions(opts...),
+		),
+		updateAIConversation: connect.NewClient[v1.UpdateAIConversationRequest, v1.AIConversation](
+			httpClient,
+			baseURL+AIServiceUpdateAIConversationProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("UpdateAIConversation")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteAIConversation: connect.NewClient[v1.DeleteAIConversationRequest, emptypb.Empty](
+			httpClient,
+			baseURL+AIServiceDeleteAIConversationProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("DeleteAIConversation")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -156,6 +212,11 @@ type aIServiceClient struct {
 	chatWithMemosIntegrated *connect.Client[v1.ChatWithMemosRequest, v1.ChatWithMemosResponse]
 	getParrotSelfCognition  *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
 	listParrots             *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
+	listAIConversations     *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
+	getAIConversation       *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
+	createAIConversation    *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
+	updateAIConversation    *connect.Client[v1.UpdateAIConversationRequest, v1.AIConversation]
+	deleteAIConversation    *connect.Client[v1.DeleteAIConversationRequest, emptypb.Empty]
 }
 
 // SemanticSearch calls memos.api.v1.AIService.SemanticSearch.
@@ -198,6 +259,31 @@ func (c *aIServiceClient) ListParrots(ctx context.Context, req *connect.Request[
 	return c.listParrots.CallUnary(ctx, req)
 }
 
+// ListAIConversations calls memos.api.v1.AIService.ListAIConversations.
+func (c *aIServiceClient) ListAIConversations(ctx context.Context, req *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error) {
+	return c.listAIConversations.CallUnary(ctx, req)
+}
+
+// GetAIConversation calls memos.api.v1.AIService.GetAIConversation.
+func (c *aIServiceClient) GetAIConversation(ctx context.Context, req *connect.Request[v1.GetAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return c.getAIConversation.CallUnary(ctx, req)
+}
+
+// CreateAIConversation calls memos.api.v1.AIService.CreateAIConversation.
+func (c *aIServiceClient) CreateAIConversation(ctx context.Context, req *connect.Request[v1.CreateAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return c.createAIConversation.CallUnary(ctx, req)
+}
+
+// UpdateAIConversation calls memos.api.v1.AIService.UpdateAIConversation.
+func (c *aIServiceClient) UpdateAIConversation(ctx context.Context, req *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return c.updateAIConversation.CallUnary(ctx, req)
+}
+
+// DeleteAIConversation calls memos.api.v1.AIService.DeleteAIConversation.
+func (c *aIServiceClient) DeleteAIConversation(ctx context.Context, req *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.deleteAIConversation.CallUnary(ctx, req)
+}
+
 // AIServiceHandler is an implementation of the memos.api.v1.AIService service.
 type AIServiceHandler interface {
 	// SemanticSearch performs semantic search on memos.
@@ -216,6 +302,16 @@ type AIServiceHandler interface {
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
+	// ListAIConversations returns a list of AI conversations.
+	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
+	// GetAIConversation returns a specific AI conversation with its messages.
+	GetAIConversation(context.Context, *connect.Request[v1.GetAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// CreateAIConversation creates a new AI conversation.
+	CreateAIConversation(context.Context, *connect.Request[v1.CreateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// UpdateAIConversation updates an AI conversation.
+	UpdateAIConversation(context.Context, *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error)
+	// DeleteAIConversation deletes an AI conversation.
+	DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -273,6 +369,36 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceListAIConversationsHandler := connect.NewUnaryHandler(
+		AIServiceListAIConversationsProcedure,
+		svc.ListAIConversations,
+		connect.WithSchema(aIServiceMethods.ByName("ListAIConversations")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceGetAIConversationHandler := connect.NewUnaryHandler(
+		AIServiceGetAIConversationProcedure,
+		svc.GetAIConversation,
+		connect.WithSchema(aIServiceMethods.ByName("GetAIConversation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceCreateAIConversationHandler := connect.NewUnaryHandler(
+		AIServiceCreateAIConversationProcedure,
+		svc.CreateAIConversation,
+		connect.WithSchema(aIServiceMethods.ByName("CreateAIConversation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceUpdateAIConversationHandler := connect.NewUnaryHandler(
+		AIServiceUpdateAIConversationProcedure,
+		svc.UpdateAIConversation,
+		connect.WithSchema(aIServiceMethods.ByName("UpdateAIConversation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceDeleteAIConversationHandler := connect.NewUnaryHandler(
+		AIServiceDeleteAIConversationProcedure,
+		svc.DeleteAIConversation,
+		connect.WithSchema(aIServiceMethods.ByName("DeleteAIConversation")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AIServiceSemanticSearchProcedure:
@@ -291,6 +417,16 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceGetParrotSelfCognitionHandler.ServeHTTP(w, r)
 		case AIServiceListParrotsProcedure:
 			aIServiceListParrotsHandler.ServeHTTP(w, r)
+		case AIServiceListAIConversationsProcedure:
+			aIServiceListAIConversationsHandler.ServeHTTP(w, r)
+		case AIServiceGetAIConversationProcedure:
+			aIServiceGetAIConversationHandler.ServeHTTP(w, r)
+		case AIServiceCreateAIConversationProcedure:
+			aIServiceCreateAIConversationHandler.ServeHTTP(w, r)
+		case AIServiceUpdateAIConversationProcedure:
+			aIServiceUpdateAIConversationHandler.ServeHTTP(w, r)
+		case AIServiceDeleteAIConversationProcedure:
+			aIServiceDeleteAIConversationHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -330,6 +466,26 @@ func (UnimplementedAIServiceHandler) GetParrotSelfCognition(context.Context, *co
 
 func (UnimplementedAIServiceHandler) ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListParrots is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListAIConversations is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) GetAIConversation(context.Context, *connect.Request[v1.GetAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetAIConversation is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) CreateAIConversation(context.Context, *connect.Request[v1.CreateAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.CreateAIConversation is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) UpdateAIConversation(context.Context, *connect.Request[v1.UpdateAIConversationRequest]) (*connect.Response[v1.AIConversation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.UpdateAIConversation is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) DeleteAIConversation(context.Context, *connect.Request[v1.DeleteAIConversationRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.DeleteAIConversation is not implemented"))
 }
 
 // ScheduleAgentServiceClient is a client for the memos.api.v1.ScheduleAgentService service.
