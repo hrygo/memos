@@ -196,6 +196,31 @@ CREATE INDEX idx_schedule_creator_status ON schedule(creator_id, row_status);
 CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 CREATE INDEX idx_schedule_uid ON schedule(uid);
 
+-- Atomic conflict detection constraint (V0.52)
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE schedule
+ADD CONSTRAINT IF NOT EXISTS no_overlapping_schedules
+EXCLUDE USING gist (
+    creator_id WITH =,
+    tsrange(start_ts, COALESCE(end_ts, start_ts + 3600), '[)') WITH &&
+)
+WHERE (row_status = 'NORMAL');
+
+CREATE INDEX IF NOT EXISTS idx_schedule_creator_time
+ON schedule(creator_id, start_ts)
+WHERE row_status = 'NORMAL';
+
+CREATE INDEX IF NOT EXISTS idx_schedule_creator_time_range
+ON schedule USING gist (
+    creator_id,
+    tsrange(start_ts, COALESCE(end_ts, start_ts + 3600), '[)')
+)
+WHERE row_status = 'NORMAL';
+
+COMMENT ON CONSTRAINT no_overlapping_schedules ON schedule IS
+'Prevents overlapping schedules for the same user. Only applies to NORMAL status schedules.';
+
 CREATE OR REPLACE FUNCTION update_schedule_updated_ts()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -271,5 +296,5 @@ CREATE TRIGGER trigger_ai_conversation_updated_ts
 -- 版本记录
 -- =============================================================================
 INSERT INTO system_setting (name, value, description) VALUES
-('schema_version', '0.51.0', '数据库 schema 版本')
+('schema_version', '0.52', '数据库 schema 版本')
 ON CONFLICT (name) DO NOTHING;
