@@ -13,7 +13,7 @@ import (
 
 // MockScheduleService is a mock implementation of schedule.Service for testing.
 type MockScheduleService struct {
-	findSchedulesResult []*schedule.ScheduleInstance
+	findSchedulesResult  []*schedule.ScheduleInstance
 	findSchedulesError   error
 	createScheduleResult *store.Schedule
 	createScheduleError  error
@@ -63,11 +63,11 @@ func TestScheduleQueryTool_Run(t *testing.T) {
 	mockService := &MockScheduleService{
 		findSchedulesResult: []*schedule.ScheduleInstance{
 			{
-				ID:        1,
-				Title:     "Test Meeting",
-				StartTs:   now.Add(2 * time.Hour).Unix(),
-				EndTs:     func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
-				Timezone:  "Asia/Shanghai",
+				ID:          1,
+				Title:       "Test Meeting",
+				StartTs:     now.Add(2 * time.Hour).Unix(),
+				EndTs:       func() *int64 { ts := now.Add(3 * time.Hour).Unix(); return &ts }(),
+				Timezone:    "Asia/Shanghai",
 				IsRecurring: false,
 			},
 		},
@@ -165,7 +165,7 @@ func TestScheduleAddTool_Run(t *testing.T) {
 
 		result, err := tool.Run(ctx, input)
 		require.NoError(t, err)
-		assert.Contains(t, result, "Successfully created schedule")
+		assert.Contains(t, result, "✓ 已创建")
 		assert.Contains(t, result, "Test Meeting")
 	})
 
@@ -213,7 +213,7 @@ func TestScheduleAddTool_Run(t *testing.T) {
 
 		result, err := tool.Run(ctx, input)
 		require.NoError(t, err)
-		assert.Contains(t, result, "Successfully created schedule")
+		assert.Contains(t, result, "✓ 已创建")
 	})
 }
 
