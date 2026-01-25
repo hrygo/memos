@@ -1,19 +1,19 @@
+import dayjs from "dayjs";
 import { Check, ChevronRight, Edit3, Loader2, Send, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { GenerativeUIContainer } from "@/components/ScheduleAI";
+import type { UIToolEvent } from "@/components/ScheduleAI/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
+import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
 import { QuickTemplateDropdown } from "./QuickTemplates";
 import type { ScheduleTemplate } from "./types";
-import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
-import dayjs from "dayjs";
-import { GenerativeUIContainer } from "@/components/ScheduleAI";
-import type { UIToolEvent } from "@/components/ScheduleAI/types";
 
 interface ScheduleQuickInputProps {
   initialDate?: string;
@@ -99,8 +99,10 @@ export function ScheduleQuickInput({
     const trimmedInput = input.trim();
     if (!trimmedInput || isProcessing) return;
 
-    setIsProcessing(true);
+    // Save the input and clear immediately for better UX
     setLastInput(trimmedInput);
+    setInput("");  // Clear input immediately
+    setIsProcessing(true);
     setAiMessage("");
 
     // Build message with editing context if available
@@ -108,6 +110,11 @@ export function ScheduleQuickInput({
     if (editingSchedule) {
       const editTime = `${dayjs.unix(Number(editingSchedule.startTs)).format("HH:mm")}-${dayjs.unix(Number(editingSchedule.endTs)).format("HH:mm")}`;
       messageToSend = `把「${editingSchedule.title}」（${editTime}）${trimmedInput}`;
+    }
+
+    // Add date context to message for backend
+    if (initialDate) {
+      messageToSend = `[日期: ${initialDate}] ${messageToSend}`;
     }
 
     try {
@@ -145,6 +152,8 @@ export function ScheduleQuickInput({
     } catch (error) {
       console.error("[ScheduleQuickInput] AI error:", error);
       toast.error(t("schedule.parse-error") || (t("schedule.quick.input.parse-error-fallback") as string));
+      // Restore input on error so user can retry
+      setInput(trimmedInput);
     } finally {
       setIsProcessing(false);
     }
@@ -206,14 +215,14 @@ export function ScheduleQuickInput({
   };
 
   const getPlaceholder = () => {
-    if (selectedDate) {
-      return t("schedule.quick.input.placeholder-with-date", { date: selectedDate }) as string;
-    }
+    // Always use placeholder without date for cleaner UI
+    // Date context is sent to backend separately
     return t("schedule.quick.input.placeholder") as string;
   };
 
-  // Display text: show last input while processing, otherwise current input
-  const displayText = isProcessing ? lastInput : input;
+  // Display text: show current input (already cleared on send)
+  // Don't show lastInput during processing - user wants input cleared
+  const displayText = input;
 
   // Format editing schedule info for display
   const editingInfo = editingSchedule
@@ -248,11 +257,7 @@ export function ScheduleQuickInput({
 
       {/* Generative UI - AI confirmation cards */}
       {uiTools.length > 0 && (
-        <GenerativeUIContainer
-          tools={uiTools}
-          onAction={onUIAction || (() => {})}
-          onDismiss={onUIDismiss || (() => {})}
-        />
+        <GenerativeUIContainer tools={uiTools} onAction={onUIAction || (() => {})} onDismiss={onUIDismiss || (() => {})} />
       )}
 
       {/* Processing Status Bar - prominent and animated */}
