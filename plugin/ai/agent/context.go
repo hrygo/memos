@@ -5,6 +5,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -37,10 +38,10 @@ type ConversationContext struct {
 
 // ConversationTurn represents a single turn in the conversation.
 type ConversationTurn struct {
-	UserInput   string        // What the user said
-	AgentOutput string        // How the agent responded
+	UserInput   string           // What the user said
+	AgentOutput string           // How the agent responded
 	ToolCalls   []ToolCallRecord // Tools called during this turn
-	Timestamp   time.Time     // When this turn occurred
+	Timestamp   time.Time        // When this turn occurred
 }
 
 // ToolCallRecord records a tool invocation.
@@ -320,12 +321,12 @@ func (c *ConversationContext) GetSummary() ContextSummary {
 	defer c.mu.RUnlock()
 
 	summary := ContextSummary{
-		SessionID:    c.SessionID,
-		UserID:       c.UserID,
-		TurnCount:    len(c.Turns),
-		CurrentStep:  StepIdle,
-		CreatedAt:    c.CreatedAt,
-		UpdatedAt:    c.UpdatedAt,
+		SessionID:   c.SessionID,
+		UserID:      c.UserID,
+		TurnCount:   len(c.Turns),
+		CurrentStep: StepIdle,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
 	}
 
 	if c.WorkingState != nil {
@@ -350,17 +351,54 @@ func (c *ConversationContext) ToJSON() (string, error) {
 	return string(data), nil
 }
 
+// ToHistoryPrompt converts the conversation history to a string format suitable for LLM context.
+// It formats turns as "User: ...\nAssistant: ..." and optionally includes tool usage summaries.
+func (c *ConversationContext) ToHistoryPrompt() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if len(c.Turns) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString("Conversation History:\n")
+
+	for _, turn := range c.Turns {
+		sb.WriteString(fmt.Sprintf("User: %s\n", turn.UserInput))
+
+		// Add tool summary if available, to provide context on what the agent did
+		if len(turn.ToolCalls) > 0 {
+			// Simplified tool summary: "Assistant (Action: tool_name): [Success/Fail]"
+			// We avoid dumping full JSON output to save tokens, but give a hint of action.
+			toolsUsed := make([]string, 0, len(turn.ToolCalls))
+			for _, tc := range turn.ToolCalls {
+				status := "OK"
+				if !tc.Success {
+					status = "Failed"
+				}
+				toolsUsed = append(toolsUsed, fmt.Sprintf("%s (%s)", tc.Tool, status))
+			}
+			sb.WriteString(fmt.Sprintf("System: Agent used tools: %s\n", strings.Join(toolsUsed, ", ")))
+		}
+
+		sb.WriteString(fmt.Sprintf("Assistant: %s\n", turn.AgentOutput))
+	}
+
+	return sb.String()
+}
+
 // ContextSummary provides a quick overview of the context state.
 type ContextSummary struct {
-	SessionID         string
-	UserID            int32
-	TurnCount         int
-	CurrentStep       WorkflowStep
-	LastIntent        string
+	SessionID           string
+	UserID              int32
+	TurnCount           int
+	CurrentStep         WorkflowStep
+	LastIntent          string
 	HasProposedSchedule bool
-	ConflictCount     int
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ConflictCount       int
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 // ContextStore manages conversation contexts for multiple sessions.
