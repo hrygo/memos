@@ -235,16 +235,26 @@ export function useChat() {
                   // Transform to the expected format with bigint conversion
                   const transformedResult = {
                     detected: true,
-                    schedules: (result.schedules || []).map((s: { uid: string; title: string; start_ts: number; end_ts: number; all_day: boolean; location?: string; status: string }) => ({
-                      uid: s.uid || "",
-                      title: s.title || "",
-                      startTs: BigInt(s.start_ts || 0),
-                      endTs: BigInt(s.end_ts || 0),
-                      allDay: s.all_day || false,
-                      location: s.location || "",
-                      recurrenceRule: "",
-                      status: s.status || "ACTIVE",
-                    })),
+                    schedules: (result.schedules || []).map(
+                      (s: {
+                        uid: string;
+                        title: string;
+                        start_ts: number;
+                        end_ts: number;
+                        all_day: boolean;
+                        location?: string;
+                        status: string;
+                      }) => ({
+                        uid: s.uid || "",
+                        title: s.title || "",
+                        startTs: BigInt(s.start_ts || 0),
+                        endTs: BigInt(s.end_ts || 0),
+                        allDay: s.all_day || false,
+                        location: s.location || "",
+                        recurrenceRule: "",
+                        status: s.status || "ACTIVE",
+                      }),
+                    ),
                     timeRangeDescription: result.time_range_description || "",
                     queryType: result.query_type || "range",
                   };

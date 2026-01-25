@@ -1,7 +1,7 @@
 import { MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
@@ -15,21 +15,10 @@ interface ConversationHistoryPanelProps {
 
 export function ConversationHistoryPanel({ className, onSelectConversation }: ConversationHistoryPanelProps) {
   const { t } = useTranslation();
-  const {
-    conversationSummaries,
-    conversations,
-    state,
-    createConversation,
-    addContextSeparator,
-    selectConversation,
-  } = useAIChat();
+  const { conversationSummaries, conversations, state, createConversation, addContextSeparator, selectConversation } = useAIChat();
 
   // Track which conversations have been loaded (have non-empty messages)
-  const loadedConversationIds = new Set(
-    conversations
-      .filter(c => c.messages.length > 0)
-      .map(c => c.id)
-  );
+  const loadedConversationIds = new Set(conversations.filter((c) => c.messages.length > 0).map((c) => c.id));
 
   const handleSelectConversation = (id: string) => {
     selectConversation(id);

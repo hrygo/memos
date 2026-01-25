@@ -1,9 +1,9 @@
-import { AlertTriangle, Calendar, Clock, Check, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { AlertTriangle, Calendar, Check, ChevronDown, ChevronUp, Clock, Zap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/utils/i18n";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
+import { useTranslate } from "@/utils/i18n";
 
 // Conflict information
 export interface ScheduleConflict {

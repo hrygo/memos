@@ -37,7 +37,12 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
       >
         <div className="flex items-start gap-3">
           {/* Parrot Icon */}
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0", !parrotIcon.startsWith("/") && parrotTheme.iconBg)}>
+          <div
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0",
+              !parrotIcon.startsWith("/") && parrotTheme.iconBg,
+            )}
+          >
             {parrotIcon.startsWith("/") ? (
               <img src={parrotIcon} alt={parrot?.displayName || ""} className="w-6 h-6 object-contain" />
             ) : (
@@ -51,7 +56,8 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               {displayMessageCount === "..."
                 ? t("ai.aichat.sidebar.message-count", { count: 0 })
-                : t("ai.aichat.sidebar.message-count", { count: displayMessageCount })} · {formatTime(conversation.updatedAt, t)}
+                : t("ai.aichat.sidebar.message-count", { count: displayMessageCount })}{" "}
+              · {formatTime(conversation.updatedAt, t)}
             </p>
           </div>
         </div>
@@ -60,10 +66,7 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
       {/* Clear Context Button - Only show if conversation is loaded */}
       {isLoaded && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <ClearContextButton
-            conversationId={conversation.id}
-            onResetContext={onResetContext}
-          />
+          <ClearContextButton conversationId={conversation.id} onResetContext={onResetContext} />
         </div>
       )}
     </div>
@@ -100,9 +103,7 @@ function ClearContextButton({ conversationId, onResetContext }: ClearContextButt
       title={t("ai.clear-context-shortcut")}
     >
       <Scissors className="w-3.5 h-3.5 shrink-0 rotate-[-45deg]" />
-      <span className="hidden text-xs font-medium whitespace-nowrap group-hover/btn:inline">
-        {t("ai.clear")}
-      </span>
+      <span className="hidden text-xs font-medium whitespace-nowrap group-hover/btn:inline">{t("ai.clear")}</span>
     </button>
   );
 }

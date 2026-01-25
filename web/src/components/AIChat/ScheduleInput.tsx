@@ -193,9 +193,11 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         const validName =
           parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
             ? parsedSchedule.name
-            : `schedules/${typeof crypto !== "undefined" && crypto.randomUUID
-              ? crypto.randomUUID()
-              : `${Date.now()}_${Math.random().toString(36).slice(2)}`}`;
+            : `schedules/${
+                typeof crypto !== "undefined" && crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `${Date.now()}_${Math.random().toString(36).slice(2)}`
+              }`;
 
         const scheduleToCreate = { ...parsedSchedule, name: validName };
 
@@ -471,8 +473,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                         value={
                           parsedSchedule.endTs > 0
                             ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                              "YYYY-MM-DDTHH:mm",
-                            )
+                                "YYYY-MM-DDTHH:mm",
+                              )
                             : ""
                         }
                         onChange={(e) => {

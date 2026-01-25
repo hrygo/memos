@@ -1,10 +1,10 @@
-import { ChevronLeft, ChevronRight, Sparkles, Clock, Lightbulb } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Clock, Lightbulb, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 import { StreamingScheduleAssistant } from "./StreamingScheduleAssistant";
-import { useScheduleContext } from "@/contexts/ScheduleContext";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface ScheduleAISidebarProps {
   className?: string;

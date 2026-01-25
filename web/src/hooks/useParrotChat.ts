@@ -48,7 +48,7 @@ export function useParrotChat() {
     streamChat: async (params: ParrotChatParams, callbacks?: ParrotChatCallbacks) => {
       const request = create(ChatRequestSchema, {
         message: params.message,
-        history: params.history ?? [],  // Deprecated: will be removed after migration
+        history: params.history ?? [], // Deprecated: will be removed after migration
         agentType: parrotToProtoAgentType(params.agentType),
         userTimezone: params.userTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       });

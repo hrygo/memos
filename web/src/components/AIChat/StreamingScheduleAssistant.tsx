@@ -1,4 +1,4 @@
-import { Calendar, Clock, Search, CheckCircle, Loader2, Sparkles, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Loader2, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

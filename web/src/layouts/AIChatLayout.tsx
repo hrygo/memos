@@ -42,7 +42,9 @@ const AIChatLayoutContent = () => {
           ) : (
             <div className="flex items-center gap-2">
               <SparklesIcon className="w-4 h-4 text-zinc-500" />
-              <span className="font-medium text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider">{t("common.ai-assistant")}</span>
+              <span className="font-medium text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider">
+                {t("common.ai-assistant")}
+              </span>
             </div>
           )}
         </div>

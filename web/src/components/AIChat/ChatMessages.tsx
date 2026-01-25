@@ -82,11 +82,16 @@ export function ChatMessages({
             // Context separator - optimized visual design
             if ("type" in item && item.type === "context-separator") {
               return (
-                <div key={`separator-${index}`} className="flex items-center justify-center gap-3 py-3 my-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div
+                  key={`separator-${index}`}
+                  className="flex items-center justify-center gap-3 py-3 my-2 animate-in fade-in slide-in-from-top-2 duration-300"
+                >
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm">
                     <Scissors className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 rotate-[-45deg]" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">{t("ai.context-cleared")}</span>
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">
+                      {t("ai.context-cleared")}
+                    </span>
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
                 </div>
@@ -122,9 +127,7 @@ export function ChatMessages({
               {/* Spacer for avatar alignment */}
               <div className="w-9 h-9 md:w-10 md:h-10 shrink-0 invisible" />
               <div className="flex-1 min-w-0">
-                <div className="max-w-[85%] md:max-w-[80%]">
-                  {amazingInsightCard}
-                </div>
+                <div className="max-w-[85%] md:max-w-[80%]">{amazingInsightCard}</div>
               </div>
             </div>
           )}
@@ -266,7 +269,10 @@ function MessageBubble({
                       role === "user"
                         ? "bg-white/10 border-white/20 text-white/80 hover:bg-white/30"
                         : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 backdrop-blur-sm",
-                      copied && (role === "user" ? "bg-white/40 border-white/40" : "bg-green-50 dark:bg-green-900/20 border-green-200 text-green-600")
+                      copied &&
+                        (role === "user"
+                          ? "bg-white/40 border-white/40"
+                          : "bg-green-50 dark:bg-green-900/20 border-green-200 text-green-600"),
                     )}
                   >
                     {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -320,9 +326,15 @@ function MessageBubble({
                       className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-600 text-zinc-500"
                     >
                       {isFolded ? (
-                        <><ChevronDown className="w-3 h-3" />{t("common.expand")}</>
+                        <>
+                          <ChevronDown className="w-3 h-3" />
+                          {t("common.expand")}
+                        </>
                       ) : (
-                        <><ChevronUp className="w-3 h-3" />{t("common.collapse")}</>
+                        <>
+                          <ChevronUp className="w-3 h-3" />
+                          {t("common.collapse")}
+                        </>
                       )}
                     </button>
                   </div>
@@ -335,4 +347,3 @@ function MessageBubble({
     </div>
   );
 }
-

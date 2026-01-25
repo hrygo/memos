@@ -1,9 +1,9 @@
 import { CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { ParrotAgentI18n } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
 import { PARROT_ICONS, PARROT_THEMES } from "@/types/parrot";
-import type { ParrotAgentI18n } from "@/hooks/useParrots";
 
 interface AgentMentionPopoverProps {
   open: boolean;
@@ -14,14 +14,7 @@ interface AgentMentionPopoverProps {
   triggerRef: React.RefObject<HTMLTextAreaElement>;
 }
 
-export function AgentMentionPopover({
-  open,
-  onClose,
-  onSelectAgent,
-  agents,
-  filterText = "",
-  triggerRef,
-}: AgentMentionPopoverProps) {
+export function AgentMentionPopover({ open, onClose, onSelectAgent, agents, filterText = "", triggerRef }: AgentMentionPopoverProps) {
   const { t } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -161,20 +154,14 @@ export function AgentMentionPopover({
               {/* Name */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                    {agent.displayName}
-                  </span>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
-                    {agent.displayNameAlt}
-                  </span>
+                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{agent.displayName}</span>
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{agent.displayNameAlt}</span>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{agent.description}</p>
               </div>
 
               {/* Selected indicator */}
-              {isSelected && (
-                <CheckCircle2 className={cn("w-4 h-4 shrink-0", theme.iconText)} />
-              )}
+              {isSelected && <CheckCircle2 className={cn("w-4 h-4 shrink-0", theme.iconText)} />}
             </button>
           );
         })}

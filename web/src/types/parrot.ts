@@ -326,8 +326,8 @@ export interface ParrotChatCallbacks {
 export interface ParrotChatParams {
   agentType: ParrotAgentType;
   message: string;
-  conversationId?: number;  // Backend will build history from this ID
-  history?: string[];       // Deprecated: Kept for backward compatibility
+  conversationId?: number; // Backend will build history from this ID
+  history?: string[]; // Deprecated: Kept for backward compatibility
   userTimezone?: string;
 }
 

@@ -53,11 +53,21 @@ export function ParrotQuickActions({ currentParrot, onParrotChange, disabled = f
                 <div className={cn("font-semibold text-sm truncate", isSelected ? "text-current" : "text-zinc-900 dark:text-zinc-100")}>
                   {parrot.displayName}
                 </div>
-                <div className={cn("text-[10px] opacity-60 truncate font-medium", isSelected ? "text-current" : "text-zinc-400 dark:text-zinc-500")}>
+                <div
+                  className={cn(
+                    "text-[10px] opacity-60 truncate font-medium",
+                    isSelected ? "text-current" : "text-zinc-400 dark:text-zinc-500",
+                  )}
+                >
                   {parrot.displayNameAlt}
                 </div>
               </div>
-              <div className={cn("text-[11px] line-clamp-1 mt-0.5 max-w-[120px]", isSelected ? "text-current opacity-90" : "text-zinc-500 dark:text-zinc-400")}>
+              <div
+                className={cn(
+                  "text-[11px] line-clamp-1 mt-0.5 max-w-[120px]",
+                  isSelected ? "text-current opacity-90" : "text-zinc-500 dark:text-zinc-400",
+                )}
+              >
                 {parrot.description}
               </div>
             </div>

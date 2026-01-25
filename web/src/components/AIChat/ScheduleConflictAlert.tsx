@@ -87,9 +87,7 @@ export const ScheduleConflictAlert = ({ open, onOpenChange, conflicts, onAdjust,
         </div>
 
         {/* Hint Text */}
-        <p className="mt-3 text-xs text-center text-muted-foreground">
-          {t("schedule.conflict-hint")}
-        </p>
+        <p className="mt-3 text-xs text-center text-muted-foreground">{t("schedule.conflict-hint")}</p>
       </DialogContent>
     </Dialog>
   );

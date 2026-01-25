@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ParrotAgentType, EmotionalState, PARROT_THEMES } from "@/types/parrot";
+import { EmotionalState, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 interface ParrotEmotionalIndicatorProps {
   active?: boolean;
@@ -115,24 +115,14 @@ export function ParrotEmotionalIndicator({
 
         {/* Subtle glow effect for positive moods */}
         {(mood === "happy" || mood === "delighted" || mood === "excited") && (
-          <span
-            className={cn(
-              "absolute inset-0 rounded-full opacity-30 animate-ping",
-              glowBg
-            )}
-          />
+          <span className={cn("absolute inset-0 rounded-full opacity-30 animate-ping", glowBg)} />
         )}
       </div>
 
       {/* Sound effect text (optional) */}
       {showText && soundEffect && (
         <span
-          className={cn(
-            "font-medium transition-all duration-300",
-            TEXT_SIZE_CLASSES[size],
-            baseColor,
-            mood === "excited" && "font-bold",
-          )}
+          className={cn("font-medium transition-all duration-300", TEXT_SIZE_CLASSES[size], baseColor, mood === "excited" && "font-bold")}
         >
           {soundEffect}
         </span>

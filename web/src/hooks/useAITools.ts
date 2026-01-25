@@ -1,17 +1,6 @@
-import { useCallback, useState, useRef } from "react";
-import type {
-  UIToolEvent,
-  UIAction,
-  UIScheduleSuggestionData,
-  UITimeSlotData,
-  UIConflictResolutionData,
-} from "@/components/ScheduleAI/types";
-import type {
-  ParsedEvent,
-  UIScheduleSuggestionData as HookUIScheduleSuggestionData,
-  UITimeSlotPickerData,
-  UIConflictResolutionData as HookUIConflictResolutionData,
-} from "@/hooks/useScheduleAgent";
+import { useCallback, useRef, useState } from "react";
+import type { UIAction, UIToolEvent } from "@/components/ScheduleAI/types";
+import type { ParsedEvent, UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotPickerData } from "@/hooks/useScheduleAgent";
 
 /**
  * Hook to manage UI tool events from the AI agent

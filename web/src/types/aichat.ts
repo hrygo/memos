@@ -1,4 +1,8 @@
 import { ParrotAgentType } from "./parrot";
+import { CapabilityType, CapabilityStatus } from "./capability";
+
+// Re-export capability types for convenience
+export type { CapabilityType, CapabilityStatus };
 
 /**
  * Message role in conversation
@@ -123,6 +127,9 @@ export interface AIChatState {
   viewMode: ConversationViewMode;
   sidebarTab: SidebarTab;
   sidebarOpen: boolean;
+  // 能力状态 (新增 - 支持"个人专属助手"模式)
+  currentCapability?: CapabilityType;
+  capabilityStatus?: CapabilityStatus;
 }
 
 /**
@@ -162,6 +169,10 @@ export interface AIChatContextValue {
   setSidebarTab: (tab: SidebarTab) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+
+  // Capability actions (新增 - 能力管理)
+  setCurrentCapability: (capability: CapabilityType) => void;
+  setCapabilityStatus: (status: CapabilityStatus) => void;
 
   // Persistence
   saveToStorage: () => void;

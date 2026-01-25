@@ -1,32 +1,35 @@
 import copy from "copy-to-clipboard";
-import toast from "react-hot-toast";
-import { ChevronLeft } from "lucide-react";
+import { MoreVertical, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { AmazingInsightCard } from "@/components/AIChat/AmazingInsightCard";
+import { CapabilityIndicator, CapabilityPanel } from "@/components/AIChat/CapabilityIndicator";
 import { ChatHeader } from "@/components/AIChat/ChatHeader";
 import { ChatInput } from "@/components/AIChat/ChatInput";
 import { ChatMessages } from "@/components/AIChat/ChatMessages";
-
-import { ParrotHub } from "@/components/AIChat/ParrotHub";
+import { PartnerGreeting } from "@/components/AIChat/PartnerGreeting";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { useChat } from "@/hooks/useAIQueries";
+import { useCapabilityRouter } from "@/hooks/useCapabilityRouter";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import type { ParrotAgentI18n } from "@/hooks/useParrots";
 import { getLocalizedParrot } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
 import type { ChatItem } from "@/types/aichat";
-import type { MemoQueryResultData, ParrotChatParams, ScheduleQueryResultData } from "@/types/parrot";
+import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
 import { PARROT_AGENTS, PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
-
-
+import {
+  CapabilityType,
+  CapabilityStatus,
+  capabilityToParrotAgent,
+  parrotAgentToCapability,
+} from "@/types/capability";
 
 // ============================================================
-// CHAT VIEW - Active Conversation
+// UNIFIED CHAT VIEW - 单一对话视图
 // ============================================================
-interface ChatViewProps {
-  currentParrot: ParrotAgentI18n;
+interface UnifiedChatViewProps {
   input: string;
   setInput: (value: string) => void;
   onSend: (messageContent?: string) => void;
@@ -36,15 +39,17 @@ interface ChatViewProps {
   setClearDialogOpen: (open: boolean) => void;
   onClearChat: () => void;
   onClearContext: () => void;
-  onBackToHub: () => void;
   memoQueryResults: MemoQueryResultData[];
   scheduleQueryResults: ScheduleQueryResultData[];
   items: ChatItem[];
-  onParrotChange: (parrot: ParrotAgentI18n | null) => void;
+  currentCapability: CapabilityType;
+  capabilityStatus: CapabilityStatus;
+  onCapabilityChange: (capability: CapabilityType) => void;
+  recentMemoCount?: number;
+  upcomingScheduleCount?: number;
 }
 
-function ChatView({
-  currentParrot,
+function UnifiedChatView({
   input,
   setInput,
   onSend,
@@ -54,12 +59,15 @@ function ChatView({
   setClearDialogOpen,
   onClearChat,
   onClearContext,
-  onBackToHub,
   memoQueryResults,
   scheduleQueryResults,
   items,
-  onParrotChange,
-}: ChatViewProps) {
+  currentCapability,
+  capabilityStatus,
+  onCapabilityChange,
+  recentMemoCount,
+  upcomingScheduleCount,
+}: UnifiedChatViewProps) {
   const { t } = useTranslation();
   const md = useMediaQuery("md");
 
@@ -75,88 +83,66 @@ function ChatView({
     // TODO: Implement message deletion
   };
 
+  // 获取当前能力对应的 Parrot 信息（保持兼容）
+  const currentParrotType = capabilityToParrotAgent(currentCapability);
+  const currentParrot = useMemo(() => {
+    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
+    return getLocalizedParrot(agent, t);
+  }, [currentParrotType, t]);
+
   const getParrotIcon = (parrotId: string) => {
     return PARROT_ICONS[parrotId] || "🤖";
   };
 
   const currentIcon = getParrotIcon(currentParrot.id);
 
-  // Welcome message when no messages
-  const welcomeMessage = (
-    <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-3 shrink-0">
-        {currentIcon.startsWith("/") ? (
-          <img src={currentIcon} alt={currentParrot.displayName} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
-        ) : (
-          currentIcon
-        )}
-      </div>
-      <h3 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-        {t("ai.welcome-intro", { name: currentParrot.displayName })}
-        <span className="text-sm text-zinc-400 dark:text-zinc-500 ml-2">{currentParrot.displayNameAlt}</span>
-      </h3>
-      {currentParrot.description && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
-          {currentParrot.description}
-        </p>
-      )}
+  // 处理快捷操作
+  const handleQuickAction = useCallback(
+    (action: "memo" | "schedule" | "summary" | "chat") => {
+      let prompt = "";
+      let targetCapability = CapabilityType.AUTO;
 
-      {currentParrot.examplePrompts && currentParrot.examplePrompts.length > 0 && (
-        <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center w-full max-w-2xl">
-          {currentParrot.examplePrompts.slice(0, 3).map((prompt, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                onSend(prompt);
-              }}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium",
-                "border border-zinc-200 dark:border-zinc-700",
-                "bg-white dark:bg-zinc-800",
-                "text-zinc-700 dark:text-zinc-300",
-                "hover:bg-zinc-100 dark:hover:bg-zinc-700",
-                "hover:border-zinc-300 dark:hover:border-zinc-600",
-                "active:scale-95 cursor-pointer",
-                "transition-all duration-200",
-                "shadow-sm hover:shadow",
-              )}
-            >
-              {prompt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      switch (action) {
+        case "memo":
+          prompt = t("ai.partner.prompt-memo") || "搜索一下我最近记录的笔记";
+          targetCapability = CapabilityType.MEMO;
+          break;
+        case "schedule":
+          prompt = t("ai.partner.prompt-schedule") || "今天还有什么安排？";
+          targetCapability = CapabilityType.SCHEDULE;
+          break;
+        case "summary":
+          prompt = t("ai.partner.prompt-summary") || "总结一下我今天的笔记和日程";
+          targetCapability = CapabilityType.AMAZING;
+          break;
+        case "chat":
+          prompt = "";
+          targetCapability = CapabilityType.AUTO;
+          break;
+      }
+
+      onCapabilityChange(targetCapability);
+      if (prompt) {
+        setTimeout(() => onSend(prompt), 100);
+      }
+    },
+    [t, onCapabilityChange, onSend],
   );
 
   return (
     <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
-      {/* Mobile Sub-Header - Compact back button only */}
-      {!md && (
-        <header className="flex items-center px-1.5 py-1 border-b border-zinc-100 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-20">
-          <button
-            onClick={onBackToHub}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95 group"
-            aria-label="Back to hub"
-          >
-            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-            <span className="text-xs font-medium">{t("common.back") || "Back"}</span>
-          </button>
-        </header>
-      )}
-
       {/* Desktop Header */}
       {md && (
         <ChatHeader
           parrot={currentParrot}
           isThinking={isThinking}
-          onBack={onBackToHub}
+          onBack={() => {}}
           onClearContext={onClearContext}
           onClearChat={onClearChat}
         />
       )}
 
-      {/* Messages Area */}
+      {/* Messages Area with Welcome */}
       <ChatMessages
         items={items}
         isTyping={isTyping}
@@ -164,8 +150,8 @@ function ChatView({
         onCopyMessage={handleCopyMessage}
         onDeleteMessage={handleDeleteMessage}
         amazingInsightCard={
-          currentParrot.id === ParrotAgentType.AMAZING &&
-            (memoQueryResults.length > 0 || scheduleQueryResults.length > 0) ? (
+          currentCapability === CapabilityType.AMAZING &&
+          (memoQueryResults.length > 0 || scheduleQueryResults.length > 0) ? (
             <AmazingInsightCard
               memos={memoQueryResults[0]?.memos ?? []}
               schedules={scheduleQueryResults[0]?.schedules ?? []}
@@ -173,8 +159,15 @@ function ChatView({
           ) : undefined
         }
       >
-        {/* Welcome message */}
-        {items.length === 0 && welcomeMessage}
+        {/* Welcome message - 伙伴型问候 */}
+        {items.length === 0 && (
+          <PartnerGreeting
+            recentMemoCount={recentMemoCount}
+            upcomingScheduleCount={upcomingScheduleCount}
+            conversationCount={0}
+            onQuickAction={handleQuickAction}
+          />
+        )}
       </ChatMessages>
 
       {/* Input Area */}
@@ -187,7 +180,7 @@ function ChatView({
         disabled={isTyping}
         isTyping={isTyping}
         currentParrotId={currentParrot.id}
-        onParrotChange={onParrotChange}
+        onParrotChange={() => {}}
       />
 
       {/* Clear Chat Confirmation Dialog */}
@@ -206,11 +199,60 @@ function ChatView({
 }
 
 // ============================================================
-// MAIN AI CHAT PAGE
+// CAPABILITY PANEL VIEW - 能力面板视图
+// ============================================================
+interface CapabilityPanelViewProps {
+  currentCapability: CapabilityType;
+  capabilityStatus: CapabilityStatus;
+  onCapabilitySelect: (capability: CapabilityType) => void;
+  onBack: () => void;
+}
+
+function CapabilityPanelView({
+  currentCapability,
+  capabilityStatus,
+  onCapabilitySelect,
+  onBack,
+}: CapabilityPanelViewProps) {
+  const md = useMediaQuery("md");
+  const { t } = useTranslation();
+
+  return (
+    <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
+      {/* Mobile Sub-Header */}
+      {!md && (
+        <header className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-20">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+          >
+            <X className="w-4 h-4" />
+            <span className="text-xs font-medium">{t("common.close") || "Close"}</span>
+          </button>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {t("ai.capability.title") || "我的能力"}
+          </span>
+          <div className="w-16" />
+        </header>
+      )}
+
+      {/* Capability Panel */}
+      <ParrotHub
+        currentCapability={currentCapability}
+        capabilityStatus={capabilityStatus}
+        onCapabilitySelect={onCapabilitySelect}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN AI CHAT PAGE - 重构为单一对话入口
 // ============================================================
 const AIChat = () => {
   const chatHook = useChat();
   const aiChat = useAIChat();
+  const capabilityRouter = useCapabilityRouter();
 
   // Local state
   const [input, setInput] = useState("");
@@ -220,13 +262,14 @@ const AIChat = () => {
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [memoQueryResults, setMemoQueryResults] = useState<MemoQueryResultData[]>([]);
   const [scheduleQueryResults, setScheduleQueryResults] = useState<ScheduleQueryResultData[]>([]);
+  const [showCapabilityPanel, setShowCapabilityPanel] = useState(false);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
   const lastAssistantMessageIdRef = useRef<string | null>(null);
   const streamingContentRef = useRef<string>("");
 
-  // Get current conversation from context
+  // Get current conversation and capability from context
   const {
     currentConversation,
     conversations,
@@ -237,22 +280,28 @@ const AIChat = () => {
     addReferencedMemos,
     addContextSeparator,
     clearMessages,
-    setViewMode,
+    state,
+    setCurrentCapability,
+    setCapabilityStatus,
   } = aiChat;
 
-  const { t } = useTranslation();
-
-  // Determine current parrot type from conversation
-  const currentParrotType = currentConversation?.parrotId;
-  // Get i18n version of the current parrot
-  const currentParrot = useMemo(() => {
-    if (!currentParrotType) return null;
-    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
-    return getLocalizedParrot(agent, t);
-  }, [currentParrotType, t]);
+  const currentCapability = state.currentCapability || CapabilityType.AUTO;
+  const capabilityStatus = state.capabilityStatus || "idle";
 
   // Get messages from current conversation
   const items = currentConversation?.messages || [];
+
+  const { t } = useTranslation();
+
+  // Get current parrot from capability (兼容旧逻辑)
+  const currentParrotType = useMemo(
+    () => capabilityToParrotAgent(currentCapability),
+    [currentCapability],
+  );
+  const currentParrot = useMemo(() => {
+    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
+    return getLocalizedParrot(agent, t);
+  }, [currentParrotType, t]);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -271,117 +320,114 @@ const AIChat = () => {
     setIsTyping(false);
   }, []);
 
-
-
-  // Handle back to hub
-  const handleBackToHub = useCallback(() => {
-    setViewMode("hub");
-  }, [setViewMode]);
-
   // Handle parrot chat with callbacks
   const handleParrotChat = useCallback(
-    async (conversationId: string, parrotId: ParrotAgentType, userMessage: string, conversationIdNum: number) => {
+    async (
+      conversationId: string,
+      parrotId: ParrotAgentType,
+      userMessage: string,
+      conversationIdNum: number,
+    ) => {
       setIsTyping(true);
       setIsThinking(true);
+      setCapabilityStatus("thinking");
       setMemoQueryResults([]);
       setScheduleQueryResults([]);
       const _messageId = ++messageIdRef.current;
 
-      // Use user message directly - system context is handled by backend
       const explicitMessage = userMessage;
 
       try {
-        await chatHook.stream({
-          message: explicitMessage,
-          conversationId: conversationIdNum,
-          agentType: parrotId,
-          userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        } as ParrotChatParams, {
-          onThinking: (msg) => {
-            if (lastAssistantMessageIdRef.current) {
-              updateMessage(conversationId, lastAssistantMessageIdRef.current, {
-                content: msg,
-              });
-            }
+        await chatHook.stream(
+          {
+            message: explicitMessage,
+            conversationId: conversationIdNum,
+            agentType: parrotId,
+            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
-          onToolUse: (toolName) => {
-            if (lastAssistantMessageIdRef.current) {
-              updateMessage(conversationId, lastAssistantMessageIdRef.current, {
-                content: toolName,
-              });
-            }
+          {
+            onThinking: (msg) => {
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
+                  content: msg,
+                });
+              }
+            },
+            onToolUse: (toolName) => {
+              setCapabilityStatus("processing");
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
+                  content: toolName,
+                });
+              }
+            },
+            onToolResult: (result) => {
+              console.log("[Parrot Tool Result]", result);
+            },
+            onMemoQueryResult: (result) => {
+              if (_messageId === messageIdRef.current) {
+                setMemoQueryResults((prev) => [...prev, result]);
+                addReferencedMemos(conversationId, result.memos);
+              }
+            },
+            onScheduleQueryResult: (result) => {
+              if (_messageId === messageIdRef.current) {
+                const transformedResult: ScheduleQueryResultData = {
+                  schedules: result.schedules.map((s) => ({
+                    uid: s.uid,
+                    title: s.title,
+                    startTimestamp: Number(s.startTs),
+                    endTimestamp: Number(s.endTs),
+                    allDay: s.allDay,
+                    location: s.location || undefined,
+                    status: s.status,
+                  })),
+                  query: "",
+                  count: result.schedules.length,
+                  timeRangeDescription: result.timeRangeDescription,
+                  queryType: result.queryType,
+                };
+                setScheduleQueryResults((prev) => [...prev, transformedResult]);
+              }
+            },
+            onContent: (content) => {
+              if (lastAssistantMessageIdRef.current) {
+                streamingContentRef.current += content;
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
+                  content: streamingContentRef.current,
+                });
+              }
+            },
+            onDone: () => {
+              setIsTyping(false);
+              setIsThinking(false);
+              setCapabilityStatus("idle");
+            },
+            onError: (error) => {
+              setIsTyping(false);
+              setIsThinking(false);
+              setCapabilityStatus("idle");
+              console.error("[Parrot Error]", error);
+              if (lastAssistantMessageIdRef.current) {
+                updateMessage(conversationId, lastAssistantMessageIdRef.current, {
+                  content:
+                    streamingContentRef.current ||
+                    t("ai.error-generic") ||
+                    "Sorry, something went wrong. Please try again.",
+                  error: true,
+                });
+              }
+            },
           },
-          onToolResult: (result) => {
-            console.log("[Parrot Tool Result]", result);
-          },
-          onMemoQueryResult: (result) => {
-            if (_messageId === messageIdRef.current) {
-              setMemoQueryResults((prev) => [...prev, result]);
-              addReferencedMemos(conversationId, result.memos);
-            }
-          },
-          onScheduleQueryResult: (result) => {
-            if (_messageId === messageIdRef.current) {
-              // Transform callback result to ScheduleQueryResultData format
-              const transformedResult: ScheduleQueryResultData = {
-                schedules: result.schedules.map((s) => ({
-                  uid: s.uid,
-                  title: s.title,
-                  startTimestamp: Number(s.startTs),
-                  endTimestamp: Number(s.endTs),
-                  allDay: s.allDay,
-                  location: s.location || undefined,
-                  status: s.status,
-                })),
-                query: "",
-                count: result.schedules.length,
-                timeRangeDescription: result.timeRangeDescription,
-                queryType: result.queryType,
-              };
-              setScheduleQueryResults((prev) => [...prev, transformedResult]);
-            }
-          },
-          onContent: (content) => {
-            console.debug("[AI Chat] onContent callback", {
-              contentLength: content.length,
-              contentPreview: content.slice(0, 50),
-              conversationId,
-              lastMessageId: lastAssistantMessageIdRef.current,
-            });
-            if (lastAssistantMessageIdRef.current) {
-              streamingContentRef.current += content;
-              updateMessage(conversationId, lastAssistantMessageIdRef.current, {
-                content: streamingContentRef.current,
-              });
-            } else {
-              console.warn("[AI Chat] onContent: lastAssistantMessageIdRef.current is null!");
-            }
-          },
-          onDone: () => {
-            setIsTyping(false);
-            setIsThinking(false);
-          },
-          onError: (error) => {
-            setIsTyping(false);
-            setIsThinking(false);
-            console.error("[Parrot Error]", error);
-            // Add error message to conversation
-            if (lastAssistantMessageIdRef.current) {
-              updateMessage(conversationId, lastAssistantMessageIdRef.current, {
-                content: streamingContentRef.current || t("ai.error-generic") || "Sorry, something went wrong. Please try again.",
-                error: true,
-              });
-            }
-          },
-        },
         );
       } catch (error) {
         setIsTyping(false);
         setIsThinking(false);
+        setCapabilityStatus("idle");
         console.error("[Parrot Chat Error]", error);
       }
     },
-    [chatHook, updateMessage, addReferencedMemos],
+    [chatHook, updateMessage, addReferencedMemos, setCapabilityStatus, t],
   );
 
   const handleSend = useCallback(
@@ -393,30 +439,41 @@ const AIChat = () => {
         resetTypingState();
       }
 
+      // 智能路由：根据输入内容自动识别能力
+      const intentResult = capabilityRouter.route(userMessage, currentCapability);
+      const targetCapability = intentResult.capability;
+
+      // 如果识别出不同的能力，切换能力
+      if (targetCapability !== currentCapability && targetCapability !== CapabilityType.AUTO) {
+        setCurrentCapability(targetCapability);
+        console.debug("[AI Chat] Auto-switching capability", {
+          from: currentCapability,
+          to: targetCapability,
+          confidence: intentResult.confidence,
+          reasoning: intentResult.reasoning,
+        });
+      }
+
+      // 确定使用哪个 Agent
+      const targetParrotId = capabilityToParrotAgent(targetCapability);
+
       // Ensure we have a conversation
       let targetConversationId = currentConversation?.id;
-      let targetParrotId = currentConversation?.parrotId;
 
       if (!targetConversationId) {
-        // No active conversation - need to create one
-        // Use current parrot if available (user selected agent from hub), otherwise DEFAULT
-        const fallbackParrotId = currentParrot?.id || ParrotAgentType.DEFAULT;
-
-        // Check for existing conversation with same parrotId
-        const existingConversation = conversations.find((c) => c.parrotId === fallbackParrotId);
+        // No active conversation - create one with default agent
+        // (会话不再绑定特定Agent，能力可以在会话中动态切换)
+        const existingConversation = conversations.find((c) => !c.parrotId || c.parrotId === ParrotAgentType.DEFAULT);
         if (existingConversation) {
           targetConversationId = existingConversation.id;
-          targetParrotId = existingConversation.parrotId;
           selectConversation(existingConversation.id);
         } else {
-          targetConversationId = createConversation(fallbackParrotId);
-          targetParrotId = fallbackParrotId;
+          targetConversationId = createConversation(ParrotAgentType.DEFAULT);
         }
       }
 
-      // At this point we must have both conversationId and parrotId
-      if (!targetConversationId || !targetParrotId) {
-        console.error("[AI Chat] Failed to determine conversation or parrot");
+      if (!targetConversationId) {
+        console.error("[AI Chat] Failed to determine conversation");
         return;
       }
 
@@ -429,62 +486,40 @@ const AIChat = () => {
       // Special handling for cutting line (context separator)
       if (userMessage === "---") {
         setInput("");
-        // Optimization: UI already shows the message, backend will persist SEPARATOR.
-        // We trigger handleParrotChat to ensure the backend sees the command.
         const targetConversationIdNum = parseInt(targetConversationId, 10);
         await handleParrotChat(targetConversationId, targetParrotId, userMessage, targetConversationIdNum);
         return;
       }
 
-      // Add empty assistant message that will be filled during streaming
+      // Add empty assistant message
       const newMessage = {
         role: "assistant" as const,
         content: "",
       };
       const assistantMessageId = addMessage(targetConversationId, newMessage);
-
-      // Store the new message ID for streaming updates
       lastAssistantMessageIdRef.current = assistantMessageId;
 
-      console.debug("[AI Chat] handleSend: messages added", {
-        targetConversationId,
-        targetParrotId,
-        assistantMessageId,
-        refValue: lastAssistantMessageIdRef.current,
-      });
-
-      // Reset streaming content ref
       streamingContentRef.current = "";
-
       setInput("");
 
-      // Backend now handles context building, including SEPARATOR filtering
-      // We only need to pass the conversationId
       const targetConversationIdNum = parseInt(targetConversationId, 10);
       const conversationIdNum = isNaN(targetConversationIdNum) ? 0 : targetConversationIdNum;
 
-      console.debug("[AI Chat] handleSend: calling handleParrotChat", {
-        targetConversationId,
-        targetConversationIdNum: conversationIdNum,
-        targetParrotId,
-      });
-
-      // Execute chat with explicit conversationId and parrotId
-      // Backend will build history from database, filtering SEPARATOR messages
       await handleParrotChat(targetConversationId, targetParrotId, userMessage, conversationIdNum);
     },
     [
       input,
       isTyping,
       currentConversation,
-      currentParrot,
-      addMessage,
+      currentCapability,
+      capabilityRouter,
+      setCurrentCapability,
       conversations,
       selectConversation,
       createConversation,
+      addMessage,
       handleParrotChat,
       resetTypingState,
-      items,
     ],
   );
 
@@ -495,35 +530,25 @@ const AIChat = () => {
     setClearDialogOpen(false);
   }, [currentConversation, clearMessages]);
 
-  const handleClearContext = useCallback((trigger: "manual" | "auto" | "shortcut" = "manual") => {
-    if (currentConversation) {
-      // Only call addContextSeparator - it handles both API call and UI refresh
-      // No need to send "---" as a message, that would create a duplicate user message
-      addContextSeparator(currentConversation.id, trigger);
-
-      toast.success(t("ai.context-cleared-toast"), {
-        duration: 2000,
-        icon: "✂️",
-        className: "dark:bg-zinc-800 dark:border-zinc-700",
-      });
-    }
-  }, [currentConversation, addContextSeparator, t]);
-
-  const handleParrotChange = useCallback(
-    (parrot: ParrotAgentI18n | null) => {
-      if (!parrot) {
-        handleBackToHub();
-        return;
-      }
-      // Check for existing conversation with same parrotId
-      const existingConversation = conversations.find((c) => c.parrotId === parrot.id);
-      if (existingConversation) {
-        selectConversation(existingConversation.id);
-      } else {
-        createConversation(parrot.id, parrot.displayName);
+  const handleClearContext = useCallback(
+    (trigger: "manual" | "auto" | "shortcut" = "manual") => {
+      if (currentConversation) {
+        addContextSeparator(currentConversation.id, trigger);
+        toast.success(t("ai.context-cleared-toast"), {
+          duration: 2000,
+          icon: "✂️",
+          className: "dark:bg-zinc-800 dark:border-zinc-700",
+        });
       }
     },
-    [conversations, createConversation, handleBackToHub, selectConversation],
+    [currentConversation, addContextSeparator, t],
+  );
+
+  const handleCapabilityChange = useCallback(
+    (capability: CapabilityType) => {
+      setCurrentCapability(capability);
+    },
+    [setCurrentCapability],
   );
 
   // Handle custom event for sending messages (from suggested prompts)
@@ -545,11 +570,9 @@ const AIChat = () => {
   // Keyboard shortcuts: Cmd/Ctrl+K to clear context
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        // Only clear context if in chat view
-        if (currentConversation && viewMode === "chat") {
+        if (currentConversation) {
           handleClearContext("shortcut");
         }
       }
@@ -561,17 +584,21 @@ const AIChat = () => {
     };
   }, [currentConversation, handleClearContext]);
 
-  // View mode determination
-  const viewMode = aiChat.state.viewMode;
-
   // ============================================================
   // RENDER
   // ============================================================
-  return viewMode === "hub" || !currentParrot ? (
-    <ParrotHub />
+  return showCapabilityPanel ? (
+    <CapabilityPanelView
+      currentCapability={currentCapability}
+      capabilityStatus={capabilityStatus}
+      onCapabilitySelect={(cap) => {
+        setCurrentCapability(cap);
+        setShowCapabilityPanel(false);
+      }}
+      onBack={() => setShowCapabilityPanel(false)}
+    />
   ) : (
-    <ChatView
-      currentParrot={currentParrot}
+    <UnifiedChatView
       input={input}
       setInput={setInput}
       onSend={handleSend}
@@ -581,11 +608,12 @@ const AIChat = () => {
       setClearDialogOpen={setClearDialogOpen}
       onClearChat={handleClearChat}
       onClearContext={handleClearContext}
-      onBackToHub={handleBackToHub}
       memoQueryResults={memoQueryResults}
       scheduleQueryResults={scheduleQueryResults}
       items={items}
-      onParrotChange={handleParrotChange}
+      currentCapability={currentCapability}
+      capabilityStatus={capabilityStatus}
+      onCapabilityChange={handleCapabilityChange}
     />
   );
 };
