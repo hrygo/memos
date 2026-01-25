@@ -26,6 +26,10 @@ const Schedule = () => {
   const [scheduleInputOpen, setScheduleInputOpen] = useState(false);
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
 
+  // AI UI Tools state for generative UI
+  const [uiTools, setUITools] = useState<any[]>([]);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
   const anchorDate = useMemo(() => {
     return selectedDate ? new Date(selectedDate + "T00:00:00") : new Date();
   }, [selectedDate]);
@@ -52,6 +56,28 @@ const Schedule = () => {
 
   const handleScheduleCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["schedules"] });
+  };
+
+  // Handle UI tool actions (confirm/reject from AI-generated components)
+  const handleUIAction = (action: any) => {
+    console.log("[Schedule] UI Action:", action);
+    setIsProcessingAction(true);
+
+    // For now, just dismiss the tool
+    // In a full implementation, this would send a confirmation message back to the AI
+    setUITools((prev) => prev.filter((t) => t.id !== action.toolId));
+    setIsProcessingAction(false);
+
+    // Refresh schedules after action
+    queryClient.invalidateQueries({ queryKey: ["schedules"] });
+  };
+
+  const handleUIDismiss = (toolId: string) => {
+    setUITools((prev) => prev.filter((t) => t.id !== toolId));
+  };
+
+  const clearUITools = () => {
+    setUITools([]);
   };
 
   return (
