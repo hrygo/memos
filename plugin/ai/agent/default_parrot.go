@@ -286,9 +286,9 @@ func (p *DefaultParrot) SelfDescribe() *ParrotSelfCognition {
 		EmotionalExpression: &EmotionalExpression{
 			DefaultMood: "focused",
 			SoundEffects: map[string]string{
-				"thinking": "...",
-				"done":     "✓",
-				"insight":  "咻~有了",
+				"thinking":  "...",
+				"done":      "✓",
+				"insight":   "咻~有了",
 				"analyzing": "看看这个...",
 			},
 			Catchphrases: []string{
@@ -297,10 +297,10 @@ func (p *DefaultParrot) SelfDescribe() *ParrotSelfCognition {
 				"发现规律了",
 			},
 			MoodTriggers: map[string]string{
-				"analyzing":  "focused",
-				"insight":    "excited",
-				"done":       "helpful",
-				"confused":   "thoughtful",
+				"analyzing": "focused",
+				"insight":   "excited",
+				"done":      "helpful",
+				"confused":  "thoughtful",
 			},
 		},
 		AvianBehaviors: []string{
@@ -329,6 +329,6 @@ func (p *DefaultParrot) SelfDescribe() *ParrotSelfCognition {
 			"无工具 - 纯 LLM 交互",
 		},
 		SelfIntroduction: "我是羽飞，你的智能领航员。我直接连接顶级大语言模型，为你提供逻辑分析、创意写作和知识问答服务。",
-		FunFact: "我的名字'羽飞'取自'羽翼飞翔' - 代表着在知识天空中的自由翱翔。作为默认助手，我就像是你的万能钥匙，能打开各种问题的大门！",
+		FunFact:          "我的名字'羽飞'取自'羽翼飞翔' - 代表着在知识天空中的自由翱翔。作为默认助手，我就像是你的万能钥匙，能打开各种问题的大门！",
 	}
 }

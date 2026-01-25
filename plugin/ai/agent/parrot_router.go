@@ -152,7 +152,7 @@ func (r *ParrotRouter) ListAgentInfo() []AgentInfo {
 // RouteDecision represents a routing decision.
 // RouteDecision 表示路由决策。
 type RouteDecision struct {
-	AgentType string
+	AgentType  string
 	Confidence float64
 	Reasoning  string
 }
@@ -185,7 +185,7 @@ func (r *ParrotRouter) AutoRoute(ctx context.Context, userInput string) (*RouteD
 	// Make decision
 	if scheduleScore > memoScore {
 		return &RouteDecision{
-			AgentType: "schedule",
+			AgentType:  "schedule",
 			Confidence: min(0.9, 0.6+float64(scheduleScore)*0.1),
 			Reasoning:  "Detected schedule-related keywords",
 		}, nil
@@ -193,7 +193,7 @@ func (r *ParrotRouter) AutoRoute(ctx context.Context, userInput string) (*RouteD
 
 	if memoScore > 0 {
 		return &RouteDecision{
-			AgentType: "memo",
+			AgentType:  "memo",
 			Confidence: min(0.9, 0.6+float64(memoScore)*0.1),
 			Reasoning:  "Detected memo-related keywords",
 		}, nil
@@ -201,7 +201,7 @@ func (r *ParrotRouter) AutoRoute(ctx context.Context, userInput string) (*RouteD
 
 	// Default to memo agent for general queries
 	return &RouteDecision{
-		AgentType: "memo",
+		AgentType:  "memo",
 		Confidence: 0.5,
 		Reasoning:  "Default agent for general queries",
 	}, nil

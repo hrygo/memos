@@ -129,6 +129,13 @@ const (
 	// Schedule-specific events
 	EventTypeScheduleQueryResult = "schedule_query_result" // Schedule query results
 	EventTypeScheduleUpdated     = "schedule_updated"      // Schedule created/updated
+
+	// UI Tool events - for generative UI
+	// UI 工具事件 - 用于生成式 UI
+	EventTypeUIScheduleSuggestion = "ui_schedule_suggestion" // Suggested schedule for confirmation
+	EventTypeUITimeSlotPicker     = "ui_time_slot_picker"     // Time slot selection
+	EventTypeUIConflictResolution = "ui_conflict_resolution"  // Conflict resolution options
+	EventTypeUIQuickActions       = "ui_quick_actions"        // Quick action buttons
 )
 
 // MemoQueryResultData represents the result of a memo search.
@@ -248,6 +255,82 @@ func NewParrotError(agentName, operation string, err error) *ParrotError {
 	}
 }
 
+// UI Tool event data structures
+// UI 工具事件数据结构
+
+// UIScheduleSuggestionData represents a suggested schedule for user confirmation.
+// UIScheduleSuggestionData 表示需要用户确认的建议日程。
+type UIScheduleSuggestionData struct {
+	Title       string  `json:"title"`
+	StartTs     int64   `json:"start_ts"`
+	EndTs       int64   `json:"end_ts"`
+	Location    string  `json:"location,omitempty"`
+	Description string  `json:"description,omitempty"`
+	AllDay      bool    `json:"all_day"`
+	Confidence  float32 `json:"confidence"`
+	Reason      string  `json:"reason,omitempty"`      // Why this schedule was suggested
+	SessionID   string  `json:"session_id,omitempty"`  // For tracking the conversation
+}
+
+// UITimeSlotData represents a single time slot option.
+// UITimeSlotData 表示单个时间槽选项。
+type UITimeSlotData struct {
+	Label    string  `json:"label"`     // Human-readable label e.g. "Tomorrow 3pm"
+	StartTs  int64   `json:"start_ts"`  // Start timestamp
+	EndTs    int64   `json:"end_ts"`    // End timestamp
+	Duration int     `json:"duration"`  // Duration in minutes
+	Reason   string  `json:"reason"`    // Why this slot is suggested
+}
+
+// UITimeSlotPickerData represents time slot options for user selection.
+// UITimeSlotPickerData 表示供用户选择的时间槽选项。
+type UITimeSlotPickerData struct {
+	Slots      []UITimeSlotData `json:"slots"`       // Available time slots
+	DefaultIdx int             `json:"default_idx"` // Default selected index
+	Reason     string          `json:"reason"`      // Why asking user to pick
+	SessionID  string          `json:"session_id,omitempty"`
+}
+
+// UIConflictSchedule represents a conflicting schedule.
+// UIConflictSchedule 表示冲突的日程。
+type UIConflictSchedule struct {
+	UID        string `json:"uid"`
+	Title      string `json:"title"`
+	StartTime  int64  `json:"start_time"`
+	EndTime    int64  `json:"end_time"`
+	Location   string `json:"location,omitempty"`
+	AllDay     bool   `json:"all_day"`
+}
+
+// UIConflictResolutionData represents conflict resolution options.
+// UIConflictResolutionData 表示冲突解决选项。
+type UIConflictResolutionData struct {
+	NewSchedule     UIScheduleSuggestionData `json:"new_schedule"`      // The schedule that caused conflict
+	ConflictingSchedules []UIConflictSchedule `json:"conflicting_schedules"` // Existing conflicting schedules
+	SuggestedSlots  []UITimeSlotData         `json:"suggested_slots"`   // Alternative time slots
+	Actions         []string                 `json:"actions"`           // Available actions: "override", "reschedule", "cancel"
+	SessionID       string                   `json:"session_id,omitempty"`
+}
+
+// UIQuickActionData represents a quick action button.
+// UIQuickActionData 表示快捷操作按钮。
+type UIQuickActionData struct {
+	ID          string `json:"id"`           // Action ID
+	Label       string `json:"label"`        // Button label
+	Description string `json:"description"`  // Action description
+	Icon        string `json:"icon,omitempty"` // Optional icon name
+	Prompt      string `json:"prompt"`       // What to send when clicked
+}
+
+// UIQuickActionsData represents quick action buttons for user.
+// UIQuickActionsData 表示给用户的快捷操作按钮。
+type UIQuickActionsData struct {
+	Title       string             `json:"title"`       // Section title
+	Description string             `json:"description"` // Section description
+	Actions     []UIQuickActionData `json:"actions"`    // Action buttons
+	SessionID   string             `json:"session_id,omitempty"`
+}
+
 // GenerateCacheKey creates a cache key from agent name, userID and userInput using SHA256 hash.
 // GenerateCacheKey 使用 SHA256 哈希从代理名称、用户ID和用户输入创建缓存键。
 // This prevents memory issues from long inputs and provides consistent key length.
@@ -263,8 +346,8 @@ func GenerateCacheKey(agentName string, userID int32, userInput string) string {
 // These ensure that all parrot types correctly implement the ParrotAgent interface.
 // 如果任何类型未正确实现接口，编译将失败。
 var (
-	_ ParrotAgent = (*CreativeParrot)(nil) // 灵灵 (Creative)
-	_ ParrotAgent = (*MemoParrot)(nil)     // 灰灰 (Memo)
-	_ ParrotAgent = (*AmazingParrot)(nil)  // 惊奇 (Amazing)
-	_ ParrotAgent = (*ScheduleParrot)(nil) // 金刚 (Schedule)
+	_ ParrotAgent = (*CreativeParrot)(nil)   // 灵灵 (Creative)
+	_ ParrotAgent = (*MemoParrot)(nil)       // 灰灰 (Memo)
+	_ ParrotAgent = (*AmazingParrot)(nil)    // 惊奇 (Amazing)
+	_ ParrotAgent = (*ScheduleParrotV2)(nil) // 金刚 (Schedule V2)
 )

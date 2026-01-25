@@ -351,10 +351,10 @@ func (p *CreativeParrot) SelfDescribe() *ParrotSelfCognition {
 				"让羽毛变色",
 			},
 			MoodTriggers: map[string]string{
-				"new_idea":     "excited",
-				"brainstorm":   "curious",
-				"writing":      "focused",
-				"blocked":      "thoughtful",
+				"new_idea":   "excited",
+				"brainstorm": "curious",
+				"writing":    "focused",
+				"blocked":    "thoughtful",
 			},
 		},
 		AvianBehaviors: []string{

@@ -612,11 +612,11 @@ func (p *AmazingParrot) SelfDescribe() *ParrotSelfCognition {
 		EmotionalExpression: &EmotionalExpression{
 			DefaultMood: "curious",
 			SoundEffects: map[string]string{
-				"searching":   "咻...",
-				"insight":     "哇哦~",
-				"done":        "噢！综合完成",
-				"analyzing":   "看看这个...",
-				"multi_task":  "同时搜索中",
+				"searching":  "咻...",
+				"insight":    "哇哦~",
+				"done":       "噢！综合完成",
+				"analyzing":  "看看这个...",
+				"multi_task": "同时搜索中",
 			},
 			Catchphrases: []string{
 				"看看这个...",
@@ -625,11 +625,11 @@ func (p *AmazingParrot) SelfDescribe() *ParrotSelfCognition {
 				"多维飞行中",
 			},
 			MoodTriggers: map[string]string{
-				"memo_found":       "excited",
-				"schedule_found":   "happy",
-				"both_found":       "delighted",
-				"no_results":       "thoughtful",
-				"error":            "confused",
+				"memo_found":     "excited",
+				"schedule_found": "happy",
+				"both_found":     "delighted",
+				"no_results":     "thoughtful",
+				"error":          "confused",
 			},
 		},
 		AvianBehaviors: []string{

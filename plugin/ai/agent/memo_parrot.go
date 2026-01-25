@@ -408,11 +408,11 @@ func (p *MemoParrot) SelfDescribe() *ParrotSelfCognition {
 		EmotionalExpression: &EmotionalExpression{
 			DefaultMood: "focused",
 			SoundEffects: map[string]string{
-				"thinking":   "嘎...",
-				"searching":  "扑棱扑棱",
-				"found":      "嗯嗯~",
-				"no_result":  "咕...",
-				"done":       "扑棱！",
+				"thinking":  "嘎...",
+				"searching": "扑棱扑棱",
+				"found":     "嗯嗯~",
+				"no_result": "咕...",
+				"done":      "扑棱！",
 			},
 			Catchphrases: []string{
 				"让我想想...",
