@@ -590,16 +590,8 @@
             "no_result": "hmm...",
             "done": "flap!"
           },
-          "catchphrases": [
-            "Let me think...",
-            "Notes say...",
-            "Searching my memory..."
-          ],
-          "behaviors": [
-            "Fluttering wings through notes",
-            "Soaring through memory forest",
-            "Pecking precisely with beak"
-          ]
+          "catchphrases": ["Let me think...", "Notes say...", "Searching my memory..."],
+          "behaviors": ["Fluttering wings through notes", "Soaring through memory forest", "Pecking precisely with beak"]
         },
         "schedule": {
           "sound_effects": {
@@ -609,17 +601,8 @@
             "scheduled": "arranged",
             "free_time": "this slot is free"
           },
-          "catchphrases": [
-            "All arranged",
-            "Time handled",
-            "Got it",
-            "Checking the time"
-          ],
-          "behaviors": [
-            "Organizing time with beak",
-            "Precise pecking arrangements",
-            "Spreading wings to plan"
-          ]
+          "catchphrases": ["All arranged", "Time handled", "Got it", "Checking the time"],
+          "behaviors": ["Organizing time with beak", "Precise pecking arrangements", "Spreading wings to plan"]
         },
         "creative": {
           "sound_effects": {
@@ -629,17 +612,8 @@
             "done": "pop~ done",
             "excited": "chirp chirp!"
           },
-          "catchphrases": [
-            "Inspiration coming~",
-            "What else...",
-            "Interesting!",
-            "Changing feather colors"
-          ],
-          "behaviors": [
-            "Feather color changing",
-            "Mind jumping",
-            "Flying freely in imagination"
-          ]
+          "catchphrases": ["Inspiration coming~", "What else...", "Interesting!", "Changing feather colors"],
+          "behaviors": ["Feather color changing", "Mind jumping", "Flying freely in imagination"]
         },
         "amazing": {
           "sound_effects": {
@@ -649,12 +623,7 @@
             "analyzing": "look at this...",
             "multi_task": "searching simultaneously"
           },
-          "catchphrases": [
-            "Look at this...",
-            "Overall view",
-            "Found a pattern",
-            "Multi-dimensional flight"
-          ],
+          "catchphrases": ["Look at this...", "Overall view", "Found a pattern", "Multi-dimensional flight"],
           "behaviors": [
             "Navigating through data bushes",
             "Multi-dimensional flight",
@@ -669,16 +638,8 @@
             "done": "✓",
             "analyzing": "look at this..."
           },
-          "catchphrases": [
-            "Look at this...",
-            "Overall view",
-            "Found a pattern"
-          ],
-          "behaviors": [
-            "Spreading wings to navigate",
-            "Soaring in the information sky",
-            "Insight with sharp gaze"
-          ]
+          "catchphrases": ["Look at this...", "Overall view", "Found a pattern"],
+          "behaviors": ["Spreading wings to navigate", "Soaring in the information sky", "Insight with sharp gaze"]
         },
         "emotional-states": {
           "focused": "Focused",
@@ -706,42 +667,78 @@
           "name": "Memo",
           "nameAlt": "灰灰",
           "description": "Note assistant for searching, summarizing, and managing memos",
-          "examples": [
-            "Search for programming notes",
-            "Summarize recent work memos",
-            "Find project management notes"
-          ]
+          "examples": ["Search for programming notes", "Summarize recent work memos", "Find project management notes"]
         },
         "schedule": {
           "name": "Schedule",
           "nameAlt": "金刚",
           "description": "Schedule assistant for creating, querying, and managing schedules",
-          "examples": [
-            "What's on my schedule today",
-            "Am I free tomorrow afternoon",
-            "Create a meeting reminder for next week"
-          ]
+          "examples": ["What's on my schedule today", "Am I free tomorrow afternoon", "Create a meeting reminder for next week"]
         },
         "amazing": {
           "name": "Amazing",
           "nameAlt": "惊奇",
           "description": "Comprehensive assistant combining memo and schedule features",
-          "examples": [
-            "Summarize today's memos and schedule",
-            "Help me plan next week's work",
-            "Search recent project-related content"
-          ]
+          "examples": ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"]
         },
         "creative": {
           "name": "Creative",
           "nameAlt": "灵灵",
           "description": "Creative writing assistant for brainstorming and content creation",
-          "examples": [
-            "Brainstorm product promotion ideas",
-            "Write a project progress email",
-            "Improve this text expression"
-          ]
+          "examples": ["Brainstorm product promotion ideas", "Write a project progress email", "Improve this text expression"]
         }
+      },
+      "capability": {
+        "title": "My Capabilities",
+        "subtitle": "I can help you search notes, manage schedules, analyze insights, or brainstorm together",
+        "active": "Active",
+        "in-use": "In Use",
+        "tap-to-activate": "Tap to Activate",
+        "thinking": "Thinking...",
+        "auto-hint": "💡 Tip: You can also start chatting directly, and I'll automatically understand your intent and use the appropriate capability",
+        "memo": {
+          "name": "Memo",
+          "nameAlt": "Memo",
+          "description": "Search & Ask"
+        },
+        "schedule": {
+          "name": "Schedule",
+          "nameAlt": "Schedule",
+          "description": "Plan & Manage"
+        },
+        "amazing": {
+          "name": "Amazing",
+          "nameAlt": "Amazing",
+          "description": "Memo + Schedule"
+        },
+        "creative": {
+          "name": "Creative",
+          "nameAlt": "Creative",
+          "description": "Brainstorm"
+        },
+        "auto": {
+          "name": "Auto",
+          "nameAlt": "Auto",
+          "description": "Smart Detect"
+        }
+      },
+      "partner": {
+        "greeting-morning": "Good morning",
+        "greeting-afternoon": "Good afternoon",
+        "greeting-evening": "Good evening",
+        "greeting-night": "It's getting late",
+        "quick-memo": "View Memos",
+        "quick-memo-desc": "Search recent notes",
+        "quick-schedule": "View Schedule",
+        "quick-schedule-desc": "Today's plans",
+        "quick-summary": "Daily Summary",
+        "quick-summary-desc": "Memo + Schedule",
+        "quick-chat": "Free Chat",
+        "quick-chat-desc": "Open conversation",
+        "input-hint": "Just type a message, I'll automatically understand your intent",
+        "prompt-memo": "Search my recent notes",
+        "prompt-schedule": "What's on my schedule today?",
+        "prompt-summary": "Summarize my memos and schedule for today"
       }
     }
   },
@@ -854,6 +851,7 @@
     "schedules": "schedules",
     "quick-input": {
       "placeholder": "e.g. Meeting tomorrow at 3pm",
+      "editing": "Editing",
       "parsing": "Parsing...",
       "ai-parsing": "AI parsing...",
       "parse-success": "Recognized",

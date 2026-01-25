@@ -590,16 +590,8 @@
             "no_result": "咕...",
             "done": "扑棱！"
           },
-          "catchphrases": [
-            "让我想想...",
-            "笔记里说...",
-            "在记忆里找找..."
-          ],
-          "behaviors": [
-            "用翅膀翻找笔记",
-            "在记忆森林中飞翔",
-            "用喙精准啄取信息"
-          ]
+          "catchphrases": ["让我想想...", "笔记里说...", "在记忆里找找..."],
+          "behaviors": ["用翅膀翻找笔记", "在记忆森林中飞翔", "用喙精准啄取信息"]
         },
         "schedule": {
           "sound_effects": {
@@ -609,17 +601,8 @@
             "scheduled": "安排好了",
             "free_time": "这片时间空着呢"
           },
-          "catchphrases": [
-            "安排好啦",
-            "时间搞定",
-            "妥妥的",
-            "确认一下时间"
-          ],
-          "behaviors": [
-            "用喙整理时间",
-            "精准啄食安排",
-            "展开羽翼规划"
-          ]
+          "catchphrases": ["安排好啦", "时间搞定", "妥妥的", "确认一下时间"],
+          "behaviors": ["用喙整理时间", "精准啄食安排", "展开羽翼规划"]
         },
         "creative": {
           "sound_effects": {
@@ -629,17 +612,8 @@
             "done": "噗~搞定",
             "excited": "啾啾！"
           },
-          "catchphrases": [
-            "灵感来了~",
-            "想想还有",
-            "有意思！",
-            "让羽毛变色"
-          ],
-          "behaviors": [
-            "羽毛变色",
-            "思维跳跃",
-            "自由飞翔想象"
-          ]
+          "catchphrases": ["灵感来了~", "想想还有", "有意思！", "让羽毛变色"],
+          "behaviors": ["羽毛变色", "思维跳跃", "自由飞翔想象"]
         },
         "amazing": {
           "sound_effects": {
@@ -649,18 +623,8 @@
             "analyzing": "看看这个...",
             "multi_task": "同时搜索中"
           },
-          "catchphrases": [
-            "看看这个...",
-            "综合来看",
-            "发现规律了",
-            "多维飞行中"
-          ],
-          "behaviors": [
-            "在数据树丛中穿梭",
-            "多维飞行",
-            "综合视野",
-            "在笔记和日程间跳跃"
-          ]
+          "catchphrases": ["看看这个...", "综合来看", "发现规律了", "多维飞行中"],
+          "behaviors": ["在数据树丛中穿梭", "多维飞行", "综合视野", "在笔记和日程间跳跃"]
         },
         "default": {
           "sound_effects": {
@@ -669,16 +633,8 @@
             "done": "✓",
             "analyzing": "看看这个..."
           },
-          "catchphrases": [
-            "看看这个...",
-            "综合来看",
-            "发现规律了"
-          ],
-          "behaviors": [
-            "展开羽翼导航",
-            "翱翔在信息天空",
-            "用锐利的目光洞察"
-          ]
+          "catchphrases": ["看看这个...", "综合来看", "发现规律了"],
+          "behaviors": ["展开羽翼导航", "翱翔在信息天空", "用锐利的目光洞察"]
         },
         "emotional-states": {
           "focused": "专注",
@@ -697,51 +653,84 @@
           "name": "羽飞",
           "nameAlt": "Navi",
           "description": "直连顶级大模型的全能领航员，为您提供无边界的创意启发、逻辑推演与全球知识洞察。",
-          "examples": [
-            "帮我构建一个复杂问题的思考逻辑框架",
-            "根据我的初步想法起草一份正式的沟通邮件"
-          ]
+          "examples": ["帮我构建一个复杂问题的思考逻辑框架", "根据我的初步想法起草一份正式的沟通邮件"]
         },
         "memo": {
           "name": "灰灰",
           "nameAlt": "Memo",
           "description": "笔记助手，专注于检索、总结和管理笔记。",
-          "examples": [
-            "搜索关于编程的笔记",
-            "总结最近的工作备忘",
-            "查找包含项目管理的笔记"
-          ]
+          "examples": ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"]
         },
         "schedule": {
           "name": "金刚",
           "nameAlt": "Schedule",
           "description": "日程助手，帮助创建、查询和管理日程。",
-          "examples": [
-            "今天有什么安排",
-            "明天下午有空吗",
-            "帮我创建下周会议提醒"
-          ]
+          "examples": ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"]
         },
         "amazing": {
           "name": "惊奇",
           "nameAlt": "Amazing",
           "description": "综合助手，结合笔记和日程功能。",
-          "examples": [
-            "总结今天的笔记和日程",
-            "帮我规划下周工作",
-            "查询最近的项目相关内容"
-          ]
+          "examples": ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"]
         },
         "creative": {
           "name": "灵灵",
           "nameAlt": "Creative",
           "description": "创意助手，提供创意写作和头脑风暴。",
-          "examples": [
-            "帮我头脑风暴产品推广创意",
-            "写一封项目进度汇报邮件",
-            "优化这段文字的表达"
-          ]
+          "examples": ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"]
         }
+      },
+      "capability": {
+        "title": "我的能力",
+        "subtitle": "我可以帮你搜索笔记、管理日程、总结分析，或者一起头脑风暴",
+        "active": "使用中",
+        "in-use": "正在使用",
+        "tap-to-activate": "点击激活",
+        "thinking": "思考中...",
+        "auto-hint": "💡 提示：你也可以直接开始聊天，我会自动理解你的意图并调用相应能力",
+        "memo": {
+          "name": "笔记",
+          "nameAlt": "Memo",
+          "description": "搜索与问答"
+        },
+        "schedule": {
+          "name": "日程",
+          "nameAlt": "Schedule",
+          "description": "规划与管理"
+        },
+        "amazing": {
+          "name": "综合",
+          "nameAlt": "Amazing",
+          "description": "笔记 + 日程"
+        },
+        "creative": {
+          "name": "创意",
+          "nameAlt": "Creative",
+          "description": "头脑风暴"
+        },
+        "auto": {
+          "name": "自动",
+          "nameAlt": "Auto",
+          "description": "智能识别"
+        }
+      },
+      "partner": {
+        "greeting-morning": "早上好",
+        "greeting-afternoon": "下午好",
+        "greeting-evening": "晚上好",
+        "greeting-night": "夜深了",
+        "quick-memo": "查看笔记",
+        "quick-memo-desc": "搜索最近的记录",
+        "quick-schedule": "查看日程",
+        "quick-schedule-desc": "今天的安排",
+        "quick-summary": "今日总结",
+        "quick-summary-desc": "笔记 + 日程",
+        "quick-chat": "随便聊聊",
+        "quick-chat-desc": "自由对话",
+        "input-hint": "直接输入消息，我会自动理解你的意图",
+        "prompt-memo": "搜索一下我最近记录的笔记",
+        "prompt-schedule": "今天还有什么安排？",
+        "prompt-summary": "总结一下我今天的笔记和日程"
       }
     }
   },
@@ -854,6 +843,7 @@
     "schedules": "个日程",
     "quick-input": {
       "placeholder": "例：明天下午3点开会",
+      "editing": "正在编辑",
       "parsing": "解析中...",
       "ai-parsing": "AI 解析中...",
       "parse-success": "识别成功",
