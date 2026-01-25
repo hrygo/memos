@@ -137,11 +137,8 @@ export function ScheduleAISidebar({ className }: ScheduleAISidebarProps) {
               <StreamingScheduleAssistant
                 onSuccess={handleSuccess}
                 onError={handleError}
-                placeholder={
-                  selectedDate
-                    ? (t("schedule.ai-sidebar.placeholder-with-date", { date: selectedDate }) as string)
-                    : (t("schedule.ai-sidebar.placeholder") as string)
-                }
+                contextDate={selectedDate}
+                placeholder={t("schedule.ai-sidebar.placeholder") as string}
               />
             </div>
           </div>

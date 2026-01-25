@@ -81,8 +81,14 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     };
   }, []);
 
+  // Track when we're sending to prevent useEffect from clearing the input
+  const isSendingRef = useRef(false);
+
   // Initialize with editSchedule when it changes
   useEffect(() => {
+    // Don't reset input while user is sending a message
+    if (isSendingRef.current) return;
+
     if (editSchedule) {
       setParsedSchedule(editSchedule);
       setInput(editSchedule.title || "");
@@ -103,17 +109,22 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
       return;
     }
 
+    // Save the current input and clear immediately for better UX
+    const currentInput = input;
+    setInput("");
+    isSendingRef.current = true;
+
     setIsProcessingAgent(true);
 
     // Limit conversation history to prevent excessive context
     const trimmedHistory = conversationHistory.slice(-MAX_CONVERSATION_ROUNDS * 2);
 
     // Add user message to history
-    const newHistory: ConversationMessage[] = [...trimmedHistory, { role: "user", content: input }];
+    const newHistory: ConversationMessage[] = [...trimmedHistory, { role: "user", content: currentInput }];
 
     try {
       const result = await agentChat.mutateAsync({
-        message: input,
+        message: currentInput,
         history: newHistory,
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
@@ -134,8 +145,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
           queryClient.invalidateQueries({ queryKey: ["schedules"] });
           // Clear history after successful creation
           setConversationHistory([]);
-          // Clear input
-          setInput("");
           // Close dialog after short delay with cleanup
           if (closeTimeoutRef.current) {
             clearTimeout(closeTimeoutRef.current);
@@ -143,11 +152,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
           closeTimeoutRef.current = setTimeout(() => {
             handleClose();
           }, SUCCESS_AUTO_CLOSE_DELAY_MS);
-        } else {
-          // Agent is asking for clarification
-          // Don't show toast - response is already visible in UI
-          // Keep input empty for user's response
-          setInput("");
         }
       }
     } catch (error) {
@@ -167,8 +171,11 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
       const retrySuffix = t("schedule.quick-input.retry-manual-mode") as string;
       toast.error(errorMessage + retrySuffix);
+      // On error, restore the input so user can retry
+      setInput(currentInput);
     } finally {
       setIsProcessingAgent(false);
+      isSendingRef.current = false;
     }
   };
 
@@ -301,6 +308,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     setShowConflictAlert(false);
     setAgentResponse(null);
     setConversationHistory([]); // Clear conversation history
+    isSendingRef.current = false; // Reset sending flag
     onOpenChange(false);
   };
 

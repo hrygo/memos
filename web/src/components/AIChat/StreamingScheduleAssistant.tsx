@@ -37,6 +37,7 @@ interface StreamingScheduleAssistantProps {
   className?: string;
   placeholder?: string;
   initialQuery?: string;
+  contextDate?: string;
 }
 
 const MAX_INPUT_HEIGHT = 120;
@@ -72,6 +73,7 @@ export function StreamingScheduleAssistant({
   className,
   placeholder,
   initialQuery = "",
+  contextDate,
 }: StreamingScheduleAssistantProps) {
   const t = useTranslate();
 
@@ -164,8 +166,14 @@ export function StreamingScheduleAssistant({
     setIsThinking(true);
 
     try {
+      // Prepend context date to message if provided (for server-side context)
+      let messageToSend = userMessage;
+      if (contextDate) {
+        messageToSend = `[日期: ${contextDate}] ${userMessage}`;
+      }
+
       const stream = scheduleAgentServiceClient.chatStream({
-        message: userMessage,
+        message: messageToSend,
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
