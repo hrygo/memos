@@ -1,4 +1,4 @@
-import { Sparkles, Clock, Calendar, Lightbulb, Wand2 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CapabilityType, CapabilityStatus, getCapabilitySound } from "@/types/capability";
@@ -20,44 +20,43 @@ const CAPABILITY_ICONS: Record<CapabilityType, React.ReactNode> = {
   [CapabilityType.AUTO]: "🤖",
 };
 
-// 能力 Lucide 图标映射（用于动画）
-// const CAPABILITY_LUCIDE_ICONS: Record<CapabilityType, React.ReactNode> = {
-//   [CapabilityType.MEMO]: <Sparkles className="w-4 h-4" />,
-//   [CapabilityType.SCHEDULE]: <Calendar className="w-4 h-4" />,
-//   [CapabilityType.AMAZING]: <Clock className="w-4 h-4" />,
-//   [CapabilityType.CREATIVE]: <Lightbulb className="w-4 h-4" />,
-//   [CapabilityType.AUTO]: <Wand2 className="w-4 h-4" />,
-// };
-
-// 能力主题色映射
+// 能力主题色映射 - 简化
 const CAPABILITY_COLORS: Record<CapabilityType, { bg: string; text: string; border: string }> = {
   [CapabilityType.MEMO]: {
-    bg: "bg-slate-100 dark:bg-slate-800/50",
+    bg: "bg-slate-50 dark:bg-slate-900/30",
     text: "text-slate-700 dark:text-slate-300",
     border: "border-slate-200 dark:border-slate-700",
   },
   [CapabilityType.SCHEDULE]: {
-    bg: "bg-cyan-100 dark:bg-cyan-900/30",
+    bg: "bg-cyan-50 dark:bg-cyan-900/20",
     text: "text-cyan-700 dark:text-cyan-300",
-    border: "border-cyan-200 dark:border-cyan-700",
+    border: "border-cyan-200 dark:border-cyan-800",
   },
   [CapabilityType.AMAZING]: {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    bg: "bg-emerald-50 dark:bg-emerald-900/20",
     text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-200 dark:border-emerald-700",
+    border: "border-emerald-200 dark:border-emerald-800",
   },
   [CapabilityType.CREATIVE]: {
-    bg: "bg-lime-100 dark:bg-lime-900/30",
-    text: "text-lime-700 dark:text-lime-300",
-    border: "border-lime-200 dark:border-lime-700",
+    bg: "bg-amber-50 dark:bg-amber-900/20",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-amber-200 dark:border-amber-800",
   },
   [CapabilityType.AUTO]: {
-    bg: "bg-indigo-100 dark:bg-indigo-900/30",
+    bg: "bg-indigo-50 dark:bg-indigo-900/20",
     text: "text-indigo-700 dark:text-indigo-300",
-    border: "border-indigo-200 dark:border-indigo-700",
+    border: "border-indigo-200 dark:border-indigo-800",
   },
 };
 
+/**
+ * CapabilityIndicator - 精简能力指示器
+ *
+ * UX/UI 改进：
+ * - 简化状态显示
+ * - 统一颜色主题
+ * - 优化动画效果
+ */
 export function CapabilityIndicator({
   capability,
   status,
@@ -92,18 +91,17 @@ export function CapabilityIndicator({
     return (
       <div
         className={cn(
-          "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all duration-300",
+          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
           colors.bg,
           colors.text,
           colors.border,
-          "border",
+          "border transition-all duration-200",
           status === "thinking" && "animate-pulse",
           className,
         )}
       >
         <span className="text-sm">{icon}</span>
         <span>{getCapabilityName(capability)}</span>
-        {soundEffect && <span className="text-[10px] opacity-60">{soundEffect}</span>}
       </div>
     );
   }
@@ -111,13 +109,12 @@ export function CapabilityIndicator({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300",
+        "inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-sm font-medium",
         colors.bg,
         colors.text,
         colors.border,
-        "border",
+        "border transition-all duration-200",
         status === "thinking" && "animate-pulse",
-        status === "processing" && "animate-subtle-bounce",
         className,
       )}
     >
@@ -131,19 +128,8 @@ export function CapabilityIndicator({
 
       {/* 状态指示 */}
       {status !== "idle" && (
-        <span className="flex items-center gap-1 text-xs opacity-70">
-          {status === "thinking" && (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-              <span>{soundEffect || "思考中..."}</span>
-            </>
-          )}
-          {status === "processing" && (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" />
-              <span>{soundEffect || "处理中..."}</span>
-            </>
-          )}
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
         </span>
       )}
 
@@ -151,10 +137,10 @@ export function CapabilityIndicator({
       {onCapabilityChange && (
         <button
           onClick={() => onCapabilityChange(CapabilityType.AUTO)}
-          className="ml-1 p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          className="ml-0.5 p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
           aria-label="切换能力"
         >
-          <Wand2 className="w-3 h-3 opacity-50" />
+          <Wand2 className="w-3 h-3 opacity-40" />
         </button>
       )}
     </div>
@@ -177,12 +163,12 @@ export function CapabilityPanel({
   onCapabilityChange,
   className,
 }: CapabilityPanelProps) {
-  const capabilities: Array<{ type: CapabilityType; icon: string; label: string; labelAlt: string }> = [
-    { type: CapabilityType.MEMO, icon: "🦜", label: "笔记", labelAlt: "Memo" },
-    { type: CapabilityType.SCHEDULE, icon: "⏰", label: "日程", labelAlt: "Schedule" },
-    { type: CapabilityType.AMAZING, icon: "🌟", label: "综合", labelAlt: "Amazing" },
-    { type: CapabilityType.CREATIVE, icon: "💡", label: "创意", labelAlt: "Creative" },
-    { type: CapabilityType.AUTO, icon: "🤖", label: "自动", labelAlt: "Auto" },
+  const capabilities: Array<{ type: CapabilityType; icon: string; label: string }> = [
+    { type: CapabilityType.MEMO, icon: "🦜", label: "笔记" },
+    { type: CapabilityType.SCHEDULE, icon: "⏰", label: "日程" },
+    { type: CapabilityType.AMAZING, icon: "🌟", label: "综合" },
+    { type: CapabilityType.CREATIVE, icon: "💡", label: "创意" },
+    { type: CapabilityType.AUTO, icon: "🤖", label: "自动" },
   ];
 
   return (
@@ -197,12 +183,12 @@ export function CapabilityPanel({
             onClick={() => onCapabilityChange(cap.type)}
             className={cn(
               "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
-              "border",
               colors.bg,
               colors.text,
               colors.border,
+              "border",
               isActive
-                ? "ring-2 ring-offset-1 ring-zinc-900 dark:ring-zinc-100 scale-105 shadow-md"
+                ? "ring-1 ring-zinc-400 dark:ring-zinc-600 scale-105 shadow-sm"
                 : "opacity-60 hover:opacity-100 hover:scale-102",
               status === "thinking" && isActive && "animate-pulse",
             )}
@@ -211,9 +197,6 @@ export function CapabilityPanel({
           >
             <span className="text-base">{cap.icon}</span>
             <span>{cap.label}</span>
-            {isActive && status !== "idle" && (
-              <span className="w-1 h-1 rounded-full bg-current animate-ping" />
-            )}
           </button>
         );
       })}

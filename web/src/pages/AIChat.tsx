@@ -1,23 +1,22 @@
 import copy from "copy-to-clipboard";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { AmazingInsightCard } from "@/components/AIChat/AmazingInsightCard";
-import { CapabilityIndicator, CapabilityPanel } from "@/components/AIChat/CapabilityIndicator";
 import { ChatHeader } from "@/components/AIChat/ChatHeader";
 import { ChatInput } from "@/components/AIChat/ChatInput";
 import { ChatMessages } from "@/components/AIChat/ChatMessages";
 import { PartnerGreeting } from "@/components/AIChat/PartnerGreeting";
+import { ParrotHub } from "@/components/AIChat/ParrotHub";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { useChat } from "@/hooks/useAIQueries";
 import { useCapabilityRouter } from "@/hooks/useCapabilityRouter";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { getLocalizedParrot } from "@/hooks/useParrots";
 import type { ChatItem } from "@/types/aichat";
 import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
-import { PARROT_AGENTS, PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
+import { ParrotAgentType } from "@/types/parrot";
 import {
   CapabilityType,
   CapabilityStatus,
@@ -41,6 +40,7 @@ interface UnifiedChatViewProps {
   scheduleQueryResults: ScheduleQueryResultData[];
   items: ChatItem[];
   currentCapability: CapabilityType;
+  capabilityStatus: CapabilityStatus;
   onCapabilityChange: (capability: CapabilityType) => void;
   recentMemoCount?: number;
   upcomingScheduleCount?: number;
@@ -80,19 +80,6 @@ function UnifiedChatView({
     // TODO: Implement message deletion
   };
 
-  // 获取当前能力对应的 Parrot 信息（保持兼容）
-  const currentParrotType = capabilityToParrotAgent(currentCapability);
-  const currentParrot = useMemo(() => {
-    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
-    return getLocalizedParrot(agent, t);
-  }, [currentParrotType, t]);
-
-  const getParrotIcon = (parrotId: string) => {
-    return PARROT_ICONS[parrotId] || "🤖";
-  };
-
-  const currentIcon = getParrotIcon(currentParrot.id);
-
   // 处理快捷操作
   const handleQuickAction = useCallback(
     (action: "memo" | "schedule" | "summary" | "chat") => {
@@ -131,7 +118,8 @@ function UnifiedChatView({
       {/* Desktop Header */}
       {md && (
         <ChatHeader
-          parrot={currentParrot}
+          currentCapability={currentCapability}
+          capabilityStatus={capabilityStatus}
           isThinking={isThinking}
           onBack={() => {}}
           onClearContext={onClearContext}
@@ -143,7 +131,7 @@ function UnifiedChatView({
       <ChatMessages
         items={items}
         isTyping={isTyping}
-        currentParrotId={currentParrot.id}
+        currentParrotId={ParrotAgentType.DEFAULT}
         onCopyMessage={handleCopyMessage}
         onDeleteMessage={handleDeleteMessage}
         amazingInsightCard={
@@ -176,7 +164,7 @@ function UnifiedChatView({
         onClearContext={onClearContext}
         disabled={isTyping}
         isTyping={isTyping}
-        currentParrotId={currentParrot.id}
+        currentParrotId={ParrotAgentType.DEFAULT}
         onParrotChange={() => {}}
       />
 
@@ -290,16 +278,6 @@ const AIChat = () => {
 
   const { t } = useTranslation();
 
-  // Get current parrot from capability (兼容旧逻辑)
-  const currentParrotType = useMemo(
-    () => capabilityToParrotAgent(currentCapability),
-    [currentCapability],
-  );
-  const currentParrot = useMemo(() => {
-    const agent = PARROT_AGENTS[currentParrotType] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
-    return getLocalizedParrot(agent, t);
-  }, [currentParrotType, t]);
-
   // Clear timeout on unmount
   useEffect(() => {
     return () => {
@@ -323,7 +301,7 @@ const AIChat = () => {
       conversationId: string,
       parrotId: ParrotAgentType,
       userMessage: string,
-      conversationIdNum: number,
+      _conversationIdNum: number,
     ) => {
       setIsTyping(true);
       setIsThinking(true);
@@ -338,10 +316,9 @@ const AIChat = () => {
         await chatHook.stream(
           {
             message: explicitMessage,
-            conversationId: conversationIdNum,
             agentType: parrotId,
             userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          },
+          } as any,
           {
             onThinking: (msg) => {
               if (lastAssistantMessageIdRef.current) {

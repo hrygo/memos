@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Clock, MessageSquare, Sun, Moon } from "lucide-react";
+import { Sparkles, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CapabilityType } from "@/types/capability";
 
@@ -16,41 +16,45 @@ interface PartnerGreetingProps {
 /**
  * 获取时间相关的问候语
  */
-function getTimeBasedGreeting(): { icon: React.ReactNode; greeting: string; timeOfDay: string } {
+function getTimeBasedGreeting(): { greeting: string; timeOfDay: string; emoji: string } {
   const hour = new Date().getHours();
-  const t = (key: string) => key; // 简化版，实际使用i18n
 
   if (hour >= 5 && hour < 12) {
     return {
-      icon: <Sun className="w-5 h-5 text-amber-500" />,
-      greeting: t("ai.partner.greeting-morning") || "早上好",
+      greeting: "ai.partner.greeting-morning", // 早上好
       timeOfDay: "morning",
+      emoji: "🌅",
     };
   }
   if (hour >= 12 && hour < 18) {
     return {
-      icon: <Sun className="w-5 h-5 text-orange-500" />,
-      greeting: t("ai.partner.greeting-afternoon") || "下午好",
+      greeting: "ai.partner.greeting-afternoon", // 下午好
       timeOfDay: "afternoon",
+      emoji: "☀️",
     };
   }
   if (hour >= 18 && hour < 22) {
     return {
-      icon: <Moon className="w-5 h-5 text-indigo-500" />,
-      greeting: t("ai.partner.greeting-evening") || "晚上好",
+      greeting: "ai.partner.greeting-evening", // 晚上好
       timeOfDay: "evening",
+      emoji: "🌆",
     };
   }
   return {
-    icon: <Moon className="w-5 h-5 text-slate-500" />,
-    greeting: t("ai.partner.greeting-night") || "夜深了",
+    greeting: "ai.partner.greeting-night", // 夜深了
     timeOfDay: "night",
+    emoji: "🌙",
   };
 }
 
 /**
- * 伙伴型问候组件
- * 提供个性化的、有温度的问候，展示用户数据概览
+ * Partner Greeting - 精简优化的欢迎界面
+ *
+ * UX/UI 改进：
+ * - 简化视觉元素，聚焦核心操作
+ * - 统一卡片样式和间距
+ * - 优化快捷操作的视觉层次
+ * - 移除冗余的状态指示
  */
 export const PartnerGreeting = memo(function PartnerGreeting({
   userName,
@@ -61,137 +65,87 @@ export const PartnerGreeting = memo(function PartnerGreeting({
   className,
 }: PartnerGreetingProps) {
   const { t } = useTranslation();
-  const { greeting, timeOfDay } = useMemo(() => getTimeBasedGreeting(), [t]);
+  const { greeting, timeOfDay, emoji } = useMemo(() => getTimeBasedGreeting(), []);
 
-  // 生成个性化问候消息
-  const personalizedMessage = useMemo(() => {
-    const messages: string[] = [];
+  const greetingText = t(greeting);
 
-    // 时间相关
-    if (timeOfDay === "morning") {
-      messages.push("今天是个创造的好天气 ☀️");
-    } else if (timeOfDay === "afternoon") {
-      messages.push("下午茶时间，来聊聊？");
-    } else if (timeOfDay === "evening") {
-      messages.push("辛苦了一天，放松一下 🌙");
-    } else {
-      messages.push("夜深了，注意休息");
-    }
-
-    // 数据相关
-    const dataHints: string[] = [];
-    if (recentMemoCount > 0) {
-      dataHints.push(`你最近记录了 ${recentMemoCount} 条笔记`);
-    }
-    if (upcomingScheduleCount > 0) {
-      dataHints.push(`今天还有 ${upcomingScheduleCount} 个日程`);
-    }
-    if (conversationCount > 3) {
-      dataHints.push("我们聊了很多次了");
-    }
-
-    return {
-      greeting,
-      hint: messages[0] || "今天想聊点什么？",
-      dataHint: dataHints.length > 0 ? dataHints.join("，") + "..." : null,
+  // 生成时间相关提示
+  const timeHint = useMemo(() => {
+    const hints = {
+      morning: "新的一天，有什么计划？",
+      afternoon: "下午茶时间，来聊聊？",
+      evening: "辛苦了一天，放松一下",
+      night: "夜深了，注意休息",
     };
-  }, [timeOfDay, recentMemoCount, upcomingScheduleCount, conversationCount, greeting]);
+    return hints[timeOfDay as keyof typeof hints];
+  }, [timeOfDay]);
 
   // 快捷操作配置
   const quickActions = useMemo(
     () => [
-      {
-        key: "memo" as const,
-        icon: "🦜",
-        label: t("ai.partner.quick-memo") || "查看笔记",
-        description: t("ai.partner.quick-memo-desc") || "搜索最近的记录",
-        color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
-      },
-      {
-        key: "schedule" as const,
-        icon: "⏰",
-        label: t("ai.partner.quick-schedule") || "查看日程",
-        description: t("ai.partner.quick-schedule-desc") || "今天的安排",
-        color: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700",
-      },
-      {
-        key: "summary" as const,
-        icon: "🌟",
-        label: t("ai.partner.quick-summary") || "今日总结",
-        description: t("ai.partner.quick-summary-desc") || "笔记 + 日程",
-        color: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700",
-      },
-      {
-        key: "chat" as const,
-        icon: "💬",
-        label: t("ai.partner.quick-chat") || "随便聊聊",
-        description: t("ai.partner.quick-chat-desc") || "自由对话",
-        color: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700",
-      },
+      { key: "memo" as const, icon: "🦜", labelKey: "ai.partner.quick-memo" },
+      { key: "schedule" as const, icon: "⏰", labelKey: "ai.partner.quick-schedule" },
+      { key: "summary" as const, icon: "🌟", labelKey: "ai.partner.quick-summary" },
+      { key: "chat" as const, icon: "💬", labelKey: "ai.partner.quick-chat" },
     ],
-    [t],
+    [],
   );
 
   return (
-    <div className={cn("flex flex-col items-center justify-center h-full px-6 py-8", className)}>
-      {/* 主图标和问候 */}
-      <div className="relative mb-6">
-        {/* 背景装饰 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full blur-2xl opacity-60" />
-
-        {/* 主图标 */}
-        <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 flex items-center justify-center text-4xl shadow-lg">
-          🦜
+    <div className={cn("flex flex-col items-center justify-center h-full w-full", className)}>
+      <div className="w-full max-w-sm px-4 flex flex-col items-center">
+        {/* 主图标区域 */}
+        <div className="relative mb-5">
+          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-3xl shadow-lg">
+            🦜
+          </div>
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center">
+            <Sparkles className="w-2.5 h-2.5 text-white" />
+          </div>
         </div>
 
-        {/* 状态指示 */}
-        <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full border-4 border-white dark:border-zinc-900 flex items-center justify-center">
-          <Sparkles className="w-3 h-3 text-white" />
+        {/* 问候语 */}
+        <div className="text-center mb-5">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <span className="text-xl">{emoji}</span>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {greetingText}
+            </h2>
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{timeHint}</p>
         </div>
-      </div>
 
-      {/* 问候语 */}
-      <h2 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
-        {personalizedMessage.greeting}！{userName ? ` ${userName}` : ""}
-      </h2>
+        {/* 快捷操作 - 简化为紧凑的行布局 */}
+        <div className="grid grid-cols-4 gap-2 w-full mb-4">
+          {quickActions.map((action) => (
+            <button
+              key={action.key}
+              onClick={() => onQuickAction?.(action.key)}
+              className={cn(
+                "flex flex-col items-center gap-1 p-2.5 rounded-xl border",
+                "bg-white dark:bg-zinc-800",
+                "border-zinc-200 dark:border-zinc-700",
+                "hover:border-zinc-300 dark:hover:border-zinc-600",
+                "hover:bg-zinc-50 dark:hover:bg-zinc-700/50",
+                "transition-all duration-150",
+                "active:scale-95",
+              )}
+              title={t(action.labelKey)}
+            >
+              <span className="text-xl">{action.icon}</span>
+              <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-300 leading-tight text-center">
+                {t(action.labelKey)}
+              </span>
+            </button>
+          ))}
+        </div>
 
-      {/* 个性化提示 */}
-      <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 mb-1 text-center max-w-md">
-        {personalizedMessage.hint}
-      </p>
-
-      {/* 数据感知提示 */}
-      {personalizedMessage.dataHint && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 mb-6 flex items-center gap-1.5">
-          <Clock className="w-3 h-3" />
-          {personalizedMessage.dataHint}
+        {/* 底部提示 */}
+        <p className="text-[10px] text-zinc-400 dark:text-zinc-600 flex items-center gap-1">
+          <MessageSquare className="w-3 h-3" />
+          {t("ai.partner.input-hint") || "直接输入消息，我会自动理解你的意图"}
         </p>
-      )}
-
-      {/* 快捷操作 */}
-      <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-        {quickActions.map((action) => (
-          <button
-            key={action.key}
-            onClick={() => onQuickAction?.(action.key)}
-            className={cn(
-              "flex flex-col items-start p-4 rounded-xl border-2 transition-all duration-200",
-              "hover:scale-102 hover:shadow-md active:scale-98",
-              action.color,
-            )}
-          >
-            <span className="text-2xl mb-2">{action.icon}</span>
-            <span className="font-semibold text-sm">{action.label}</span>
-            <span className="text-xs opacity-70 mt-0.5">{action.description}</span>
-          </button>
-        ))}
       </div>
-
-      {/* 底部提示 */}
-      <p className="mt-8 text-xs text-zinc-400 dark:text-zinc-600 flex items-center gap-1.5">
-        <MessageSquare className="w-3 h-3" />
-        {t("ai.partner.input-hint") || "直接输入消息，我会自动理解你的意图"}
-      </p>
     </div>
   );
 });
@@ -211,7 +165,8 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
   className,
 }: MiniPartnerGreetingProps) {
   const { t } = useTranslation();
-  const { greeting } = useMemo(() => getTimeBasedGreeting(), [t]);
+  const { greeting } = useMemo(() => getTimeBasedGreeting(), []);
+  const greetingText = t(greeting);
 
   const capabilityEmojis: Record<CapabilityType, string> = {
     [CapabilityType.MEMO]: "🦜",
@@ -223,14 +178,14 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
 
   return (
     <div className={cn("flex items-start gap-3 p-4", className)}>
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shrink-0">
+      <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-lg shrink-0 shadow-sm">
         {capability ? capabilityEmojis[capability] : "🦜"}
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <p className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-          {greeting}！{message || "今天想聊点什么？"}
+          {greetingText}！{message || "今天想聊点什么？"}
         </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-500">
+        <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-2">
           我可以帮你搜索笔记、管理日程，或者一起头脑风暴 💡
         </p>
       </div>
