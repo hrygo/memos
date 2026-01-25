@@ -161,6 +161,17 @@ const Schedule = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
+          {/* Generative UI Container - AI-generated interactive components */}
+          {uiTools.length > 0 && (
+            <div className="mb-4">
+              <GenerativeUIContainer
+                tools={uiTools}
+                onAction={handleUIAction}
+                onDismiss={handleUIDismiss}
+              />
+            </div>
+          )}
+
           {effectiveViewTab === "calendar" ? (
             <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
           ) : (
