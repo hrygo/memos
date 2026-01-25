@@ -307,7 +307,7 @@ function CreateIdentityProviderDialog({ open, onOpenChange, identityProvider, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent size="2xl" className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t(isCreating ? "setting.sso-section.create-sso" : "setting.sso-section.update-sso")}</DialogTitle>
         </DialogHeader>

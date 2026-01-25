@@ -329,7 +329,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ScheduleErrorBoundary>
-          <DialogContent className="overflow-hidden min-w-[320px] md:max-w-[500px]">
+          <DialogContent size="md" className="overflow-hidden min-w-[320px]">
             <DialogTitle>{isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}</DialogTitle>
             <DialogDescription>{isEditMode ? "" : t("schedule.natural-language-hint")}</DialogDescription>
 
@@ -551,7 +551,7 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-sm">
+        <DialogContent size="sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />

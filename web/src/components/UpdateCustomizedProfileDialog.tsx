@@ -104,7 +104,7 @@ function UpdateCustomizedProfileDialog({ open, onOpenChange, onSuccess }: Props)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="2xl">
         <DialogHeader>
           <DialogTitle>{t("setting.system-section.customize-server.title")}</DialogTitle>
           <DialogDescription>Customize your instance appearance and settings.</DialogDescription>

@@ -94,7 +94,7 @@ function CreateAccessTokenDialog({ open, onOpenChange, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("setting.access-token-section.create-dialog.create-access-token")}</DialogTitle>
         </DialogHeader>

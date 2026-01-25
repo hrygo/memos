@@ -76,7 +76,7 @@ const KeyboardShortcutsHelp = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md" aria-describedby="keyboard-shortcuts-description">
+      <DialogContent size="md" aria-describedby="keyboard-shortcuts-description">
         <DialogHeader>
           <DialogTitle>{t("shortcuts.title") || "Keyboard Shortcuts"}</DialogTitle>
           <DialogDescription id="keyboard-shortcuts-description">

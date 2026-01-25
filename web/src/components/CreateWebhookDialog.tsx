@@ -118,7 +118,7 @@ function CreateWebhookDialog({ open, onOpenChange, webhookName, onSuccess }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {isCreating

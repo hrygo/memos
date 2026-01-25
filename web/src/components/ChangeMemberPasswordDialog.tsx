@@ -72,7 +72,7 @@ function ChangeMemberPasswordDialog({ open, onOpenChange, user, onSuccess }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {t("setting.account-section.change-password")} ({user.displayName})
