@@ -1022,6 +1022,15 @@
       "placeholder": "Tell me what you want to schedule...",
       "placeholder-with-date": "{{date}}, tell me what you want to schedule...",
       "hint": "Use natural language to create and manage schedules"
+    },
+    "ai": {
+      "placeholder": "Type 'Meeting at 3pm tomorrow' or 'When am I free?'",
+      "thinking": "Thinking...",
+      "select-time": "Select a time",
+      "confirm-slot": "Confirm",
+      "conflict-detected": "Conflict detected",
+      "alternatives": "Suggested times",
+      "quick-actions": "Quick actions"
     }
   },
   "chat": {

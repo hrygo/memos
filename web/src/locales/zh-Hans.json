@@ -1022,6 +1022,15 @@
       "placeholder": "告诉我你想安排什么...",
       "placeholder-with-date": "{{date}}，告诉我你想安排什么...",
       "hint": "使用自然语言创建和管理日程"
+    },
+    "ai": {
+      "placeholder": "输入如「明天下午3点开会」或「我什么时候有空」",
+      "thinking": "思考中...",
+      "select-time": "选择时间",
+      "confirm-slot": "确认",
+      "conflict-detected": "检测到冲突",
+      "alternatives": "建议时间",
+      "quick-actions": "快捷操作"
     }
   },
   "chat": {
