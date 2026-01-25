@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	pluginai "github.com/usememos/memos/plugin/ai"
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 	"github.com/usememos/memos/server/auth"
@@ -30,9 +29,6 @@ type AIService struct {
 
 	// Adaptive retriever for RAG operations
 	AdaptiveRetriever *retrieval.AdaptiveRetriever
-
-	// 鹦鹉系统（Milestone 1）
-	ParrotRouter *agentpkg.ParrotRouter
 
 	// Chat event bus and conversation service (lazily initialized)
 	chatEventBusMu      sync.RWMutex

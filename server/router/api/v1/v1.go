@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"github.com/usememos/memos/internal/profile"
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	"github.com/usememos/memos/plugin/ai"
 	"github.com/usememos/memos/plugin/markdown"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
@@ -87,23 +86,12 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				// 创建自适应检索器
 				adaptiveRetriever := retrieval.NewAdaptiveRetriever(store, embeddingService, rerankerService)
 
-				// Initialize ParrotRouter if LLM service is available
-				var parrotRouter *agentpkg.ParrotRouter
-				if llmService != nil {
-					var routerErr error
-					parrotRouter, routerErr = agentpkg.NewParrotRouter(llmService, store)
-					if routerErr != nil {
-						slog.Warn("Failed to initialize ParrotRouter", "error", routerErr)
-					}
-				}
-
 				service.AIService = &AIService{
 					Store:             store,
 					EmbeddingService:  embeddingService,
 					RerankerService:   rerankerService,
 					LLMService:        llmService,
 					AdaptiveRetriever: adaptiveRetriever,
-					ParrotRouter:      parrotRouter,
 				}
 				// Initialize ScheduleService with LLM service for natural language parsing
 				service.ScheduleService = &ScheduleService{
