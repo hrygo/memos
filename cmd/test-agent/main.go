@@ -66,7 +66,7 @@ func main() {
 	userID := int32(1) // 测试用户 ID
 	userTimezone := "Asia/Shanghai"
 
-	agent, err := agent.NewSchedulerAgent(llmService, scheduleSvc, userID, userTimezone)
+	agent, err := agent.NewSchedulerAgentV2(llmService, scheduleSvc, userID, userTimezone)
 	if err != nil {
 		log.Fatalf("Failed to create scheduler agent: %v", err)
 	}
