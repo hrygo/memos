@@ -7,6 +7,7 @@ import { ScheduleSearchBar } from "@/components/AIChat/ScheduleSearchBar";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
 import { ScheduleQuickInput } from "@/components/ScheduleQuickInput/ScheduleQuickInput";
 import { ScheduleAISidebar } from "@/components/AIChat/ScheduleAISidebar";
+import { GenerativeUIContainer } from "@/components/ScheduleAI";
 import { Button } from "@/components/ui/button";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useSchedulesOptimized } from "@/hooks/useScheduleQueries";
