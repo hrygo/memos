@@ -30,9 +30,9 @@ type ChatEvent struct {
 	// For Separator event
 	SeparatorContent string
 	// Context information
-	ConversationID   int32
+	ConversationID     int32
 	IsTempConversation bool
-	Timestamp        int64
+	Timestamp          int64
 }
 
 // ChatEventType represents the type of chat event.
@@ -331,7 +331,7 @@ func (s *ConversationService) handleSeparator(ctx context.Context, event *ChatEv
 
 // createTemporaryConversation creates a new temporary conversation.
 func (s *ConversationService) createTemporaryConversation(ctx context.Context, event *ChatEvent) (int32, error) {
-	title := s.generateTemporaryTitle(ctx, event.UserID)
+	title := s.generateTemporaryTitle()
 	conversation, err := s.store.CreateAIConversation(ctx, &store.AIConversation{
 		UID:       shortuuid.New(),
 		CreatorID: event.UserID,
@@ -405,7 +405,7 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 // generateTemporaryTitle generates a title for a temporary conversation.
 // Returns a title key that the frontend should localize and handle numbering.
 // The numbering is handled by the frontend to avoid expensive database queries.
-func (s *ConversationService) generateTemporaryTitle(ctx context.Context, userID int32) string {
+func (s *ConversationService) generateTemporaryTitle() string {
 	// Return a simple title key; the frontend will handle display numbering
 	// based on the actual list of conversations it receives.
 	return "chat.new"

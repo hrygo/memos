@@ -128,6 +128,7 @@ func (f *AgentFactory) createMemoParrot(cfg *CreateConfig) (agentpkg.ParrotAgent
 }
 
 // createScheduleParrot creates a schedule parrot agent.
+// Uses the new framework-less SchedulerAgentV2 (no LangChainGo dependency).
 func (f *AgentFactory) createScheduleParrot(_ context.Context, cfg *CreateConfig) (agentpkg.ParrotAgent, error) {
 	if f.store == nil {
 		return nil, fmt.Errorf("store is required for schedule parrot")
@@ -139,21 +140,21 @@ func (f *AgentFactory) createScheduleParrot(_ context.Context, cfg *CreateConfig
 	// Create schedule service
 	scheduleSvc := schedule.NewService(f.store)
 
-	// Create scheduler agent
-	schedulerAgent, err := agentpkg.NewSchedulerAgent(
+	// Create scheduler agent V2 (framework-less, uses native LLM tool calling)
+	schedulerAgent, err := agentpkg.NewSchedulerAgentV2(
 		f.llm,
 		scheduleSvc,
 		cfg.UserID,
 		timezone,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create scheduler agent: %w", err)
+		return nil, fmt.Errorf("failed to create scheduler agent v2: %w", err)
 	}
 
-	// Wrap in schedule parrot
-	parrot, err := agentpkg.NewScheduleParrot(schedulerAgent)
+	// Wrap in schedule parrot V2
+	parrot, err := agentpkg.NewScheduleParrotV2(schedulerAgent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create schedule parrot: %w", err)
+		return nil, fmt.Errorf("failed to create schedule parrot v2: %w", err)
 	}
 
 	return parrot, nil

@@ -45,7 +45,6 @@ func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream Cha
 	// Create logger for this request
 	logger := observability.NewRequestContext(slog.Default(), req.AgentType.String(), req.UserID)
 	logger.Info("AI chat started (parrot agent)",
-		slog.String("agent_type", req.AgentType.String()),
 		slog.Int(observability.LogFieldMessageLen, len(req.Message)),
 		slog.Int("history_count", len(req.History)),
 	)
@@ -72,7 +71,6 @@ func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream Cha
 	}
 
 	logger.Info("AI chat completed",
-		slog.String("agent_type", req.AgentType.String()),
 		slog.Int64(observability.LogFieldDuration, logger.DurationMs()),
 	)
 
@@ -179,11 +177,11 @@ func (h *RoutingHandler) Handle(ctx context.Context, req *ChatRequest, stream Ch
 // ToChatRequest converts a protobuf request to an internal ChatRequest.
 func ToChatRequest(pbReq *v1pb.ChatRequest) *ChatRequest {
 	return &ChatRequest{
-		Message:         pbReq.Message,
-		History:         pbReq.History,
-		AgentType:       AgentTypeFromProto(pbReq.AgentType),
-		Timezone:        pbReq.UserTimezone,
-		ConversationID:  pbReq.ConversationId,
+		Message:            pbReq.Message,
+		History:            pbReq.History,
+		AgentType:          AgentTypeFromProto(pbReq.AgentType),
+		Timezone:           pbReq.UserTimezone,
+		ConversationID:     pbReq.ConversationId,
 		IsTempConversation: pbReq.IsTempConversation,
 	}
 }

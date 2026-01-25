@@ -98,6 +98,10 @@ func (m *mockLLMService) ChatStream(ctx context.Context, messages []ai.Message) 
 	return nil, nil
 }
 
+func (m *mockLLMService) ChatWithTools(ctx context.Context, messages []ai.Message, tools []ai.ToolDescriptor) (*ai.ChatResponse, error) {
+	return &ai.ChatResponse{Content: m.response}, nil
+}
+
 func (m *mockLLMService) IsEnabled() bool {
 	return true
 }
