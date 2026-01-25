@@ -61,7 +61,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({
   className,
 }: PartnerGreetingProps) {
   const { t } = useTranslation();
-  const { icon, greeting, timeOfDay } = useMemo(() => getTimeBasedGreeting(), [t]);
+  const { greeting, timeOfDay } = useMemo(() => getTimeBasedGreeting(), [t]);
 
   // 生成个性化问候消息
   const personalizedMessage = useMemo(() => {
