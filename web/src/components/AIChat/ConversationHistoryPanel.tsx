@@ -62,18 +62,10 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header */}
-      <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.aichat.sidebar.history")}</h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-          {t("ai.aichat.sidebar.conversation-count", { count: conversationSummaries.length })}
-        </p>
-      </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {hasConversations ? (
-          <div className="p-2 space-y-1">
+          <div className="flex flex-col gap-1 px-2 py-2">
             {conversationSummaries.map((conversation) => (
               <ConversationItem
                 key={conversation.id}

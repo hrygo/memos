@@ -32,6 +32,7 @@ interface ScheduleInputProps {
   initialText?: string;
   editSchedule?: Schedule | null;
   onSuccess?: (schedule: Schedule) => void;
+  contextDate?: string;
 }
 
 // Type definitions for conversation history
@@ -111,15 +112,9 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     const newHistory: ConversationMessage[] = [...trimmedHistory, { role: "user", content: input }];
 
     try {
-      // Build full conversation context using StringBuilder pattern for better performance
-      const parts: string[] = [];
-      for (const msg of newHistory) {
-        parts.push(`${msg.role}: ${msg.content}`);
-      }
-      const conversationContext = parts.join("\n");
-
       const result = await agentChat.mutateAsync({
-        message: conversationContext,
+        message: input,
+        history: newHistory,
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
@@ -199,8 +194,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
           parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
             ? parsedSchedule.name
             : `schedules/${typeof crypto !== "undefined" && crypto.randomUUID
-                ? crypto.randomUUID()
-                : `${Date.now()}_${Math.random().toString(36).slice(2)}`}`;
+              ? crypto.randomUUID()
+              : `${Date.now()}_${Math.random().toString(36).slice(2)}`}`;
 
         const scheduleToCreate = { ...parsedSchedule, name: validName };
 
@@ -476,8 +471,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
                         value={
                           parsedSchedule.endTs > 0
                             ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                                "YYYY-MM-DDTHH:mm",
-                              )
+                              "YYYY-MM-DDTHH:mm",
+                            )
                             : ""
                         }
                         onChange={(e) => {

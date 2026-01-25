@@ -30,7 +30,8 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
   const t = useTranslate();
 
   const todayStr = dayjs().format("YYYY-MM-DD");
-  const startOfWeek = currentDate.startOf("week");
+  // Show 3 days before and 3 days after current date
+  const startDate = currentDate.subtract(3, "day");
 
   const toDayjs = (ts: bigint) => dayjs(timestampDate(create(TimestampSchema, { seconds: ts, nanos: 0 })));
 
@@ -53,7 +54,7 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
 
       <div className="flex items-center gap-1 sm:gap-1.5 flex-1" role="tablist" aria-label={t("schedule.select-date") as string}>
         {Array.from({ length: 7 }, (_, i) => {
-          const date = startOfWeek.add(i, "day");
+          const date = startDate.add(i, "day");
           const dateStr = date.format("YYYY-MM-DD");
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedDate;

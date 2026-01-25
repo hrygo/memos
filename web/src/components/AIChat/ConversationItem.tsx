@@ -32,14 +32,14 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
     >
       <button
         onClick={() => onSelect(conversation.id)}
-        className="w-full text-left p-3 pr-12"
+        className="w-full text-left px-3 py-2.5 pr-12"
         aria-label={`Select conversation: ${conversation.title}`}
       >
         <div className="flex items-start gap-3">
           {/* Parrot Icon */}
-          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0", !parrotIcon.startsWith("/") && parrotTheme.iconBg)}>
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0", !parrotIcon.startsWith("/") && parrotTheme.iconBg)}>
             {parrotIcon.startsWith("/") ? (
-              <img src={parrotIcon} alt={parrot?.displayName || ""} className="w-8 h-8 object-contain" />
+              <img src={parrotIcon} alt={parrot?.displayName || ""} className="w-6 h-6 object-contain" />
             ) : (
               parrotIcon
             )}
