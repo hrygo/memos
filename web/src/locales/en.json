@@ -503,6 +503,7 @@
     "context-cleared": "Context trimmed",
     "context-cleared-toast": "Context trimmed",
     "welcome-title": "Welcome to AI Assistant",
+    "welcome-intro": "Hi, I'm {{name}}",
     "welcome-description": "I can help you search, summarize, and discuss your memos, as well as manage your schedules",
     "send-shortcut": "Send",
     "newline-shortcut": "New line",
@@ -511,7 +512,14 @@
     "prompt-explain": "Explain a concept",
     "prompt-discuss": "Start a discussion",
     "error-title": "Something went wrong",
+    "error-generic": "Sorry, something went wrong. Please try again.",
     "retry": "Retry",
+    "start-chat": "Start Chat",
+    "assistants": "Assistants",
+    "hub": {
+      "title": "AI Assistants",
+      "subtitle": "Choose an AI assistant to help you with your tasks, creativity, and organization."
+    },
     "aichat": {
       "sidebar": {
         "history": "History",
@@ -976,7 +984,15 @@
       "no-conflict-slot": "No conflict",
       "end-slot": "End slot",
       "next-day-available": "Next day available",
-      "slot-unavailable": "Suggested time slot still has conflicts, please select another"
+      "slot-unavailable": "Suggested time slot still has conflicts, please select another",
+      "single-conflict": "Found 1 schedule conflict",
+      "multiple-conflicts": "Found {{count}} schedule conflicts",
+      "new-schedule": "New schedule",
+      "conflicting-schedules": "Conflicting schedules",
+      "ai-suggestions": "AI suggested solutions",
+      "suggestions-available": "suggestions available",
+      "manual-resolve": "Manual adjust",
+      "override": "Create anyway"
     },
     "dialog-history": "Dialog history",
     "ai-assistant-reply": "AI assistant reply",
@@ -992,7 +1008,21 @@
     "input-reply": "Input reply",
     "send-reply": "Send reply",
     "cancel-chat": "Cancel chat",
-    "schedule-preview": "Schedule preview"
+    "schedule-preview": "Schedule preview",
+    "streaming-assistant": {
+      "placeholder": "Tell me what you want to schedule, e.g., \"Meeting tomorrow at 3pm\"",
+      "thinking": "Thinking...",
+      "executing-tool": "Executing",
+      "hint": "Tell me what you want to schedule, natural language input supported"
+    },
+    "ai-sidebar": {
+      "title": "AI Assistant",
+      "subtitle": "Smart Schedule Management",
+      "quick-suggestions": "Quick Actions",
+      "placeholder": "Tell me what you want to schedule...",
+      "placeholder-with-date": "{{date}}, tell me what you want to schedule...",
+      "hint": "Use natural language to create and manage schedules"
+    }
   },
   "chat": {
     "default": {

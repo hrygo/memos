@@ -503,6 +503,7 @@
     "context-cleared": "上下文已裁剪",
     "context-cleared-toast": "上下文已裁剪",
     "welcome-title": "欢迎使用 AI 助手",
+    "welcome-intro": "嗨，我是 {{name}}",
     "welcome-description": "我可以帮您搜索、总结、讨论备忘内容，以及管理您的日程",
     "send-shortcut": "发送",
     "newline-shortcut": "换行",
@@ -511,7 +512,14 @@
     "prompt-explain": "解释某个概念",
     "prompt-discuss": "开始讨论",
     "error-title": "出错了",
+    "error-generic": "抱歉，出了点问题，请重试",
     "retry": "重试",
+    "start-chat": "开始对话",
+    "assistants": "AI 助手",
+    "hub": {
+      "title": "AI 助手中心",
+      "subtitle": "选择一个 AI 助手来帮助您完成任务、激发创意和规划生活"
+    },
     "aichat": {
       "sidebar": {
         "history": "历史记录",
@@ -976,7 +984,15 @@
       "no-conflict-slot": "无冲突时段",
       "end-slot": "末尾时段",
       "next-day-available": "次日可用",
-      "slot-unavailable": "建议时段仍有冲突，请选择其他时间"
+      "slot-unavailable": "建议时段仍有冲突，请选择其他时间",
+      "single-conflict": "发现 1 个日程冲突",
+      "multiple-conflicts": "发现 {{count}} 个日程冲突",
+      "new-schedule": "新日程",
+      "conflicting-schedules": "冲突的日程",
+      "ai-suggestions": "AI 建议的解决方案",
+      "suggestions-available": "个可用建议",
+      "manual-resolve": "手动调整",
+      "override": "仍要创建"
     },
     "dialog-history": "对话历史",
     "ai-assistant-reply": "AI 助手回复",
@@ -992,7 +1008,21 @@
     "input-reply": "输入回复",
     "send-reply": "发送回复",
     "cancel-chat": "取消对话",
-    "schedule-preview": "日程预览"
+    "schedule-preview": "日程预览",
+    "streaming-assistant": {
+      "placeholder": "告诉我你想安排什么，例如：「明天下午3点开会」",
+      "thinking": "正在思考...",
+      "executing-tool": "正在执行",
+      "hint": "告诉我你想安排什么，支持自然语言输入"
+    },
+    "ai-sidebar": {
+      "title": "AI 助手",
+      "subtitle": "智能日程管理",
+      "quick-suggestions": "快捷操作",
+      "placeholder": "告诉我你想安排什么...",
+      "placeholder-with-date": "{{date}}，告诉我你想安排什么...",
+      "hint": "使用自然语言创建和管理日程"
+    }
   },
   "chat": {
     "default": {
