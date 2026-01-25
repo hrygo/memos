@@ -940,8 +940,8 @@
     },
     "quick": {
       "input": {
-        "placeholder": "例如：五点钟回家",
-        "placeholder-with-date": "{{date}}，例如：五点钟回家",
+        "placeholder": "例如：明天下午3点开会",
+        "placeholder-with-date": "{{date}}，告诉我你想安排什么",
         "ai-hint": "AI 智能体会自动创建日程",
         "creating": "AI 正在为您创建日程...",
         "created-success": "日程已创建成功",

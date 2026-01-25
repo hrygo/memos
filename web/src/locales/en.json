@@ -948,8 +948,8 @@
     },
     "quick": {
       "input": {
-        "placeholder": "e.g. Go home at 5 o'clock",
-        "placeholder-with-date": "{{date}}, e.g. Go home at 5 o'clock",
+        "placeholder": "e.g. Meeting at 3pm tomorrow",
+        "placeholder-with-date": "{{date}}, tell me what you want to schedule",
         "ai-hint": "AI agent will automatically create schedules",
         "creating": "AI is creating your schedule...",
         "created-success": "Schedule created successfully",
