@@ -6,6 +6,7 @@ import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
 import { ScheduleSearchBar } from "@/components/AIChat/ScheduleSearchBar";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
 import { ScheduleQuickInput } from "@/components/ScheduleQuickInput/ScheduleQuickInput";
+import { ScheduleAISidebar } from "@/components/AIChat/ScheduleAISidebar";
 import { Button } from "@/components/ui/button";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useSchedulesOptimized } from "@/hooks/useScheduleQueries";
@@ -53,99 +54,107 @@ const Schedule = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Header with View Tabs and Search (desktop) */}
-      <div className="hidden lg:flex flex-none px-4 py-3 border-b border-border/50 overflow-hidden">
-        <div className="flex items-center justify-between gap-4 w-full">
+    <div className="w-full h-full flex overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header with View Tabs and Search (desktop) */}
+        <div className="hidden lg:flex flex-none px-4 py-3 border-b border-border/50 overflow-hidden">
+          <div className="flex items-center justify-between gap-4 w-full">
+            {!hasSearchFilter ? (
+              <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-lg" role="tablist">
+                <Button
+                  role="tab"
+                  aria-selected={viewTab === "timeline"}
+                  variant={viewTab === "timeline" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-9 px-3 text-sm font-medium rounded-md"
+                  onClick={() => setViewTab("timeline")}
+                >
+                  <LayoutList className="w-4 h-4 mr-1.5" />
+                  {t("schedule.timeline") || "Timeline"}
+                </Button>
+                <Button
+                  role="tab"
+                  aria-selected={viewTab === "calendar"}
+                  variant={viewTab === "calendar" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-9 px-3 text-sm font-medium rounded-md"
+                  onClick={() => setViewTab("calendar")}
+                >
+                  <Calendar className="w-4 h-4 mr-1.5" />
+                  {t("schedule.month-view") || "Month"}
+                </Button>
+              </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                {filteredSchedules.length} {t("schedule.search-results") || "results"}
+              </span>
+            )}
+
+            <div className="flex items-center gap-2 justify-end">
+              <ScheduleSearchBar
+                schedules={allSchedules}
+                onFilteredChange={setFilteredSchedules}
+                onHasFilterChange={setHasSearchFilter}
+                className="w-80"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: View Tabs */}
+        <div className="lg:hidden flex-none px-3 py-2 flex items-center justify-between gap-2 border-b border-border/50">
           {!hasSearchFilter ? (
-            <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-lg" role="tablist">
+            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
               <Button
-                role="tab"
                 aria-selected={viewTab === "timeline"}
                 variant={viewTab === "timeline" ? "default" : "ghost"}
                 size="sm"
-                className="h-9 px-3 text-sm font-medium rounded-md"
+                className="h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]"
                 onClick={() => setViewTab("timeline")}
               >
-                <LayoutList className="w-4 h-4 mr-1.5" />
-                {t("schedule.timeline") || "Timeline"}
+                <LayoutList className="w-4 h-4" />
               </Button>
               <Button
-                role="tab"
                 aria-selected={viewTab === "calendar"}
                 variant={viewTab === "calendar" ? "default" : "ghost"}
                 size="sm"
-                className="h-9 px-3 text-sm font-medium rounded-md"
+                className="h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]"
                 onClick={() => setViewTab("calendar")}
               >
-                <Calendar className="w-4 h-4 mr-1.5" />
-                {t("schedule.month-view") || "Month"}
+                <Calendar className="w-4 h-4" />
               </Button>
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {filteredSchedules.length} {t("schedule.search-results") || "results"}
             </span>
           )}
+        </div>
 
-          <div className="flex items-center gap-2 justify-end">
-            <ScheduleSearchBar
-              schedules={allSchedules}
-              onFilteredChange={setFilteredSchedules}
-              onHasFilterChange={setHasSearchFilter}
-              className="w-80"
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
+          {effectiveViewTab === "calendar" ? (
+            <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
+          ) : (
+            <ScheduleTimeline
+              schedules={displaySchedules}
+              selectedDate={selectedDate}
+              onDateClick={handleDateClick}
+              onScheduleEdit={handleEditSchedule}
             />
-          </div>
+          )}
+        </div>
+
+        {/* Quick Input with Templates */}
+        <div className="flex-none p-4 bg-background/95 backdrop-blur-sm border-t border-border/50">
+          <ScheduleQuickInput initialDate={selectedDate} onScheduleCreated={handleScheduleCreated} />
         </div>
       </div>
 
-      {/* Mobile: View Tabs */}
-      <div className="lg:hidden flex-none px-3 py-2 flex items-center justify-between gap-2 border-b border-border/50">
-        {!hasSearchFilter ? (
-          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-            <Button
-              aria-selected={viewTab === "timeline"}
-              variant={viewTab === "timeline" ? "default" : "ghost"}
-              size="sm"
-              className="h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]"
-              onClick={() => setViewTab("timeline")}
-            >
-              <LayoutList className="w-4 h-4" />
-            </Button>
-            <Button
-              aria-selected={viewTab === "calendar"}
-              variant={viewTab === "calendar" ? "default" : "ghost"}
-              size="sm"
-              className="h-10 w-10 p-0 rounded-md min-h-[44px] min-w-[44px]"
-              onClick={() => setViewTab("calendar")}
-            >
-              <Calendar className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            {filteredSchedules.length} {t("schedule.search-results") || "results"}
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
-        {effectiveViewTab === "calendar" ? (
-          <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
-        ) : (
-          <ScheduleTimeline
-            schedules={displaySchedules}
-            selectedDate={selectedDate}
-            onDateClick={handleDateClick}
-            onScheduleEdit={handleEditSchedule}
-          />
-        )}
-      </div>
-
-      {/* Quick Input with Templates */}
-      <div className="flex-none p-4 bg-background/95 backdrop-blur-sm border-t border-border/50">
-        <ScheduleQuickInput initialDate={selectedDate} onScheduleCreated={handleScheduleCreated} />
+      {/* AI Assistant Sidebar */}
+      <div className="hidden xl:block">
+        <ScheduleAISidebar />
       </div>
 
       {/* Schedule Input Dialog */}
@@ -153,6 +162,7 @@ const Schedule = () => {
         open={scheduleInputOpen}
         onOpenChange={handleCloseInput}
         editSchedule={editSchedule}
+        contextDate={selectedDate}
         onSuccess={() => {
           handleCloseInput();
           queryClient.invalidateQueries({ queryKey: ["schedules"] });

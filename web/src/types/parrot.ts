@@ -13,6 +13,18 @@ export enum ParrotAgentType {
 }
 
 /**
+ * Default pinned agents in the sidebar
+ * 侧边栏默认固定的鹦鹉代理
+ */
+export const PINNED_PARROT_AGENTS = [
+  ParrotAgentType.DEFAULT,
+  ParrotAgentType.MEMO,
+  ParrotAgentType.SCHEDULE,
+  ParrotAgentType.AMAZING,
+  ParrotAgentType.CREATIVE,
+];
+
+/**
  * Emotional state of a parrot
  * 鹦鹉的情感状态
  */

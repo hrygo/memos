@@ -288,9 +288,24 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       title: title || getDefaultTitle(parrotId),
       parrotId: agentType,
     }).then(pb => {
-      refreshConversations().then(() => {
-        setState(prev => ({ ...prev, currentConversationId: String(pb.id) }));
+      // Optimistically update state with the new conversation
+      const newConv = convertConversationFromPb(pb);
+
+      setState(prev => {
+        // Prevent duplicates
+        const exists = prev.conversations.some(c => c.id === newConv.id);
+        const newConversations = exists ? prev.conversations : [newConv, ...prev.conversations];
+
+        return {
+          ...prev,
+          conversations: newConversations,
+          currentConversationId: newConv.id,
+          viewMode: "chat",
+        };
       });
+
+      // Refresh in background to ensure sync
+      refreshConversations();
     }).catch(err => {
       console.error("Failed to create conversation:", err);
       // Rollback to hub view on error
@@ -437,7 +452,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     }));
   }, []);
 
-  const addContextSeparator = useCallback((conversationId: string, trigger: "manual" | "auto" | "shortcut" = "manual") => {
+  const addContextSeparator = useCallback((conversationId: string, _trigger: "manual" | "auto" | "shortcut" = "manual") => {
     const numericId = parseInt(conversationId);
     if (isNaN(numericId)) return "";
 
@@ -463,75 +478,75 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     return "";
   }, [convertConversationFromPb]);
 
-// Helper function to merge messages into state (pure function, safe for async callbacks)
-function mergeMessagesIntoState(
-  prevState: AIChatState,
-  conversationId: string,
-  response: {
-    messages: AIMessage[];
-    hasMore: boolean;
-    totalCount: number;
-    latestMessageUid: string;
-  },
-  convertMessageFromPb: (m: AIMessage) => ChatItem
-): AIChatState {
-  const newMessages = response.messages.map(m => convertMessageFromPb(m));
+  // Helper function to merge messages into state (pure function, safe for async callbacks)
+  function mergeMessagesIntoState(
+    prevState: AIChatState,
+    conversationId: string,
+    response: {
+      messages: AIMessage[];
+      hasMore: boolean;
+      totalCount: number;
+      latestMessageUid: string;
+    },
+    convertMessageFromPb: (m: AIMessage) => ChatItem
+  ): AIChatState {
+    const newMessages = response.messages.map(m => convertMessageFromPb(m));
 
-  return {
-    ...prevState,
-    conversations: prevState.conversations.map(c => {
-      if (c.id !== conversationId) return c;
+    return {
+      ...prevState,
+      conversations: prevState.conversations.map(c => {
+        if (c.id !== conversationId) return c;
 
-      // For first load (no existing cache), use new messages directly
-      if (!c.messageCache) {
+        // For first load (no existing cache), use new messages directly
+        if (!c.messageCache) {
+          return {
+            ...c,
+            messages: enforceFIFOMessages(newMessages),
+            messageCache: {
+              lastMessageUid: response.latestMessageUid,
+              totalCount: response.totalCount,
+              hasMore: response.hasMore,
+            },
+          };
+        }
+
+        // For incremental sync, merge with existing messages
+        const existingMessages = c.messages || [];
+        const mergedMessages = [...existingMessages];
+
+        // Append new messages (avoid duplicates by UID)
+        const existingUids = new Set(
+          existingMessages
+            .filter(m => !isContextSeparator(m))
+            .map(m => ("uid" in m ? m.uid : m.id))
+        );
+
+        for (const msg of newMessages) {
+          if (!isContextSeparator(msg)) {
+            const uid = (msg as any).uid || msg.id;
+            if (!existingUids.has(uid)) {
+              mergedMessages.push(msg);
+            }
+          } else {
+            mergedMessages.push(msg);
+          }
+        }
+
+        // Enforce FIFO limit
         return {
           ...c,
-          messages: enforceFIFOMessages(newMessages),
+          messages: enforceFIFOMessages(mergedMessages),
           messageCache: {
             lastMessageUid: response.latestMessageUid,
             totalCount: response.totalCount,
             hasMore: response.hasMore,
           },
         };
-      }
+      }),
+    };
+  }
 
-      // For incremental sync, merge with existing messages
-      const existingMessages = c.messages || [];
-      const mergedMessages = [...existingMessages];
-
-      // Append new messages (avoid duplicates by UID)
-      const existingUids = new Set(
-        existingMessages
-          .filter(m => !isContextSeparator(m))
-          .map(m => ("uid" in m ? m.uid : m.id))
-      );
-
-      for (const msg of newMessages) {
-        if (!isContextSeparator(msg)) {
-          const uid = (msg as any).uid || msg.id;
-          if (!existingUids.has(uid)) {
-            mergedMessages.push(msg);
-          }
-        } else {
-          mergedMessages.push(msg);
-        }
-      }
-
-      // Enforce FIFO limit
-      return {
-        ...c,
-        messages: enforceFIFOMessages(mergedMessages),
-        messageCache: {
-          lastMessageUid: response.latestMessageUid,
-          totalCount: response.totalCount,
-          hasMore: response.hasMore,
-        },
-      };
-    }),
-  };
-}
-
-// Message sync actions with incremental sync and FIFO cache
+  // Message sync actions with incremental sync and FIFO cache
   const syncMessages = useCallback(async (conversationId: string) => {
     const numericId = parseInt(conversationId);
     if (isNaN(numericId)) return;

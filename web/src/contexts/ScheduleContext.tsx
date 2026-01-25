@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from "react";
+import dayjs from "dayjs";
 import type { QuickInputPreferences } from "@/components/ScheduleQuickInput/types";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 
@@ -44,7 +45,7 @@ const DEFAULT_QUICK_INPUT_PREFERENCES: QuickInputPreferences = {
 };
 
 export const ScheduleProvider = ({ children }: ScheduleProviderProps) => {
-  const [selectedDate, setSelectedDate] = useState<string | undefined>();
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(dayjs().format("YYYY-MM-DD"));
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");

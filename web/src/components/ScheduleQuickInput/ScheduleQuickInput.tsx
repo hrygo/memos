@@ -85,13 +85,9 @@ export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreate
     setLastInput(trimmedInput);
     setAiMessage("");
 
-    const messageWithDate = selectedDate
-      ? t("schedule.quick.input.date-context", { date: selectedDate }) + `\n${trimmedInput}`
-      : trimmedInput;
-
     try {
       const response = await agentChat.mutateAsync({
-        message: messageWithDate,
+        message: trimmedInput,
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
