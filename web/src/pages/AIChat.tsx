@@ -1,5 +1,5 @@
 import copy from "copy-to-clipboard";
-import { MoreVertical, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,6 @@ import { useChat } from "@/hooks/useAIQueries";
 import { useCapabilityRouter } from "@/hooks/useCapabilityRouter";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { getLocalizedParrot } from "@/hooks/useParrots";
-import { cn } from "@/lib/utils";
 import type { ChatItem } from "@/types/aichat";
 import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
 import { PARROT_AGENTS, PARROT_ICONS, ParrotAgentType } from "@/types/parrot";
@@ -23,7 +22,6 @@ import {
   CapabilityType,
   CapabilityStatus,
   capabilityToParrotAgent,
-  parrotAgentToCapability,
 } from "@/types/capability";
 
 // ============================================================
@@ -43,7 +41,6 @@ interface UnifiedChatViewProps {
   scheduleQueryResults: ScheduleQueryResultData[];
   items: ChatItem[];
   currentCapability: CapabilityType;
-  capabilityStatus: CapabilityStatus;
   onCapabilityChange: (capability: CapabilityType) => void;
   recentMemoCount?: number;
   upcomingScheduleCount?: number;
