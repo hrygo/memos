@@ -491,6 +491,8 @@
   "ai": {
     "chat": "Chat",
     "thinking": "Thinking...",
+    "processing": "Processing...",
+    "ready": "Ready",
     "regenerate": "Regenerate",
     "clear": "Trim",
     "more-options": "More options",
@@ -516,6 +518,8 @@
     "retry": "Retry",
     "start-chat": "Start Chat",
     "assistants": "Assistants",
+    "assistant-name": "AI Assistant",
+    "assistant-description": "Your Digital Partner",
     "hub": {
       "title": "AI Assistants",
       "subtitle": "Choose an AI assistant to help you with your tasks, creativity, and organization."

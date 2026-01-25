@@ -491,6 +491,8 @@
   "ai": {
     "chat": "对话",
     "thinking": "思考中...",
+    "processing": "处理中...",
+    "ready": "就绪",
     "regenerate": "重新生成",
     "clear": "裁剪",
     "more-options": "更多选项",
@@ -516,6 +518,8 @@
     "retry": "重试",
     "start-chat": "开始对话",
     "assistants": "AI 助手",
+    "assistant-name": "AI 助手",
+    "assistant-description": "你的数字伙伴",
     "hub": {
       "title": "AI 助手中心",
       "subtitle": "选择一个 AI 助手来帮助您完成任务、激发创意和规划生活"
