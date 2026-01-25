@@ -28,7 +28,7 @@ const NavigationDrawer = () => {
         </SheetHeader>
         <Navigation className="pb-4" />
       </SheetContent>
-    </Sheet >
+    </Sheet>
   );
 };
 

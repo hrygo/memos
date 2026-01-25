@@ -36,11 +36,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         alt={alt}
         loading={lazy ? "lazy" : "eager"}
         decoding="async"
-        className={cn(
-          "transition-opacity duration-200",
-          isLoaded ? "opacity-100" : "opacity-0",
-          className,
-        )}
+        className={cn("transition-opacity duration-200", isLoaded ? "opacity-100" : "opacity-0", className)}
         onLoad={() => setIsLoaded(true)}
         onError={() => {
           setIsLoaded(true);

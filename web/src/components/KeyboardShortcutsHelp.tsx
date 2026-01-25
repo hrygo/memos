@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface Shortcut {
@@ -75,7 +69,7 @@ const KeyboardShortcutsHelp = () => {
             {i < part.split(" + ").length - 1 && <span className="text-muted-foreground text-xs">+</span>}
           </span>
         ))}
-        {index < (key.split("/").length - 1) && <span className="text-muted-foreground text-xs mx-1">or</span>}
+        {index < key.split("/").length - 1 && <span className="text-muted-foreground text-xs mx-1">or</span>}
       </span>
     ));
   };
@@ -95,10 +89,7 @@ const KeyboardShortcutsHelp = () => {
               <h3 className="text-sm font-semibold mb-2">{category.title}</h3>
               <div className="space-y-2">
                 {category.shortcuts.map((shortcut) => (
-                  <div
-                    key={shortcut.key}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={shortcut.key} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{shortcut.description}</span>
                     <div className="flex items-center">{formatKey(shortcut.key)}</div>
                   </div>

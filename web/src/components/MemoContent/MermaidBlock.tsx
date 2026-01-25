@@ -8,9 +8,7 @@ import { extractCodeContent } from "./utils";
 // Security: Validate SVG output to prevent script injection
 const sanitizeSvg = (svg: string): string => {
   // Remove any script tags or event handlers from SVG
-  return svg
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-    .replace(/\bon\w+\s*=/gi, ""); // Remove onclick, onload, etc.
+  return svg.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/\bon\w+\s*=/gi, ""); // Remove onclick, onload, etc.
 };
 
 interface MermaidBlockProps {

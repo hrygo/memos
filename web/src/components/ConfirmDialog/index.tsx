@@ -45,9 +45,7 @@ export default function ConfirmDialog({
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className={description ? "" : "sr-only"}>
-            {description || t("common.confirm")}
-          </DialogDescription>
+          <DialogDescription className={description ? "" : "sr-only"}>{description || t("common.confirm")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" disabled={loading} onClick={() => onOpenChange(false)}>

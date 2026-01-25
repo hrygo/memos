@@ -35,7 +35,7 @@ export const CARD_SIZES = {
 export const MEMO_CARD = cn(
   CARD_VARIANTS.default,
   CARD_SIZES.md,
-  "relative group flex flex-col justify-start items-start w-full mb-2 gap-2 text-card-foreground transition-colors"
+  "relative group flex flex-col justify-start items-start w-full mb-2 gap-2 text-card-foreground transition-colors",
 );
 
 /**
@@ -45,7 +45,7 @@ export const MEMO_CARD = cn(
 export const MEMO_EDITOR_CARD = cn(
   CARD_VARIANTS.default,
   "px-4 pt-3 pb-1",
-  "group relative w-full flex flex-col justify-between items-start gap-2"
+  "group relative w-full flex flex-col justify-between items-start gap-2",
 );
 
 /**
@@ -54,13 +54,10 @@ export const MEMO_EDITOR_CARD = cn(
 export const MEMO_CARD_SKELETON = cn(
   CARD_VARIANTS.default,
   CARD_SIZES.md,
-  "relative flex flex-col justify-start items-start w-full mb-2 gap-2 animate-pulse"
+  "relative flex flex-col justify-start items-start w-full mb-2 gap-2 animate-pulse",
 );
 
 /**
  * Base classes for related memo cards (smaller, clickable)
  */
-export const RELATED_MEMO_CARD = cn(
-  CARD_VARIANTS.interactive,
-  "p-3 group"
-);
+export const RELATED_MEMO_CARD = cn(CARD_VARIANTS.interactive, "p-3 group");

@@ -1,9 +1,9 @@
 import { FileTextIcon, LoaderIcon, SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { RELATED_MEMO_CARD } from "@/components/ui/card/constants";
 import { useRelatedMemos } from "@/hooks/useAIQueries";
 import { cn } from "@/lib/utils";
-import { RELATED_MEMO_CARD } from "@/components/ui/card/constants";
 
 interface Props {
   memoName: string; // format: "memos/{id}"
@@ -36,11 +36,7 @@ const MemoRelatedList = ({ memoName, className }: Props) => {
         {relatedMemos.memos.map((memo) => {
           const id = memo.name.split("/").pop();
           return (
-            <Link
-              key={memo.name}
-              to={`/m/${id}`}
-              className={RELATED_MEMO_CARD}
-            >
+            <Link key={memo.name} to={`/m/${id}`} className={RELATED_MEMO_CARD}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <FileTextIcon className="w-3 h-3 text-muted-foreground" />
