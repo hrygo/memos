@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -23,6 +24,35 @@ type LLMService interface {
 
 	// ChatStream performs streaming chat.
 	ChatStream(ctx context.Context, messages []Message) (<-chan string, <-chan error)
+
+	// ChatWithTools performs chat with function calling support.
+	ChatWithTools(ctx context.Context, messages []Message, tools []ToolDescriptor) (*ChatResponse, error)
+}
+
+// ToolDescriptor represents a function/tool available to the LLM.
+type ToolDescriptor struct {
+	Name        string
+	Description string
+	Parameters  string // JSON Schema string
+}
+
+// ChatResponse represents the LLM response including potential tool calls.
+type ChatResponse struct {
+	Content   string
+	ToolCalls []ToolCall
+}
+
+// ToolCall represents a request to call a tool.
+type ToolCall struct {
+	ID       string
+	Type     string
+	Function FunctionCall
+}
+
+// FunctionCall represents the function details.
+type FunctionCall struct {
+	Name      string
+	Arguments string
 }
 
 type llmService struct {
@@ -95,6 +125,74 @@ func (s *llmService) Chat(ctx context.Context, messages []Message) (string, erro
 	}
 
 	return resp.Choices[0].Message.Content, nil
+}
+
+func (s *llmService) ChatWithTools(ctx context.Context, messages []Message, tools []ToolDescriptor) (*ChatResponse, error) {
+	// Add timeout protection
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	openaiTools := make([]openai.Tool, len(tools))
+	for i, t := range tools {
+		// Parse JSON schema definition for parameters
+		// Assuming Parameters is already a valid JSON Schema string
+		// Note: user must provide "type": "object" wrapper if not present?
+		// LangChainGo usually provides full schema.
+		// We'll treat it as json.RawMessage if possible, but go-openai expects struct or map?
+		// go-openai Parameters is interface{}.
+
+		// For simplicity, we assume we need to unmarshal the string into something generic
+		// or pass it directly if library supports it.
+		// Looking at go-openai: FunctionDefinition.Parameters is interface{}.
+		// We should unmarshal the JSON string to map[string]interface{}.
+
+		openaiTools[i] = openai.Tool{
+			Type: openai.ToolTypeFunction,
+			Function: &openai.FunctionDefinition{
+				Name:        t.Name,
+				Description: t.Description,
+				Parameters:  json.RawMessage(t.Parameters),
+			},
+		}
+	}
+
+	req := openai.ChatCompletionRequest{
+		Model:       s.model,
+		MaxTokens:   s.maxTokens,
+		Temperature: s.temperature,
+		Messages:    convertMessages(messages),
+		Tools:       openaiTools,
+	}
+
+	resp, err := s.client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("LLM chat with tools failed: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return nil, fmt.Errorf("empty response from LLM")
+	}
+
+	choice := resp.Choices[0]
+	response := &ChatResponse{
+		Content: choice.Message.Content,
+	}
+
+	if len(choice.Message.ToolCalls) > 0 {
+		response.ToolCalls = make([]ToolCall, len(choice.Message.ToolCalls))
+		for i, tc := range choice.Message.ToolCalls {
+			response.ToolCalls[i] = ToolCall{
+				ID:   tc.ID,
+				Type: string(tc.Type),
+				Function: FunctionCall{
+					Name:      tc.Function.Name,
+					Arguments: tc.Function.Arguments,
+				},
+			}
+		}
+	}
+
+	return response, nil
 }
 
 func (s *llmService) ChatStream(ctx context.Context, messages []Message) (<-chan string, <-chan error) {
