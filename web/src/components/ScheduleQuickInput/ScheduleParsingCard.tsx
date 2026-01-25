@@ -146,7 +146,11 @@ export function ScheduleParsingCard({
           </div>
 
           {/* Schedule Card */}
-          <div className="bg-background rounded-lg border border-border/50 p-2.5 shadow-sm" role="region" aria-label={t("schedule.schedule-details") as string}>
+          <div
+            className="bg-background rounded-lg border border-border/50 p-2.5 shadow-sm"
+            role="region"
+            aria-label={t("schedule.schedule-details") as string}
+          >
             {/* Title + Time in one row for compactness */}
             <div className="flex items-center gap-2 min-w-0">
               {/* Time badge */}

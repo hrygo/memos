@@ -206,9 +206,7 @@ export function ResizablePanel({
   const sidebarWidth = 384;
   const availableWidth = window.innerWidth - sidebarWidth;
   const panelWidthPx = isRight ? (availableWidth * sizePercent) / 100 : 0;
-  const panelStyle = isRight
-    ? { width: `${Math.max(200, panelWidthPx)}px`, height: "100%" }
-    : { height: `${sizePercent}%`, width: "100%" };
+  const panelStyle = isRight ? { width: `${Math.max(200, panelWidthPx)}px`, height: "100%" } : { height: `${sizePercent}%`, width: "100%" };
 
   const panelClass = isRight
     ? "absolute top-0 bottom-0 right-0 border-l border-border/50 rounded-l-2xl min-w-[200px]"
@@ -227,7 +225,11 @@ export function ResizablePanel({
     return (
       <div className="absolute inset-0 z-50 pointer-events-none">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer" onClick={() => onOpenChange(false)} aria-hidden="true" />
+        <div
+          className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer"
+          onClick={() => onOpenChange(false)}
+          aria-hidden="true"
+        />
 
         {/* Resizable Panel */}
         <div
@@ -278,7 +280,11 @@ export function ResizablePanel({
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer" onClick={() => onOpenChange(false)} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-black/20 pointer-events-auto cursor-pointer"
+        onClick={() => onOpenChange(false)}
+        aria-hidden="true"
+      />
 
       {/* Resizable Panel */}
       <div

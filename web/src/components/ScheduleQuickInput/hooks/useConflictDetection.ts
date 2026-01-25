@@ -8,7 +8,7 @@ import type { ConflictInfo, SuggestedTimeSlot } from "../types";
 // ============================================================================
 
 const DAY_START = 8; // 8 AM
-const DAY_END = 22;  // 10 PM
+const DAY_END = 22; // 10 PM
 const SLOT_INCREMENT = 30; // 30 minutes
 const MAX_SUGGESTIONS = 3;
 
@@ -47,12 +47,7 @@ function hasOverlap(start1: number, end1: number, start2: number, end2: number):
 /**
  * Find conflicts between a new schedule and existing schedules.
  */
-function findConflicts(
-  startTs: number,
-  endTs: number,
-  existingSchedules: Schedule[],
-  excludeName?: string
-): ConflictInfo[] {
+function findConflicts(startTs: number, endTs: number, existingSchedules: Schedule[], excludeName?: string): ConflictInfo[] {
   return existingSchedules
     .filter((s) => {
       if (excludeName && s.name === excludeName) return false;
@@ -87,65 +82,68 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
   const hasConflicts = conflicts.length > 0;
 
   // Find available slots
-  const findAvailableSlots = useCallback((date: Date, durationMinutes: number): SuggestedTimeSlot[] => {
-    const slots: SuggestedTimeSlot[] = [];
-    const dayStart = dayjs(date).hour(DAY_START).minute(0);
-    const dayEnd = dayjs(date).hour(DAY_END).minute(0);
-    const now = dayjs();
+  const findAvailableSlots = useCallback(
+    (date: Date, durationMinutes: number): SuggestedTimeSlot[] => {
+      const slots: SuggestedTimeSlot[] = [];
+      const dayStart = dayjs(date).hour(DAY_START).minute(0);
+      const dayEnd = dayjs(date).hour(DAY_END).minute(0);
+      const now = dayjs();
 
-    // Get schedules for this day, sorted by start time
-    const daySchedules = existingSchedules
-      .filter((s) => dayjs(Number(s.startTs) * 1000).isSame(date, "day"))
-      .sort((a, b) => Number(a.startTs) - Number(b.startTs));
+      // Get schedules for this day, sorted by start time
+      const daySchedules = existingSchedules
+        .filter((s) => dayjs(Number(s.startTs) * 1000).isSame(date, "day"))
+        .sort((a, b) => Number(a.startTs) - Number(b.startTs));
 
-    // Start searching from current time (rounded up) or DAY_START
-    let searchStart = dayStart;
-    if (now.isSame(date, "day") && now.isAfter(dayStart)) {
-      const roundedMinute = Math.ceil(now.minute() / SLOT_INCREMENT) * SLOT_INCREMENT;
-      searchStart = now.minute(roundedMinute).second(0);
-      if (searchStart.isBefore(dayStart)) searchStart = dayStart;
-    }
-
-    // Scan through the day looking for gaps
-    let currentStart = searchStart.unix();
-
-    for (const schedule of daySchedules) {
-      const sStart = Number(schedule.startTs);
-      const sEnd = Number(schedule.endTs);
-      const gapSeconds = sStart - currentStart;
-
-      // Check if gap fits the required duration
-      if (gapSeconds >= durationMinutes * 60 && !hasOverlap(currentStart, currentStart + durationMinutes * 60, sStart, sEnd)) {
-        const slotEnd = currentStart + durationMinutes * 60;
-        slots.push({
-          startTs: BigInt(currentStart),
-          endTs: BigInt(slotEnd),
-          label: `${dayjs.unix(currentStart).format("HH:mm")} - ${dayjs.unix(slotEnd).format("HH:mm")}`,
-          reason: (t?.("schedule.conflict.no-conflict-slot") as string) ?? "Available",
-        });
-        if (slots.length >= MAX_SUGGESTIONS) break;
+      // Start searching from current time (rounded up) or DAY_START
+      let searchStart = dayStart;
+      if (now.isSame(date, "day") && now.isAfter(dayStart)) {
+        const roundedMinute = Math.ceil(now.minute() / SLOT_INCREMENT) * SLOT_INCREMENT;
+        searchStart = now.minute(roundedMinute).second(0);
+        if (searchStart.isBefore(dayStart)) searchStart = dayStart;
       }
 
-      // Move to after this schedule
-      currentStart = Math.max(currentStart, sEnd);
-    }
+      // Scan through the day looking for gaps
+      let currentStart = searchStart.unix();
 
-    // Check for slot after last schedule
-    if (slots.length < MAX_SUGGESTIONS) {
-      const remainingSeconds = dayEnd.unix() - currentStart;
-      if (remainingSeconds >= durationMinutes * 60) {
-        const slotEnd = currentStart + durationMinutes * 60;
-        slots.push({
-          startTs: BigInt(currentStart),
-          endTs: BigInt(slotEnd),
-          label: `${dayjs.unix(currentStart).format("HH:mm")} - ${dayjs.unix(slotEnd).format("HH:mm")}`,
-          reason: (t?.("schedule.conflict.end-slot") as string) ?? "Available",
-        });
+      for (const schedule of daySchedules) {
+        const sStart = Number(schedule.startTs);
+        const sEnd = Number(schedule.endTs);
+        const gapSeconds = sStart - currentStart;
+
+        // Check if gap fits the required duration
+        if (gapSeconds >= durationMinutes * 60 && !hasOverlap(currentStart, currentStart + durationMinutes * 60, sStart, sEnd)) {
+          const slotEnd = currentStart + durationMinutes * 60;
+          slots.push({
+            startTs: BigInt(currentStart),
+            endTs: BigInt(slotEnd),
+            label: `${dayjs.unix(currentStart).format("HH:mm")} - ${dayjs.unix(slotEnd).format("HH:mm")}`,
+            reason: (t?.("schedule.conflict.no-conflict-slot") as string) ?? "Available",
+          });
+          if (slots.length >= MAX_SUGGESTIONS) break;
+        }
+
+        // Move to after this schedule
+        currentStart = Math.max(currentStart, sEnd);
       }
-    }
 
-    return slots.slice(0, MAX_SUGGESTIONS);
-  }, [existingSchedules, t]);
+      // Check for slot after last schedule
+      if (slots.length < MAX_SUGGESTIONS) {
+        const remainingSeconds = dayEnd.unix() - currentStart;
+        if (remainingSeconds >= durationMinutes * 60) {
+          const slotEnd = currentStart + durationMinutes * 60;
+          slots.push({
+            startTs: BigInt(currentStart),
+            endTs: BigInt(slotEnd),
+            label: `${dayjs.unix(currentStart).format("HH:mm")} - ${dayjs.unix(slotEnd).format("HH:mm")}`,
+            reason: (t?.("schedule.conflict.end-slot") as string) ?? "Available",
+          });
+        }
+      }
+
+      return slots.slice(0, MAX_SUGGESTIONS);
+    },
+    [existingSchedules, t],
+  );
 
   // Generate suggestions based on current input
   const suggestions = useMemo(() => {
@@ -182,17 +180,16 @@ export function useConflictDetection(options: UseConflictDetectionOptions): UseC
 // ============================================================================
 
 export function checkOverlap(start1: bigint | number, end1: bigint | number, start2: bigint | number, end2: bigint | number): boolean {
-  return hasOverlap(
-    Number(start1), Number(end1),
-    Number(start2), Number(end2)
-  );
+  return hasOverlap(Number(start1), Number(end1), Number(start2), Number(end2));
 }
 
 export function getOverlapDuration(start1: bigint | number, end1: bigint | number, start2: bigint | number, end2: bigint | number): number {
   if (!checkOverlap(start1, end1, start2, end2)) return 0;
 
-  const s1 = Number(start1), e1 = Number(end1);
-  const s2 = Number(start2), e2 = Number(end2);
+  const s1 = Number(start1),
+    e1 = Number(end1);
+  const s2 = Number(start2),
+    e2 = Number(end2);
   const overlapStart = Math.max(s1, s2);
   const overlapEnd = Math.min(e1, e2);
 

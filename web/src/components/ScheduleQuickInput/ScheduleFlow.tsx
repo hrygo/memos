@@ -110,7 +110,7 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             <div
               className={cn("max-w-[80%] rounded-2xl px-3 py-2", msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}
               role={msg.role === "assistant" ? "article" : "status"}
-              aria-label={msg.role === "assistant" ? t("schedule.ai-assistant-reply") as string : t("schedule.your-message") as string}
+              aria-label={msg.role === "assistant" ? (t("schedule.ai-assistant-reply") as string) : (t("schedule.your-message") as string)}
             >
               {msg.role === "assistant" ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -136,7 +136,11 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
             <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
               <Bot className="h-3.5 w-3.5 text-primary" />
             </div>
-            <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted" role="article" aria-label={t("schedule.ai-assistant-question") as string}>
+            <div
+              className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted"
+              role="article"
+              aria-label={t("schedule.ai-assistant-question") as string}
+            >
               <p className="text-sm text-muted-foreground mb-0">{getStepPrompt()}</p>
             </div>
           </div>
@@ -145,8 +149,16 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
 
       {/* Confirmation Step */}
       {currentStep === "confirmation" && (
-        <div role="region" aria-label={t("schedule.confirm-schedule") as string} className="px-4 py-3 border-t border-border/50 bg-muted/30">
-          <div className="flex items-start gap-3 p-3 rounded-lg border bg-background" role="group" aria-label={t("schedule.schedule-details") as string}>
+        <div
+          role="region"
+          aria-label={t("schedule.confirm-schedule") as string}
+          className="px-4 py-3 border-t border-border/50 bg-muted/30"
+        >
+          <div
+            className="flex items-start gap-3 p-3 rounded-lg border bg-background"
+            role="group"
+            aria-label={t("schedule.schedule-details") as string}
+          >
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0" aria-hidden="true">
               <Calendar className="h-4 w-4 text-primary" />
             </div>
@@ -215,7 +227,11 @@ export function ScheduleFlow({ currentStep, conversation, scheduleData, onSubmit
 
       {/* Input Area - Not shown in confirmation step */}
       {currentStep !== "confirmation" && (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border/50" role="region" aria-label={t("schedule.input-area") as string}>
+        <div
+          className="flex items-center gap-2 px-4 py-3 border-t border-border/50"
+          role="region"
+          aria-label={t("schedule.input-area") as string}
+        >
           <Input
             ref={inputRef}
             value={input}
@@ -288,7 +304,11 @@ export function CompactScheduleFlow({ scheduleData, onEdit, className }: Compact
   };
 
   return (
-    <div className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)} role="region" aria-label={t("schedule.schedule-preview") as string}>
+    <div
+      className={cn("flex items-center gap-3 p-2 rounded-lg bg-primary/5", className)}
+      role="region"
+      aria-label={t("schedule.schedule-preview") as string}
+    >
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm truncate" aria-label={t("schedule.schedule-title-label") as string}>
           {scheduleData.title || (t("schedule.quick-input.default-title") as string)}

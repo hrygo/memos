@@ -6,13 +6,12 @@ import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
 import { ScheduleSearchBar } from "@/components/AIChat/ScheduleSearchBar";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
 import { ScheduleQuickInput } from "@/components/ScheduleQuickInput/ScheduleQuickInput";
-import { ScheduleAISidebar } from "@/components/AIChat/ScheduleAISidebar";
-import { GenerativeUIContainer } from "@/components/ScheduleAI";
 import { Button } from "@/components/ui/button";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useSchedulesOptimized } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import type { UIToolEvent } from "@/components/ScheduleAI/types";
 
 type ViewTab = "calendar" | "timeline";
 
@@ -25,10 +24,7 @@ const Schedule = () => {
   const [viewTab, setViewTab] = useState<ViewTab>("timeline");
   const [scheduleInputOpen, setScheduleInputOpen] = useState(false);
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
-
-  // AI UI Tools state for generative UI
-  const [uiTools, setUITools] = useState<any[]>([]);
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [uiTools, setUITools] = useState<UIToolEvent[]>([]);
 
   const anchorDate = useMemo(() => {
     return selectedDate ? new Date(selectedDate + "T00:00:00") : new Date();
@@ -58,26 +54,13 @@ const Schedule = () => {
     queryClient.invalidateQueries({ queryKey: ["schedules"] });
   };
 
-  // Handle UI tool actions (confirm/reject from AI-generated components)
-  const handleUIAction = (action: any) => {
-    console.log("[Schedule] UI Action:", action);
-    setIsProcessingAction(true);
-
-    // For now, just dismiss the tool
-    // In a full implementation, this would send a confirmation message back to the AI
+  const handleUIAction = (action: { type: string; toolId: string; data?: unknown }) => {
     setUITools((prev) => prev.filter((t) => t.id !== action.toolId));
-    setIsProcessingAction(false);
-
-    // Refresh schedules after action
     queryClient.invalidateQueries({ queryKey: ["schedules"] });
   };
 
   const handleUIDismiss = (toolId: string) => {
     setUITools((prev) => prev.filter((t) => t.id !== toolId));
-  };
-
-  const clearUITools = () => {
-    setUITools([]);
   };
 
   return (
@@ -161,19 +144,13 @@ const Schedule = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 pb-4 overflow-x-hidden">
-          {/* Generative UI Container - AI-generated interactive components */}
-          {uiTools.length > 0 && (
-            <div className="mb-4">
-              <GenerativeUIContainer
-                tools={uiTools}
-                onAction={handleUIAction}
-                onDismiss={handleUIDismiss}
-              />
-            </div>
-          )}
-
           {effectiveViewTab === "calendar" ? (
-            <ScheduleCalendar schedules={displaySchedules} selectedDate={selectedDate} onDateClick={handleDateClick} showMobileHint={false} />
+            <ScheduleCalendar
+              schedules={displaySchedules}
+              selectedDate={selectedDate}
+              onDateClick={handleDateClick}
+              showMobileHint={false}
+            />
           ) : (
             <ScheduleTimeline
               schedules={displaySchedules}
@@ -186,13 +163,18 @@ const Schedule = () => {
 
         {/* Quick Input with Templates */}
         <div className="flex-none p-4 bg-background/95 backdrop-blur-sm border-t border-border/50">
-          <ScheduleQuickInput initialDate={selectedDate} onScheduleCreated={handleScheduleCreated} />
+          <ScheduleQuickInput
+            initialDate={selectedDate}
+            onScheduleCreated={handleScheduleCreated}
+            editingSchedule={editSchedule}
+            onClearEditing={() => {
+              setEditSchedule(null);
+            }}
+            uiTools={uiTools}
+            onUIAction={handleUIAction}
+            onUIDismiss={handleUIDismiss}
+          />
         </div>
-      </div>
-
-      {/* AI Assistant Sidebar */}
-      <div className="hidden xl:block">
-        <ScheduleAISidebar />
       </div>
 
       {/* Schedule Input Dialog */}

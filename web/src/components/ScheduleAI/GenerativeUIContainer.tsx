@@ -1,20 +1,10 @@
 import { useEffect } from "react";
-import { useTranslate } from "@/utils/i18n";
+import type { UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotData, UITimeSlotPickerData } from "@/hooks/useScheduleAgent";
 import { cn } from "@/lib/utils";
-import type {
-  GenerativeUIContainerProps,
-  ScheduleSuggestionCardProps,
-  TimeSlotPickerProps,
-  ConflictResolutionProps,
-} from "./types";
+import { ConflictResolution } from "./ConflictResolution";
 import { ScheduleSuggestionCard } from "./ScheduleSuggestionCard";
 import { TimeSlotPicker } from "./TimeSlotPicker";
-import { ConflictResolution } from "./ConflictResolution";
-import type {
-  UIScheduleSuggestionData,
-  UITimeSlotPickerData,
-  UIConflictResolutionData,
-} from "@/hooks/useScheduleAgent";
+import type { GenerativeUIContainerProps, UIAction } from "./types";
 
 /**
  * GenerativeUIContainer - Renders AI-generated UI components
@@ -22,14 +12,7 @@ import type {
  * This container receives UI tool events from the AI agent and renders
  * the appropriate interactive components for user confirmation.
  */
-export function GenerativeUIContainer({
-  tools,
-  onAction,
-  onDismiss,
-  className,
-}: GenerativeUIContainerProps) {
-  const t = useTranslate();
-
+export function GenerativeUIContainer({ tools, onAction, onDismiss, className }: GenerativeUIContainerProps) {
   // Auto-dismiss tools after 5 minutes (temporary session)
   useEffect(() => {
     const timers = tools.map((tool) => {
@@ -81,44 +64,37 @@ export function GenerativeUIContainer({
  */
 interface GenerativeUIComponentProps {
   tool: GenerativeUIContainerProps["tools"][number];
-  onAction: (action: { type: string; data?: unknown }) => void;
+  onAction: (action: UIAction) => void;
   onDismiss: () => void;
 }
 
-function GenerativeUIComponent({
-  tool,
-  onAction,
-  onDismiss,
-}: GenerativeUIComponentProps) {
+function GenerativeUIComponent({ tool, onAction, onDismiss }: GenerativeUIComponentProps) {
+  // Create wrappers that include toolId
+  const handleConfirm = (data: UIScheduleSuggestionData) => {
+    onAction({ type: "confirm", toolId: tool.id, data });
+  };
+
+  const handleReject = () => {
+    onAction({ type: "reject", toolId: tool.id });
+  };
+
+  const handleSlotSelect = (slot: UITimeSlotData) => {
+    onAction({ type: "select_slot", toolId: tool.id, data: slot });
+  };
+
+  const handleConflictAction = (action: "override" | "reschedule" | "cancel", slot?: UITimeSlotData) => {
+    onAction({ type: action, toolId: tool.id, data: slot });
+  };
+
   switch (tool.type) {
     case "schedule_suggestion":
-      return (
-        <ScheduleSuggestionCard
-          data={tool.data as UIScheduleSuggestionData}
-          onConfirm={(data) => onAction({ type: "confirm", data })}
-          onReject={() => onAction({ type: "reject" })}
-        />
-      );
+      return <ScheduleSuggestionCard data={tool.data as UIScheduleSuggestionData} onConfirm={handleConfirm} onReject={handleReject} />;
 
     case "time_slot_picker":
-      return (
-        <TimeSlotPicker
-          data={tool.data as UITimeSlotPickerData}
-          onSelect={(slot) => onAction({ type: "select_slot", data: slot })}
-          onDismiss={onDismiss}
-        />
-      );
+      return <TimeSlotPicker data={tool.data as UITimeSlotPickerData} onSelect={handleSlotSelect} onDismiss={onDismiss} />;
 
     case "conflict_resolution":
-      return (
-        <ConflictResolution
-          data={tool.data as UIConflictResolutionData}
-          onAction={(action, slot) =>
-            onAction({ type: action, data: slot })
-          }
-          onDismiss={onDismiss}
-        />
-      );
+      return <ConflictResolution data={tool.data as UIConflictResolutionData} onAction={handleConflictAction} onDismiss={onDismiss} />;
 
     default:
       // Unknown tool type - render nothing

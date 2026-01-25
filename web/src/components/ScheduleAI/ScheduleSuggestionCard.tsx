@@ -1,15 +1,10 @@
-import { Calendar, Clock, MapPin } from "lucide-react";
-import { useTranslate } from "@/utils/i18n";
-import { cn } from "@/lib/utils";
-import type { ScheduleSuggestionCardProps } from "./types";
 import dayjs from "dayjs";
+import { Calendar, Clock, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
+import type { ScheduleSuggestionCardProps } from "./types";
 
-export function ScheduleSuggestionCard({
-  data,
-  onConfirm,
-  onReject,
-  isLoading = false,
-}: ScheduleSuggestionCardProps) {
+export function ScheduleSuggestionCard({ data, onConfirm, onReject, isLoading = false }: ScheduleSuggestionCardProps) {
   const t = useTranslate();
 
   const startTime = dayjs.unix(data.start_ts).format("HH:mm");
@@ -19,6 +14,11 @@ export function ScheduleSuggestionCard({
   const handleConfirm = () => {
     onConfirm(data);
   };
+
+  // Get translations with fallback
+  const creatingText = (t as any)("schedule.quick-input.creating") || "Creating...";
+  const confirmText = (t as any)("schedule.quick-input.confirm-create") || "Confirm";
+  const cancelText = (t as any)("common.cancel") || "Cancel";
 
   return (
     <div className="bg-primary/10 rounded-xl border border-primary/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -44,9 +44,7 @@ export function ScheduleSuggestionCard({
             )}
           </div>
 
-          {data.reason && (
-            <p className="mt-2 text-xs text-muted-foreground">{data.reason}</p>
-          )}
+          {data.reason && <p className="mt-2 text-xs text-muted-foreground">{data.reason}</p>}
         </div>
       </div>
 
@@ -58,10 +56,10 @@ export function ScheduleSuggestionCard({
           className={cn(
             "flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-colors",
             "bg-primary text-primary-foreground hover:bg-primary/90",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
-          {isLoading ? t("schedule.quick-input.creating") : t("schedule.quick-input.confirm-create")}
+          {isLoading ? creatingText : confirmText}
         </button>
         <button
           type="button"
@@ -70,10 +68,10 @@ export function ScheduleSuggestionCard({
           className={cn(
             "py-2 px-4 rounded-lg font-medium text-sm transition-colors",
             "bg-muted text-muted-foreground hover:bg-muted/70",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
-          {t("common.cancel")}
+          {cancelText}
         </button>
       </div>
     </div>

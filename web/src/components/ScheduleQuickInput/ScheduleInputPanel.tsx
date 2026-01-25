@@ -251,7 +251,13 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
     <ResizablePanel open={open} onOpenChange={onOpenChange} position="bottom" initialSize={30} minSize={20} maxSize={30}>
       <div className="h-full flex flex-col relative">
         {/* Scrollable content area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4" role="log" aria-live="polite" aria-label={t("schedule.dialog-history") as string}>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-4 py-3 space-y-4"
+          role="log"
+          aria-live="polite"
+          aria-label={t("schedule.dialog-history") as string}
+        >
           {/* Conversation History */}
           {conversationHistory.map((msg, idx) => (
             <div key={idx} className={cn("flex gap-2 text-sm", msg.role === "user" ? "justify-end" : "justify-start")} role="row">
@@ -289,7 +295,11 @@ export function ScheduleInputPanel({ open, onOpenChange, onSuccess }: ScheduleIn
               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
                 <Bot className="h-3.5 w-3.5 text-primary" />
               </div>
-              <div className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted" role="article" aria-label={t("schedule.ai-assistant-reply") as string}>
+              <div
+                className="max-w-[80%] rounded-2xl px-3 py-2 bg-muted"
+                role="article"
+                aria-label={t("schedule.ai-assistant-reply") as string}
+              >
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}

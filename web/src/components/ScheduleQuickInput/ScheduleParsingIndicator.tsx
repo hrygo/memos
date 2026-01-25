@@ -120,7 +120,12 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Partial state - needs more info
   if (parseResult.state === "partial") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)} role="status" aria-live="polite" aria-label={t("schedule.need-more-info") as string}>
+      <div
+        className={cn("flex items-center gap-2 text-xs", className)}
+        role="status"
+        aria-live="polite"
+        aria-label={t("schedule.need-more-info") as string}
+      >
         <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" aria-hidden="true" />
         <span className="text-amber-700 dark:text-amber-400">
           {parseResult.message || (t("schedule.quick-input.parse-partial") as string)}
@@ -132,7 +137,12 @@ export function ScheduleParsingIndicator({ parseResult, isParsing, parseSource, 
   // Error state
   if (parseResult.state === "error") {
     return (
-      <div className={cn("flex items-center gap-2 text-xs", className)} role="alert" aria-live="assertive" aria-label={t("schedule.parse-failed") as string}>
+      <div
+        className={cn("flex items-center gap-2 text-xs", className)}
+        role="alert"
+        aria-live="assertive"
+        aria-label={t("schedule.parse-failed") as string}
+      >
         <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" aria-hidden="true" />
         <span className="text-destructive">{parseResult.message || (t("schedule.quick-input.parse-error") as string)}</span>
       </div>

@@ -3,17 +3,17 @@
  * Generative UI components for the schedule page
  */
 
+export { ConflictResolution } from "./ConflictResolution";
 export { GenerativeUIContainer } from "./GenerativeUIContainer";
 export { ScheduleSuggestionCard } from "./ScheduleSuggestionCard";
 export { TimeSlotPicker } from "./TimeSlotPicker";
-export { ConflictResolution } from "./ConflictResolution";
 
 export type {
-  UIToolEvent,
+  ConflictResolutionProps,
   GenerativeUIContainerProps,
-  UIAction,
+  QuickActionsProps,
   ScheduleSuggestionCardProps,
   TimeSlotPickerProps,
-  ConflictResolutionProps,
-  QuickActionsProps,
+  UIAction,
+  UIToolEvent,
 } from "./types";

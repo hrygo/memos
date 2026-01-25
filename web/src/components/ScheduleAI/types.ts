@@ -5,7 +5,15 @@
 
 import type {
   UIConflictResolutionData,
-  UIConflictSchedule,
+  UIQuickActionsData,
+  UIScheduleSuggestionData,
+  UITimeSlotData,
+  UITimeSlotPickerData,
+} from "@/hooks/useScheduleAgent";
+
+// Re-export types from useScheduleAgent for convenience
+export type {
+  UIConflictResolutionData,
   UIQuickActionsData,
   UIScheduleSuggestionData,
   UITimeSlotData,
@@ -18,11 +26,7 @@ import type {
 export interface UIToolEvent {
   id: string;
   type: "schedule_suggestion" | "time_slot_picker" | "conflict_resolution" | "quick_actions";
-  data:
-    | UIScheduleSuggestionData
-    | UITimeSlotPickerData
-    | UIConflictResolutionData
-    | UIQuickActionsData;
+  data: UIScheduleSuggestionData | UITimeSlotPickerData | UIConflictResolutionData | UIQuickActionsData;
   timestamp: number;
 }
 
@@ -82,4 +86,15 @@ export interface QuickActionsProps {
   data: UIQuickActionsData;
   onAction: (action: UIQuickActionData) => void;
   onDismiss: () => void;
+}
+
+/**
+ * UI Quick Action data
+ */
+export interface UIQuickActionData {
+  id: string;
+  label: string;
+  description: string;
+  icon?: string;
+  prompt: string;
 }

@@ -234,7 +234,7 @@ export function AISuggestionCards({ suggestions, onConfirmSuggestion, className 
         (t("schedule.quick-input.selected-label") as string)
           .replace("{title}", suggestion.title || defaultTitle)
           .replace("{date}", suggestion.date)
-          .replace("{time}", suggestion.startTime)
+          .replace("{time}", suggestion.startTime),
       );
     }
 

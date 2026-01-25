@@ -1,4 +1,4 @@
-import { Check, ChevronRight, Loader2, Send, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Edit3, Loader2, Send, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,35 @@ import { useTranslate } from "@/utils/i18n";
 import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
 import { QuickTemplateDropdown } from "./QuickTemplates";
 import type { ScheduleTemplate } from "./types";
+import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
+import dayjs from "dayjs";
+import { GenerativeUIContainer } from "@/components/ScheduleAI";
+import type { UIToolEvent } from "@/components/ScheduleAI/types";
 
 interface ScheduleQuickInputProps {
   initialDate?: string;
   onScheduleCreated?: () => void;
+  editingSchedule?: Schedule | null;
+  onClearEditing?: () => void;
+  uiTools?: UIToolEvent[];
+  onUIAction?: (action: { type: string; toolId: string; data?: unknown }) => void;
+  onUIDismiss?: (toolId: string) => void;
   className?: string;
 }
 
 const MAX_INPUT_HEIGHT = 120;
 const LINE_HEIGHT = 24;
 
-export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreated, className }: ScheduleQuickInputProps) {
+export function ScheduleQuickInput({
+  initialDate: _initialDate,
+  onScheduleCreated,
+  editingSchedule,
+  onClearEditing,
+  uiTools = [],
+  onUIAction,
+  onUIDismiss,
+  className,
+}: ScheduleQuickInputProps) {
   const { selectedDate } = useScheduleContext();
   const agentChat = useScheduleAgentChat();
   const t = useTranslate();
@@ -85,9 +103,16 @@ export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreate
     setLastInput(trimmedInput);
     setAiMessage("");
 
+    // Build message with editing context if available
+    let messageToSend = trimmedInput;
+    if (editingSchedule) {
+      const editTime = `${dayjs.unix(Number(editingSchedule.startTs)).format("HH:mm")}-${dayjs.unix(Number(editingSchedule.endTs)).format("HH:mm")}`;
+      messageToSend = `把「${editingSchedule.title}」（${editTime}）${trimmedInput}`;
+    }
+
     try {
       const response = await agentChat.mutateAsync({
-        message: trimmedInput,
+        message: messageToSend,
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
       });
 
@@ -97,10 +122,17 @@ export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreate
         aiResponse.includes("成功创建日程") ||
         aiResponse.includes("successfully created") ||
         aiResponse.includes("已安排") ||
-        aiResponse.includes("已为您创建");
+        aiResponse.includes("已为您创建") ||
+        aiResponse.includes("已更新") ||
+        aiResponse.includes("updated successfully") ||
+        aiResponse.includes("修改成功");
 
       if (createdSchedule) {
         handleScheduleCreated();
+        // Clear editing state after successful update
+        if (editingSchedule) {
+          onClearEditing?.();
+        }
       } else {
         setAiMessage(aiResponse);
         const todayStr = t("schedule.quick-input.today") as string;
@@ -183,8 +215,46 @@ export function ScheduleQuickInput({ initialDate: _initialDate, onScheduleCreate
   // Display text: show last input while processing, otherwise current input
   const displayText = isProcessing ? lastInput : input;
 
+  // Format editing schedule info for display
+  const editingInfo = editingSchedule
+    ? {
+        title: editingSchedule.title,
+        time: `${dayjs.unix(Number(editingSchedule.startTs)).format("HH:mm")}-${dayjs.unix(Number(editingSchedule.endTs)).format("HH:mm")}`,
+      }
+    : null;
+
   return (
     <div className={cn("w-full flex flex-col gap-2", className)}>
+      {/* Editing Status Bar */}
+      {editingSchedule && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-500/10 rounded-lg border border-amber-500/20">
+          <Edit3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">
+              {(t as any)("schedule.quick.input.editing") || "Editing"} "{editingInfo?.title}"
+            </p>
+            <p className="text-xs text-amber-600/70 dark:text-amber-400/70">{editingInfo?.time}</p>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onClearEditing}
+            className="h-7 w-7 p-0 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
+      {/* Generative UI - AI confirmation cards */}
+      {uiTools.length > 0 && (
+        <GenerativeUIContainer
+          tools={uiTools}
+          onAction={onUIAction || (() => {})}
+          onDismiss={onUIDismiss || (() => {})}
+        />
+      )}
+
       {/* Processing Status Bar - prominent and animated */}
       {isProcessing && (
         <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-pulse">
