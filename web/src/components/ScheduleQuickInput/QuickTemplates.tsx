@@ -3,7 +3,22 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { type Translations, useTranslate } from "@/utils/i18n";
-import type { ScheduleTemplate } from "./types";
+
+/** Template for quick schedule creation */
+export interface ScheduleTemplate {
+  id: string;
+  title: string;
+  icon: string;
+  duration: number; // in minutes
+  defaultTitle?: string;
+  color?: string;
+  /** i18n key for translating the title */
+  i18nKey?: string;
+  /** Natural language prompt example (shown in input when selected) */
+  prompt?: string;
+  /** i18n key for the prompt */
+  promptI18nKey?: string;
+}
 
 /**
  * Hook to detect clicks outside a component

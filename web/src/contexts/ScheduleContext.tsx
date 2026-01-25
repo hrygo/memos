@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { createContext, ReactNode, useContext, useState } from "react";
-import type { QuickInputPreferences } from "@/components/ScheduleQuickInput/types";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 
 interface ScheduleContextType {
@@ -16,8 +15,6 @@ interface ScheduleContextType {
   // Quick input state
   quickInputOpen: boolean;
   setQuickInputOpen: (open: boolean) => void;
-  quickInputPreferences: QuickInputPreferences;
-  updateQuickInputPreferences: (preferences: Partial<QuickInputPreferences>) => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
@@ -34,16 +31,6 @@ interface ScheduleProviderProps {
   children: ReactNode;
 }
 
-const DEFAULT_QUICK_INPUT_PREFERENCES: QuickInputPreferences = {
-  defaultDuration: 60,
-  defaultAllDay: false,
-  enableLocalParsing: true,
-  enableAIParsing: true,
-  parseDebounceMs: 600,
-  showTemplates: true,
-  collapseOnCreate: true,
-};
-
 export const ScheduleProvider = ({ children }: ScheduleProviderProps) => {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(dayjs().format("YYYY-MM-DD"));
 
@@ -54,11 +41,6 @@ export const ScheduleProvider = ({ children }: ScheduleProviderProps) => {
 
   // Quick input state
   const [quickInputOpen, setQuickInputOpen] = useState(false);
-  const [quickInputPreferences, setQuickInputPreferences] = useState<QuickInputPreferences>(DEFAULT_QUICK_INPUT_PREFERENCES);
-
-  const updateQuickInputPreferences = (preferences: Partial<QuickInputPreferences>) => {
-    setQuickInputPreferences((prev) => ({ ...prev, ...preferences }));
-  };
 
   return (
     <ScheduleContext.Provider
@@ -73,8 +55,6 @@ export const ScheduleProvider = ({ children }: ScheduleProviderProps) => {
         setHasSearchFilter,
         quickInputOpen,
         setQuickInputOpen,
-        quickInputPreferences,
-        updateQuickInputPreferences,
       }}
     >
       {children}
