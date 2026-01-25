@@ -29,6 +29,7 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
     nameAltKey: "ai.capability.memo.nameAlt",
     descriptionKey: "ai.capability.memo.description",
     theme: PARROT_THEMES.MEMO,
+    nameAlt: "Memo",
   },
   {
     id: CapabilityType.SCHEDULE,
@@ -39,6 +40,7 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
     nameAltKey: "ai.capability.schedule.nameAlt",
     descriptionKey: "ai.capability.schedule.description",
     theme: PARROT_THEMES.SCHEDULE,
+    nameAlt: "Schedule",
   },
   {
     id: CapabilityType.AMAZING,
@@ -49,6 +51,7 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
     nameAltKey: "ai.capability.amazing.nameAlt",
     descriptionKey: "ai.capability.amazing.description",
     theme: PARROT_THEMES.AMAZING,
+    nameAlt: "Amazing",
   },
   {
     id: CapabilityType.CREATIVE,
@@ -59,6 +62,7 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
     nameAltKey: "ai.capability.creative.nameAlt",
     descriptionKey: "ai.capability.creative.description",
     theme: PARROT_THEMES.CREATIVE,
+    nameAlt: "Creative",
   },
 ];
 
