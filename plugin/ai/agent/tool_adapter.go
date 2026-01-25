@@ -157,8 +157,13 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 			return resp.Content, nil
 		}
 
-		// Add assistant's response to history
-		// We format tool calls as text for the message history
+		// Send thinking/content to callback (without tool call syntax)
+		// IMPORTANT: Tool call syntax is ONLY for message history, not sent to frontend
+		if callback != nil && resp.Content != "" {
+			callback(EventAnswer, resp.Content)
+		}
+
+		// Add assistant's response to history with tool call syntax
 		assistantText := resp.Content
 		if len(resp.ToolCalls) > 0 {
 			for _, tc := range resp.ToolCalls {

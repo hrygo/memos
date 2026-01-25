@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"log/slog"
@@ -25,6 +26,9 @@ const (
 	// DefaultTimezone is the default timezone for schedule operations
 	DefaultTimezone = "Asia/Shanghai"
 )
+
+// toolCallRegex is pre-compiled for performance (hot path)
+var toolCallRegex = regexp.MustCompile(`\n?\[Tool: [^\]]+\]`)
 
 // ScheduleAgentService is a dedicated service for schedule agent interactions.
 type ScheduleAgentService struct {
@@ -209,15 +213,31 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 		return status.Errorf(codes.Internal, "agent execution failed: %v", err)
 	}
 
+	// Sanitize response: remove any tool call syntax that might have leaked
+	// This is a defensive measure to ensure clean user-facing responses
+	sanitizedResponse := response
+	if strings.Contains(sanitizedResponse, "[Tool:") {
+		preview := response
+		if len(preview) > 200 {
+			preview = preview[:200] + "..."
+		}
+		logger.Warn("Response contains tool call syntax, sanitizing", "response_preview", preview)
+		// Remove tool call syntax like [Tool: name(...)]
+		sanitizedResponse = toolCallRegex.ReplaceAllString(sanitizedResponse, "")
+		sanitizedResponse = strings.TrimSpace(sanitizedResponse)
+	} else {
+		sanitizedResponse = response
+	}
+
 	// Update Context with the turn
 	// Note: ToolCalls capture is not fully implemented in callback yet,
 	// but we record the text turn at least.
-	conversationCtx.AddTurn(req.Message, response, nil)
+	conversationCtx.AddTurn(req.Message, sanitizedResponse, nil)
 
 	// Send final response
 	finalJSON, err := json.Marshal(map[string]string{
 		"type": "answer",
-		"data": response,
+		"data": sanitizedResponse,
 	})
 	if err != nil {
 		logger.Error("Failed to marshal final response", "error", err)
@@ -227,14 +247,14 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 
 	if err := stream.Send(&v1pb.ScheduleAgentStreamResponse{
 		Event:   string(finalJSON),
-		Content: response,
+		Content: sanitizedResponse,
 		Done:    true,
 	}); err != nil {
 		logger.Error("Failed to send final response", "error", err)
 		return status.Errorf(codes.Internal, "failed to send response: %v", err)
 	}
 
-	logger.Info("Chat stream completed successfully", "duration", time.Since(start), "response_len", len(response))
+	logger.Info("Chat stream completed successfully", "duration", time.Since(start), "response_len", len(sanitizedResponse))
 
 	return nil
 }
