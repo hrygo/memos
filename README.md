@@ -20,21 +20,27 @@
 
 ## 快速体验
 
-**Docker 一键启动**（基础笔记功能）：
+**Docker 一键启动**（基础笔记功能，内置 SQLite）：
 
 ```bash
 docker run -d --name memos -p 5230:5230 -v ~/.memos:/var/opt/memos hrygo/memos:stable
 ```
 
-**启用 AI 功能**（需要 API Key）：
+**启用 AI 功能**（需要 PostgreSQL + API Key）：
 
 ```bash
-docker run -d --name memos -p 5230:5230 \
-  -v ~/.memos:/var/opt/memos \
-  -e MEMOS_AI_ENABLED=true \
-  -e MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx \
-  -e MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx \
-  hrygo/memos:stable
+# 1. 克隆仓库
+git clone https://github.com/hrygo/memos.git && cd memos
+
+# 2. 配置环境变量
+cp .env.prod.example .env.prod
+# 编辑 .env.prod 填入：
+#   POSTGRES_PASSWORD=your_password
+#   MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx
+#   MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx
+
+# 3. 启动 (PostgreSQL + Memos)
+docker compose -f docker/compose/prod.yml --env-file .env.prod up -d
 ```
 
 打开 http://localhost:5230 开始使用！
