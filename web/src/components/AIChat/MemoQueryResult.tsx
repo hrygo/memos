@@ -22,13 +22,13 @@ export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
     return (
       <div
         className={cn(
-          "flex flex-col items-center justify-center py-8 px-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700",
+          "flex flex-col items-center justify-center py-8 px-4 rounded-lg bg-muted border border-border",
           className,
         )}
       >
-        <FileText className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mb-3" />
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("ai.memo-query.no-results")}</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+        <FileText className="w-12 h-12 text-muted-foreground mb-3" />
+        <p className="text-sm font-medium text-foreground">{t("ai.memo-query.no-results")}</p>
+        <p className="text-xs text-muted-foreground mt-1">
           {t("ai.memo-query.query-label")}: "{query}"
         </p>
       </div>
@@ -36,14 +36,14 @@ export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
   }
 
   return (
-    <div className={cn("rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 overflow-hidden", className)}>
+    <div className={cn("rounded-lg bg-muted border border-border overflow-hidden", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <div>
-            <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{t("ai.memo-query.results-title")}</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <h3 className="font-semibold text-sm text-foreground">{t("ai.memo-query.results-title")}</h3>
+            <p className="text-xs text-muted-foreground">
               {t("ai.memo-query.query-label")}: "{query}" · {t("ai.memo-query.found-count", { count })}
             </p>
           </div>
@@ -55,7 +55,7 @@ export function MemoQueryResult({ result, className }: MemoQueryResultProps) {
       </div>
 
       {/* Results List */}
-      <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
+      <div className="divide-y divide-border">
         {sortedMemos.map((memo, index) => (
           <MemoQueryResultItem key={memo.uid} memo={memo} rank={index + 1} />
         ))}
@@ -78,7 +78,7 @@ function MemoQueryResultItem({ memo, rank }: MemoQueryResultItemProps) {
   const scoreColor = getScoreColor(memo.score);
 
   return (
-    <Link to={`/memo/${memo.uid}`} className="block px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors">
+    <Link to={`/memo/${memo.uid}`} className="block px-4 py-3 hover:bg-muted transition-colors">
       <div className="flex items-start justify-between space-x-3">
         {/* Rank Badge */}
         <div
@@ -86,7 +86,7 @@ function MemoQueryResultItem({ memo, rank }: MemoQueryResultItemProps) {
             "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
             rank <= 3
               ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-              : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400",
+              : "bg-muted text-muted-foreground",
           )}
         >
           {rank}
@@ -94,7 +94,7 @@ function MemoQueryResultItem({ memo, rank }: MemoQueryResultItemProps) {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-zinc-800 dark:text-zinc-200 line-clamp-2">{memo.content}</p>
+          <p className="text-sm text-foreground line-clamp-2">{memo.content}</p>
         </div>
 
         {/* Score Badge */}
@@ -112,6 +112,6 @@ function getScoreColor(score: number): string {
   } else if (score >= 0.5) {
     return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300";
   } else {
-    return "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400";
+    return "bg-muted text-muted-foreground";
   }
 }

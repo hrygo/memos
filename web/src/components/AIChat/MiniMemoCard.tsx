@@ -17,8 +17,8 @@ export function MiniMemoCard({ memo, rank, showRank = true, className }: MiniMem
     <Link
       to={`/memos/${memo.uid}`}
       className={cn(
-        "block p-2.5 rounded-lg border hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors group",
-        "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
+        "block p-2.5 rounded-lg border hover:bg-muted transition-colors group",
+        "bg-card border-border",
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function MiniMemoCard({ memo, rank, showRank = true, className }: MiniMem
               "flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-xs font-medium",
               rank <= 3
                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                : "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400",
+                : "bg-muted text-muted-foreground",
             )}
           >
             {rank}
@@ -37,9 +37,9 @@ export function MiniMemoCard({ memo, rank, showRank = true, className }: MiniMem
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-zinc-700 dark:text-zinc-300 line-clamp-3 leading-relaxed">{memo.content}</p>
+          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{memo.content}</p>
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">{memo.timestamp ? formatTime(memo.timestamp) : ""}</span>
+            <span className="text-xs text-muted-foreground">{memo.timestamp ? formatTime(memo.timestamp) : ""}</span>
             <span className={cn("text-xs px-1.5 py-0.5 rounded", scoreColor)}>{scorePercentage}%</span>
           </div>
         </div>
@@ -56,7 +56,7 @@ function getScoreColor(score: number): string {
   } else if (score >= 0.5) {
     return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300";
   } else {
-    return "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400";
+    return "bg-muted text-muted-foreground";
   }
 }
 

@@ -694,6 +694,7 @@
       }
     },
     "aichat": {
+      "input-hint": "直接输入消息，我会自动理解你的意图",
       "delete-conversation-title": "删除会话",
       "delete-conversation-confirm": "确定要删除这个会话吗？此操作无法撤销。",
       "sidebar": {

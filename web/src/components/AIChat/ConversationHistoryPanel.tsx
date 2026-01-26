@@ -90,7 +90,7 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
             {groupedConversations.map((group) => (
               <div key={group.key} className="mb-1">
                 {/* 时间分组标签 */}
-                <div className="px-3 py-1.5 text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
+                <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {group.label}
                 </div>
                 {/* 会话列表 */}
@@ -137,11 +137,11 @@ function EmptyState() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-      <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-        <MessageSquarePlus className="w-5 h-5 text-zinc-400" />
+      <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
+        <MessageSquarePlus className="w-5 h-5 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-conversations")}</h3>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.start-new-chat")}</p>
+      <h3 className="text-sm font-medium text-foreground mb-1">{t("ai.aichat.sidebar.no-conversations")}</h3>
+      <p className="text-xs text-muted-foreground">{t("ai.aichat.sidebar.start-new-chat")}</p>
     </div>
   );
 }

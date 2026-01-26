@@ -94,8 +94,8 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
 
       {/* 问候语区域 */}
       <div className="text-center mb-8">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">{greetingText}</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{timeHint}</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">{greetingText}</h2>
+        <p className="text-sm text-muted-foreground">{timeHint}</p>
       </div>
 
       {/* 示例提问 - 点击直接发送 */}
@@ -106,8 +106,8 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
             onClick={() => onSendMessage?.(item.prompt)}
             className={cn(
               "flex flex-row items-center gap-3 p-3 rounded-xl",
-              "bg-white dark:bg-zinc-800",
-              "border border-zinc-200 dark:border-zinc-700",
+              "bg-card",
+              "border border-border",
               "hover:border-emerald-300 dark:hover:border-emerald-700",
               "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
               "transition-all duration-200",
@@ -117,13 +117,13 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
             title={item.prompt}
           >
             <span className="text-2xl shrink-0">{item.icon}</span>
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 text-left leading-tight line-clamp-2">{item.prompt}</span>
+            <span className="text-sm font-medium text-muted-foreground text-left leading-tight line-clamp-2">{item.prompt}</span>
           </button>
         ))}
       </div>
 
       {/* 底部提示 */}
-      <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
         <MessageSquare className="w-3.5 h-3.5" />
         {t("ai.parrot.partner.input-hint")}
       </p>
@@ -158,8 +158,8 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({ message, 
         {capability ? capabilityEmojis[capability] : "🦜"}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{greetingText}</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-2">{message || t("ai.parrot.partner.default-hint")}</p>
+        <p className="font-medium text-foreground mb-1">{greetingText}</p>
+        <p className="text-xs text-muted-foreground line-clamp-2">{message || t("ai.parrot.partner.default-hint")}</p>
       </div>
     </div>
   );

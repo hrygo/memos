@@ -19,7 +19,7 @@ export function SidebarTabs({ activeTab, onTabChange, className }: SidebarTabsPr
   return (
     <div className={cn("w-full", className)}>
       {/* Segmented Control Container */}
-      <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+      <div className="flex p-1 bg-muted rounded-xl">
         <TabButton
           active={activeTab === "history"}
           onClick={() => onTabChange("history")}
@@ -55,8 +55,8 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
         "transition-all duration-200 ease-in-out",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-500",
         active
-          ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
       )}
       aria-pressed={active}
     >

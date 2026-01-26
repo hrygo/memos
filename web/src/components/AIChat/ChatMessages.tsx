@@ -86,14 +86,14 @@ export function ChatMessages({
                   key={`separator-${index}`}
                   className="flex items-center justify-center gap-3 py-3 my-2 animate-in fade-in slide-in-from-top-2 duration-300"
                 >
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm">
-                    <Scissors className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 rotate-[-45deg]" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border shadow-sm">
+                    <Scissors className="w-3.5 h-3.5 text-muted-foreground rotate-[-45deg]" />
+                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
                       {t("ai.context-cleared")}
                     </span>
                   </div>
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                 </div>
               );
             }
@@ -268,7 +268,7 @@ function MessageBubble({
                       "p-1.5 rounded-lg border shadow-sm transition-all active:scale-90",
                       role === "user"
                         ? "bg-white/10 border-white/20 text-white/80 hover:bg-white/30"
-                        : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 backdrop-blur-sm",
+                        : "bg-card/50 border-border text-muted-foreground hover:text-foreground backdrop-blur-sm",
                       copied &&
                         (role === "user"
                           ? "bg-white/40 border-white/40"
@@ -294,7 +294,7 @@ function MessageBubble({
                         pre: ({ node, ...props }) => <CodeBlock {...props} />,
                         code: ({ className, children, inline, ...props }: CodeComponentProps) => {
                           return inline ? (
-                            <code className={cn("px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs", className)} {...props}>
+                            <code className={cn("px-1.5 py-0.5 rounded-md bg-muted text-xs", className)} {...props}>
                               {children}
                             </code>
                           ) : (
@@ -318,12 +318,12 @@ function MessageBubble({
               {shouldShowFold && (
                 <>
                   {isFolded && (
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/95 via-white/40 to-transparent dark:from-zinc-800/95 dark:via-zinc-800/40 pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card via-card/40 to-transparent pointer-events-none" />
                   )}
                   <div className={cn("flex justify-center p-1.5", isFolded ? "absolute bottom-0 inset-x-0 z-10" : "relative")}>
                     <button
                       onClick={toggleFold}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-600 text-zinc-500"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-card border border-border shadow-sm hover:bg-accent text-muted-foreground"
                     >
                       {isFolded ? (
                         <>

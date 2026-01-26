@@ -79,16 +79,16 @@ export function ParrotHub({
   const { t } = useTranslation();
 
   return (
-    <div className={cn("w-full h-full overflow-y-auto bg-zinc-50 dark:bg-zinc-900 p-4 md:p-8", className)}>
+    <div className={cn("w-full h-full overflow-y-auto bg-sidebar p-4 md:p-8", className)}>
       <div className="max-w-4xl mx-auto">
         {/* 头部标题 - 强调"能力"而非"选择" */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.capability.title") || "我的能力"}</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-foreground">{t("ai.capability.title") || "我的能力"}</h2>
             <Sparkles className="w-5 h-5 text-indigo-500" />
           </div>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             {t("ai.capability.subtitle") || "我可以帮你搜索笔记、管理日程、综合分析"}
           </p>
         </div>
@@ -106,11 +106,11 @@ export function ParrotHub({
                 onClick={() => onCapabilitySelect?.(card.id)}
                 className={cn(
                   "flex flex-col text-left p-5 md:p-6 rounded-2xl border-2 transition-all duration-300 group relative overflow-hidden",
-                  "bg-white dark:bg-zinc-800",
+                  "bg-card",
                   isActive
-                    ? theme.cardBorder + " ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-100 shadow-lg scale-[1.02]"
-                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md",
-                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:focus:ring-zinc-100",
+                    ? theme.cardBorder + " ring-2 ring-offset-2 ring-foreground shadow-lg scale-[1.02]"
+                    : "border-border hover:border-border hover:shadow-md",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground",
                 )}
               >
                 {/* 背景装饰 */}
@@ -123,7 +123,7 @@ export function ParrotHub({
 
                 {/* 活跃指示器 */}
                 {isActive && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-foreground text-background text-xs font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                     {t("ai.capability.active") || "使用中"}
                   </div>
@@ -142,11 +142,11 @@ export function ParrotHub({
                 {/* 名称 */}
                 <h3 className={cn("text-base md:text-lg font-bold mb-1 transition-colors", theme.text)}>
                   {t(card.nameKey) || card.nameAlt}
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-2">{t(card.nameAltKey)}</span>
+                  <span className="text-xs font-medium text-muted-foreground ml-2">{t(card.nameAltKey)}</span>
                 </h3>
 
                 {/* 描述 */}
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4 flex-grow">{t(card.descriptionKey)}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-grow">{t(card.descriptionKey)}</p>
 
                 {/* 底部提示 */}
                 <div className={cn("flex items-center text-sm font-medium", theme.iconText)}>
@@ -165,9 +165,9 @@ export function ParrotHub({
 
                 {/* 处理中状态动画 */}
                 {isActive && capabilityStatus === "thinking" && (
-                  <div className="absolute inset-0 bg-white/50 dark:bg-zinc-800/50 flex items-center justify-center">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      <div className="w-5 h-5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 bg-card/50 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
                       <span>{t("ai.capability.thinking") || "思考中..."}</span>
                     </div>
                   </div>

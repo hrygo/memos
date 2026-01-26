@@ -27,27 +27,27 @@ export function ReferencedMemosPanel({ className }: ReferencedMemosPanelProps) {
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
-      <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-zinc-500" />
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.aichat.sidebar.memos")}</h2>
+          <FileText className="w-4 h-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">{t("ai.aichat.sidebar.memos")}</h2>
         </div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 ml-6">
+        <p className="text-xs text-muted-foreground mt-0.5 ml-6">
           {referencedMemos.length} {referencedMemos.length === 1 ? "memo" : "memos"}
         </p>
       </div>
 
       {/* Search */}
       {(hasMemos || searchQuery) && (
-        <div className="p-2 border-b border-zinc-200 dark:border-zinc-700">
+        <div className="p-2 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("ai.aichat.sidebar.search-placeholder")}
-              className="w-full pl-8 pr-3 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-800 border-0 rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+              className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted border-0 rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -80,9 +80,9 @@ function EmptyState({ searchQuery, hasMemos }: EmptyStateProps) {
   if (searchQuery) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-        <Search className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-results")}</h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.try-different-search")}</p>
+        <Search className="w-8 h-8 text-muted-foreground/50 mb-3" />
+        <h3 className="text-sm font-medium text-foreground mb-1">{t("ai.aichat.sidebar.no-results")}</h3>
+        <p className="text-xs text-muted-foreground">{t("ai.aichat.sidebar.try-different-search")}</p>
       </div>
     );
   }
@@ -90,9 +90,9 @@ function EmptyState({ searchQuery, hasMemos }: EmptyStateProps) {
   if (!hasMemos) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-        <FileText className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mb-3" />
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-referenced-memos")}</h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.search-memos-hint")}</p>
+        <FileText className="w-8 h-8 text-muted-foreground/50 mb-3" />
+        <h3 className="text-sm font-medium text-foreground mb-1">{t("ai.aichat.sidebar.no-referenced-memos")}</h3>
+        <p className="text-xs text-muted-foreground">{t("ai.aichat.sidebar.search-memos-hint")}</p>
       </div>
     );
   }

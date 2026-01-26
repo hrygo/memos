@@ -26,7 +26,7 @@ export function ConversationItem({ conversation, isActive, onSelect, onDelete, c
     <div
       className={cn(
         "group relative rounded-lg transition-all",
-        isActive ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+        isActive ? "bg-accent" : "hover:bg-muted",
         className,
       )}
     >
@@ -52,8 +52,8 @@ export function ConversationItem({ conversation, isActive, onSelect, onDelete, c
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{conversation.title}</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <h3 className="font-medium text-sm text-foreground truncate">{conversation.title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {displayMessageCount === "..."
                 ? t("ai.aichat.sidebar.message-count", { count: 0 })
                 : t("ai.aichat.sidebar.message-count", { count: displayMessageCount })}{" "}
@@ -88,9 +88,9 @@ function DeleteButton({ conversationId, onDelete }: DeleteButtonProps) {
       className={cn(
         "flex items-center justify-center",
         "w-8 h-8 rounded-lg",
-        "text-zinc-400 dark:text-zinc-500",
-        "hover:text-red-500 dark:hover:text-red-400",
-        "hover:bg-red-50 dark:hover:bg-red-950/50",
+        "text-muted-foreground",
+        "hover:text-destructive",
+        "hover:bg-destructive/10",
         "transition-all duration-200",
       )}
       aria-label={t("common.delete")}
