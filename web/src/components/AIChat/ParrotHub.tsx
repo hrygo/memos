@@ -84,13 +84,11 @@ export function ParrotHub({
         {/* 头部标题 - 强调"能力"而非"选择" */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="w-5 h-5 text-indigo-500" />
+            <Sparkles className="w-5 h-5 text-primary" />
             <h2 className="text-lg md:text-xl font-semibold text-foreground">{t("ai.capability.title") || "我的能力"}</h2>
-            <Sparkles className="w-5 h-5 text-indigo-500" />
+            <Sparkles className="w-5 h-5 text-primary" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t("ai.capability.subtitle") || "我可以帮你搜索笔记、管理日程、综合分析"}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("ai.capability.subtitle") || "我可以帮你搜索笔记、管理日程、综合分析"}</p>
         </div>
 
         {/* 能力卡片网格 */}
@@ -124,7 +122,7 @@ export function ParrotHub({
                 {/* 活跃指示器 */}
                 {isActive && (
                   <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-foreground text-background text-xs font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                     {t("ai.capability.active") || "使用中"}
                   </div>
                 )}
@@ -178,8 +176,8 @@ export function ParrotHub({
         </div>
 
         {/* 底部提示 - 强调"自动路由" */}
-        <div className="mt-8 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-          <p className="text-sm text-center text-indigo-700 dark:text-indigo-300 flex items-center justify-center gap-2">
+        <div className="mt-8 p-4 rounded-xl bg-accent border border-border">
+          <p className="text-sm text-center text-foreground flex items-center justify-center gap-2">
             <Sparkles className="w-4 h-4" />
             <span>{t("ai.capability.auto-hint") || "💡 提示：你也可以直接开始聊天，我会自动理解你的意图并调用相应能力"}</span>
           </p>

@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 interface ChatInputProps {
   value: string;
@@ -15,7 +14,6 @@ interface ChatInputProps {
   onClearChat?: () => void;
   disabled?: boolean;
   isTyping?: boolean;
-  currentParrotId?: ParrotAgentType;
   placeholder?: string;
   className?: string;
   showQuickActions?: boolean;
@@ -31,7 +29,6 @@ export function ChatInput({
   onClearChat,
   disabled = false,
   isTyping = false,
-  currentParrotId,
   placeholder,
   className,
   showQuickActions = false,
@@ -40,8 +37,6 @@ export function ChatInput({
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   // Handle mobile keyboard visibility
   useEffect(() => {
@@ -107,13 +102,14 @@ export function ChatInput({
                 variant="ghost"
                 size="sm"
                 onClick={onNewChat}
-                className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-950/50 transition-all overflow-hidden"
+                aria-label={t("ai.aichat.sidebar.new-chat")}
+                className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-primary hover:text-primary hover:bg-accent transition-all overflow-hidden"
                 title="⌘N"
               >
                 <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden group-hover/btn:inline ml-1 whitespace-nowrap">
                   {t("ai.aichat.sidebar.new-chat")}
-                  <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-900 rounded">⌘N</kbd>
+                  <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-accent rounded">⌘N</kbd>
                 </span>
               </Button>
             )}
@@ -122,6 +118,7 @@ export function ChatInput({
                 variant="ghost"
                 size="sm"
                 onClick={onClearContext}
+                aria-label={t("ai.clear-context")}
                 className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all overflow-hidden"
                 title="⌘K"
               >
@@ -137,6 +134,7 @@ export function ChatInput({
                 variant="ghost"
                 size="sm"
                 onClick={onClearChat}
+                aria-label={t("ai.clear-chat")}
                 className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all overflow-hidden"
                 title="⌘L"
               >
@@ -155,9 +153,7 @@ export function ChatInput({
           className={cn(
             "flex items-end gap-2 md:gap-3 p-2.5 md:p-3 rounded-xl border transition-all",
             "focus-within:ring-2 focus-within:ring-offset-2 shadow-sm",
-            theme.inputBg,
-            theme.inputBorder,
-            theme.inputFocus,
+            "bg-card border-border focus-within:ring-ring",
           )}
         >
           <Textarea
@@ -178,9 +174,7 @@ export function ChatInput({
             className={cn(
               "shrink-0 h-11 min-w-[44px] rounded-xl transition-all",
               "hover:scale-105 active:scale-95",
-              value.trim() && !isTyping
-                ? cn(theme.iconBg, theme.iconText)
-                : "bg-muted text-muted-foreground",
+              value.trim() && !isTyping ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
             )}
             onClick={onSend}

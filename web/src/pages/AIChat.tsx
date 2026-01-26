@@ -77,7 +77,7 @@ function UnifiedChatView({
   };
 
   return (
-    <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
+    <div className="w-full h-full flex flex-col relative bg-background">
       {/* Desktop Header */}
       {md && <ChatHeader currentCapability={currentCapability} capabilityStatus={capabilityStatus} isThinking={isThinking} />}
 
@@ -110,7 +110,6 @@ function UnifiedChatView({
         onClearChat={() => setClearDialogOpen(true)}
         disabled={isTyping}
         isTyping={isTyping}
-        currentParrotId={ParrotAgentType.AMAZING}
       />
 
       {/* Clear Chat Confirmation Dialog */}
@@ -143,18 +142,18 @@ function CapabilityPanelView({ currentCapability, capabilityStatus, onCapability
   const { t } = useTranslation();
 
   return (
-    <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
+    <div className="w-full h-full flex flex-col relative bg-background">
       {/* Mobile Sub-Header */}
       {!md && (
-        <header className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-20">
+        <header className="flex items-center justify-between px-3 py-2 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
             <X className="w-4 h-4" />
             <span className="text-xs font-medium">{t("common.close") || "Close"}</span>
           </button>
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("ai.capability.title") || "我的能力"}</span>
+          <span className="text-sm font-medium text-foreground">{t("ai.capability.title") || "我的能力"}</span>
           <div className="w-16" />
         </header>
       )}

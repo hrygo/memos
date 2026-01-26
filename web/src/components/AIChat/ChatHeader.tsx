@@ -67,14 +67,14 @@ export function ChatHeader({
     >
       {/* Left Section */}
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-lg shadow-sm">
+        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-lg shadow-sm">
           {ASSISTANT_ICON}
         </div>
         <div className="flex flex-col">
           <h1 className="font-semibold text-foreground text-sm leading-tight">{assistantName}</h1>
           {/* 动作描述 - 替代能力徽章 */}
           {actionDescription ? (
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <span className="text-xs text-primary flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
               {actionDescription}
             </span>
@@ -87,7 +87,7 @@ export function ChatHeader({
       {/* Right Section - Status indicator */}
       {isThinking && (
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Sparkles className="w-4 h-4 animate-pulse text-amber-500" />
+          <Sparkles className="w-4 h-4 animate-pulse text-primary" />
         </div>
       )}
     </header>

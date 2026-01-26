@@ -87,9 +87,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
     <div className={cn("flex flex-col items-center justify-center h-full w-full px-6 py-8", className)}>
       {/* 主图标 */}
       <div className="mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-3xl shadow-sm">
-          🦜
-        </div>
+        <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-3xl shadow-sm">🦜</div>
       </div>
 
       {/* 问候语区域 */}
@@ -108,8 +106,8 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
               "flex flex-row items-center gap-3 p-3 rounded-xl",
               "bg-card",
               "border border-border",
-              "hover:border-emerald-300 dark:hover:border-emerald-700",
-              "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
+              "hover:border-primary/50",
+              "hover:bg-accent",
               "transition-all duration-200",
               "active:scale-95",
               "min-h-[56px]",
@@ -117,7 +115,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
             title={item.prompt}
           >
             <span className="text-2xl shrink-0">{item.icon}</span>
-            <span className="text-sm font-medium text-muted-foreground text-left leading-tight line-clamp-2">{item.prompt}</span>
+            <span className="text-sm font-medium text-foreground text-left leading-tight line-clamp-2">{item.prompt}</span>
           </button>
         ))}
       </div>
@@ -154,7 +152,7 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({ message, 
 
   return (
     <div className={cn("flex items-start gap-3 p-4", className)}>
-      <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-lg shrink-0 shadow-sm">
+      <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary flex items-center justify-center text-lg shrink-0 shadow-sm">
         {capability ? capabilityEmojis[capability] : "🦜"}
       </div>
       <div className="flex-1 min-w-0">

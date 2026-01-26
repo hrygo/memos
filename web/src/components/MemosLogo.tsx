@@ -19,7 +19,10 @@ function MemosLogo(props: Props) {
         {collapsed ? (
           <UserAvatar className="shrink-0" avatarUrl={avatarUrl} />
         ) : (
-          <img src="/full-logo.webp" alt={title} className="h-14 w-auto object-contain dark:brightness-[1.8]" />
+          <>
+            <img src="/logo.webp" alt={title} className="h-10 w-auto object-contain" />
+            <span className="text-xl font-bold text-foreground tracking-tight ml-2">{title}</span>
+          </>
         )}
       </div>
     </div>

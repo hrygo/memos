@@ -164,7 +164,7 @@ func (ic *IntentClassifier) isQueryIntent(input, lowerInput string) bool {
 }
 
 // isUpdateIntent checks if the input suggests an update operation.
-func (ic *IntentClassifier) isUpdateIntent(input, lowerInput string) bool {
+func (ic *IntentClassifier) isUpdateIntent(_, lowerInput string) bool {
 	for _, keyword := range ic.updateKeywords {
 		if strings.Contains(lowerInput, strings.ToLower(keyword)) {
 			return true

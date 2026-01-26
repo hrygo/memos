@@ -1,221 +1,221 @@
 # Memos
 
-> This project is a fork of [usememos/memos](https://github.com/usememos/memos).
+> 本项目是 [usememos/memos](https://github.com/usememos/memos) 的分支。
 
-Memos is a **privacy-first, AI-powered personal intelligence assistant** that combines lightweight note-taking with smart schedule management and multi-agent AI capabilities.
+Memos 是一个**隐私优先、AI 驱动的个人智能助手**，结合了轻量级笔记记录、智能日程管理和多智能体 AI 能力。
 
-## ✨ Highlights
+## ✨ 亮点
 
-- 🦜 **Multi-Agent AI System** – Three specialized "Parrot Agents" handle different tasks
-- 🧠 **Intelligent RAG Pipeline** – Hybrid retrieval with BM25 + Vector Search + Reranking
-- 📅 **Smart Schedule Management** – Calendar view + natural language input with conflict detection
-- 🔒 **Privacy First** – Self-hosted, no telemetry, your data stays yours
-
----
-
-## 💬 AI Chat Session
-
-Memos provides **persistent AI chat sessions** with intelligent message management:
-
-### Message Types
-
-| Type   | Count | Frontend | LLM Context | Description                           |
-| ------ | ----- | -------- | ----------- | ------------------------------------- |
-| MSG    | ✓     | ✓        | ✓           | User/Assistant messages (100 limit)   |
-| SEP    | ✗     | ✓        | ✗           | Context separator (visual divider)     |
-| SUMMARY | ✗   | ✗        | ✓           | Auto-generated summary (invisible)   |
-
-### Key Features
-
-- **Persistent Conversations** – All chat sessions are stored in PostgreSQL
-- **Incremental Sync** – Efficiently load messages with UID-based pagination
-- **FIFO Cache** – Frontend maintains 100 MSG cache per conversation
-- **Context Separator** – Manually clear conversation context with `---`
-- **Auto Summarization** – Conversations are automatically summarized after 11 messages
-- **Multi-Device Sync** – Chat state synchronized across devices
-
-### Message Sync Flow
-
-```
-First Load          → Latest 100 MSG (SEP included)
-Incremental Load    → Messages after lastMessageUid (max 100 MSG)
-UID Not Found       → sync_required flag triggers full refresh
-```
+- 🦜 **多智能体 AI 系统** – 三个专业化的"鹦鹉智能体"处理不同任务
+- 🧠 **智能 RAG 管线** – BM25 + 向量搜索 + 重排序的混合检索
+- 📅 **智能日程管理** – 日历视图 + 自然语言输入 + 冲突检测
+- 🔒 **隐私优先** – 自托管，无遥测，数据完全由你掌控
 
 ---
 
-## 📅 Schedule Management
+## 💬 AI 对话会话
 
-Memos provides a **dedicated schedule management module** with calendar visualization and AI-powered natural language input:
+Memos 提供**持久化 AI 对话会话**，具备智能消息管理：
 
-### Two Access Modes
+### 消息类型
 
-| Mode | Entry Point | Interface | Use Case |
-|------|-------------|-----------|----------|
-| **Standalone** | `/schedule` | FullCalendar + Quick Input | Visual planning, drag-and-drop |
-| **Chat-based** | `/chat` → 金刚 Agent | Natural language | "明天下午3点开会" |
+| 类型    | 计数 | 前端显示 | LLM 上下文 | 描述                         |
+| ------- | ---- | -------- | ---------- | ---------------------------- |
+| MSG     | ✓    | ✓        | ✓          | 用户/助手消息（限 100 条）   |
+| SEP     | ✗    | ✓        | ✗          | 上下文分隔符（视觉分割线）   |
+| SUMMARY | ✗    | ✗        | ✓          | 自动生成的摘要（不可见）     |
 
-### Key Features
+### 核心功能
 
-- **Calendar View** – Month/Week/Day views with FullCalendar
-- **Quick Input** – Natural language schedule creation with date context
-- **Conflict Detection** – Automatic check for overlapping schedules
-- **Free Time Finder** – AI suggests available slots (8:00-22:00)
-- **Drag & Drop** – Reschedule by dragging events on calendar
-- **Recurrence** – RRULE-based repeating schedules (daily/weekly/monthly)
+- **持久化对话** – 所有对话会话存储在 PostgreSQL
+- **增量同步** – 基于 UID 分页高效加载消息
+- **FIFO 缓存** – 前端维护每个对话 100 条 MSG 缓存
+- **上下文分隔** – 使用 `---` 手动清除对话上下文
+- **自动摘要** – 11 条消息后自动生成对话摘要
+- **多设备同步** – 对话状态跨设备同步
 
-### Schedule Agent (金刚) Tools
+### 消息同步流程
 
-| Tool | Function |
-|------|----------|
-| `schedule_add` | Create new schedule with conflict check |
-| `schedule_query` | Query schedules by time range |
-| `schedule_update` | Modify existing schedules |
-| `find_free_time` | Find available time slots |
+```
+首次加载          → 最新 100 条 MSG（含 SEP）
+增量加载          → lastMessageUid 之后的消息（最多 100 条 MSG）
+UID 未找到        → sync_required 标志触发全量刷新
+```
 
 ---
 
-## 🦜 Parrot AI Agents
+## 📅 日程管理
 
-Memos uses a **multi-agent architecture** where specialized AI assistants (modeled after parrot species) handle different tasks:
+Memos 提供**专用日程管理模块**，支持日历可视化和 AI 驱动的自然语言输入：
 
-| Agent        | Name     | Bird Species              | Specialization          | Key Capabilities                                                  |
-| ------------ | -------- | ------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| 🦜 `MEMO`     | **灰灰** | 非洲灰鹦鹉 (African Grey) | Note Search & Retrieval | Semantic search, memo summary, RAG Q&A                            |
-| 📅 `SCHEDULE` | **金刚** | 金刚鹦鹉 (Macaw)          | Schedule Management     | Create/query/update schedules, conflict detection, find free time |
-| ⭐ `AMAZING`  | **惊奇** | 亚马逊鹦鹉 (Amazon)       | Comprehensive Assistant | Parallel memo + schedule retrieval, integrated analysis           |
+### 两种访问模式
 
-### Agent Selection
+| 模式       | 入口        | 界面                     | 使用场景                   |
+| ---------- | ----------- | ------------------------ | -------------------------- |
+| **独立式** | `/schedule` | FullCalendar + 快捷输入  | 可视化规划、拖拽调整       |
+| **对话式** | `/chat` → 金刚智能体 | 自然语言           | "明天下午3点开会"          |
 
-Memos uses **intelligent intent-based routing** powered by a hybrid Rule + LLM classifier:
+### 核心功能
+
+- **日历视图** – 月/周/日视图（FullCalendar）
+- **快捷输入** – 带日期上下文的自然语言创建日程
+- **冲突检测** – 自动检查重叠日程
+- **空闲时间查找** – AI 建议可用时段（8:00-22:00）
+- **拖拽调整** – 在日历上拖动事件重新安排
+- **重复规则** – 基于 RRULE 的重复日程（每天/每周/每月）
+
+### 日程智能体（金刚）工具
+
+| 工具              | 功能                   |
+| ----------------- | ---------------------- |
+| `schedule_add`    | 创建新日程并检查冲突   |
+| `schedule_query`  | 按时间范围查询日程     |
+| `schedule_update` | 修改已有日程           |
+| `find_free_time`  | 查找可用时间段         |
+
+---
+
+## 🦜 Parrot AI 智能体
+
+Memos 使用**多智能体架构**，由专业化的 AI 助手（以鹦鹉物种命名）处理不同任务：
+
+| 智能体       | 名称     | 鹦鹉物种                  | 专业领域         | 核心能力                                                   |
+| ------------ | -------- | ------------------------- | ---------------- | ---------------------------------------------------------- |
+| 🦜 `MEMO`     | **灰灰** | 非洲灰鹦鹉 (African Grey) | 笔记搜索与检索   | 语义搜索、笔记摘要、RAG 问答                               |
+| 📅 `SCHEDULE` | **金刚** | 金刚鹦鹉 (Macaw)          | 日程管理         | 创建/查询/更新日程、冲突检测、查找空闲时间                 |
+| ⭐ `AMAZING`  | **惊奇** | 亚马逊鹦鹉 (Amazon)       | 综合助手         | 并行笔记 + 日程检索、整合分析                              |
+
+### 智能体选择
+
+Memos 使用**基于意图的智能路由**，由混合 Rule + LLM 分类器驱动：
 
 ```
-User Input → ChatRouter (Backend)
+用户输入 → ChatRouter（后端）
                  ↓
          ┌──────┴──────┐
          ↓             ↓
-    Rule Match     LLM Classify
-     (0ms)          (~400ms)
+    规则匹配       LLM 分类
+     (0ms)         (~400ms)
          ↓             ↓
          └──────┬──────┘
                 ↓
     MEMO / SCHEDULE / AMAZING
 ```
 
-- **Rule-based** (fast path): High-confidence keyword matching
-- **LLM fallback**: Semantic understanding for ambiguous inputs
-- **Manual override**: Use `@` symbol or click agent cards in Parrot Hub
+- **规则匹配**（快速路径）：高置信度关键词匹配
+- **LLM 回退**：处理模糊输入的语义理解
+- **手动指定**：使用 `@` 符号或点击 Parrot Hub 中的智能体卡片
 
-### Agent Technical Details
+### 智能体技术详情
 
 <details>
-<summary><b>🦜 灰灰 (MEMO) – Memory & Retrieval Specialist</b></summary>
+<summary><b>🦜 灰灰 (MEMO) – 记忆与检索专家</b></summary>
 
-**Working Style**: ReAct loop – search first, then answer based on retrieved evidence
+**工作方式**：ReAct 循环 – 先搜索，再基于检索证据回答
 
-**Tools**:
-- `memo_search` – Semantic search across all memos with embedding similarity
+**工具**：
+- `memo_search` – 基于嵌入相似度的全笔记语义搜索
 
-**Fun Fact**: Named after the famous African Grey parrot Alex, who could understand 100+ vocabulary concepts!
+**趣闻**：以著名的非洲灰鹦鹉 Alex 命名，它能理解 100+ 词汇概念！
 </details>
 
 <details>
-<summary><b>📅 金刚 (SCHEDULE) – Time Management Expert</b></summary>
+<summary><b>📅 金刚 (SCHEDULE) – 时间管理专家</b></summary>
 
-**Working Style**: ReAct loop with direct efficient approach – defaults to 1 hour duration, auto conflict detection
+**工作方式**：ReAct 循环，直接高效 – 默认 1 小时时长，自动冲突检测
 
-**Tools**:
-- `schedule_add` – Create new schedules with automatic conflict check
-- `schedule_query` – Query schedules by time range
-- `schedule_update` – Modify existing schedules
-- `find_free_time` – Find available time slots (8:00-22:00)
+**工具**：
+- `schedule_add` – 创建新日程并自动检查冲突
+- `schedule_query` – 按时间范围查询日程
+- `schedule_update` – 修改已有日程
+- `find_free_time` – 查找可用时间段（8:00-22:00）
 
-**Fun Fact**: Macaws are known for their punctuality in nature, always following consistent daily routines!
+**趣闻**：金刚鹦鹉以守时著称，总是遵循固定的日常作息！
 </details>
 
 <details>
-<summary><b>⭐ 惊奇 (AMAZING) – Comprehensive Multi-Task Assistant</b></summary>
+<summary><b>⭐ 惊奇 (AMAZING) – 综合多任务助手</b></summary>
 
-**Working Style**: Two-phase concurrent retrieval – Intent Analysis → Parallel Tool Execution → Answer Synthesis
+**工作方式**：两阶段并发检索 – 意图分析 → 并行工具执行 → 答案合成
 
-**Tools**: Combines capabilities of MEMO and SCHEDULE agents
+**工具**：整合 MEMO 和 SCHEDULE 智能体的能力
 
-**Fun Fact**: Amazon parrots are among the most talkative parrots – just like Amazing demonstrates multiple superpowers in one conversation!
+**趣闻**：亚马逊鹦鹉是最健谈的鹦鹉之一 – 就像惊奇在一次对话中展现多种超能力！
 </details>
 
 ---
 
-## 🧠 Core Technology Stack
+## 🧠 核心技术栈
 
-### Intelligent RAG Pipeline
+### 智能 RAG 管线
 
 ```
-Query → QueryRouter → Cache Check
-                         ├─ Cache Hit → Return (60% hit rate)
-                         └─ Cache Miss → AdaptiveRetriever → Update Cache
+查询 → QueryRouter → 缓存检查
+                         ├─ 缓存命中 → 返回（60% 命中率）
+                         └─ 缓存未命中 → AdaptiveRetriever → 更新缓存
                                               │
                               ┌───────────────┼───────────────┐
                               ▼               ▼               ▼
-                           BM25           Vector          Reranker
+                           BM25           向量检索        重排序器
                        (PostgreSQL)    (pgvector)    (bge-reranker-v2-m3)
                               │               │               │
                               └───────────────┴───────────────┘
                                               │
-                                          RRF Fusion → Results
+                                          RRF 融合 → 结果
 ```
 
-| Component            | Technology              | Purpose                                               |
-| -------------------- | ----------------------- | ----------------------------------------------------- |
-| **Vector Search**    | pgvector + HNSW         | Similarity-based retrieval (m=16, ef_construction=64) |
-| **Full-text Search** | PostgreSQL FTS + BM25   | Keyword-based retrieval with tsvector/GIN indexes     |
-| **Reranker**         | BAAI/bge-reranker-v2-m3 | Cross-encoder reranking for precision                 |
-| **Embedding**        | BAAI/bge-m3 (1024d)     | Dense vector embeddings via SiliconFlow               |
-| **LLM**              | DeepSeek V3             | Reasoning, summarization, agent execution             |
+| 组件             | 技术                    | 用途                                          |
+| ---------------- | ----------------------- | --------------------------------------------- |
+| **向量搜索**     | pgvector + HNSW         | 相似度检索（m=16, ef_construction=64）        |
+| **全文搜索**     | PostgreSQL FTS + BM25   | 关键词检索（tsvector/GIN 索引）               |
+| **重排序器**     | BAAI/bge-reranker-v2-m3 | 交叉编码器重排序提升精度                      |
+| **嵌入模型**     | BAAI/bge-m3 (1024d)     | 稠密向量嵌入（SiliconFlow 提供）              |
+| **大语言模型**   | DeepSeek V3             | 推理、摘要、智能体执行                        |
 
-### Smart Query Routing
+### 智能查询路由
 
-The `QueryRouter` automatically detects query intent and routes to the optimal retrieval strategy:
+`QueryRouter` 自动检测查询意图并路由到最优检索策略：
 
-| Strategy                      | Trigger                        | Use Case                |
-| ----------------------------- | ------------------------------ | ----------------------- |
-| `schedule_bm25_only`          | Time keywords ("今天", "本周") | Schedule queries        |
-| `memo_semantic_only`          | Conceptual queries             | Pure vector search      |
-| `hybrid_bm25_weighted`        | Mixed keywords                 | BM25 + Vector fusion    |
-| `hybrid_with_time_filter`     | Time + keywords                | Filtered hybrid search  |
-| `full_pipeline_with_reranker` | Complex queries                | Full RAG with reranking |
+| 策略                          | 触发条件                       | 使用场景             |
+| ----------------------------- | ------------------------------ | -------------------- |
+| `schedule_bm25_only`          | 时间关键词（"今天"、"本周"）   | 日程查询             |
+| `memo_semantic_only`          | 概念性查询                     | 纯向量搜索           |
+| `hybrid_bm25_weighted`        | 混合关键词                     | BM25 + 向量融合      |
+| `hybrid_with_time_filter`     | 时间 + 关键词                  | 带过滤的混合搜索     |
+| `full_pipeline_with_reranker` | 复杂查询                       | 完整 RAG + 重排序    |
 
-### Schedule Intelligence
+### 日程智能
 
-- **Natural Language Parsing** – "明天下午3点开会" → creates schedule at tomorrow 15:00
-- **Conflict Detection** – Automatic check for overlapping schedules
-- **Free Time Finder** – Suggests available slots within 8:00-22:00 window
-- **Recurrence Support** – RRULE-based repeating schedules (daily/weekly/monthly)
+- **自然语言解析** – "明天下午3点开会" → 创建明天 15:00 的日程
+- **冲突检测** – 自动检查重叠日程
+- **空闲时间查找** – 在 8:00-22:00 范围内建议可用时段
+- **重复支持** – 基于 RRULE 的重复日程（每天/每周/每月）
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ 架构概览
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Frontend (React + Vite)                       │
+│                    前端 (React + Vite)                           │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │                     RootLayout                            │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────────┐  │   │
 │  │  │ MainLayout │  │ AIChat     │  │ ScheduleLayout     │  │   │
-│  │  │ (Memo)     │  │ Layout     │  │ (Calendar)         │  │   │
+│  │  │ (笔记)     │  │ Layout     │  │ (日历)             │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────────┘  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │ Connect RPC (HTTP/2)
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Backend (Go + Echo)                          │
+│                     后端 (Go + Echo)                             │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
 │  │   MemoService   │  │ ScheduleService │  │   AIService     │  │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
 │                              │                                   │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │                    ChatRouter (Intent)                       ││
-│  │         Rule Match (0ms) → LLM Fallback (~400ms)            ││
+│  │                    ChatRouter (意图路由)                     ││
+│  │         规则匹配 (0ms) → LLM 回退 (~400ms)                  ││
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       ││
 │  │  │  MemoParrot  │  │ScheduleParrot│  │AmazingParrot │       ││
 │  │  │    (灰灰)     │  │    (金刚)     │  │    (惊奇)     │       ││
@@ -223,16 +223,16 @@ The `QueryRouter` automatically detects query intent and routes to the optimal r
 │  └─────────────────────────────────────────────────────────────┘│
 │  ┌─────────────────┐  ┌─────────────────┐                       │
 │  │AdaptiveRetriever│  │  QueryRouter    │                       │
-│  │ (Hybrid Search) │  │ (RAG Strategy)  │                       │
+│  │ (混合搜索)       │  │ (RAG 策略)      │                       │
 │  └─────────────────┘  └─────────────────┘                       │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Storage & AI Layer                           │
+│                     存储层 & AI 层                               │
 │  ┌─────────────────┐  ┌─────────────────────────────────────┐   │
-│  │   PostgreSQL    │  │          AI Providers                │   │
+│  │   PostgreSQL    │  │          AI 服务提供商               │   │
 │  │  ├─ memo        │  │  ┌─────────┐ ┌───────┐ ┌─────────┐  │   │
-│  │  ├─ schedule    │  │  │Embedding│ │Rerank │ │   LLM   │  │   │
+│  │  ├─ schedule    │  │  │嵌入模型 │ │重排序 │ │   LLM   │  │   │
 │  │  ├─ conversation│  │  │(bge-m3) │ │(bge)  │ │(DeepSeek│  │   │
 │  │  └─ pgvector    │  │  └─────────┘ └───────┘ └─────────┘  │   │
 │  └─────────────────┘  └─────────────────────────────────────┘   │
@@ -241,44 +241,44 @@ The `QueryRouter` automatically detects query intent and routes to the optimal r
 
 ---
 
-## 🚀 Getting Started
+## 🚀 快速开始
 
-### Prerequisites
+### 前置条件
 
 - Go 1.25+
 - Node.js 22+ & pnpm
-- Docker (for PostgreSQL)
+- Docker（用于 PostgreSQL）
 
-### Local Development
+### 本地开发
 
 ```bash
-# 1. Clone the repository
+# 1. 克隆仓库
 git clone https://github.com/hrygo/memos.git
 cd memos
 
-# 2. Install dependencies
+# 2. 安装依赖
 make deps-all
 
-# 3. Start development environment
+# 3. 启动开发环境
 make start
 ```
 
-This automatically starts:
-- **PostgreSQL** (Docker container with pgvector)
-- **Backend** at http://localhost:28081
-- **Frontend** at http://localhost:25173
+自动启动：
+- **PostgreSQL**（Docker 容器，含 pgvector）
+- **后端** http://localhost:28081
+- **前端** http://localhost:25173
 
-### Build
+### 构建
 
 ```bash
-# Backend
+# 后端
 make build
 
-# Frontend
+# 前端
 make build-web
 ```
 
-### Docker Deployment
+### Docker 部署
 
 ```bash
 docker run -d \
@@ -290,108 +290,108 @@ docker run -d \
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ 技术栈
 
-### Backend
+### 后端
 
-| Component     | Technology          | Purpose                       |
-| ------------- | ------------------- | ----------------------------- |
-| Language      | Go 1.25+            | High-performance, concurrent  |
-| Framework     | Echo + Connect RPC  | gRPC-HTTP transcoding         |
-| Database      | PostgreSQL 16+      | Primary storage with pgvector |
-| Vector Engine | pgvector (HNSW)     | Similarity search             |
-| Caching       | Redis 7+ (optional) | L2 cache, session             |
+| 组件       | 技术                | 用途                       |
+| ---------- | ------------------- | -------------------------- |
+| 语言       | Go 1.25+            | 高性能、并发               |
+| 框架       | Echo + Connect RPC  | gRPC-HTTP 转码             |
+| 数据库     | PostgreSQL 16+      | 主存储（含 pgvector）      |
+| 向量引擎   | pgvector (HNSW)     | 相似度搜索                 |
+| 缓存       | Redis 7+（可选）    | L2 缓存、会话              |
 
-### Frontend
+### 前端
 
-| Component | Technology              | Purpose                       |
-| --------- | ----------------------- | ----------------------------- |
-| Framework | React 18                | Concurrent features, Suspense |
-| Build     | Vite 7                  | Fast HMR, optimized builds    |
-| State     | TanStack Query          | Server state, caching         |
-| UI        | Radix UI + Tailwind CSS | Accessible, themeable         |
-| Calendar  | FullCalendar            | Schedule visualization        |
+| 组件   | 技术                    | 用途                       |
+| ------ | ----------------------- | -------------------------- |
+| 框架   | React 18                | 并发特性、Suspense         |
+| 构建   | Vite 7                  | 快速 HMR、优化构建         |
+| 状态   | TanStack Query          | 服务端状态、缓存           |
+| UI     | Radix UI + Tailwind CSS | 可访问、可主题化           |
+| 日历   | FullCalendar            | 日程可视化                 |
 
-### AI Services
+### AI 服务
 
-| Service   | Provider    | Model                   |
-| --------- | ----------- | ----------------------- |
-| Embedding | SiliconFlow | BAAI/bge-m3 (1024d)     |
-| Reranking | SiliconFlow | BAAI/bge-reranker-v2-m3 |
-| LLM       | DeepSeek    | DeepSeek V3             |
-
----
-
-## 📊 Database Support
-
-| Database   | Status                    | AI Features                                      | Recommended Use          |
-| ---------- | ------------------------- | ------------------------------------------------ | ------------------------ |
-| PostgreSQL | ✅ Full Support           | ✅ All AI features (Conversation, Vector, Rerank) | Production               |
-| SQLite     | ⚠️ Development Only        | ❌ **AI features NOT supported**                  | Non-AI development only  |
-| MySQL      | ❌ Removed                | ❌                                                | N/A                      |
-
-> ⚠️ **Important**: SQLite does NOT support AI features (conversation persistence, vector search, reranking).
-> Use PostgreSQL for production AI features. See [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md) for details.
+| 服务     | 提供商      | 模型                    |
+| -------- | ----------- | ----------------------- |
+| 嵌入     | SiliconFlow | BAAI/bge-m3 (1024d)     |
+| 重排序   | SiliconFlow | BAAI/bge-reranker-v2-m3 |
+| LLM      | DeepSeek    | DeepSeek V3             |
 
 ---
 
-## 📁 Project Structure
+## 📊 数据库支持
+
+| 数据库     | 状态                    | AI 功能                                          | 推荐用途             |
+| ---------- | ----------------------- | ------------------------------------------------ | -------------------- |
+| PostgreSQL | ✅ 完全支持             | ✅ 所有 AI 功能（对话、向量、重排序）             | 生产环境             |
+| SQLite     | ⚠️ 仅开发环境           | ❌ **不支持 AI 功能**                             | 非 AI 功能开发       |
+| MySQL      | ❌ 已移除               | ❌                                                | 不适用               |
+
+> ⚠️ **重要**：SQLite 不支持 AI 功能（对话持久化、向量搜索、重排序）。
+> 生产环境 AI 功能请使用 PostgreSQL。详见 [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)。
+
+---
+
+## 📁 项目结构
 
 ```
 memos/
-├── cmd/memos/                # Main application entry point
-├── server/                   # Go backend
-│   ├── router/api/v1/       # API handlers (Connect RPC)
-│   │   └── ai/              # AI chat components
-│   │       ├── context_builder.go     # Context building for LLM
-│   │       └── conversation_summarizer.go  # Auto-summarization
-│   ├── queryengine/         # Query routing & intent detection
-│   ├── retrieval/           # Adaptive retrieval (BM25 + Vector)
-│   ├── runner/              # Background task runners
-│   ├── scheduler/           # Schedule management
-│   └── service/             # Business logic layer
-├── plugin/ai/               # AI components
-│   ├── agent/               # Parrot agents
+├── cmd/memos/                # 应用主入口
+├── server/                   # Go 后端
+│   ├── router/api/v1/       # API 处理器（Connect RPC）
+│   │   └── ai/              # AI 聊天组件
+│   │       ├── context_builder.go     # LLM 上下文构建
+│   │       └── conversation_summarizer.go  # 自动摘要
+│   ├── queryengine/         # 查询路由 & 意图检测
+│   ├── retrieval/           # 自适应检索（BM25 + 向量）
+│   ├── runner/              # 后台任务运行器
+│   ├── scheduler/           # 日程管理
+│   └── service/             # 业务逻辑层
+├── plugin/ai/               # AI 组件
+│   ├── agent/               # Parrot 智能体
 │   │   ├── memo_parrot.go
 │   │   ├── schedule_parrot_v2.go
 │   │   ├── amazing_parrot.go
-│   │   ├── chat_router.go   # Intent-based agent routing (Rule + LLM)
-│   │   └── tools/           # Agent tools (scheduler, memo_search)
-│   ├── embedding.go         # Embedding service
-│   ├── reranker.go          # Reranking service
-│   └── llm.go               # LLM service
-├── store/                   # Data storage layer
-│   └── db/                  # Database implementations
-│       ├── postgres/        # PostgreSQL (production)
-│       └── sqlite/          # SQLite (development)
-├── proto/                   # Protocol buffers
-├── web/                     # React frontend
+│   │   ├── chat_router.go   # 基于意图的智能体路由（Rule + LLM）
+│   │   └── tools/           # 智能体工具（scheduler, memo_search）
+│   ├── embedding.go         # 嵌入服务
+│   ├── reranker.go          # 重排序服务
+│   └── llm.go               # LLM 服务
+├── store/                   # 数据存储层
+│   └── db/                  # 数据库实现
+│       ├── postgres/        # PostgreSQL（生产）
+│       └── sqlite/          # SQLite（开发）
+├── proto/                   # Protocol Buffers
+├── web/                     # React 前端
 │   └── src/
-│       ├── components/      # UI components
-│       ├── contexts/        # React contexts
-│       │   └── AIChatContext.tsx  # AI chat state management
-│       ├── layouts/         # Page layouts
-│       ├── pages/           # Route pages
-│       │   └── AIChat.tsx    # AI chat page
-│       └── hooks/           # React hooks
-├── docs/                    # Documentation
-│   └── dev-guides/          # Developer guides
-└── scripts/                 # Development & deployment scripts
+│       ├── components/      # UI 组件
+│       ├── contexts/        # React 上下文
+│       │   └── AIChatContext.tsx  # AI 聊天状态管理
+│       ├── layouts/         # 页面布局
+│       ├── pages/           # 路由页面
+│       │   └── AIChat.tsx    # AI 聊天页面
+│       └── hooks/           # React Hooks
+├── docs/                    # 文档
+│   └── dev-guides/          # 开发指南
+└── scripts/                 # 开发 & 部署脚本
 ```
 
 ---
 
-## 📖 Documentation
+## 📖 文档
 
-| Document                                         | Description                                 |
-| ------------------------------------------------ | ------------------------------------------- |
-| [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)   | Backend development & database policy       |
-| [FRONTEND.md](docs/dev-guides/FRONTEND.md)       | Frontend architecture & layout patterns     |
-| [ARCHITECTURE.md](docs/dev-guides/ARCHITECTURE.md) | Project architecture & Parrot Agent details |
-| [QUICKSTART_AGENT.md](docs/dev-guides/QUICKSTART_AGENT.md) | Agent testing quick start guide     |
+| 文档                                               | 描述                           |
+| -------------------------------------------------- | ------------------------------ |
+| [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)     | 后端开发 & 数据库策略          |
+| [FRONTEND.md](docs/dev-guides/FRONTEND.md)         | 前端架构 & 布局模式            |
+| [ARCHITECTURE.md](docs/dev-guides/ARCHITECTURE.md) | 项目架构 & Parrot 智能体详情   |
+| [QUICKSTART_AGENT.md](docs/dev-guides/QUICKSTART_AGENT.md) | 智能体测试快速入门     |
 
 ---
 
-## 📄 License
+## 📄 许可证
 
 [MIT](LICENSE)

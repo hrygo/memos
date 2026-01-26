@@ -44,8 +44,8 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
           onClick={handleStartNewChat}
           className={cn(
             "w-full flex items-center justify-center gap-2 px-3 py-2",
-            "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
-            "text-white text-sm font-medium rounded-lg transition-all",
+            "bg-sidebar-primary hover:bg-sidebar-primary/90",
+            "text-sidebar-primary-foreground text-sm font-medium rounded-lg transition-all",
             "shadow-sm active:scale-[0.98]",
           )}
         >
