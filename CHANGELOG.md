@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.54.0] - 2026-01-27
+
+### 🚀 Features & UX Improvements
+
+- **Schedule Management**: Optimized scheduling workflow with significantly fewer confirmation steps ("约定 > 配置 > 询问").
+- **AI Chat Refactor**: Enhanced AI native experience with refactored Timeline and Calendar components.
+- **Conflict Resolution**: Implemented automatic conflict resolution for scheduling with undo option.
+
+### 🌐 Internationalization
+
+- **Locale Cleanup**: Cleaned up i18n locales, focusing on English, Simplified Chinese (简体中文), and Traditional Chinese (繁體中文) for better maintainability.
+
+---
+
 ## [v0.53.0] - 2026-01-26
 
 ### 📝 Documentation & Code Quality

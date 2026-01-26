@@ -502,7 +502,7 @@
     }
   },
   "schedule": {
-    "title": "日程",
+    "title": "日程管理",
     "add": "新建",
     "search-placeholder": "搜索日程...",
     "search-results": "個結果",

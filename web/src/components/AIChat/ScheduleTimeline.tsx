@@ -161,14 +161,14 @@ export const ScheduleTimeline = ({
               </span>
             </div>
             <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-              {daySchedules.length} Items
+              {t("schedule.schedule-count", { count: daySchedules.length })}
             </span>
           </div>
 
           {daySchedules.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/40 pb-20 mt-10">
               <CalendarDays className="w-16 h-16 mb-4 opacity-20" />
-              <p className="text-lg font-medium">No schedules</p>
+              <p className="text-lg font-medium">{t("schedule.no-schedules")}</p>
             </div>
           ) : (
             <div className="relative flex flex-col gap-4 pb-20">
@@ -226,7 +226,7 @@ export const ScheduleTimeline = ({
                                 <div className="flex items-center gap-1.5">
                                   <Clock className="w-3 h-3 shrink-0 opacity-70" />
                                   <span>
-                                    {Math.max(15, endDate.diff(startDate, 'minute'))} min
+                                    {Math.max(15, endDate.diff(startDate, 'minute'))} {t("schedule.quick-input.minutes-abbr")}
                                   </span>
                                 </div>
 
