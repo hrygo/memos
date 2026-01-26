@@ -141,8 +141,7 @@ func (n *NilRedisCache) Close() error {
 /*
 // Redis implementation (requires github.com/redis/go-redis/v9)
 // Uncomment and build with -tags redis to enable
-
-// +build redis
+// Build tag: redis
 
 package cache
 
