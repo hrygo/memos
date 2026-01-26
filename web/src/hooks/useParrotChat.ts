@@ -51,12 +51,8 @@ export function useParrotChat() {
         history: params.history ?? [], // Deprecated: will be removed after migration
         agentType: parrotToProtoAgentType(params.agentType),
         userTimezone: params.userTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+        conversationId: params.conversationId ?? 0,
       });
-
-      // Manually set conversationId since it may not be in the generated schema
-      if (params.conversationId) {
-        (request as any).conversationId = params.conversationId;
-      }
 
       try {
         // Use the streaming method from Connect RPC client

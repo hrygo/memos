@@ -23,7 +23,10 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
   const { t } = useTranslation();
   const { conversationSummaries, conversations, state, addContextSeparator, selectConversation } = useAIChat();
 
-  const loadedConversationIds = new Set(conversations.filter((c) => c.messages.length > 0).map((c) => c.id));
+  const loadedConversationIds = useMemo(
+    () => new Set(conversations.filter((c) => c.messages.length > 0).map((c) => c.id)),
+    [conversations],
+  );
 
   // 按时间分组会话
   const groupedConversations = useMemo(() => {

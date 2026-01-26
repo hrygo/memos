@@ -100,9 +100,9 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
 
       {/* 示例提问 - 点击直接发送 */}
       <div className="grid grid-cols-2 gap-3 w-full mb-8">
-        {suggestedPrompts.map((item, index) => (
+        {suggestedPrompts.map((item) => (
           <button
-            key={index}
+            key={item.promptKey}
             onClick={() => onSendMessage?.(item.prompt)}
             className={cn(
               "flex flex-row items-center gap-3 p-3 rounded-xl",

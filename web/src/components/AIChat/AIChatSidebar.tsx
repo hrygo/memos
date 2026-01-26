@@ -54,7 +54,9 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{t("ai.assistant-name")}</div>
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            {capabilityStatus === "thinking" ? t("ai.thinking") : t("ai.ready")}
+            {capabilityStatus === "thinking" && t("ai.thinking")}
+            {capabilityStatus === "processing" && t("ai.processing")}
+            {(capabilityStatus === "idle" || capabilityStatus === "active") && t("ai.ready")}
           </div>
         </div>
       </div>

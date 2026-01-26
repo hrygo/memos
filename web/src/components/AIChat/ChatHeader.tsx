@@ -2,7 +2,7 @@ import { Eraser, MoreHorizontal, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { CapabilityType } from "@/types/capability";
+import { CapabilityStatus, CapabilityType } from "@/types/capability";
 
 interface ChatHeaderProps {
   isThinking?: boolean;
@@ -10,7 +10,7 @@ interface ChatHeaderProps {
   onClearChat?: () => void;
   className?: string;
   currentCapability?: CapabilityType;
-  capabilityStatus?: string;
+  capabilityStatus?: CapabilityStatus;
 }
 
 /**
@@ -26,7 +26,7 @@ const ASSISTANT_ICON = "🦜";
 /**
  * 根据当前能力和状态获取动作描述
  */
-function getActionDescription(capability: CapabilityType, status: string, t: (key: string) => string): string | null {
+function getActionDescription(capability: CapabilityType, status: CapabilityStatus, t: (key: string) => string): string | null {
   if (status === "idle") return null;
 
   if (status === "thinking") {

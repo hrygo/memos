@@ -252,7 +252,7 @@ const AIChat = () => {
             message: explicitMessage,
             agentType: parrotId,
             userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          } as any,
+          },
           {
             onThinking: (msg) => {
               if (lastAssistantMessageIdRef.current) {

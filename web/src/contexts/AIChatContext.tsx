@@ -578,7 +578,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
         for (const msg of newMessages) {
           if (!isContextSeparator(msg)) {
-            const uid = (msg as any).uid || msg.id;
+            const uid = "uid" in msg ? msg.uid : msg.id;
             if (!existingUids.has(uid)) {
               mergedMessages.push(msg);
             }
@@ -668,7 +668,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         const oldestMessage = conversation.messages.find((m) => !isContextSeparator(m));
         if (!oldestMessage) return prev;
 
-        const oldestUid = (oldestMessage as any).uid || oldestMessage.id;
+        const oldestUid = "uid" in oldestMessage ? oldestMessage.uid : oldestMessage.id;
 
         // Fire-and-forget async operation
         aiServiceClient
