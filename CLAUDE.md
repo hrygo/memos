@@ -27,7 +27,6 @@
 ### 2. Database
 - **PostgreSQL**: Production. Full AI support.
 - **SQLite**: Dev only. **No AI features**.
-- **MySQL**: Not supported.
 
 ### 3. Code Style
 - **Go**: `snake_case.go`, `log/slog`
