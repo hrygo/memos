@@ -33,13 +33,16 @@ docker run -d --name memos -p 5230:5230 -v ~/.memos:/var/opt/memos hrygo/memos:s
 git clone https://github.com/hrygo/memos.git && cd memos
 
 # 2. 配置环境变量
-cp .env.prod.example .env.prod
+cp deploy/aliyun/.env.prod.example .env.prod
 # 编辑 .env.prod 填入：
 #   POSTGRES_PASSWORD=your_password
 #   MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx
 #   MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx
 
-# 3. 启动 (PostgreSQL + Memos)
+# 3. 构建镜像
+make build && docker build -t memos:latest -f docker/Dockerfile .
+
+# 4. 启动 (PostgreSQL + Memos)
 docker compose -f docker/compose/prod.yml --env-file .env.prod up -d
 ```
 
