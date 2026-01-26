@@ -157,29 +157,6 @@ func wrapToolWithName(name string, tool interface{}) ToolWithSchema {
 	return wrapped
 }
 
-// toolWithWrapper is a helper that implements ToolWithSchema for existing tools.
-type toolWithWrapper struct {
-	name        string
-	description string
-	runFunc     func(ctx context.Context, input string) (string, error)
-	params      map[string]interface{}
-}
-
-func (t *toolWithWrapper) Name() string        { return t.name }
-func (t *toolWithWrapper) Description() string { return t.description }
-func (t *toolWithWrapper) Parameters() map[string]interface{} {
-	if t.params == nil {
-		return map[string]interface{}{
-			"type":       "object",
-			"properties": map[string]interface{}{},
-		}
-	}
-	return t.params
-}
-func (t *toolWithWrapper) Run(ctx context.Context, input string) (string, error) {
-	return t.runFunc(ctx, input)
-}
-
 // Execute runs the agent with the given user input.
 func (a *SchedulerAgentV2) Execute(ctx context.Context, userInput string) (string, error) {
 	return a.ExecuteWithCallback(ctx, userInput, nil, nil)

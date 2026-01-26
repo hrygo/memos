@@ -81,7 +81,7 @@ memos/
 | AgentType  | Parrot Name | File                 | Description                               |
 | ---------- | ----------- | -------------------- | ----------------------------------------- |
 | `MEMO`     | 灰灰        | `memo_parrot.go`     | Memo search and retrieval specialist      |
-| `SCHEDULE` | 金刚        | `schedule_parrot.go` | Schedule creation and management          |
+| `SCHEDULE` | 金刚        | `schedule_parrot_v2.go` | Schedule creation and management          |
 | `AMAZING`  | 惊奇        | `amazing_parrot.go`  | Comprehensive assistant (memo + schedule) |
 
 ### Agent Router
@@ -136,7 +136,7 @@ func (s *AIService) createChatHandler() aichat.Handler {
 
 ### Schedule Agent
 
-**Location**: `plugin/ai/agent/scheduler.go`
+**Location**: `plugin/ai/agent/scheduler_v2.go`
 
 Implements a ReAct-style loop with tool execution:
 
@@ -148,7 +148,7 @@ Implements a ReAct-style loop with tool execution:
 
 **System Prompt**: Directs LLM to extract date/time from input, default to 1-hour duration, and use selected date when unspecified.
 
-**Frontend Integration** (`web/src/components/AIChat/ScheduleChatInput.tsx`):
+**Frontend Integration** (`web/src/components/AIChat/ScheduleInput.tsx`):
 ```typescript
 const message = buildScheduleMessage(userInput, selectedDate);
 // Result: "当前选中日期: 2026-01-23\n吃午饭"

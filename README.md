@@ -353,7 +353,7 @@ memos/
 ├── plugin/ai/               # AI components
 │   ├── agent/               # Parrot agents
 │   │   ├── memo_parrot.go
-│   │   ├── schedule_parrot.go
+│   │   ├── schedule_parrot_v2.go
 │   │   ├── amazing_parrot.go
 │   │   ├── chat_router.go   # Intent-based agent routing (Rule + LLM)
 │   │   └── tools/           # Agent tools (scheduler, memo_search)
