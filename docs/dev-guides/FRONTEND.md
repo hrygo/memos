@@ -16,6 +16,64 @@
   - `pnpm lint`: Run TypeScript and Biome checks
   - `pnpm lint:fix`: Auto-fix linting issues
 
+---
+
+## Tailwind CSS 4 Pitfalls
+
+### CRITICAL: Never use semantic `max-w-sm/md/lg/xl`
+
+**Root Cause**: Tailwind CSS 4 redefines these classes to use `--spacing-*` variables (~16px) instead of traditional container widths (384-512px). This causes Dialogs, Sheets, and modals to collapse into unusable "slivers".
+
+| Semantic Class | Tailwind 3 | Tailwind 4 |
+| :--- | :--- | :--- |
+| `max-w-sm` | 384px | ~16px (broken) |
+| `max-w-md` | 448px | ~16px (broken) |
+| `max-w-lg` | 512px | ~16px (broken) |
+
+**Wrong** (collapses to ~16px):
+```tsx
+<DialogContent className="max-w-md">
+<SheetContent className="sm:max-w-sm">
+```
+
+**Correct** (explicit rem values):
+```tsx
+<DialogContent className="max-w-[28rem]">  {/* 448px */}
+<SheetContent className="sm:max-w-[24rem]"> {/* 384px */}
+```
+
+**Reference Table**:
+| Width | rem Value | Use Case |
+| :--- | :--- | :--- |
+| 384px | `max-w-[24rem]` | Small dialogs, sidebars |
+| 448px | `max-w-[28rem]` | Standard dialogs |
+| 512px | `max-w-[32rem]` | Large dialogs, forms |
+| 672px | `max-w-[42rem]` | Wide content |
+
+### Avoid `max-w-*` on Grid containers
+
+**Wrong** (causes overlap/squash):
+```tsx
+<div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+  {/* 320px / 2 = 160px per column - content crushed */}
+</div>
+```
+
+**Correct**:
+```tsx
+<div className="grid grid-cols-2 gap-3 w-full">
+  {/* Let gap and parent padding control width */}
+</div>
+```
+
+| Use `max-w-*` for | Don't use `max-w-*` for |
+| :--- | :--- |
+| Dialog/Modal/Popover | Grid containers |
+| Tooltip/Alert text | Flex items that need to fill |
+| Sidebar/Drawer | Cards in responsive layouts |
+
+**Rule**: Grid uses `gap`, not `max-w-*`. If `max-width / column-count < 200px`, don't use `max-w-*`.
+
 ## Layout Architecture
 
 ### Layout Hierarchy

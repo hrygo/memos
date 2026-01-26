@@ -1,8 +1,8 @@
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import dayjs, { Dayjs } from "dayjs";
-import { ChevronLeft, ChevronRight, Clock, Coffee, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Clock, Coffee, GripVertical, MapPin } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
@@ -13,6 +13,7 @@ interface ScheduleTimelineProps {
   selectedDate?: string;
   onDateClick?: (date: string) => void;
   onScheduleEdit?: (schedule: Schedule) => void;
+  onScheduleUpdate?: (schedule: Schedule, newStartTs: bigint, newEndTs: bigint) => void;
   className?: string;
 }
 
@@ -124,9 +125,19 @@ const DateStrip = ({ currentDate, selectedDate, schedules, onDateSelect, onPrevW
   );
 };
 
-export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onScheduleEdit, className = "" }: ScheduleTimelineProps) => {
+export const ScheduleTimeline = ({
+  schedules,
+  selectedDate,
+  onDateClick,
+  onScheduleEdit,
+  onScheduleUpdate,
+  className = "",
+}: ScheduleTimelineProps) => {
   const t = useTranslate();
   const [currentDate, setCurrentDate] = useState(selectedDate ? dayjs(selectedDate) : dayjs());
+  const [draggedSchedule, setDraggedSchedule] = useState<Schedule | null>(null);
+  const [dragOverTime, setDragOverTime] = useState<string | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedDate) {
@@ -158,6 +169,72 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       return schedule.startTs < otherEnd && other.startTs < scheduleEnd;
     });
   };
+
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, schedule: Schedule) => {
+    setDraggedSchedule(schedule);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", schedule.name);
+
+    // Add drag image styling
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = "0.5";
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = "1";
+    setDraggedSchedule(null);
+    setDragOverTime(null);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+
+      // Calculate time based on mouse position
+      if (timelineRef.current && draggedSchedule) {
+        const rect = timelineRef.current.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const totalHeight = rect.height;
+
+        // Map Y position to hour (8:00 - 22:00)
+        const hourRange = 14; // 22 - 8
+        const hour = Math.floor(8 + (y / totalHeight) * hourRange);
+        const clampedHour = Math.max(8, Math.min(21, hour));
+        const timeStr = `${clampedHour.toString().padStart(2, "0")}:00`;
+        setDragOverTime(timeStr);
+      }
+    },
+    [draggedSchedule],
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+
+      if (draggedSchedule && dragOverTime && onScheduleUpdate) {
+        const [hours] = dragOverTime.split(":").map(Number);
+        const originalStart = toDayjs(draggedSchedule.startTs);
+        const originalEnd = toDayjs(draggedSchedule.endTs);
+        const duration = originalEnd.diff(originalStart, "minute");
+
+        // Calculate new start time on the same date
+        const newStart = dayjs(selectedDateStr).hour(hours).minute(0).second(0);
+        const newEnd = newStart.add(duration, "minute");
+
+        const newStartTs = BigInt(newStart.unix());
+        const newEndTs = BigInt(newEnd.unix());
+
+        onScheduleUpdate(draggedSchedule, newStartTs, newEndTs);
+      }
+
+      setDraggedSchedule(null);
+      setDragOverTime(null);
+    },
+    [draggedSchedule, dragOverTime, onScheduleUpdate, selectedDateStr],
+  );
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -197,7 +274,23 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
       </div>
 
       {/* Timeline Content */}
-      <div className="flex-1 overflow-y-auto -mx-1 px-1" role="list" aria-label={t("schedule.schedule-list") as string}>
+      <div
+        ref={timelineRef}
+        className="flex-1 overflow-y-auto -mx-1 px-1 relative"
+        role="list"
+        aria-label={t("schedule.schedule-list") as string}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Drag time indicator */}
+        {dragOverTime && draggedSchedule && (
+          <div className="absolute left-0 right-0 flex items-center pointer-events-none z-10 px-2">
+            <div className="flex-1 h-0.5 bg-primary" />
+            <span className="px-2 py-1 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-lg">{dragOverTime}</span>
+            <div className="flex-1 h-0.5 bg-primary" />
+          </div>
+        )}
+
         {daySchedules.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-muted-foreground" role="status">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4" aria-hidden="true">
@@ -226,12 +319,15 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                 endTime: endTime.format("HH:mm"),
                 hasConflict: conflict ? t("schedule.conflict") : "",
               }).trim();
+              const isDragging = draggedSchedule?.name === schedule.name;
 
               return (
-                <button
+                <div
                   key={idx}
-                  type="button"
                   role="listitem"
+                  draggable={!!onScheduleUpdate}
+                  onDragStart={(e) => handleDragStart(e, schedule)}
+                  onDragEnd={handleDragEnd}
                   onClick={() => onScheduleEdit?.(schedule)}
                   aria-label={ariaLabel}
                   className={cn(
@@ -239,9 +335,18 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                     "hover:shadow-md active:scale-[0.99]",
                     "focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:outline-none",
                     conflictStyle,
+                    isDragging && "opacity-50 scale-95",
+                    onScheduleUpdate && "cursor-grab active:cursor-grabbing",
                   )}
                 >
                   <div className="flex items-start gap-3 sm:gap-4">
+                    {/* Drag Handle */}
+                    {onScheduleUpdate && (
+                      <div className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity cursor-grab" aria-hidden="true">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+
                     {/* Time Column */}
                     <div className="shrink-0 w-14 sm:w-16 text-right" aria-hidden="true">
                       <div className="text-sm font-semibold">{startTime.format("HH:mm")}</div>
@@ -274,7 +379,7 @@ export const ScheduleTimeline = ({ schedules, selectedDate, onDateClick, onSched
                       </span>
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>

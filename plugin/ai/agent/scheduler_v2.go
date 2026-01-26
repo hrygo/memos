@@ -16,12 +16,13 @@ import (
 // SchedulerAgentV2 is the new framework-less schedule agent.
 // It uses native LLM tool calling without LangChainGo dependency.
 type SchedulerAgentV2 struct {
-	agent       *Agent
-	llm         ai.LLMService
-	scheduleSvc schedule.Service
-	userID      int32
-	timezone    string
-	timezoneLoc *time.Location
+	agent            *Agent
+	llm              ai.LLMService
+	scheduleSvc      schedule.Service
+	userID           int32
+	timezone         string
+	timezoneLoc      *time.Location
+	intentClassifier *LLMIntentClassifier // LLM-based intent classification
 }
 
 // NewSchedulerAgentV2 creates a new framework-less schedule agent.
@@ -88,6 +89,13 @@ func NewSchedulerAgentV2(llm ai.LLMService, scheduleSvc schedule.Service, userID
 		timezone:    userTimezone,
 		timezoneLoc: timezoneLoc,
 	}, nil
+}
+
+// SetIntentClassifier configures the LLM-based intent classifier.
+// When set, the agent will classify user input before execution to optimize
+// routing and provide better responses.
+func (a *SchedulerAgentV2) SetIntentClassifier(classifier *LLMIntentClassifier) {
+	a.intentClassifier = classifier
 }
 
 // wrapTool converts a tool with Run() and Description() methods to ToolWithSchema.
@@ -179,6 +187,27 @@ func (a *SchedulerAgentV2) Execute(ctx context.Context, userInput string) (strin
 
 // ExecuteWithCallback runs the agent with state-aware context and callback support.
 func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput string, conversationCtx *ConversationContext, callback func(event string, data string)) (string, error) {
+	// Intent classification (if classifier is configured)
+	var intent TaskIntent = IntentSimpleCreate // default
+	if a.intentClassifier != nil {
+		classifiedIntent, err := a.intentClassifier.Classify(ctx, userInput)
+		if err != nil {
+			slog.Warn("intent classification failed, using default",
+				"error", err,
+				"input", truncateForLog(userInput, 30))
+		} else {
+			intent = classifiedIntent
+			slog.Debug("intent classified",
+				"intent", intent,
+				"input", truncateForLog(userInput, 30))
+
+			// Notify frontend about classified intent
+			if callback != nil {
+				callback("intent_classified", string(intent))
+			}
+		}
+	}
+
 	// If there's conversation context, prepend it to the input
 	fullInput := userInput
 	if conversationCtx != nil {
@@ -188,56 +217,63 @@ func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput st
 		}
 	}
 
+	// Add intent hint to help the agent
+	if intent != IntentSimpleCreate {
+		fullInput = fmt.Sprintf("[意图: %s]\n%s", a.intentToHint(intent), fullInput)
+	}
+
 	// Wrap the callback to inject UI events
 	uiCallback := a.wrapUICallback(callback)
 
 	// Run the agent
+	// TODO: For IntentBatchCreate, use Plan-Execute mode instead of ReAct
 	return a.agent.RunWithCallback(ctx, fullInput, uiCallback)
+}
+
+// intentToHint converts intent to a hint string for the LLM.
+func (a *SchedulerAgentV2) intentToHint(intent TaskIntent) string {
+	switch intent {
+	case IntentSimpleCreate:
+		return "创建单个日程"
+	case IntentSimpleQuery:
+		return "查询日程或空闲时间"
+	case IntentSimpleUpdate:
+		return "修改或删除日程"
+	case IntentBatchCreate:
+		return "批量创建重复日程"
+	case IntentConflictResolve:
+		return "处理日程冲突"
+	case IntentMultiQuery:
+		return "综合查询"
+	default:
+		return "通用日程操作"
+	}
 }
 
 // wrapUICallback wraps the original callback to inject UI events based on tool usage.
 // This enables generative UI by emitting structured UI events when tools are called.
 func (a *SchedulerAgentV2) wrapUICallback(originalCallback func(event string, data string)) func(event string, data string) {
-	// Track pending schedule data for UI events
 	var pendingSchedule *UIScheduleSuggestionData
-	var lastQueryResult *localtools.ScheduleQueryToolResult
 
 	return func(event string, data string) {
-		// Always forward to original callback
 		if originalCallback != nil {
 			originalCallback(event, data)
 		}
 
-		// Process tool_use events to extract schedule data
-		if event == "tool_use" {
-			if strings.HasPrefix(data, "schedule_add:") {
-				// Extract schedule_add input and emit UI suggestion event
-				scheduleData := a.parseScheduleAddInput(data)
-				if scheduleData != nil {
-					pendingSchedule = scheduleData
-					// Emit UI schedule suggestion event
-					a.emitUIEvent(originalCallback, EventTypeUIScheduleSuggestion, scheduleData)
-				}
-			} else if strings.HasPrefix(data, "schedule_query:") {
-				// Store query result for potential conflict resolution
-				queryResult := a.parseScheduleQueryResult(data)
-				if queryResult != nil {
-					lastQueryResult = queryResult
-				}
+		if event == "tool_use" && strings.HasPrefix(data, "schedule_add:") {
+			if scheduleData := a.parseScheduleAddInput(data); scheduleData != nil {
+				pendingSchedule = scheduleData
+				a.emitUIEvent(originalCallback, EventTypeUIScheduleSuggestion, scheduleData)
 			}
 		}
 
-		// Process tool_result events to detect conflicts
 		if event == "tool_result" && pendingSchedule != nil {
-			// Check if result indicates conflict
 			if a.isConflictResult(data) {
-				// Emit conflict resolution UI event
-				conflictData := a.buildConflictResolutionData(pendingSchedule, lastQueryResult)
+				conflictData := a.buildConflictResolutionData(pendingSchedule)
 				if conflictData != nil {
 					a.emitUIEvent(originalCallback, EventTypeUIConflictResolution, conflictData)
 				}
 			}
-			// Clear pending schedule after processing result
 			pendingSchedule = nil
 		}
 	}
@@ -298,13 +334,6 @@ func (a *SchedulerAgentV2) parseScheduleAddInput(toolData string) *UIScheduleSug
 	}
 }
 
-// parseScheduleQueryResult parses schedule_query tool input.
-func (a *SchedulerAgentV2) parseScheduleQueryResult(toolData string) *localtools.ScheduleQueryToolResult {
-	// This would parse the query result if needed for conflict detection
-	// For now, we keep it simple and return nil
-	return nil
-}
-
 // isConflictResult checks if a tool result indicates a schedule conflict.
 func (a *SchedulerAgentV2) isConflictResult(result string) bool {
 	lowerResult := strings.ToLower(result)
@@ -315,10 +344,10 @@ func (a *SchedulerAgentV2) isConflictResult(result string) bool {
 }
 
 // buildConflictResolutionData builds conflict resolution UI data.
-func (a *SchedulerAgentV2) buildConflictResolutionData(pending *UIScheduleSuggestionData, queryResult *localtools.ScheduleQueryToolResult) *UIConflictResolutionData {
+func (a *SchedulerAgentV2) buildConflictResolutionData(pending *UIScheduleSuggestionData) *UIConflictResolutionData {
 	return &UIConflictResolutionData{
-		NewSchedule:   *pending,
-		Actions:       []string{"reschedule", "override", "cancel"},
+		NewSchedule:    *pending,
+		Actions:        []string{"reschedule", "override", "cancel"},
 		SuggestedSlots: []UITimeSlotData{},
 	}
 }
@@ -353,18 +382,48 @@ func buildSystemPromptV2(timezoneLoc *time.Location) string {
 	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
 当前系统时间: %s (%s)
 
-核心原则:
-1. 先查后建: 创建日程前建议先检查冲突。
-2. 冲突必处理: 发现冲突必须查找可用时间。
-3. 默认1小时: 用户未指定时长时，默认为1小时。
-4. 时间推断: 若用户输入的时间在当前时间之前，默认视为明天。
+## 核心原则
+1. **先查后建**: 创建日程前必须先用 schedule_query 检查该时段是否有冲突
+2. **冲突必处理**: 发现冲突时必须调用 find_free_time 查找可用时间
+3. **默认1小时**: 用户未指定时长时，默认为1小时
+4. **时间推断**: 若时间在当前之前，默认视为明天
 
-任务:
-使用提供的工具(Tools)来管理用户的日程。
-如果需要执行操作，请直接调用相应的函数。
+## 工具调用最佳实践
+根据任务类型选择最优调用链：
+
+### 简单创建 (如"明天3点开会")
+1. schedule_query → 检查冲突
+2. schedule_add → 创建日程
+⚡ 共2步，最高效
+
+### 有冲突时
+1. schedule_query → 发现冲突
+2. find_free_time → 查找空闲时间
+3. schedule_add → 创建日程
+⚡ 共3步
+
+### 修改日程 (如"把会议改到4点")
+1. schedule_query → 找到目标日程
+2. schedule_update → 更新时间
+
+### 查询日程 (如"今天有什么安排")
+1. schedule_query → 直接返回结果
+⚡ 仅1步
+
+## 响应格式
+- 创建成功后，回复格式: "✓ 已创建: [标题] ([时间])"
+- 更新成功后，回复格式: "✓ 已更新: [标题] ([新时间])"
+- 如有冲突，先说明冲突，再给出建议时间
+
+## 注意事项
+- 使用 ISO8601 格式传递时间参数 (如 2026-01-27T15:00:00%s)
+- 所有日期时间都应基于用户时区 (%s)
+- 尽可能简洁回答，避免冗余说明
 
 尽可能使用中文回答。`,
 		nowLocal.Format("2006-01-02 15:04"),
 		tzOffset,
+		tzOffset,
+		timezoneLoc.String(),
 	)
 }

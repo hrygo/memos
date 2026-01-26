@@ -1,8 +1,7 @@
-import { EraserIcon, MoreHorizontalIcon, SendIcon } from "lucide-react";
+import { MessageSquarePlus, Scissors, SendIcon, Trash2 } from "lucide-react";
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
@@ -11,8 +10,9 @@ interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
-  onClearChat?: () => void;
+  onNewChat?: () => void;
   onClearContext?: () => void;
+  onClearChat?: () => void;
   disabled?: boolean;
   isTyping?: boolean;
   currentParrotId?: ParrotAgentType;
@@ -26,8 +26,9 @@ export function ChatInput({
   value,
   onChange,
   onSend,
-  onClearChat,
+  onNewChat,
   onClearContext,
+  onClearChat,
   disabled = false,
   isTyping = false,
   currentParrotId,
@@ -98,42 +99,54 @@ export function ChatInput({
         {/* Quick Actions */}
         {showQuickActions && quickActions}
 
-        {/* Clear Chat Button - Desktop */}
-        {(onClearChat || onClearContext) && (
-          <div className="hidden md:block absolute -top-10 right-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
-                >
-                  <EraserIcon className="w-3.5 h-3.5 mr-1" />
-                  {t("ai.clear")}
-                  <MoreHorizontalIcon className="w-3 h-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {onClearContext && (
-                  <DropdownMenuItem onClick={onClearContext} className="cursor-pointer">
-                    <EraserIcon className="w-4 h-4 mr-2" />
-                    <div>
-                      <div className="font-medium">{t("ai.clear-context")}</div>
-                      <div className="text-xs text-muted-foreground">{t("ai.clear-context-desc")}</div>
-                    </div>
-                  </DropdownMenuItem>
-                )}
-                {onClearChat && (
-                  <DropdownMenuItem onClick={onClearChat} className="text-destructive focus:text-destructive cursor-pointer">
-                    <EraserIcon className="w-4 h-4 mr-2" />
-                    <div>
-                      <div className="font-medium">{t("ai.clear-chat")}</div>
-                      <div className="text-xs text-muted-foreground">{t("ai.clear-chat-desc")}</div>
-                    </div>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {/* Toolbar - 工具栏 */}
+        {(onNewChat || onClearContext || onClearChat) && (
+          <div className="flex items-center gap-1 mb-2">
+            {onNewChat && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNewChat}
+                className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-950/50 transition-all overflow-hidden"
+                title="⌘N"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden group-hover/btn:inline ml-1 whitespace-nowrap">
+                  {t("ai.aichat.sidebar.new-chat")}
+                  <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-900 rounded">⌘N</kbd>
+                </span>
+              </Button>
+            )}
+            {onClearContext && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearContext}
+                className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-all overflow-hidden"
+                title="⌘K"
+              >
+                <Scissors className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden group-hover/btn:inline ml-1 whitespace-nowrap">
+                  {t("ai.clear-context")}
+                  <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-zinc-200 dark:bg-zinc-700 rounded">⌘K</kbd>
+                </span>
+              </Button>
+            )}
+            {onClearChat && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearChat}
+                className="group/btn h-7 w-7 hover:w-auto px-0 hover:px-2 text-xs text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-red-950/50 transition-all overflow-hidden"
+                title="⌘L"
+              >
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden group-hover/btn:inline ml-1 whitespace-nowrap">
+                  {t("ai.clear-chat")}
+                  <kbd className="ml-1.5 px-1 py-0.5 text-[10px] bg-red-200 dark:bg-red-900 rounded">⌘L</kbd>
+                </span>
+              </Button>
+            )}
           </div>
         )}
 
@@ -179,9 +192,7 @@ export function ChatInput({
         </div>
 
         {/* Hint Text - Desktop only */}
-        <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1.5 text-center hidden md:block">
-          {t("ai.input-hint") || "Press Enter to send, Shift + Enter for new line"}
-        </p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1.5 text-center hidden md:block">{t("ai.aichat.input-hint")}</p>
       </div>
     </div>
   );

@@ -71,6 +71,9 @@ const (
 	AIServiceAddContextSeparatorProcedure = "/memos.api.v1.AIService/AddContextSeparator"
 	// AIServiceListMessagesProcedure is the fully-qualified name of the AIService's ListMessages RPC.
 	AIServiceListMessagesProcedure = "/memos.api.v1.AIService/ListMessages"
+	// AIServiceClearConversationMessagesProcedure is the fully-qualified name of the AIService's
+	// ClearConversationMessages RPC.
+	AIServiceClearConversationMessagesProcedure = "/memos.api.v1.AIService/ClearConversationMessages"
 	// ScheduleAgentServiceChatProcedure is the fully-qualified name of the ScheduleAgentService's Chat
 	// RPC.
 	ScheduleAgentServiceChatProcedure = "/memos.api.v1.ScheduleAgentService/Chat"
@@ -107,6 +110,8 @@ type AIServiceClient interface {
 	AddContextSeparator(context.Context, *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error)
 	// ListMessages returns messages for a conversation with incremental sync support.
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	// ClearConversationMessages deletes all messages in a conversation.
+	ClearConversationMessages(context.Context, *connect.Request[v1.ClearConversationMessagesRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAIServiceClient constructs a client for the memos.api.v1.AIService service. By default, it
@@ -198,24 +203,31 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("ListMessages")),
 			connect.WithClientOptions(opts...),
 		),
+		clearConversationMessages: connect.NewClient[v1.ClearConversationMessagesRequest, emptypb.Empty](
+			httpClient,
+			baseURL+AIServiceClearConversationMessagesProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("ClearConversationMessages")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aIServiceClient implements AIServiceClient.
 type aIServiceClient struct {
-	semanticSearch         *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
-	suggestTags            *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
-	chat                   *connect.Client[v1.ChatRequest, v1.ChatResponse]
-	getRelatedMemos        *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
-	getParrotSelfCognition *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
-	listParrots            *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
-	listAIConversations    *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
-	getAIConversation      *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
-	createAIConversation   *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
-	updateAIConversation   *connect.Client[v1.UpdateAIConversationRequest, v1.AIConversation]
-	deleteAIConversation   *connect.Client[v1.DeleteAIConversationRequest, emptypb.Empty]
-	addContextSeparator    *connect.Client[v1.AddContextSeparatorRequest, emptypb.Empty]
-	listMessages           *connect.Client[v1.ListMessagesRequest, v1.ListMessagesResponse]
+	semanticSearch            *connect.Client[v1.SemanticSearchRequest, v1.SemanticSearchResponse]
+	suggestTags               *connect.Client[v1.SuggestTagsRequest, v1.SuggestTagsResponse]
+	chat                      *connect.Client[v1.ChatRequest, v1.ChatResponse]
+	getRelatedMemos           *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
+	getParrotSelfCognition    *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
+	listParrots               *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
+	listAIConversations       *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
+	getAIConversation         *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
+	createAIConversation      *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
+	updateAIConversation      *connect.Client[v1.UpdateAIConversationRequest, v1.AIConversation]
+	deleteAIConversation      *connect.Client[v1.DeleteAIConversationRequest, emptypb.Empty]
+	addContextSeparator       *connect.Client[v1.AddContextSeparatorRequest, emptypb.Empty]
+	listMessages              *connect.Client[v1.ListMessagesRequest, v1.ListMessagesResponse]
+	clearConversationMessages *connect.Client[v1.ClearConversationMessagesRequest, emptypb.Empty]
 }
 
 // SemanticSearch calls memos.api.v1.AIService.SemanticSearch.
@@ -283,6 +295,11 @@ func (c *aIServiceClient) ListMessages(ctx context.Context, req *connect.Request
 	return c.listMessages.CallUnary(ctx, req)
 }
 
+// ClearConversationMessages calls memos.api.v1.AIService.ClearConversationMessages.
+func (c *aIServiceClient) ClearConversationMessages(ctx context.Context, req *connect.Request[v1.ClearConversationMessagesRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.clearConversationMessages.CallUnary(ctx, req)
+}
+
 // AIServiceHandler is an implementation of the memos.api.v1.AIService service.
 type AIServiceHandler interface {
 	// SemanticSearch performs semantic search on memos.
@@ -311,6 +328,8 @@ type AIServiceHandler interface {
 	AddContextSeparator(context.Context, *connect.Request[v1.AddContextSeparatorRequest]) (*connect.Response[emptypb.Empty], error)
 	// ListMessages returns messages for a conversation with incremental sync support.
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	// ClearConversationMessages deletes all messages in a conversation.
+	ClearConversationMessages(context.Context, *connect.Request[v1.ClearConversationMessagesRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -398,6 +417,12 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("ListMessages")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceClearConversationMessagesHandler := connect.NewUnaryHandler(
+		AIServiceClearConversationMessagesProcedure,
+		svc.ClearConversationMessages,
+		connect.WithSchema(aIServiceMethods.ByName("ClearConversationMessages")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AIServiceSemanticSearchProcedure:
@@ -426,6 +451,8 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceAddContextSeparatorHandler.ServeHTTP(w, r)
 		case AIServiceListMessagesProcedure:
 			aIServiceListMessagesHandler.ServeHTTP(w, r)
+		case AIServiceClearConversationMessagesProcedure:
+			aIServiceClearConversationMessagesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -485,6 +512,10 @@ func (UnimplementedAIServiceHandler) AddContextSeparator(context.Context, *conne
 
 func (UnimplementedAIServiceHandler) ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListMessages is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) ClearConversationMessages(context.Context, *connect.Request[v1.ClearConversationMessagesRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ClearConversationMessages is not implemented"))
 }
 
 // ScheduleAgentServiceClient is a client for the memos.api.v1.ScheduleAgentService service.

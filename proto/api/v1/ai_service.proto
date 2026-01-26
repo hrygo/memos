@@ -107,6 +107,13 @@ service AIService {
       get: "/api/v1/ai/conversations/{conversation_id}/messages"
     };
   }
+
+  // ClearConversationMessages deletes all messages in a conversation.
+  rpc ClearConversationMessages(ClearConversationMessagesRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/ai/conversations/{conversation_id}/messages"
+    };
+  }
 }
 
 
@@ -275,6 +282,11 @@ message ListMessagesResponse {
   int32 total_count = 3;                // Total count of MSG messages (excludes SEP/SUMMARY)
   string latest_message_uid = 4;        // UID of the latest message for sync validation
   bool sync_required = 5;               // Whether client should re-sync (UID not found)
+}
+
+// ClearConversationMessagesRequest is the request for ClearConversationMessages.
+message ClearConversationMessagesRequest {
+  int32 conversation_id = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // ChatResponse is the response for Chat.

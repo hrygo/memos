@@ -3,10 +3,11 @@ import { Check, ChevronRight, Edit3, Loader2, Send, Sparkles, X } from "lucide-r
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { GenerativeUIContainer } from "@/components/ScheduleAI";
+import { StreamingFeedback } from "@/components/ScheduleAI/StreamingFeedback";
 import type { UIToolEvent } from "@/components/ScheduleAI/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
+import { useScheduleAgentStreamingChat } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { type Translations, useTranslate } from "@/utils/i18n";
@@ -38,7 +39,7 @@ export function ScheduleQuickInput({
   onUIDismiss,
   className,
 }: ScheduleQuickInputProps) {
-  const agentChat = useScheduleAgentChat();
+  const streamingChat = useScheduleAgentStreamingChat();
   const t = useTranslate();
 
   // State
@@ -48,10 +49,12 @@ export function ScheduleQuickInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [showTemplates, setShowTemplates] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState<ScheduleSuggestion[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Use streaming state for processing indicator
+  const isProcessing = streamingChat.isStreaming;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -100,7 +103,6 @@ export function ScheduleQuickInput({
     // Save the input and clear immediately for better UX
     setLastInput(trimmedInput);
     setInput(""); // Clear input immediately
-    setIsProcessing(true);
     setAiMessage("");
 
     // Build message with editing context if available
@@ -116,12 +118,9 @@ export function ScheduleQuickInput({
     }
 
     try {
-      const response = await agentChat.mutateAsync({
-        message: messageToSend,
-        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
-      });
+      const response = await streamingChat.startChat(messageToSend, Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai");
 
-      const aiResponse = response.response || "";
+      const aiResponse = response || "";
       const createdSchedule =
         aiResponse.includes("已成功创建") ||
         aiResponse.includes("成功创建日程") ||
@@ -152,8 +151,6 @@ export function ScheduleQuickInput({
       toast.error(t("schedule.parse-error") || (t("schedule.quick.input.parse-error-fallback") as string));
       // Restore input on error so user can retry
       setInput(trimmedInput);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -169,35 +166,27 @@ export function ScheduleQuickInput({
     textareaRef.current?.focus();
   };
 
-  const handleAISuggestionSelect = (suggestion: ScheduleSuggestion) => {
+  const handleAISuggestionSelect = async (suggestion: ScheduleSuggestion) => {
     const message = t("schedule.quick.input.suggestion-message", {
       date: suggestion.date,
       title: suggestion.title,
       startTime: suggestion.startTime,
       endTime: suggestion.endTime || "",
     }) as string;
-    setIsProcessing(true);
 
-    agentChat
-      .mutateAsync({
-        message,
-        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
-      })
-      .then((response) => {
-        const aiResponse = response.response || "";
-        if (aiResponse.includes("已成功创建") || aiResponse.includes("已安排") || aiResponse.includes("已为您创建")) {
-          handleScheduleCreated();
-        } else {
-          setAiMessage(aiResponse);
-        }
-      })
-      .catch((error) => {
-        console.error("[ScheduleQuickInput] Suggestion error:", error);
-        toast.error(t("schedule.quick.input.create-failed") as string);
-      })
-      .finally(() => {
-        setIsProcessing(false);
-      });
+    try {
+      const response = await streamingChat.startChat(message, Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai");
+
+      const aiResponse = response || "";
+      if (aiResponse.includes("已成功创建") || aiResponse.includes("已安排") || aiResponse.includes("已为您创建")) {
+        handleScheduleCreated();
+      } else {
+        setAiMessage(aiResponse);
+      }
+    } catch (error) {
+      console.error("[ScheduleQuickInput] Suggestion error:", error);
+      toast.error(t("schedule.quick.input.create-failed") as string);
+    }
   };
 
   const handleClear = () => {
@@ -258,8 +247,11 @@ export function ScheduleQuickInput({
         <GenerativeUIContainer tools={uiTools} onAction={onUIAction || (() => {})} onDismiss={onUIDismiss || (() => {})} />
       )}
 
-      {/* Processing Status Bar - prominent and animated */}
-      {isProcessing && (
+      {/* Streaming Feedback - Real-time AI thinking process */}
+      {isProcessing && <StreamingFeedback events={streamingChat.events} isStreaming={isProcessing} className="mb-2" />}
+
+      {/* Processing Status Bar - shown when streaming has no events yet */}
+      {isProcessing && streamingChat.events.length === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-pulse">
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
           <div className="flex-1">

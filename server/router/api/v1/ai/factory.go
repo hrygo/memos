@@ -19,6 +19,7 @@ const (
 	AgentTypeMemo     AgentType = "MEMO"
 	AgentTypeSchedule AgentType = "SCHEDULE"
 	AgentTypeAmazing  AgentType = "AMAZING"
+	AgentTypeAuto     AgentType = "AUTO" // Auto-route based on intent
 )
 
 // String returns the string representation of the agent type.
@@ -27,16 +28,18 @@ func (t AgentType) String() string {
 }
 
 // AgentTypeFromProto converts proto AgentType to internal AgentType.
-// DEFAULT and CREATIVE are deprecated - fallback to AMAZING for comprehensive assistance.
+// DEFAULT triggers auto-routing based on user intent.
 func AgentTypeFromProto(protoType v1pb.AgentType) AgentType {
 	switch protoType {
 	case v1pb.AgentType_AGENT_TYPE_MEMO:
 		return AgentTypeMemo
 	case v1pb.AgentType_AGENT_TYPE_SCHEDULE:
 		return AgentTypeSchedule
-	default:
-		// AMAZING, DEFAULT, CREATIVE, and unknown types all use AMAZING
+	case v1pb.AgentType_AGENT_TYPE_AMAZING:
 		return AgentTypeAmazing
+	default:
+		// DEFAULT and unknown types trigger auto-routing
+		return AgentTypeAuto
 	}
 }
 
@@ -61,9 +64,9 @@ type CreateConfig struct {
 
 // AgentFactory creates parrot agents based on type.
 type AgentFactory struct {
-	llm        ai.LLMService
-	retriever  *retrieval.AdaptiveRetriever
-	store      *store.Store
+	llm       ai.LLMService
+	retriever *retrieval.AdaptiveRetriever
+	store     *store.Store
 }
 
 // NewAgentFactory creates a new agent factory.

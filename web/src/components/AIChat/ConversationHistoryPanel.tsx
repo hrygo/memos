@@ -1,7 +1,7 @@
 import { MessageSquarePlus } from "lucide-react";
-import { useMemo } from "react";
-import toast from "react-hot-toast";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { cn } from "@/lib/utils";
 import { ConversationSummary } from "@/types/aichat";
@@ -21,7 +21,9 @@ interface ConversationHistoryPanelProps {
  */
 export function ConversationHistoryPanel({ className, onSelectConversation }: ConversationHistoryPanelProps) {
   const { t } = useTranslation();
-  const { conversationSummaries, conversations, state, addContextSeparator, selectConversation } = useAIChat();
+  const { conversationSummaries, conversations, state, deleteConversation, selectConversation } = useAIChat();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
 
   const loadedConversationIds = useMemo(
     () => new Set(conversations.filter((c) => c.messages.length > 0).map((c) => c.id)),
@@ -64,13 +66,17 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     onSelectConversation?.(id);
   };
 
-  const handleResetContext = (id: string) => {
-    addContextSeparator(id, "manual");
-    toast.success(t("ai.context-cleared-toast"), {
-      duration: 2000,
-      icon: "✂️",
-      className: "dark:bg-zinc-800 dark:border-zinc-700",
-    });
+  const handleDeleteClick = (id: string) => {
+    setConversationToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (conversationToDelete) {
+      deleteConversation(conversationToDelete);
+    }
+    setDeleteDialogOpen(false);
+    setConversationToDelete(null);
   };
 
   const hasConversations = conversationSummaries.length > 0;
@@ -95,7 +101,7 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
                       conversation={conversation}
                       isActive={conversation.id === state.currentConversationId}
                       onSelect={handleSelectConversation}
-                      onResetContext={handleResetContext}
+                      onDelete={handleDeleteClick}
                       isLoaded={loadedConversationIds.has(conversation.id)}
                     />
                   ))}
@@ -107,6 +113,21 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
           <EmptyState />
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setConversationToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={t("ai.aichat.delete-conversation-title")}
+        description={t("ai.aichat.delete-conversation-confirm")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        confirmVariant="destructive"
+      />
     </div>
   );
 }

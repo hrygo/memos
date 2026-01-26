@@ -26,6 +26,7 @@ interface UnifiedChatViewProps {
   input: string;
   setInput: (value: string) => void;
   onSend: (messageContent?: string) => void;
+  onNewChat: () => void;
   isTyping: boolean;
   isThinking: boolean;
   clearDialogOpen: boolean;
@@ -45,6 +46,7 @@ function UnifiedChatView({
   input,
   setInput,
   onSend,
+  onNewChat,
   isTyping,
   isThinking,
   clearDialogOpen,
@@ -77,15 +79,7 @@ function UnifiedChatView({
   return (
     <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
       {/* Desktop Header */}
-      {md && (
-        <ChatHeader
-          currentCapability={currentCapability}
-          capabilityStatus={capabilityStatus}
-          isThinking={isThinking}
-          onClearContext={onClearContext}
-          onClearChat={onClearChat}
-        />
-      )}
+      {md && <ChatHeader currentCapability={currentCapability} capabilityStatus={capabilityStatus} isThinking={isThinking} />}
 
       {/* Messages Area with Welcome */}
       <ChatMessages
@@ -111,8 +105,9 @@ function UnifiedChatView({
         value={input}
         onChange={handleInputChange}
         onSend={onSend}
-        onClearChat={onClearChat}
+        onNewChat={onNewChat}
         onClearContext={onClearContext}
+        onClearChat={() => setClearDialogOpen(true)}
         disabled={isTyping}
         isTyping={isTyping}
         currentParrotId={ParrotAgentType.AMAZING}
@@ -435,6 +430,10 @@ const AIChat = () => {
     setClearDialogOpen(false);
   }, [currentConversation, clearMessages]);
 
+  const handleNewChat = useCallback(() => {
+    createConversation(ParrotAgentType.AMAZING);
+  }, [createConversation]);
+
   const handleClearContext = useCallback(
     (trigger: "manual" | "auto" | "shortcut" = "manual") => {
       if (currentConversation) {
@@ -465,14 +464,28 @@ const AIChat = () => {
     };
   }, [handleSend]);
 
-  // Keyboard shortcuts: Cmd/Ctrl+K to clear context
+  // Keyboard shortcuts: ⌘K clear context, ⌘N new chat, ⌘L clear chat
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        if (currentConversation) {
-          handleClearContext("shortcut");
-        }
+      if (!(e.metaKey || e.ctrlKey)) return;
+
+      switch (e.key.toLowerCase()) {
+        case "k":
+          e.preventDefault();
+          if (currentConversation) {
+            handleClearContext("shortcut");
+          }
+          break;
+        case "n":
+          e.preventDefault();
+          handleNewChat();
+          break;
+        case "l":
+          e.preventDefault();
+          if (currentConversation) {
+            setClearDialogOpen(true);
+          }
+          break;
       }
     };
 
@@ -480,7 +493,7 @@ const AIChat = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentConversation, handleClearContext]);
+  }, [currentConversation, handleClearContext, handleNewChat]);
 
   // ============================================================
   // RENDER
@@ -500,6 +513,7 @@ const AIChat = () => {
       input={input}
       setInput={setInput}
       onSend={handleSend}
+      onNewChat={handleNewChat}
       isTyping={isTyping}
       isThinking={isThinking}
       clearDialogOpen={clearDialogOpen}

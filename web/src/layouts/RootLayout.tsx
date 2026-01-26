@@ -45,7 +45,7 @@ const RootLayout = () => {
             "border-r border-border",
           )}
         >
-          <Navigation className="py-4 md:pt-6" collapsed={true} />
+          <Navigation className="py-3" collapsed={true} />
         </div>
       )}
       <main className="w-full h-full grow shrink flex flex-col justify-start items-center overflow-hidden">

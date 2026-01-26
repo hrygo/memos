@@ -167,13 +167,9 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         updatedAt: c.updatedAt,
         // Prefer backend messageCount, fallback to local calculation
         messageCount: c.messageCount ?? getMessageCount(c),
-        pinned: c.pinned || false,
       }))
       .sort((a, b) => {
-        // Pinned first
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        // Then by updated time
+        // Sort by updated time (newest first)
         return b.updatedAt - a.updatedAt;
       });
   }, [state.conversations, getMessageCount]);
@@ -242,7 +238,6 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         updatedAt: Number(pb.updatedTs) * 1000,
         messages: (pb.messages ?? []).map((m) => convertMessageFromPb(m)),
         referencedMemos: [], // Backend managed for RAG, but state can store it if needed
-        pinned: pb.pinned,
         messageCount: pb.messageCount, // Use backend-provided message count
       };
     },
@@ -269,18 +264,13 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
           // Use the shared conversion helper
           const parrotId = convertParrotIdToAgentType(local.parrotId);
 
-          const pb = await aiServiceClient.createAIConversation({
+          await aiServiceClient.createAIConversation({
             title: local.title,
             parrotId,
           });
 
-          if (local.pinned) {
-            await aiServiceClient.updateAIConversation({ id: pb.id, pinned: true });
-          }
-
           // We don't bulk migrate history to avoid database bloat,
           // but the user's list is now persisted.
-          // If critical, we could iterate messages here too.
           console.log(`Migrated conversation: ${local.title}`);
         } catch (e) {
           console.error(`Failed to migrate conversation: ${local.title}`, e);
@@ -296,30 +286,58 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   const createConversation = useCallback(
     (parrotId: ParrotAgentType, title?: string): string => {
       const tempId = generateId(); // Temporary ID for UI
+      const now = Date.now();
+      const defaultTitle = title || getDefaultTitle(parrotId);
+
+      // Immediately add temporary conversation to state (optimistic update)
+      // This allows addMessage to work immediately without waiting for backend
+      const tempConversation: Conversation = {
+        id: tempId,
+        title: defaultTitle,
+        parrotId,
+        createdAt: now,
+        updatedAt: now,
+        messages: [],
+        referencedMemos: [],
+        messageCount: 0,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        conversations: [tempConversation, ...prev.conversations],
+        currentConversationId: tempId,
+        viewMode: "chat",
+      }));
 
       // Asynchronously create on backend
-      const agentType =
-        parrotId === ParrotAgentType.MEMO ? AgentType.MEMO : parrotId === ParrotAgentType.SCHEDULE ? AgentType.SCHEDULE : AgentType.AMAZING;
+      const agentType = convertParrotIdToAgentType(parrotId);
 
       aiServiceClient
         .createAIConversation({
-          title: title || getDefaultTitle(parrotId),
+          title: defaultTitle,
           parrotId: agentType,
         })
         .then((pb) => {
-          // Optimistically update state with the new conversation
+          // Replace temp conversation with real one from backend
           const newConv = convertConversationFromPb(pb);
 
           setState((prev) => {
-            // Prevent duplicates
-            const exists = prev.conversations.some((c) => c.id === newConv.id);
-            const newConversations = exists ? prev.conversations : [newConv, ...prev.conversations];
+            // Find the temp conversation and preserve its messages
+            const tempConv = prev.conversations.find((c) => c.id === tempId);
+            const preservedMessages = tempConv?.messages || [];
+
+            // Remove temp conversation and add real one with preserved messages
+            const filteredConversations = prev.conversations.filter((c) => c.id !== tempId);
+            const realConversation: Conversation = {
+              ...newConv,
+              messages: preservedMessages,
+              messageCount: preservedMessages.filter((m) => !isContextSeparator(m)).length,
+            };
 
             return {
               ...prev,
-              conversations: newConversations,
+              conversations: [realConversation, ...filteredConversations],
               currentConversationId: newConv.id,
-              viewMode: "chat",
             };
           });
 
@@ -328,13 +346,18 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         })
         .catch((err) => {
           console.error("Failed to create conversation:", err);
-          // Rollback to hub view on error
-          setState((prev) => ({ ...prev, viewMode: "hub" }));
+          // Remove temp conversation on error
+          setState((prev) => ({
+            ...prev,
+            conversations: prev.conversations.filter((c) => c.id !== tempId),
+            currentConversationId: null,
+            viewMode: "hub",
+          }));
         });
 
       return tempId;
     },
-    [refreshConversations],
+    [convertConversationFromPb, convertParrotIdToAgentType, refreshConversations],
   );
 
   const deleteConversation = useCallback(
@@ -382,28 +405,6 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     setState((prev) => ({
       ...prev,
       conversations: prev.conversations.map((c) => (c.id === id ? { ...c, title, updatedAt: Date.now() } : c)),
-    }));
-  }, []);
-
-  const pinConversation = useCallback((id: string) => {
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      aiServiceClient.updateAIConversation({ id: numericId, pinned: true });
-    }
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((c) => (c.id === id ? { ...c, pinned: true } : c)),
-    }));
-  }, []);
-
-  const unpinConversation = useCallback((id: string) => {
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      aiServiceClient.updateAIConversation({ id: numericId, pinned: false });
-    }
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((c) => (c.id === id ? { ...c, pinned: false } : c)),
     }));
   }, []);
 
@@ -496,15 +497,22 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   }, []);
 
   const clearMessages = useCallback((conversationId: string) => {
-    // For cloud persistence, clearing messages is actually adding a separator
-    // or deleting the conversation. Here we treat it as an optimistic clear
-    // but the backend will handle the clear context on the next message
+    const numericId = parseInt(conversationId);
+
+    // Optimistic update: clear messages in local state immediately
     setState((prev) => ({
       ...prev,
       conversations: prev.conversations.map((c) =>
         c.id === conversationId ? { ...c, messages: [], messageCount: 0, updatedAt: Date.now() } : c,
       ),
     }));
+
+    // Call backend API to persist the deletion
+    if (!isNaN(numericId)) {
+      aiServiceClient.clearConversationMessages({ conversationId: numericId }).catch((err) => {
+        console.error("Failed to clear messages on backend:", err);
+      });
+    }
   }, []);
 
   const addContextSeparator = useCallback(
@@ -836,8 +844,6 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     deleteConversation,
     selectConversation,
     updateConversationTitle,
-    pinConversation,
-    unpinConversation,
     addMessage,
     updateMessage,
     deleteMessage,

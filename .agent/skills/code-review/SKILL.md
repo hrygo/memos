@@ -18,7 +18,7 @@ disable-model-invocation: false
 1. **获取变更**: `git diff --cached` 或 `git diff`
 2. **加载上下文**: 读取 `.code-review.yaml` (如有)
 3. **运行检查**: 执行语言对应的 linter
-4. **深度审计**: 安全/稳定性/性能/架构
+4. **深度审计**: 安全/稳定性/性能/架构/UX/UI
 5. **输出报告**: 遵循下方格式
 
 ---

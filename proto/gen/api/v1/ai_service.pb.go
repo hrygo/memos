@@ -1321,6 +1321,51 @@ func (x *ListMessagesResponse) GetSyncRequired() bool {
 	return false
 }
 
+// ClearConversationMessagesRequest is the request for ClearConversationMessages.
+type ClearConversationMessagesRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId int32                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ClearConversationMessagesRequest) Reset() {
+	*x = ClearConversationMessagesRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClearConversationMessagesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClearConversationMessagesRequest) ProtoMessage() {}
+
+func (x *ClearConversationMessagesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClearConversationMessagesRequest.ProtoReflect.Descriptor instead.
+func (*ClearConversationMessagesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ClearConversationMessagesRequest) GetConversationId() int32 {
+	if x != nil {
+		return x.ConversationId
+	}
+	return 0
+}
+
 // ChatResponse is the response for Chat.
 type ChatResponse struct {
 	state                  protoimpl.MessageState  `protogen:"open.v1"`
@@ -1338,7 +1383,7 @@ type ChatResponse struct {
 
 func (x *ChatResponse) Reset() {
 	*x = ChatResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	mi := &file_api_v1_ai_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1350,7 +1395,7 @@ func (x *ChatResponse) String() string {
 func (*ChatResponse) ProtoMessage() {}
 
 func (x *ChatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[20]
+	mi := &file_api_v1_ai_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1363,7 +1408,7 @@ func (x *ChatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatResponse.ProtoReflect.Descriptor instead.
 func (*ChatResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{20}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ChatResponse) GetContent() string {
@@ -1427,7 +1472,7 @@ type ScheduleCreationIntent struct {
 
 func (x *ScheduleCreationIntent) Reset() {
 	*x = ScheduleCreationIntent{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[21]
+	mi := &file_api_v1_ai_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1439,7 +1484,7 @@ func (x *ScheduleCreationIntent) String() string {
 func (*ScheduleCreationIntent) ProtoMessage() {}
 
 func (x *ScheduleCreationIntent) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[21]
+	mi := &file_api_v1_ai_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1452,7 +1497,7 @@ func (x *ScheduleCreationIntent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleCreationIntent.ProtoReflect.Descriptor instead.
 func (*ScheduleCreationIntent) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{21}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ScheduleCreationIntent) GetDetected() bool {
@@ -1489,7 +1534,7 @@ type ScheduleQueryResult struct {
 
 func (x *ScheduleQueryResult) Reset() {
 	*x = ScheduleQueryResult{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[22]
+	mi := &file_api_v1_ai_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1501,7 +1546,7 @@ func (x *ScheduleQueryResult) String() string {
 func (*ScheduleQueryResult) ProtoMessage() {}
 
 func (x *ScheduleQueryResult) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[22]
+	mi := &file_api_v1_ai_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1514,7 +1559,7 @@ func (x *ScheduleQueryResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleQueryResult.ProtoReflect.Descriptor instead.
 func (*ScheduleQueryResult) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{22}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ScheduleQueryResult) GetDetected() bool {
@@ -1563,7 +1608,7 @@ type ScheduleSummary struct {
 
 func (x *ScheduleSummary) Reset() {
 	*x = ScheduleSummary{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[23]
+	mi := &file_api_v1_ai_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1575,7 +1620,7 @@ func (x *ScheduleSummary) String() string {
 func (*ScheduleSummary) ProtoMessage() {}
 
 func (x *ScheduleSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[23]
+	mi := &file_api_v1_ai_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1588,7 +1633,7 @@ func (x *ScheduleSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduleSummary.ProtoReflect.Descriptor instead.
 func (*ScheduleSummary) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{23}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ScheduleSummary) GetUid() string {
@@ -1658,7 +1703,7 @@ type GetRelatedMemosRequest struct {
 
 func (x *GetRelatedMemosRequest) Reset() {
 	*x = GetRelatedMemosRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[24]
+	mi := &file_api_v1_ai_service_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1670,7 +1715,7 @@ func (x *GetRelatedMemosRequest) String() string {
 func (*GetRelatedMemosRequest) ProtoMessage() {}
 
 func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[24]
+	mi := &file_api_v1_ai_service_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1683,7 +1728,7 @@ func (x *GetRelatedMemosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosRequest.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{24}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetRelatedMemosRequest) GetName() string {
@@ -1710,7 +1755,7 @@ type GetRelatedMemosResponse struct {
 
 func (x *GetRelatedMemosResponse) Reset() {
 	*x = GetRelatedMemosResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[25]
+	mi := &file_api_v1_ai_service_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1722,7 +1767,7 @@ func (x *GetRelatedMemosResponse) String() string {
 func (*GetRelatedMemosResponse) ProtoMessage() {}
 
 func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[25]
+	mi := &file_api_v1_ai_service_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1735,7 +1780,7 @@ func (x *GetRelatedMemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRelatedMemosResponse.ProtoReflect.Descriptor instead.
 func (*GetRelatedMemosResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{25}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetRelatedMemosResponse) GetMemos() []*SearchResult {
@@ -1764,7 +1809,7 @@ type ParrotSelfCognition struct {
 
 func (x *ParrotSelfCognition) Reset() {
 	*x = ParrotSelfCognition{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[26]
+	mi := &file_api_v1_ai_service_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1776,7 +1821,7 @@ func (x *ParrotSelfCognition) String() string {
 func (*ParrotSelfCognition) ProtoMessage() {}
 
 func (x *ParrotSelfCognition) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[26]
+	mi := &file_api_v1_ai_service_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1789,7 +1834,7 @@ func (x *ParrotSelfCognition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParrotSelfCognition.ProtoReflect.Descriptor instead.
 func (*ParrotSelfCognition) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{26}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ParrotSelfCognition) GetName() string {
@@ -1872,7 +1917,7 @@ type GetParrotSelfCognitionRequest struct {
 
 func (x *GetParrotSelfCognitionRequest) Reset() {
 	*x = GetParrotSelfCognitionRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[27]
+	mi := &file_api_v1_ai_service_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1884,7 +1929,7 @@ func (x *GetParrotSelfCognitionRequest) String() string {
 func (*GetParrotSelfCognitionRequest) ProtoMessage() {}
 
 func (x *GetParrotSelfCognitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[27]
+	mi := &file_api_v1_ai_service_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1897,7 +1942,7 @@ func (x *GetParrotSelfCognitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetParrotSelfCognitionRequest.ProtoReflect.Descriptor instead.
 func (*GetParrotSelfCognitionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{27}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetParrotSelfCognitionRequest) GetAgentType() AgentType {
@@ -1917,7 +1962,7 @@ type GetParrotSelfCognitionResponse struct {
 
 func (x *GetParrotSelfCognitionResponse) Reset() {
 	*x = GetParrotSelfCognitionResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[28]
+	mi := &file_api_v1_ai_service_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1929,7 +1974,7 @@ func (x *GetParrotSelfCognitionResponse) String() string {
 func (*GetParrotSelfCognitionResponse) ProtoMessage() {}
 
 func (x *GetParrotSelfCognitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[28]
+	mi := &file_api_v1_ai_service_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1942,7 +1987,7 @@ func (x *GetParrotSelfCognitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetParrotSelfCognitionResponse.ProtoReflect.Descriptor instead.
 func (*GetParrotSelfCognitionResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{28}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetParrotSelfCognitionResponse) GetSelfCognition() *ParrotSelfCognition {
@@ -1961,7 +2006,7 @@ type ListParrotsRequest struct {
 
 func (x *ListParrotsRequest) Reset() {
 	*x = ListParrotsRequest{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[29]
+	mi := &file_api_v1_ai_service_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1973,7 +2018,7 @@ func (x *ListParrotsRequest) String() string {
 func (*ListParrotsRequest) ProtoMessage() {}
 
 func (x *ListParrotsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[29]
+	mi := &file_api_v1_ai_service_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1986,7 +2031,7 @@ func (x *ListParrotsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParrotsRequest.ProtoReflect.Descriptor instead.
 func (*ListParrotsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{29}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{30}
 }
 
 // ListParrotsResponse is the response for ListParrots.
@@ -1999,7 +2044,7 @@ type ListParrotsResponse struct {
 
 func (x *ListParrotsResponse) Reset() {
 	*x = ListParrotsResponse{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[30]
+	mi := &file_api_v1_ai_service_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2011,7 +2056,7 @@ func (x *ListParrotsResponse) String() string {
 func (*ListParrotsResponse) ProtoMessage() {}
 
 func (x *ListParrotsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[30]
+	mi := &file_api_v1_ai_service_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2024,7 +2069,7 @@ func (x *ListParrotsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParrotsResponse.ProtoReflect.Descriptor instead.
 func (*ListParrotsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{30}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListParrotsResponse) GetParrots() []*ParrotInfo {
@@ -2046,7 +2091,7 @@ type ParrotInfo struct {
 
 func (x *ParrotInfo) Reset() {
 	*x = ParrotInfo{}
-	mi := &file_api_v1_ai_service_proto_msgTypes[31]
+	mi := &file_api_v1_ai_service_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2058,7 +2103,7 @@ func (x *ParrotInfo) String() string {
 func (*ParrotInfo) ProtoMessage() {}
 
 func (x *ParrotInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_ai_service_proto_msgTypes[31]
+	mi := &file_api_v1_ai_service_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2071,7 +2116,7 @@ func (x *ParrotInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParrotInfo.ProtoReflect.Descriptor instead.
 func (*ParrotInfo) Descriptor() ([]byte, []int) {
-	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{31}
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ParrotInfo) GetAgentType() AgentType {
@@ -2185,7 +2230,9 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\x12,\n" +
 	"\x12latest_message_uid\x18\x04 \x01(\tR\x10latestMessageUid\x12#\n" +
-	"\rsync_required\x18\x05 \x01(\bR\fsyncRequired\"\xcb\x02\n" +
+	"\rsync_required\x18\x05 \x01(\bR\fsyncRequired\"P\n" +
+	" ClearConversationMessagesRequest\x12,\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x05B\x03\xe0A\x02R\x0econversationId\"\xcb\x02\n" +
 	"\fChatResponse\x12\x18\n" +
 	"\acontent\x18\x01 \x01(\tR\acontent\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\x12\x12\n" +
@@ -2256,7 +2303,7 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\xda\r\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x042\xfd\x0e\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12[\n" +
@@ -2270,7 +2317,8 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x14UpdateAIConversation\x12).memos.api.v1.UpdateAIConversationRequest\x1a\x1c.memos.api.v1.AIConversation\"(\x82\xd3\xe4\x93\x02\":\x01*2\x1d/api/v1/ai/conversations/{id}\x12\x80\x01\n" +
 	"\x14DeleteAIConversation\x12).memos.api.v1.DeleteAIConversationRequest\x1a\x16.google.protobuf.Empty\"%\x82\xd3\xe4\x93\x02\x1f*\x1d/api/v1/ai/conversations/{id}\x12\x98\x01\n" +
 	"\x13AddContextSeparator\x12(.memos.api.v1.AddContextSeparatorRequest\x1a\x16.google.protobuf.Empty\"?\x82\xd3\xe4\x93\x029:\x01*\"4/api/v1/ai/conversations/{conversation_id}/separator\x12\x92\x01\n" +
-	"\fListMessages\x12!.memos.api.v1.ListMessagesRequest\x1a\".memos.api.v1.ListMessagesResponse\";\x82\xd3\xe4\x93\x025\x123/api/v1/ai/conversations/{conversation_id}/messages2\xaa\x02\n" +
+	"\fListMessages\x12!.memos.api.v1.ListMessagesRequest\x1a\".memos.api.v1.ListMessagesResponse\";\x82\xd3\xe4\x93\x025\x123/api/v1/ai/conversations/{conversation_id}/messages\x12\xa0\x01\n" +
+	"\x19ClearConversationMessages\x12..memos.api.v1.ClearConversationMessagesRequest\x1a\x16.google.protobuf.Empty\";\x82\xd3\xe4\x93\x025*3/api/v1/ai/conversations/{conversation_id}/messages2\xaa\x02\n" +
 	"\x14ScheduleAgentService\x12\x7f\n" +
 	"\x04Chat\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a'.memos.api.v1.ScheduleAgentChatResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/schedule-agent/chat\x12\x90\x01\n" +
 	"\n" +
@@ -2290,43 +2338,44 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_api_v1_ai_service_proto_goTypes = []any{
-	(ScheduleQueryMode)(0),                 // 0: memos.api.v1.ScheduleQueryMode
-	(AgentType)(0),                         // 1: memos.api.v1.AgentType
-	(*ScheduleAgentChatRequest)(nil),       // 2: memos.api.v1.ScheduleAgentChatRequest
-	(*ScheduleAgentChatResponse)(nil),      // 3: memos.api.v1.ScheduleAgentChatResponse
-	(*ScheduleAgentStreamResponse)(nil),    // 4: memos.api.v1.ScheduleAgentStreamResponse
-	(*SemanticSearchRequest)(nil),          // 5: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),         // 6: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),                   // 7: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),             // 8: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),            // 9: memos.api.v1.SuggestTagsResponse
-	(*ChatRequest)(nil),                    // 10: memos.api.v1.ChatRequest
-	(*AIConversation)(nil),                 // 11: memos.api.v1.AIConversation
-	(*AIMessage)(nil),                      // 12: memos.api.v1.AIMessage
-	(*ListAIConversationsRequest)(nil),     // 13: memos.api.v1.ListAIConversationsRequest
-	(*ListAIConversationsResponse)(nil),    // 14: memos.api.v1.ListAIConversationsResponse
-	(*GetAIConversationRequest)(nil),       // 15: memos.api.v1.GetAIConversationRequest
-	(*CreateAIConversationRequest)(nil),    // 16: memos.api.v1.CreateAIConversationRequest
-	(*UpdateAIConversationRequest)(nil),    // 17: memos.api.v1.UpdateAIConversationRequest
-	(*DeleteAIConversationRequest)(nil),    // 18: memos.api.v1.DeleteAIConversationRequest
-	(*AddContextSeparatorRequest)(nil),     // 19: memos.api.v1.AddContextSeparatorRequest
-	(*ListMessagesRequest)(nil),            // 20: memos.api.v1.ListMessagesRequest
-	(*ListMessagesResponse)(nil),           // 21: memos.api.v1.ListMessagesResponse
-	(*ChatResponse)(nil),                   // 22: memos.api.v1.ChatResponse
-	(*ScheduleCreationIntent)(nil),         // 23: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),            // 24: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),                // 25: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),         // 26: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil),        // 27: memos.api.v1.GetRelatedMemosResponse
-	(*ParrotSelfCognition)(nil),            // 28: memos.api.v1.ParrotSelfCognition
-	(*GetParrotSelfCognitionRequest)(nil),  // 29: memos.api.v1.GetParrotSelfCognitionRequest
-	(*GetParrotSelfCognitionResponse)(nil), // 30: memos.api.v1.GetParrotSelfCognitionResponse
-	(*ListParrotsRequest)(nil),             // 31: memos.api.v1.ListParrotsRequest
-	(*ListParrotsResponse)(nil),            // 32: memos.api.v1.ListParrotsResponse
-	(*ParrotInfo)(nil),                     // 33: memos.api.v1.ParrotInfo
-	(*emptypb.Empty)(nil),                  // 34: google.protobuf.Empty
+	(ScheduleQueryMode)(0),                   // 0: memos.api.v1.ScheduleQueryMode
+	(AgentType)(0),                           // 1: memos.api.v1.AgentType
+	(*ScheduleAgentChatRequest)(nil),         // 2: memos.api.v1.ScheduleAgentChatRequest
+	(*ScheduleAgentChatResponse)(nil),        // 3: memos.api.v1.ScheduleAgentChatResponse
+	(*ScheduleAgentStreamResponse)(nil),      // 4: memos.api.v1.ScheduleAgentStreamResponse
+	(*SemanticSearchRequest)(nil),            // 5: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),           // 6: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),                     // 7: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),               // 8: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),              // 9: memos.api.v1.SuggestTagsResponse
+	(*ChatRequest)(nil),                      // 10: memos.api.v1.ChatRequest
+	(*AIConversation)(nil),                   // 11: memos.api.v1.AIConversation
+	(*AIMessage)(nil),                        // 12: memos.api.v1.AIMessage
+	(*ListAIConversationsRequest)(nil),       // 13: memos.api.v1.ListAIConversationsRequest
+	(*ListAIConversationsResponse)(nil),      // 14: memos.api.v1.ListAIConversationsResponse
+	(*GetAIConversationRequest)(nil),         // 15: memos.api.v1.GetAIConversationRequest
+	(*CreateAIConversationRequest)(nil),      // 16: memos.api.v1.CreateAIConversationRequest
+	(*UpdateAIConversationRequest)(nil),      // 17: memos.api.v1.UpdateAIConversationRequest
+	(*DeleteAIConversationRequest)(nil),      // 18: memos.api.v1.DeleteAIConversationRequest
+	(*AddContextSeparatorRequest)(nil),       // 19: memos.api.v1.AddContextSeparatorRequest
+	(*ListMessagesRequest)(nil),              // 20: memos.api.v1.ListMessagesRequest
+	(*ListMessagesResponse)(nil),             // 21: memos.api.v1.ListMessagesResponse
+	(*ClearConversationMessagesRequest)(nil), // 22: memos.api.v1.ClearConversationMessagesRequest
+	(*ChatResponse)(nil),                     // 23: memos.api.v1.ChatResponse
+	(*ScheduleCreationIntent)(nil),           // 24: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),              // 25: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),                  // 26: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),           // 27: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil),          // 28: memos.api.v1.GetRelatedMemosResponse
+	(*ParrotSelfCognition)(nil),              // 29: memos.api.v1.ParrotSelfCognition
+	(*GetParrotSelfCognitionRequest)(nil),    // 30: memos.api.v1.GetParrotSelfCognitionRequest
+	(*GetParrotSelfCognitionResponse)(nil),   // 31: memos.api.v1.GetParrotSelfCognitionResponse
+	(*ListParrotsRequest)(nil),               // 32: memos.api.v1.ListParrotsRequest
+	(*ListParrotsResponse)(nil),              // 33: memos.api.v1.ListParrotsResponse
+	(*ParrotInfo)(nil),                       // 34: memos.api.v1.ParrotInfo
+	(*emptypb.Empty)(nil),                    // 35: google.protobuf.Empty
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
 	7,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
@@ -2337,21 +2386,21 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	11, // 5: memos.api.v1.ListAIConversationsResponse.conversations:type_name -> memos.api.v1.AIConversation
 	1,  // 6: memos.api.v1.CreateAIConversationRequest.parrot_id:type_name -> memos.api.v1.AgentType
 	12, // 7: memos.api.v1.ListMessagesResponse.messages:type_name -> memos.api.v1.AIMessage
-	23, // 8: memos.api.v1.ChatResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
-	24, // 9: memos.api.v1.ChatResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
-	25, // 10: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	24, // 8: memos.api.v1.ChatResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	25, // 9: memos.api.v1.ChatResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	26, // 10: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
 	7,  // 11: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
 	1,  // 12: memos.api.v1.GetParrotSelfCognitionRequest.agent_type:type_name -> memos.api.v1.AgentType
-	28, // 13: memos.api.v1.GetParrotSelfCognitionResponse.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
-	33, // 14: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
+	29, // 13: memos.api.v1.GetParrotSelfCognitionResponse.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	34, // 14: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
 	1,  // 15: memos.api.v1.ParrotInfo.agent_type:type_name -> memos.api.v1.AgentType
-	28, // 16: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	29, // 16: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
 	5,  // 17: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
 	8,  // 18: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
 	10, // 19: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatRequest
-	26, // 20: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	29, // 21: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
-	31, // 22: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
+	27, // 20: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	30, // 21: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
+	32, // 22: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
 	13, // 23: memos.api.v1.AIService.ListAIConversations:input_type -> memos.api.v1.ListAIConversationsRequest
 	15, // 24: memos.api.v1.AIService.GetAIConversation:input_type -> memos.api.v1.GetAIConversationRequest
 	16, // 25: memos.api.v1.AIService.CreateAIConversation:input_type -> memos.api.v1.CreateAIConversationRequest
@@ -2359,25 +2408,27 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	18, // 27: memos.api.v1.AIService.DeleteAIConversation:input_type -> memos.api.v1.DeleteAIConversationRequest
 	19, // 28: memos.api.v1.AIService.AddContextSeparator:input_type -> memos.api.v1.AddContextSeparatorRequest
 	20, // 29: memos.api.v1.AIService.ListMessages:input_type -> memos.api.v1.ListMessagesRequest
-	2,  // 30: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	2,  // 31: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	6,  // 32: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	9,  // 33: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	22, // 34: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
-	27, // 35: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	30, // 36: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
-	32, // 37: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
-	14, // 38: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
-	11, // 39: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 40: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 41: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
-	34, // 42: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
-	34, // 43: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
-	21, // 44: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
-	3,  // 45: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
-	4,  // 46: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
-	32, // [32:47] is the sub-list for method output_type
-	17, // [17:32] is the sub-list for method input_type
+	22, // 30: memos.api.v1.AIService.ClearConversationMessages:input_type -> memos.api.v1.ClearConversationMessagesRequest
+	2,  // 31: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	2,  // 32: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	6,  // 33: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	9,  // 34: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	23, // 35: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
+	28, // 36: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	31, // 37: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
+	33, // 38: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
+	14, // 39: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
+	11, // 40: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
+	11, // 41: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
+	11, // 42: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
+	35, // 43: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
+	35, // 44: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
+	21, // 45: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
+	35, // 46: memos.api.v1.AIService.ClearConversationMessages:output_type -> google.protobuf.Empty
+	3,  // 47: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	4,  // 48: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	33, // [33:49] is the sub-list for method output_type
+	17, // [17:33] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name
@@ -2395,7 +2446,7 @@ func file_api_v1_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   32,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

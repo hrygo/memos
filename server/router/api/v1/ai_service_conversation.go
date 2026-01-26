@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	aichat "github.com/usememos/memos/server/router/api/v1/ai"
 	"github.com/usememos/memos/store"
 )
 
@@ -27,9 +26,6 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
 	}
 
-	// Ensure all fixed conversations exist for the user
-	s.ensureFixedConversations(ctx, user.ID)
-
 	conversations, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
 		CreatorID: &user.ID,
 	})
@@ -37,20 +33,12 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 		return nil, status.Errorf(codes.Internal, "failed to list conversations: %v", err)
 	}
 
-	// Collect pinned conversation IDs for batch message counting
-	var pinnedIDs []int32
-	for _, c := range conversations {
-		if c.Pinned {
-			pinnedIDs = append(pinnedIDs, c.ID)
-		}
-	}
-
-	// Batch count messages for all pinned conversations at once (avoid N+1)
+	// Batch count messages for all conversations at once (avoid N+1)
+	// TODO: Optimize by adding ConversationIDs filter to ListAIMessages or
+	// maintain message_count column in ai_conversation table for better performance.
 	messageCounts := make(map[int32]int32)
-	if len(pinnedIDs) > 0 {
-		allMessages, err := s.Store.ListAIMessages(ctx, &store.FindAIMessage{
-			// Get messages for all pinned conversations
-		})
+	if len(conversations) > 0 {
+		allMessages, err := s.Store.ListAIMessages(ctx, &store.FindAIMessage{})
 		if err == nil {
 			// Count non-SEPARATOR messages per conversation
 			for _, m := range allMessages {
@@ -65,96 +53,12 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 		Conversations: make([]*v1pb.AIConversation, 0, len(conversations)),
 	}
 	for _, c := range conversations {
-		// Only return pinned (fixed) conversations to hide legacy/temporary conversations
-		if c.Pinned {
-			pbConv := convertAIConversationFromStore(c)
-			pbConv.MessageCount = messageCounts[c.ID]
-			response.Conversations = append(response.Conversations, pbConv)
-		}
+		pbConv := convertAIConversationFromStore(c)
+		pbConv.MessageCount = messageCounts[c.ID]
+		response.Conversations = append(response.Conversations, pbConv)
 	}
 
 	return response, nil
-}
-
-// ensureFixedConversations ensures all 5 fixed conversations exist for the user.
-// This is called on ListAIConversations to guarantee users always see all available parrots.
-// Uses batch query to avoid N+1 problem.
-func (s *AIService) ensureFixedConversations(ctx context.Context, userID int32) {
-	// Calculate all fixed conversation IDs first (3 core capabilities)
-	agentTypes := []struct {
-		agent v1pb.AgentType
-		ai    aichat.AgentType
-	}{
-		{v1pb.AgentType_AGENT_TYPE_MEMO, aichat.AgentTypeMemo},
-		{v1pb.AgentType_AGENT_TYPE_SCHEDULE, aichat.AgentTypeSchedule},
-		{v1pb.AgentType_AGENT_TYPE_AMAZING, aichat.AgentTypeAmazing},
-	}
-
-	fixedIDs := make([]int32, len(agentTypes))
-	idToAgentType := make(map[int32]struct {
-		agent v1pb.AgentType
-		ai    aichat.AgentType
-	})
-
-	for i, at := range agentTypes {
-		id := aichat.CalculateFixedConversationID(userID, at.ai)
-		fixedIDs[i] = id
-		idToAgentType[id] = at
-	}
-
-	// Batch query: get all existing conversations in one call
-	// Using ID IN clause would be ideal, but current API doesn't support it
-	// Fall back to querying by user and filter in-memory
-	existing, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
-		CreatorID: &userID,
-	})
-	if err != nil {
-		slog.Default().Warn("Failed to list conversations for fixed check", "user_id", userID, "error", err)
-	}
-
-	// Build a set of existing fixed conversation IDs
-	existingFixedIDs := make(map[int32]bool, len(existing))
-	for _, c := range existing {
-		if _, ok := idToAgentType[c.ID]; ok {
-			existingFixedIDs[c.ID] = true
-		}
-	}
-
-	// Create missing fixed conversations only
-	now := time.Now().Unix()
-	for _, id := range fixedIDs {
-		if existingFixedIDs[id] {
-			continue // Already exists
-		}
-
-		at := idToAgentType[id]
-		title := aichat.GetFixedConversationTitle(at.ai)
-
-		conv, err := s.Store.CreateAIConversation(ctx, &store.AIConversation{
-			ID:        id,
-			UID:       shortuuid.New(),
-			CreatorID: userID,
-			Title:     title,
-			ParrotID:  at.agent.String(),
-			Pinned:    true,
-			CreatedTs: now,
-			UpdatedTs: now,
-			RowStatus: store.Normal,
-		})
-		if err != nil {
-			slog.Default().Warn("Failed to create fixed conversation",
-				"id", id,
-				"agent_type", at.agent.String(),
-				"user_id", userID,
-				"error", err,
-			)
-		} else {
-			slog.Default().Debug("Created fixed conversation",
-				"id", conv.ID,
-				"title", conv.Title,
-			)
-		}
-	}
 }
 
 func (s *AIService) GetAIConversation(ctx context.Context, req *v1pb.GetAIConversationRequest) (*v1pb.AIConversation, error) {
@@ -210,7 +114,6 @@ func (s *AIService) CreateAIConversation(ctx context.Context, req *v1pb.CreateAI
 		CreatorID: user.ID,
 		Title:     req.Title,
 		ParrotID:  req.ParrotId.String(),
-		Pinned:    false,
 		CreatedTs: now,
 		UpdatedTs: now,
 		RowStatus: store.Normal,
@@ -247,9 +150,6 @@ func (s *AIService) UpdateAIConversation(ctx context.Context, req *v1pb.UpdateAI
 	if req.Title != nil {
 		update.Title = req.Title
 	}
-	if req.Pinned != nil {
-		update.Pinned = req.Pinned
-	}
 
 	updated, err := s.Store.UpdateAIConversation(ctx, update)
 	if err != nil {
@@ -275,12 +175,6 @@ func (s *AIService) DeleteAIConversation(ctx context.Context, req *v1pb.DeleteAI
 	}
 	if len(conversations) == 0 {
 		return nil, status.Errorf(codes.NotFound, "conversation not found")
-	}
-
-	// Prevent deletion of fixed (pinned) conversations
-	conversation := conversations[0]
-	if conversation.Pinned {
-		return nil, status.Errorf(codes.FailedPrecondition, "cannot delete fixed conversation")
 	}
 
 	if err := s.Store.DeleteAIConversation(ctx, &store.DeleteAIConversation{ID: req.Id}); err != nil {
@@ -524,4 +418,46 @@ func getLatestMessageUID(messages []*store.AIMessage) string {
 		return ""
 	}
 	return messages[len(messages)-1].UID
+}
+
+// ClearConversationMessages deletes all messages in a conversation.
+func (s *AIService) ClearConversationMessages(ctx context.Context, req *v1pb.ClearConversationMessagesRequest) (*emptypb.Empty, error) {
+	user, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// Verify conversation ownership
+	conversations, err := s.Store.ListAIConversations(ctx, &store.FindAIConversation{
+		ID:        &req.ConversationId,
+		CreatorID: &user.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get conversation: %v", err)
+	}
+	if len(conversations) == 0 {
+		return nil, status.Errorf(codes.NotFound, "conversation not found")
+	}
+
+	// Delete all messages in the conversation
+	if err := s.Store.DeleteAIMessage(ctx, &store.DeleteAIMessage{
+		ConversationID: &req.ConversationId,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to clear messages: %v", err)
+	}
+
+	// Update conversation timestamp
+	now := time.Now().Unix()
+	_, err = s.Store.UpdateAIConversation(ctx, &store.UpdateAIConversation{
+		ID:        req.ConversationId,
+		UpdatedTs: &now,
+	})
+	if err != nil {
+		slog.Default().Warn("Failed to update conversation timestamp after clearing messages",
+			"conversation_id", req.ConversationId,
+			"error", err,
+		)
+	}
+
+	return &emptypb.Empty{}, nil
 }

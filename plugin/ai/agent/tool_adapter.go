@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
+	"time"
 
 	"github.com/usememos/memos/plugin/ai"
 )
@@ -134,14 +136,27 @@ func (a *Agent) Run(ctx context.Context, input string) (string, error) {
 
 // RunWithCallback executes the agent with callback support.
 func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Callback) (string, error) {
+	startTime := time.Now()
+	defer func() {
+		slog.Debug("agent execution completed",
+			"agent", a.config.Name,
+			"duration_ms", time.Since(startTime).Milliseconds(),
+		)
+	}()
+
 	// Build initial messages
 	messages := []ai.Message{
 		{Role: "system", Content: a.config.SystemPrompt},
 		{Role: "user", Content: input},
 	}
 
+	// Track tool results for early stopping
+	var lastToolResult string
+
 	// Execute the agent loop
 	for iteration := 0; iteration < a.config.MaxIterations; iteration++ {
+		iterStart := time.Now()
+
 		// Call LLM with tools
 		resp, err := a.llm.ChatWithTools(ctx, messages, a.toolDescriptors())
 		if err != nil {
@@ -154,6 +169,13 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 			if callback != nil && resp.Content != "" {
 				callback(EventAnswer, resp.Content)
 			}
+
+			slog.Debug("agent iteration completed",
+				"agent", a.config.Name,
+				"iteration", iteration+1,
+				"duration_ms", time.Since(iterStart).Milliseconds(),
+				"final", true,
+			)
 			return resp.Content, nil
 		}
 
@@ -182,16 +204,27 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 				callback(EventToolUse, fmt.Sprintf("%s:%s", toolName, toolInput))
 			}
 
+			toolStart := time.Now()
+
 			// Execute the tool
 			toolResult, err := a.executeTool(ctx, toolName, toolInput)
 			if err != nil {
 				toolResult = fmt.Sprintf("Error: %v", err)
 			}
 
+			slog.Debug("tool execution completed",
+				"agent", a.config.Name,
+				"tool", toolName,
+				"duration_ms", time.Since(toolStart).Milliseconds(),
+			)
+
 			// Notify callback of result
 			if callback != nil {
 				callback(EventToolResult, toolResult)
 			}
+
+			// Store for early stopping check
+			lastToolResult = toolResult
 
 			// Add tool result as a user message (simulating user giving feedback)
 			// This is a simplified approach; more sophisticated implementations
@@ -201,9 +234,61 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 				Content: fmt.Sprintf("[Result from %s]: %s", toolName, toolResult),
 			})
 		}
+
+		// Early stopping: check if task is complete after schedule_add or schedule_update
+		if shouldEarlyStop(lastToolResult) {
+			slog.Debug("early stopping triggered",
+				"agent", a.config.Name,
+				"iteration", iteration+1,
+				"reason", "task_completed",
+			)
+
+			// Generate a brief final response
+			finalResponse := lastToolResult
+			if callback != nil {
+				callback(EventAnswer, finalResponse)
+			}
+			return finalResponse, nil
+		}
+
+		slog.Debug("agent iteration completed",
+			"agent", a.config.Name,
+			"iteration", iteration+1,
+			"duration_ms", time.Since(iterStart).Milliseconds(),
+			"final", false,
+		)
 	}
 
 	return "", fmt.Errorf("max iterations (%d) exceeded", a.config.MaxIterations)
+}
+
+// shouldEarlyStop checks if the agent should stop early based on tool results.
+// Returns true if a schedule was successfully created or updated.
+func shouldEarlyStop(toolResult string) bool {
+	if toolResult == "" {
+		return false
+	}
+
+	// Check for success indicators in Chinese and English
+	successIndicators := []string{
+		"✓ 已创建",
+		"✓ 已更新",
+		"已成功创建",
+		"成功创建日程",
+		"Successfully created",
+		"Successfully updated",
+		"schedule created",
+		"schedule updated",
+	}
+
+	lowerResult := strings.ToLower(toolResult)
+	for _, indicator := range successIndicators {
+		if strings.Contains(toolResult, indicator) || strings.Contains(lowerResult, strings.ToLower(indicator)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // toolDescriptors converts the agent's tools to ai.ToolDescriptor format.

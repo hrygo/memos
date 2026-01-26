@@ -24,8 +24,9 @@ type ChatStream interface {
 
 // ParrotHandler handles all parrot agent requests (DEFAULT, MEMO, SCHEDULE, AMAZING, CREATIVE).
 type ParrotHandler struct {
-	factory *AgentFactory
-	llm     ai.LLMService
+	factory    *AgentFactory
+	llm        ai.LLMService
+	chatRouter *agentpkg.ChatRouter
 }
 
 // NewParrotHandler creates a new parrot handler.
@@ -36,14 +37,48 @@ func NewParrotHandler(factory *AgentFactory, llm ai.LLMService) *ParrotHandler {
 	}
 }
 
+// SetChatRouter configures the intelligent chat router for auto-routing.
+func (h *ParrotHandler) SetChatRouter(router *agentpkg.ChatRouter) {
+	h.chatRouter = router
+}
+
 // Handle implements Handler interface for parrot agent requests.
 func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatStream) error {
 	if h.llm == nil {
 		return status.Error(codes.Unavailable, "LLM service is not available")
 	}
 
+	// Auto-route if AgentType is AUTO
+	agentType := req.AgentType
+	if agentType == AgentTypeAuto && h.chatRouter != nil {
+		routeResult, err := h.chatRouter.Route(ctx, req.Message)
+		if err != nil {
+			slog.Warn("chat router failed, defaulting to amazing",
+				"error", err,
+				"message", req.Message[:min(len(req.Message), 30)])
+			agentType = AgentTypeAmazing
+		} else {
+			// Map ChatRouteType to AgentType
+			switch routeResult.Route {
+			case agentpkg.RouteTypeMemo:
+				agentType = AgentTypeMemo
+			case agentpkg.RouteTypeSchedule:
+				agentType = AgentTypeSchedule
+			default:
+				agentType = AgentTypeAmazing
+			}
+			slog.Info("chat auto-routed",
+				"route", routeResult.Route,
+				"method", routeResult.Method,
+				"confidence", routeResult.Confidence)
+		}
+	} else if agentType == AgentTypeAuto {
+		// No router configured, fallback to amazing
+		agentType = AgentTypeAmazing
+	}
+
 	// Create logger for this request
-	logger := observability.NewRequestContext(slog.Default(), req.AgentType.String(), req.UserID)
+	logger := observability.NewRequestContext(slog.Default(), agentType.String(), req.UserID)
 	logger.Info("AI chat started (parrot agent)",
 		slog.Int(observability.LogFieldMessageLen, len(req.Message)),
 		slog.Int("history_count", len(req.History)),
@@ -204,4 +239,13 @@ func HandleError(err error) error {
 
 	// Default to internal error
 	return status.Error(codes.Internal, err.Error())
+}
+
+// NewChatRouter creates a new chat router for auto-routing based on intent classification.
+func NewChatRouter(cfg *ai.IntentClassifierConfig) *agentpkg.ChatRouter {
+	return agentpkg.NewChatRouter(agentpkg.ChatRouterConfig{
+		APIKey:  cfg.APIKey,
+		BaseURL: cfg.BaseURL,
+		Model:   cfg.Model,
+	})
 }

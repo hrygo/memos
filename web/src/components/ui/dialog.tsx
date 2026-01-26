@@ -20,7 +20,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     data-slot="dialog-overlay"
     className={cn(
-      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-foreground/50",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
       className,
     )}
     {...props}
@@ -28,20 +28,48 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+/**
+ * Dialog 尺寸系统 - Tailwind CSS 4 兼容设计
+ *
+ * 定位策略：使用 flexbox 居中（避免 transform 兼容问题）
+ *
+ * 重要：Tailwind CSS 4 中 max-w-sm/md/lg 使用 --spacing-* 变量
+ * 而不是传统的容器宽度，所以这里使用明确的 rem 值。
+ *
+ * 传统 Tailwind 3 宽度对照：
+ * - sm: 24rem (384px)
+ * - md: 28rem (448px)
+ * - lg: 32rem (512px)
+ * - xl: 36rem (576px)
+ * - 2xl: 42rem (672px)
+ */
 const dialogContentVariants = cva(
-  "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex flex-col translate-x-[-50%] translate-y-[-50%] rounded-lg border shadow-lg duration-200 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] md:max-h-[calc(100vh-4rem)]",
+  [
+    // 外观
+    "bg-background rounded-lg border shadow-lg",
+    // 内部布局
+    "flex flex-col p-6",
+    // 宽度：使用百分比确保移动端有边距
+    "w-full mx-4",
+    // 高度限制
+    "max-h-[85vh]",
+    // 动画
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+    "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+    "duration-200",
+  ].join(" "),
   {
     variants: {
       size: {
-        sm: "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-sm",
-        md: "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-md",
-        default:
-          "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-lg",
-        lg: "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-lg",
-        xl: "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-xl",
-        "2xl":
-          "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-full md:max-w-2xl",
-        full: "w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] p-4 sm:w-[calc(100%-3rem)] sm:max-w-[calc(100%-3rem)] sm:p-6 md:w-[calc(100%-2rem)] md:max-w-none",
+        // 使用明确的 rem 值，避免 Tailwind 4 的 --spacing-* 问题
+        sm: "max-w-[24rem]",
+        md: "max-w-[28rem]",
+        default: "max-w-[32rem]",
+        lg: "max-w-[32rem]",
+        xl: "max-w-[36rem]",
+        "2xl": "max-w-[42rem]",
+        full: "max-w-none mx-0",
       },
     },
     defaultVariants: {
@@ -59,23 +87,26 @@ const DialogContent = React.forwardRef<
 >(({ className, children, showCloseButton = true, size, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(dialogContentVariants({ size }), className)}
-      onCloseAutoFocus={(e) => {
-        e.preventDefault();
-        document.body.style.pointerEvents = "auto";
-      }}
-      {...props}
-    >
-      <div className="overflow-y-auto overflow-x-hidden flex flex-col gap-4 w-full">{children}</div>
-      {showCloseButton && (
-        <DialogPrimitive.Close className="ring-offset-background data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
+    {/* 居中容器：使用 flexbox 居中，避免 transform 兼容问题 */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn("pointer-events-auto relative", dialogContentVariants({ size }), className)}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          document.body.style.pointerEvents = "auto";
+        }}
+        {...props}
+      >
+        <div className="w-full overflow-y-auto overflow-x-hidden flex flex-col gap-4">{children}</div>
+        {showCloseButton && (
+          <DialogPrimitive.Close className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+            <XIcon className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </div>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
@@ -86,7 +117,7 @@ const DialogHeader = React.forwardRef<React.ElementRef<"div">, React.ComponentPr
 DialogHeader.displayName = "DialogHeader";
 
 const DialogFooter = React.forwardRef<React.ElementRef<"div">, React.ComponentPropsWithoutRef<"div">>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex flex-col gap-3 sm:flex-row sm:justify-end", className)} {...props} />
+  <div ref={ref} className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)} {...props} />
 ));
 DialogFooter.displayName = "DialogFooter";
 
@@ -94,7 +125,7 @@ const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-lg leading-none font-semibold", className)} {...props} />
+  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -102,7 +133,7 @@ const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn("text-muted-foreground text-sm", className)} {...props} />
+  <DialogPrimitive.Description ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 

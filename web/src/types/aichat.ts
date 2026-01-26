@@ -101,7 +101,6 @@ export interface Conversation {
   updatedAt: number;
   messages: ChatItem[];
   referencedMemos: ReferencedMemo[];
-  pinned?: boolean;
   messageCount?: number; // Optional: backend-provided message count (excludes SEPARATOR)
   messageCache?: MessageCache; // Local message cache state for incremental sync
 }
@@ -115,7 +114,6 @@ export interface ConversationSummary {
   parrotId: ParrotAgentType;
   updatedAt: number;
   messageCount: number;
-  pinned: boolean;
 }
 
 /**
@@ -149,8 +147,6 @@ export interface AIChatContextValue {
   deleteConversation: (id: string) => void;
   selectConversation: (id: string) => void;
   updateConversationTitle: (id: string, title: string) => void;
-  pinConversation: (id: string) => void;
-  unpinConversation: (id: string) => void;
 
   // Message actions
   addMessage: (conversationId: string, message: Omit<ConversationMessage, "id" | "timestamp">) => string;

@@ -1,4 +1,4 @@
-import { Scissors } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ConversationSummary } from "@/types/aichat";
@@ -8,12 +8,12 @@ interface ConversationItemProps {
   conversation: ConversationSummary;
   isActive: boolean;
   onSelect: (id: string) => void;
-  onResetContext: (id: string) => void;
+  onDelete: (id: string) => void;
   className?: string;
   isLoaded?: boolean; // Whether this conversation has been loaded with messages
 }
 
-export function ConversationItem({ conversation, isActive, onSelect, onResetContext, className, isLoaded = false }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, onSelect, onDelete, className, isLoaded = false }: ConversationItemProps) {
   const { t } = useTranslation();
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
@@ -63,47 +63,40 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
         </div>
       </button>
 
-      {/* Clear Context Button - Only show if conversation is loaded */}
-      {isLoaded && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <ClearContextButton conversationId={conversation.id} onResetContext={onResetContext} />
-        </div>
-      )}
+      {/* Delete Button - Show on hover */}
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <DeleteButton conversationId={conversation.id} onDelete={onDelete} />
+      </div>
     </div>
   );
 }
 
-interface ClearContextButtonProps {
+interface DeleteButtonProps {
   conversationId: string;
-  onResetContext: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-function ClearContextButton({ conversationId, onResetContext }: ClearContextButtonProps) {
+function DeleteButton({ conversationId, onDelete }: DeleteButtonProps) {
   const { t } = useTranslation();
 
   return (
     <button
       onClick={(e) => {
         e.stopPropagation();
-        onResetContext(conversationId);
+        onDelete(conversationId);
       }}
       className={cn(
         "flex items-center justify-center",
         "w-8 h-8 rounded-lg",
         "text-zinc-400 dark:text-zinc-500",
-        "hover:text-zinc-600 dark:hover:text-zinc-300",
-        "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+        "hover:text-red-500 dark:hover:text-red-400",
+        "hover:bg-red-50 dark:hover:bg-red-950/50",
         "transition-all duration-200",
-        "group/btn",
-        // Expand on hover
-        "hover:w-auto hover:px-2 hover:gap-1.5",
-        "overflow-hidden",
       )}
-      aria-label={t("ai.clear-context")}
-      title={t("ai.clear-context-shortcut")}
+      aria-label={t("common.delete")}
+      title={t("common.delete")}
     >
-      <Scissors className="w-3.5 h-3.5 shrink-0 rotate-[-45deg]" />
-      <span className="hidden text-xs font-medium whitespace-nowrap group-hover/btn:inline">{t("ai.clear")}</span>
+      <Trash2 className="w-4 h-4" />
     </button>
   );
 }

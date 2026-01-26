@@ -538,3 +538,14 @@ func (s *ConnectServiceHandler) AddContextSeparator(ctx context.Context, req *co
 	}
 	return connect.NewResponse(resp), nil
 }
+
+func (s *ConnectServiceHandler) ClearConversationMessages(ctx context.Context, req *connect.Request[v1pb.ClearConversationMessagesRequest]) (*connect.Response[emptypb.Empty], error) {
+	if s.AIService == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.ClearConversationMessages(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}

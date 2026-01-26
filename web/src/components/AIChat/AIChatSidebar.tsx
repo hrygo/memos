@@ -24,7 +24,7 @@ interface AIChatSidebarProps {
 export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
   const { t } = useTranslation();
   const { state, setSidebarTab, createConversation } = useAIChat();
-  const { sidebarTab, capabilityStatus } = state;
+  const { sidebarTab } = state;
 
   const handleTabChange = (tab: SidebarTab) => {
     setSidebarTab(tab);
@@ -38,31 +38,8 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
 
   return (
     <aside className={cn("flex flex-col h-full bg-zinc-50 dark:bg-zinc-900", className)}>
-      {/* Header - 简化设计，移除能力切换 */}
-      <div className="flex items-center gap-2.5 p-3 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
-        <div className="relative shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-lg shadow-sm">
-            🦜
-          </div>
-          <div
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900",
-              capabilityStatus === "idle" ? "bg-green-500" : "bg-amber-500 animate-pulse",
-            )}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{t("ai.assistant-name")}</div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            {capabilityStatus === "thinking" && t("ai.thinking")}
-            {capabilityStatus === "processing" && t("ai.processing")}
-            {(capabilityStatus === "idle" || capabilityStatus === "active") && t("ai.ready")}
-          </div>
-        </div>
-      </div>
-
-      {/* 新建对话按钮 - 置顶，在 Tab 之上 */}
-      <div className="p-2 shrink-0">
+      {/* 新建对话按钮 - 置顶 */}
+      <div className="p-2 pt-3 shrink-0">
         <button
           onClick={handleStartNewChat}
           className={cn(

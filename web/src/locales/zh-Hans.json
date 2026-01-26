@@ -694,6 +694,8 @@
       }
     },
     "aichat": {
+      "delete-conversation-title": "删除会话",
+      "delete-conversation-confirm": "确定要删除这个会话吗？此操作无法撤销。",
       "sidebar": {
         "history": "历史记录",
         "memos": "引用笔记",
@@ -821,6 +823,23 @@
     "need-more-info": "需要更多信息",
     "parse-failed": "解析失败",
     "parse-success": "解析成功",
+    "ai": {
+      "thinking": "思考中...",
+      "processing": "处理中...",
+      "checking-schedule": "正在检查已有日程...",
+      "creating-schedule": "正在创建日程...",
+      "updating-schedule": "正在更新日程...",
+      "finding-free-time": "正在查找空闲时间...",
+      "using-tool": "使用工具",
+      "tool-completed": "完成",
+      "error": "发生错误",
+      "alternatives": "可选时间段",
+      "placeholder": "输入如「明天下午3点开会」或「我什么时候有空」",
+      "select-time": "选择时间",
+      "confirm-slot": "确认",
+      "conflict-detected": "检测到冲突",
+      "quick-actions": "快捷操作"
+    },
     "recurrence": {
       "daily": "每天",
       "weekly": "每周",
@@ -1011,15 +1030,6 @@
       "placeholder": "告诉我你想安排什么...",
       "placeholder-with-date": "{{date}}，告诉我你想安排什么...",
       "hint": "使用自然语言创建和管理日程"
-    },
-    "ai": {
-      "placeholder": "输入如「明天下午3点开会」或「我什么时候有空」",
-      "thinking": "思考中...",
-      "select-time": "选择时间",
-      "confirm-slot": "确认",
-      "conflict-detected": "检测到冲突",
-      "alternatives": "建议时间",
-      "quick-actions": "快捷操作"
     }
   },
   "chat": {

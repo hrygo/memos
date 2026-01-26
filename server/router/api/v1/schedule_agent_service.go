@@ -34,22 +34,35 @@ var toolCallRegex = regexp.MustCompile(`\n?\[Tool: [^\]]+\]`)
 type ScheduleAgentService struct {
 	v1pb.UnimplementedScheduleAgentServiceServer
 
-	Store        *store.Store
-	LLM          ai.LLMService
-	Profile      *profile.Profile
-	ContextStore *agent.ContextStore // TODO: Persist to PostgreSQL for cross-restart context recovery
+	Store            *store.Store
+	LLM              ai.LLMService
+	Profile          *profile.Profile
+	ContextStore     *agent.ContextStore // TODO: Persist to PostgreSQL for cross-restart context recovery
+	IntentClassifier *agent.LLMIntentClassifier
 }
 
 // NewScheduleAgentService creates a new schedule agent service.
 func NewScheduleAgentService(store *store.Store, llm ai.LLMService, profile *profile.Profile) *ScheduleAgentService {
-	return &ScheduleAgentService{
-		Store:        store,
-		LLM:          llm,
-		Profile:      profile,
+	svc := &ScheduleAgentService{
+		Store:   store,
+		LLM:     llm,
+		Profile: profile,
 		// ContextStore uses in-memory storage; context is lost on service restart.
 		// TODO: Migrate to PostgreSQL for persistent storage.
 		ContextStore: agent.NewContextStore(),
 	}
+
+	// Initialize LLM Intent Classifier if SiliconFlow API key is available
+	if profile.AISiliconFlowAPIKey != "" {
+		svc.IntentClassifier = agent.NewLLMIntentClassifier(agent.LLMIntentConfig{
+			APIKey:  profile.AISiliconFlowAPIKey,
+			BaseURL: profile.AISiliconFlowBaseURL,
+			Model:   "Qwen/Qwen2.5-7B-Instruct", // Fast, cost-effective model
+		})
+		slog.Info("LLM Intent Classifier initialized for ScheduleAgentService")
+	}
+
+	return svc
 }
 
 // Chat handles non-streaming schedule agent chat requests.
@@ -77,6 +90,11 @@ func (s *ScheduleAgentService) Chat(ctx context.Context, req *v1pb.ScheduleAgent
 	if err != nil {
 		logger.Error("Failed to create scheduler agent", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to create scheduler agent: %v", err)
+	}
+
+	// Configure intent classifier if available
+	if s.IntentClassifier != nil {
+		schedulerAgent.SetIntentClassifier(s.IntentClassifier)
 	}
 
 	// Execute agent (non-streaming)
@@ -120,6 +138,11 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 	if err != nil {
 		logger.Error("Failed to create scheduler agent", "error", err)
 		return status.Errorf(codes.Internal, "failed to create scheduler agent: %v", err)
+	}
+
+	// Configure intent classifier if available
+	if s.IntentClassifier != nil {
+		schedulerAgent.SetIntentClassifier(s.IntentClassifier)
 	}
 
 	// Context Management: Get or create conversation context

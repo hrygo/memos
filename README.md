@@ -6,9 +6,9 @@ Memos is a **privacy-first, AI-powered personal intelligence assistant** that co
 
 ## ✨ Highlights
 
-- 🦜 **Multi-Agent AI System** – Four specialized "Parrot Agents" handle different tasks with unique personalities
-- 🧠 **Intelligent RAG Pipeline** – Hybrid retrieval with BM25 + Vector Search + Reranking for accurate results
-- 📅 **Smart Schedule Management** – Natural language schedule creation with conflict detection
+- 🦜 **Multi-Agent AI System** – Three specialized "Parrot Agents" handle different tasks
+- 🧠 **Intelligent RAG Pipeline** – Hybrid retrieval with BM25 + Vector Search + Reranking
+- 📅 **Smart Schedule Management** – Calendar view + natural language input with conflict detection
 - 🔒 **Privacy First** – Self-hosted, no telemetry, your data stays yours
 
 ---
@@ -44,6 +44,37 @@ UID Not Found       → sync_required flag triggers full refresh
 
 ---
 
+## 📅 Schedule Management
+
+Memos provides a **dedicated schedule management module** with calendar visualization and AI-powered natural language input:
+
+### Two Access Modes
+
+| Mode | Entry Point | Interface | Use Case |
+|------|-------------|-----------|----------|
+| **Standalone** | `/schedule` | FullCalendar + Quick Input | Visual planning, drag-and-drop |
+| **Chat-based** | `/chat` → 金刚 Agent | Natural language | "明天下午3点开会" |
+
+### Key Features
+
+- **Calendar View** – Month/Week/Day views with FullCalendar
+- **Quick Input** – Natural language schedule creation with date context
+- **Conflict Detection** – Automatic check for overlapping schedules
+- **Free Time Finder** – AI suggests available slots (8:00-22:00)
+- **Drag & Drop** – Reschedule by dragging events on calendar
+- **Recurrence** – RRULE-based repeating schedules (daily/weekly/monthly)
+
+### Schedule Agent (金刚) Tools
+
+| Tool | Function |
+|------|----------|
+| `schedule_add` | Create new schedule with conflict check |
+| `schedule_query` | Query schedules by time range |
+| `schedule_update` | Modify existing schedules |
+| `find_free_time` | Find available time slots |
+
+---
+
 ## 🦜 Parrot AI Agents
 
 Memos uses a **multi-agent architecture** where specialized AI assistants (modeled after parrot species) handle different tasks:
@@ -53,11 +84,27 @@ Memos uses a **multi-agent architecture** where specialized AI assistants (model
 | 🦜 `MEMO`     | **灰灰** | 非洲灰鹦鹉 (African Grey) | Note Search & Retrieval | Semantic search, memo summary, RAG Q&A                            |
 | 📅 `SCHEDULE` | **金刚** | 金刚鹦鹉 (Macaw)          | Schedule Management     | Create/query/update schedules, conflict detection, find free time |
 | ⭐ `AMAZING`  | **惊奇** | 亚马逊鹦鹉 (Amazon)       | Comprehensive Assistant | Parallel memo + schedule retrieval, integrated analysis           |
-| 💡 `CREATIVE` | **灵灵** | 虎皮鹦鹉 (Budgerigar)     | Creative Writing        | Brainstorming, content generation, text improvement               |
 
 ### Agent Selection
 
-Use the `@` symbol in the AI chat to switch between agents, or click agent cards in the Parrot Hub.
+Memos uses **intelligent intent-based routing** powered by a hybrid Rule + LLM classifier:
+
+```
+User Input → ChatRouter (Backend)
+                 ↓
+         ┌──────┴──────┐
+         ↓             ↓
+    Rule Match     LLM Classify
+     (0ms)          (~400ms)
+         ↓             ↓
+         └──────┬──────┘
+                ↓
+    MEMO / SCHEDULE / AMAZING
+```
+
+- **Rule-based** (fast path): High-confidence keyword matching
+- **LLM fallback**: Semantic understanding for ambiguous inputs
+- **Manual override**: Use `@` symbol or click agent cards in Parrot Hub
 
 ### Agent Technical Details
 
@@ -94,14 +141,6 @@ Use the `@` symbol in the AI chat to switch between agents, or click agent cards
 **Tools**: Combines capabilities of MEMO and SCHEDULE agents
 
 **Fun Fact**: Amazon parrots are among the most talkative parrots – just like Amazing demonstrates multiple superpowers in one conversation!
-</details>
-
-<details>
-<summary><b>💡 灵灵 (CREATIVE) – Creative Inspiration Muse</b></summary>
-
-**Working Style**: Pure LLM creative mode – no tools, free imagination
-
-**Fun Fact**: Budgerigars are the smallest parrots but have infinite creativity and vitality!
 </details>
 
 ---
@@ -158,11 +197,14 @@ The `QueryRouter` automatically detects query intent and routes to the optimal r
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                       Frontend (React + Vite)                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ Memo Editor │  │  Calendar   │  │    AI Chat + Parrot Hub │  │
-│  │ + Attachment │  │   View     │  │    + Agent Selection    │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+│                    Frontend (React + Vite)                       │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                     RootLayout                            │   │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────────────┐  │   │
+│  │  │ MainLayout │  │ AIChat     │  │ ScheduleLayout     │  │   │
+│  │  │ (Memo)     │  │ Layout     │  │ (Calendar)         │  │   │
+│  │  └────────────┘  └────────────┘  └────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │ Connect RPC (HTTP/2)
 ┌─────────────────────────────────────────────────────────────────┐
@@ -172,28 +214,28 @@ The `QueryRouter` automatically detects query intent and routes to the optimal r
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
 │                              │                                   │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │                  Parrot Agent Layer                          ││
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        ││
-│  │  │MemoParrot│ │Schedule  │ │ Amazing  │ │Creative  │        ││
-│  │  │  (灰灰)   │ │ Parrot   │ │ Parrot   │ │ Parrot   │        ││
-│  │  │          │ │  (金刚)   │ │  (惊奇)   │ │  (灵灵)   │        ││
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘        ││
+│  │                    ChatRouter (Intent)                       ││
+│  │         Rule Match (0ms) → LLM Fallback (~400ms)            ││
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       ││
+│  │  │  MemoParrot  │  │ScheduleParrot│  │AmazingParrot │       ││
+│  │  │    (灰灰)     │  │    (金刚)     │  │    (惊奇)     │       ││
+│  │  └──────────────┘  └──────────────┘  └──────────────┘       ││
 │  └─────────────────────────────────────────────────────────────┘│
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │  QueryRouter    │  │AdaptiveRetriever│  │  CostMonitor    │  │
-│  │ (Intent Route)  │  │ (Hybrid Search) │  │   (FinOps)      │  │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+│  ┌─────────────────┐  ┌─────────────────┐                       │
+│  │AdaptiveRetriever│  │  QueryRouter    │                       │
+│  │ (Hybrid Search) │  │ (RAG Strategy)  │                       │
+│  └─────────────────┘  └─────────────────┘                       │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Storage & AI Layer                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │   PostgreSQL    │  │  Redis (Opt)    │  │  AI Providers   │  │
-│  │  ├─ memo        │  │  ├─ L1 Cache    │  │  ├─ Embedding   │  │
-│  │  ├─ schedule    │  │  └─ Session     │  │  ├─ Reranker    │  │
-│  │  ├─ pgvector    │  │                 │  │  └─ LLM         │  │
-│  │  └─ memo_embed  │  │                 │  │                 │  │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+│  ┌─────────────────┐  ┌─────────────────────────────────────┐   │
+│  │   PostgreSQL    │  │          AI Providers                │   │
+│  │  ├─ memo        │  │  ┌─────────┐ ┌───────┐ ┌─────────┐  │   │
+│  │  ├─ schedule    │  │  │Embedding│ │Rerank │ │   LLM   │  │   │
+│  │  ├─ conversation│  │  │(bge-m3) │ │(bge)  │ │(DeepSeek│  │   │
+│  │  └─ pgvector    │  │  └─────────┘ └───────┘ └─────────┘  │   │
+│  └─────────────────┘  └─────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -313,8 +355,7 @@ memos/
 │   │   ├── memo_parrot.go
 │   │   ├── schedule_parrot.go
 │   │   ├── amazing_parrot.go
-│   │   ├── creative_parrot.go
-│   │   ├── scheduler.go     # Schedule agent orchestrator
+│   │   ├── chat_router.go   # Intent-based agent routing (Rule + LLM)
 │   │   └── tools/           # Agent tools (scheduler, memo_search)
 │   ├── embedding.go         # Embedding service
 │   ├── reranker.go          # Reranking service
@@ -342,20 +383,12 @@ memos/
 
 ## 📖 Documentation
 
-### Developer Guides
-| Document                                  | Description                                     |
-| ----------------------------------------- | ----------------------------------------------- |
-| [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)   | Backend development & database policy           |
-| [FRONTEND.md](docs/dev-guides/FRONTEND.md)       | Frontend architecture & layout patterns         |
-| [ARCHITECTURE.md](docs/dev-guides/ARCHITECTURE.md) | Project architecture & Parrot Agent details     |
-| [QUICKSTART_AGENT.md](docs/dev-guides/QUICKSTART_AGENT.md) | Agent quick start guide                         |
-
-### Design Documents
-| Document                                                                            | Description                                     |
-| ----------------------------------------------------------------------------------- | ----------------------------------------------- |
-| [MEMOS_REFACTOR_PLAN.md](docs/MEMOS_REFACTOR_PLAN.md)                               | Full refactoring roadmap (6-8 months, 5 phases) |
-| [parrot-agents-final-technical-spec.md](docs/parrot-agents-final-technical-spec.md) | Technical specification v2.0                    |
-| [parrot-agents-executive-summary-v2.md](docs/parrot-agents-executive-summary-v2.md) | Executive summary                               |
+| Document                                         | Description                                 |
+| ------------------------------------------------ | ------------------------------------------- |
+| [BACKEND_DB.md](docs/dev-guides/BACKEND_DB.md)   | Backend development & database policy       |
+| [FRONTEND.md](docs/dev-guides/FRONTEND.md)       | Frontend architecture & layout patterns     |
+| [ARCHITECTURE.md](docs/dev-guides/ARCHITECTURE.md) | Project architecture & Parrot Agent details |
+| [QUICKSTART_AGENT.md](docs/dev-guides/QUICKSTART_AGENT.md) | Agent testing quick start guide     |
 
 ---
 

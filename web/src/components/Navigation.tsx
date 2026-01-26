@@ -89,9 +89,9 @@ const Navigation = (props: Props) => {
     <header className={cn("w-full h-full overflow-auto flex flex-col justify-between items-start gap-4 hide-scrollbar", className)}>
       <nav
         aria-label={t("common.navigation") || "Main navigation"}
-        className="w-full px-1 py-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden hide-scrollbar shrink"
+        className="w-full px-1 flex flex-col justify-start items-start space-y-2 overflow-auto overflow-x-hidden hide-scrollbar shrink"
       >
-        <NavLink className="mb-3 cursor-pointer" to={currentUser ? Routes.CHAT : Routes.EXPLORE}>
+        <NavLink className="mb-1 cursor-pointer" to={currentUser ? Routes.CHAT : Routes.EXPLORE}>
           <MemosLogo collapsed={collapsed} />
         </NavLink>
         {navLinks.map((navLink) => (

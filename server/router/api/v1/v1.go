@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 
+	"log/slog"
+
 	"connectrpc.com/connect"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"log/slog"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/usememos/memos/internal/profile"
@@ -33,12 +34,12 @@ type APIV1Service struct {
 	v1pb.UnimplementedScheduleServiceServer
 	v1pb.UnimplementedScheduleAgentServiceServer
 
-	Secret              string
-	Profile             *profile.Profile
-	Store               *store.Store
-	MarkdownService     markdown.Service
-	AIService           *AIService
-	ScheduleService     *ScheduleService
+	Secret               string
+	Profile              *profile.Profile
+	Store                *store.Store
+	MarkdownService      markdown.Service
+	AIService            *AIService
+	ScheduleService      *ScheduleService
 	ScheduleAgentService *ScheduleAgentService
 
 	// thumbnailSemaphore limits concurrent thumbnail generation to prevent memory exhaustion
@@ -87,11 +88,12 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				adaptiveRetriever := retrieval.NewAdaptiveRetriever(store, embeddingService, rerankerService)
 
 				service.AIService = &AIService{
-					Store:             store,
-					EmbeddingService:  embeddingService,
-					RerankerService:   rerankerService,
-					LLMService:        llmService,
-					AdaptiveRetriever: adaptiveRetriever,
+					Store:                  store,
+					EmbeddingService:       embeddingService,
+					RerankerService:        rerankerService,
+					LLMService:             llmService,
+					AdaptiveRetriever:      adaptiveRetriever,
+					IntentClassifierConfig: &aiConfig.IntentClassifier,
 				}
 				// Initialize ScheduleService with LLM service for natural language parsing
 				service.ScheduleService = &ScheduleService{

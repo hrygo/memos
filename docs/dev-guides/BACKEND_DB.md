@@ -109,11 +109,10 @@ MEMOS_AI_DEEPSEEK_API_KEY=your_key
 ## Key Components
 
 ### AI Agent Routing
-All AI chat logic routes through `ParrotRouter` in `plugin/ai/agent/`:
+All AI chat logic routes through `ChatRouter` in `plugin/ai/agent/`:
 - **MemoParrot** (灰灰): Memo search and retrieval
-- **ScheduleParrot** (金刚): Schedule management via `scheduler.go`
+- **ScheduleParrot** (金刚): Schedule management
 - **AmazingParrot** (惊奇): Combined memo + schedule
-- **CreativeParrot** (灵灵): Creative writing
 
 ### Query Engine
 Located in `server/queryengine/`:

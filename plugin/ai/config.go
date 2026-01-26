@@ -10,9 +10,10 @@ import (
 type Config struct {
 	Enabled bool
 
-	Embedding EmbeddingConfig
-	Reranker  RerankerConfig
-	LLM       LLMConfig
+	Embedding        EmbeddingConfig
+	Reranker         RerankerConfig
+	LLM              LLMConfig
+	IntentClassifier IntentClassifierConfig
 }
 
 // EmbeddingConfig represents vector embedding configuration.
@@ -41,6 +42,15 @@ type LLMConfig struct {
 	BaseURL     string
 	MaxTokens   int     // default: 2048
 	Temperature float32 // default: 0.7
+}
+
+// IntentClassifierConfig represents intent classification LLM configuration.
+// Uses a lightweight model for fast, cost-effective classification.
+type IntentClassifierConfig struct {
+	Enabled bool
+	Model   string // default: Qwen/Qwen2.5-7B-Instruct
+	APIKey  string
+	BaseURL string
 }
 
 // NewConfigFromProfile creates AI config from profile.
@@ -97,6 +107,15 @@ func NewConfigFromProfile(p *profile.Profile) *Config {
 		cfg.LLM.BaseURL = p.AIOpenAIBaseURL
 	case "ollama":
 		cfg.LLM.BaseURL = p.AIOllamaBaseURL
+	}
+
+	// Intent Classifier configuration
+	// Uses SiliconFlow with a lightweight model for fast classification
+	cfg.IntentClassifier = IntentClassifierConfig{
+		Enabled: p.AISiliconFlowAPIKey != "",
+		Model:   "Qwen/Qwen2.5-7B-Instruct", // Fast, cost-effective
+		APIKey:  p.AISiliconFlowAPIKey,
+		BaseURL: p.AISiliconFlowBaseURL,
 	}
 
 	return cfg

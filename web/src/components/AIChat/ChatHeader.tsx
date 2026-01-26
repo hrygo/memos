@@ -1,24 +1,21 @@
-import { Eraser, MoreHorizontal, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { CapabilityStatus, CapabilityType } from "@/types/capability";
 
 interface ChatHeaderProps {
   isThinking?: boolean;
-  onClearContext?: () => void;
-  onClearChat?: () => void;
   className?: string;
   currentCapability?: CapabilityType;
   capabilityStatus?: CapabilityStatus;
 }
 
 /**
- * Chat Header - 统一入口设计
+ * Chat Header - 简洁状态显示
  *
  * UX/UI 设计原则：
- * - 移除能力徽章，不暴露系统内部能力边界
- * - 状态展示改为动作描述（"搜索笔记中..."而非"笔记能力"）
+ * - 仅展示助手信息和状态
+ * - 工具按钮移至输入框工具栏
  * - 简洁清晰的视觉层次
  */
 const ASSISTANT_ICON = "🦜";
@@ -51,8 +48,6 @@ function getActionDescription(capability: CapabilityType, status: CapabilityStat
 
 export function ChatHeader({
   isThinking = false,
-  onClearContext,
-  onClearChat,
   className,
   currentCapability = CapabilityType.AUTO,
   capabilityStatus = "idle",
@@ -89,51 +84,12 @@ export function ChatHeader({
         </div>
       </div>
 
-      {/* Right Section */}
-      <div className="flex items-center gap-2">
-        {isThinking && (
-          <div className="hidden sm:flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 mr-1">
-            <Sparkles className="w-4 h-4 animate-pulse text-amber-500" />
-          </div>
-        )}
-
-        {/* More Options */}
-        {(onClearContext || onClearChat) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
-                aria-label="More options"
-              >
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {onClearContext && (
-                <DropdownMenuItem onClick={onClearContext} className="cursor-pointer">
-                  <Eraser className="w-4 h-4 mr-2 text-zinc-500" />
-                  <div>
-                    <div className="font-medium">{t("ai.clear-context")}</div>
-                    <div className="text-xs text-zinc-500">{t("ai.clear-context-desc")}</div>
-                  </div>
-                </DropdownMenuItem>
-              )}
-              {onClearChat && (
-                <DropdownMenuItem
-                  onClick={onClearChat}
-                  className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 cursor-pointer"
-                >
-                  <Eraser className="w-4 h-4 mr-2" />
-                  <div>
-                    <div className="font-medium">{t("ai.clear-chat")}</div>
-                    <div className="text-xs text-zinc-500">{t("ai.clear-chat-desc")}</div>
-                  </div>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+      {/* Right Section - Status indicator */}
+      {isThinking && (
+        <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+          <Sparkles className="w-4 h-4 animate-pulse text-amber-500" />
+        </div>
+      )}
     </header>
   );
 }

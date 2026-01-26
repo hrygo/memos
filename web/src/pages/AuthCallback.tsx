@@ -115,7 +115,7 @@ const AuthCallback = () => {
       {state.loading ? (
         <Spinner size="lg" />
       ) : (
-        <div className="max-w-lg font-mono whitespace-pre-wrap opacity-80">{state.errorMessage}</div>
+        <div className="max-w-[32rem] font-mono whitespace-pre-wrap opacity-80">{state.errorMessage}</div>
       )}
     </div>
   );

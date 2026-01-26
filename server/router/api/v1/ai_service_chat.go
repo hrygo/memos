@@ -90,12 +90,12 @@ func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer
 
 	// Emit conversation start event to trigger conversation creation
 	event := &aichat.ChatEvent{
-		Type:              aichat.EventConversationStart,
-		UserID:            user.ID,
-		AgentType:         chatReq.AgentType,
-		ConversationID:    chatReq.ConversationID,
+		Type:               aichat.EventConversationStart,
+		UserID:             user.ID,
+		AgentType:          chatReq.AgentType,
+		ConversationID:     chatReq.ConversationID,
 		IsTempConversation: chatReq.IsTempConversation,
-		Timestamp:         time.Now().Unix(),
+		Timestamp:          time.Now().Unix(),
 	}
 	results, err := eventBus.Publish(ctx, event)
 	if err != nil {
@@ -115,26 +115,26 @@ func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer
 	// Handle separator (---) - emit event and return without agent processing
 	if req.Message == "---" && chatReq.ConversationID != 0 {
 		eventBus.Publish(ctx, &aichat.ChatEvent{
-			Type:              aichat.EventSeparator,
-			UserID:            user.ID,
-			AgentType:         chatReq.AgentType,
-			SeparatorContent:  "Context cleared",
-			ConversationID:    chatReq.ConversationID,
+			Type:               aichat.EventSeparator,
+			UserID:             user.ID,
+			AgentType:          chatReq.AgentType,
+			SeparatorContent:   "Context cleared",
+			ConversationID:     chatReq.ConversationID,
 			IsTempConversation: chatReq.IsTempConversation,
-			Timestamp:         time.Now().Unix(),
+			Timestamp:          time.Now().Unix(),
 		})
 		return stream.Send(&v1pb.ChatResponse{Done: true})
 	}
 
 	// Emit user message event
 	eventBus.Publish(ctx, &aichat.ChatEvent{
-		Type:              aichat.EventUserMessage,
-		UserID:            user.ID,
-		AgentType:         chatReq.AgentType,
-		UserMessage:       req.Message,
-		ConversationID:    chatReq.ConversationID,
+		Type:               aichat.EventUserMessage,
+		UserID:             user.ID,
+		AgentType:          chatReq.AgentType,
+		UserMessage:        req.Message,
+		ConversationID:     chatReq.ConversationID,
 		IsTempConversation: chatReq.IsTempConversation,
-		Timestamp:         time.Now().Unix(),
+		Timestamp:          time.Now().Unix(),
 	})
 
 	// Build conversation context from backend
@@ -213,6 +213,16 @@ func (s *AIService) createChatHandler() aichat.Handler {
 		s.Store,
 	)
 	parrotHandler := aichat.NewParrotHandler(factory, s.LLMService)
+
+	// Configure chat router for auto-routing if intent classifier is enabled
+	if s.IntentClassifierConfig != nil && s.IntentClassifierConfig.Enabled {
+		chatRouter := aichat.NewChatRouter(s.IntentClassifierConfig)
+		parrotHandler.SetChatRouter(chatRouter)
+		slog.Info("Chat router enabled",
+			"model", s.IntentClassifierConfig.Model,
+		)
+	}
+
 	return aichat.NewRoutingHandler(parrotHandler)
 }
 
@@ -258,13 +268,13 @@ func (s *eventCollectingStream) Send(resp *v1pb.ChatResponse) error {
 
 		if response != "" {
 			s.eventBus.Publish(s.Context(), &aichat.ChatEvent{
-				Type:              aichat.EventAssistantResponse,
-				UserID:            s.userID,
-				AgentType:         s.agentType,
-				AssistantResponse: response,
-				ConversationID:    s.conversationID,
+				Type:               aichat.EventAssistantResponse,
+				UserID:             s.userID,
+				AgentType:          s.agentType,
+				AssistantResponse:  response,
+				ConversationID:     s.conversationID,
 				IsTempConversation: s.isTemp,
-				Timestamp:         time.Now().Unix(),
+				Timestamp:          time.Now().Unix(),
 			})
 		}
 

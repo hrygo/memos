@@ -53,7 +53,7 @@ func (d *DB) ListAIConversations(ctx context.Context, find *store.FindAIConversa
 		where, args = append(where, "pinned = "+placeholder(len(args)+1)), append(args, *find.Pinned)
 	}
 
-	query := `SELECT id, uid, creator_id, title, parrot_id, pinned, created_ts, updated_ts FROM ai_conversation WHERE ` + strings.Join(where, " AND ") + ` ORDER BY pinned DESC, updated_ts DESC`
+	query := `SELECT id, uid, creator_id, title, parrot_id, pinned, created_ts, updated_ts FROM ai_conversation WHERE ` + strings.Join(where, " AND ") + ` ORDER BY updated_ts DESC`
 	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list ai_conversations: %w", err)

@@ -42,7 +42,7 @@ export default function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o: boolean) => !loading && onOpenChange(o)}>
-      <DialogContent size="sm">
+      <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className={description ? "" : "sr-only"}>{description || t("common.confirm")}</DialogDescription>

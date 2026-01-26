@@ -1,6 +1,7 @@
 import { create } from "@bufbuild/protobuf";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { useCallback, useRef, useState } from "react";
 import { scheduleServiceClient } from "@/connect";
 import type {
   CheckConflictRequest,
@@ -17,8 +18,172 @@ import {
   ScheduleSchema,
 } from "@/types/proto/api/v1/schedule_service_pb";
 
+export type { ParsedEvent, UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotData } from "./useScheduleAgent";
 // Re-export ScheduleAgent hooks for convenience
 export { scheduleAgentChatStream, useScheduleAgentChat } from "./useScheduleAgent";
+
+/**
+ * Streaming event from the Agent
+ */
+export interface StreamingEvent {
+  type: "thinking" | "tool_use" | "tool_result" | "answer" | "error" | "ui_schedule_suggestion";
+  data: string;
+  timestamp: number;
+}
+
+/**
+ * Hook state for streaming chat
+ */
+export interface StreamingChatState {
+  isStreaming: boolean;
+  events: StreamingEvent[];
+  currentStep: string;
+  finalAnswer: string;
+  error: string | null;
+}
+
+/**
+ * Hook to chat with Schedule Agent with streaming feedback
+ * Provides real-time events for UI feedback
+ */
+export function useScheduleAgentStreamingChat() {
+  const queryClient = useQueryClient();
+  const [state, setState] = useState<StreamingChatState>({
+    isStreaming: false,
+    events: [],
+    currentStep: "",
+    finalAnswer: "",
+    error: null,
+  });
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const startChat = useCallback(
+    async (message: string, userTimezone = "Asia/Shanghai") => {
+      // Reset state
+      setState({
+        isStreaming: true,
+        events: [],
+        currentStep: "",
+        finalAnswer: "",
+        error: null,
+      });
+
+      // Create abort controller for cancellation
+      abortControllerRef.current = new AbortController();
+
+      try {
+        // Import dynamically to avoid circular dependencies
+        const { scheduleAgentChatStream } = await import("./useScheduleAgent");
+
+        const eventHandler = (event: { type: string; data: string }) => {
+          const streamingEvent: StreamingEvent = {
+            type: event.type as StreamingEvent["type"],
+            data: event.data,
+            timestamp: Date.now(),
+          };
+
+          setState((prev) => ({
+            ...prev,
+            events: [...prev.events, streamingEvent],
+            currentStep: formatCurrentStep(event.type, event.data),
+          }));
+        };
+
+        let finalContent = "";
+        for await (const chunk of scheduleAgentChatStream(message, userTimezone, eventHandler)) {
+          // Check for cancellation
+          if (abortControllerRef.current?.signal.aborted) {
+            break;
+          }
+
+          if (chunk.done) {
+            finalContent = chunk.content || finalContent;
+          } else if (chunk.content) {
+            finalContent = chunk.content;
+          }
+        }
+
+        // Update final state
+        setState((prev) => ({
+          ...prev,
+          isStreaming: false,
+          finalAnswer: finalContent,
+        }));
+
+        // Invalidate schedule queries to refresh
+        queryClient.invalidateQueries({ queryKey: ["schedules"] });
+
+        return finalContent;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        setState((prev) => ({
+          ...prev,
+          isStreaming: false,
+          error: errorMessage,
+        }));
+        throw error;
+      }
+    },
+    [queryClient],
+  );
+
+  const cancelChat = useCallback(() => {
+    abortControllerRef.current?.abort();
+    setState((prev) => ({
+      ...prev,
+      isStreaming: false,
+    }));
+  }, []);
+
+  const reset = useCallback(() => {
+    setState({
+      isStreaming: false,
+      events: [],
+      currentStep: "",
+      finalAnswer: "",
+      error: null,
+    });
+  }, []);
+
+  return {
+    ...state,
+    startChat,
+    cancelChat,
+    reset,
+  };
+}
+
+/**
+ * Format current step for display
+ */
+function formatCurrentStep(type: string, data: string): string {
+  switch (type) {
+    case "thinking":
+      return data || "Thinking...";
+    case "tool_use": {
+      const toolMatch = data.match(/^(\w+)(?::|$)/);
+      const toolName = toolMatch ? toolMatch[1] : "tool";
+      switch (toolName) {
+        case "schedule_query":
+          return "Checking schedules...";
+        case "schedule_add":
+          return "Creating schedule...";
+        case "schedule_update":
+          return "Updating schedule...";
+        case "find_free_time":
+          return "Finding free time...";
+        default:
+          return `Using ${toolName}...`;
+      }
+    }
+    case "tool_result":
+      return "Processing result...";
+    case "answer":
+      return "";
+    default:
+      return "";
+  }
+}
 
 /**
  * Hook to fetch schedules for a specific date range with buffer days

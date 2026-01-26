@@ -17,9 +17,9 @@ import (
 //   - Persistent cache across restarts
 //
 // To enable Redis support:
-//   1. Add redis dependency: go get github.com/redis/go-redis/v9
-//   2. Uncomment the implementation below
-//   3. Build with redis tag: go build -tags redis
+//  1. Add redis dependency: go get github.com/redis/go-redis/v9
+//  2. Uncomment the implementation below
+//  3. Build with redis tag: go build -tags redis
 type RedisCacheInterface interface {
 	Set(ctx context.Context, key string, value any)
 	SetWithTTL(ctx context.Context, key string, value any, ttl time.Duration)

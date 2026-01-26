@@ -80,26 +80,59 @@ memos/
 
 | AgentType  | Parrot Name | File                 | Description                               |
 | ---------- | ----------- | -------------------- | ----------------------------------------- |
-| `DEFAULT`  | 默认助手    | -                    | RAG-based chat with memo context          |
 | `MEMO`     | 灰灰        | `memo_parrot.go`     | Memo search and retrieval specialist      |
 | `SCHEDULE` | 金刚        | `schedule_parrot.go` | Schedule creation and management          |
 | `AMAZING`  | 惊奇        | `amazing_parrot.go`  | Comprehensive assistant (memo + schedule) |
-| `CREATIVE` | 灵灵        | `creative_parrot.go` | Creative writing and brainstorming        |
 
 ### Agent Router
 
-**Location**: `plugin/ai/agent/parrot_router.go`
+**Location**: `plugin/ai/agent/chat_router.go`
 
-**Routing Logic**:
-```go
-// In ai_service_chat.go
-if req.AgentType != v1pb.AgentType_AGENT_TYPE_DEFAULT {
-    return s.chatWithParrot(ctx, req, req, stream)  // Parrot Agent path
-}
-// Otherwise: DEFAULT agent path (legacy RAG)
+The ChatRouter implements a **hybrid Rule + LLM** intent classification system for intelligent agent routing:
+
+```
+User Input → ChatRouter.Route()
+                  ↓
+           routeByRules()     ← Fast path (0ms)
+                  ↓
+         Match Found? ─Yes→ Return (confidence ≥0.80)
+                  │
+                  No
+                  ↓
+           routeByLLM()       ← Slow path (~400ms)
+                  ↓
+         Qwen2.5-7B-Instruct
+         (Strict JSON Schema)
+                  ↓
+           Route Result
 ```
 
-**Frontend Usage**: Set `agentType` in `ChatRequest` to route to specific agent.
+**Rule-based Matching**:
+- Schedule keywords: 日程, schedule, 会议, meeting, 提醒, 时间词 (今天/明天/周X)
+- Memo keywords: 笔记, memo, 搜索, 查找, 写过, 关于
+- Amazing keywords: 综合, 总结一下, 本周工作, 周报
+
+**LLM Fallback** (for ambiguous inputs):
+- Model: `Qwen/Qwen2.5-7B-Instruct` via SiliconFlow
+- Max tokens: 30 (minimal response)
+- Strict JSON schema enforces valid output: `{"route": "memo|schedule|amazing", "confidence": 0.0-1.0}`
+
+**Integration** (`server/router/api/v1/ai_service_chat.go`):
+```go
+func (s *AIService) createChatHandler() aichat.Handler {
+    factory := aichat.NewAgentFactory(...)
+    parrotHandler := aichat.NewParrotHandler(factory, s.LLMService)
+    
+    // Auto-routing enabled when IntentClassifier is configured
+    if s.IntentClassifierConfig != nil && s.IntentClassifierConfig.Enabled {
+        chatRouter := aichat.NewChatRouter(s.IntentClassifierConfig)
+        parrotHandler.SetChatRouter(chatRouter)
+    }
+    return aichat.NewRoutingHandler(parrotHandler)
+}
+```
+
+**Frontend**: Routing logic removed from `useCapabilityRouter.ts` - always sends `AUTO` type, backend decides.
 
 ### Schedule Agent
 
