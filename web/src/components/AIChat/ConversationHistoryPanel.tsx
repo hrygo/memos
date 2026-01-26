@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { cn } from "@/lib/utils";
 import { ConversationSummary } from "@/types/aichat";
-import { ParrotAgentType } from "@/types/parrot";
 import { ConversationItem } from "./ConversationItem";
 
 interface ConversationHistoryPanelProps {
@@ -17,13 +16,12 @@ interface ConversationHistoryPanelProps {
  * 会话历史面板 - 统一入口设计
  *
  * 设计原则：
- * - 新建对话直接进入，无需选择助手类型
  * - 会话按时间分组，提升回溯效率
- * - 智能路由由系统自动处理
+ * - 新建对话按钮已移至 Sidebar 顶部
  */
 export function ConversationHistoryPanel({ className, onSelectConversation }: ConversationHistoryPanelProps) {
   const { t } = useTranslation();
-  const { conversationSummaries, conversations, state, createConversation, addContextSeparator, selectConversation } = useAIChat();
+  const { conversationSummaries, conversations, state, addContextSeparator, selectConversation } = useAIChat();
 
   const loadedConversationIds = new Set(conversations.filter((c) => c.messages.length > 0).map((c) => c.id));
 
@@ -63,12 +61,6 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
     onSelectConversation?.(id);
   };
 
-  // 统一入口：直接创建会话，使用 AMAZING 作为默认（综合助手，智能路由）
-  const handleStartNewChat = () => {
-    createConversation(ParrotAgentType.AMAZING);
-    onSelectConversation?.("");
-  };
-
   const handleResetContext = (id: string) => {
     addContextSeparator(id, "manual");
     toast.success(t("ai.context-cleared-toast"), {
@@ -82,22 +74,6 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* 新建对话按钮 - 置顶 */}
-      <div className="p-2 border-b border-zinc-200/50 dark:border-zinc-800/50 shrink-0">
-        <button
-          onClick={handleStartNewChat}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 px-3 py-2",
-            "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
-            "text-white text-sm font-medium rounded-lg transition-all",
-            "shadow-sm active:scale-[0.98]",
-          )}
-        >
-          <MessageSquarePlus className="w-4 h-4" />
-          {t("ai.aichat.sidebar.new-chat")}
-        </button>
-      </div>
-
       {/* 会话列表 */}
       <div className="flex-1 overflow-y-auto">
         {hasConversations ? (
@@ -125,18 +101,14 @@ export function ConversationHistoryPanel({ className, onSelectConversation }: Co
             ))}
           </div>
         ) : (
-          <EmptyState onStartChat={handleStartNewChat} />
+          <EmptyState />
         )}
       </div>
     </div>
   );
 }
 
-interface EmptyStateProps {
-  onStartChat: () => void;
-}
-
-function EmptyState({ onStartChat }: EmptyStateProps) {
+function EmptyState() {
   const { t } = useTranslation();
 
   return (
@@ -145,19 +117,7 @@ function EmptyState({ onStartChat }: EmptyStateProps) {
         <MessageSquarePlus className="w-5 h-5 text-zinc-400" />
       </div>
       <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-conversations")}</h3>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">{t("ai.aichat.sidebar.start-new-chat")}</p>
-      <button
-        onClick={onStartChat}
-        className={cn(
-          "flex items-center justify-center gap-2 px-4 py-2",
-          "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
-          "text-white text-sm font-medium rounded-lg transition-all",
-          "shadow-sm active:scale-[0.98]",
-        )}
-      >
-        <MessageSquarePlus className="w-4 h-4" />
-        {t("ai.aichat.sidebar.new-chat")}
-      </button>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("ai.aichat.sidebar.start-new-chat")}</p>
     </div>
   );
 }

@@ -30,19 +30,19 @@ function getActionDescription(capability: CapabilityType, status: string, t: (ke
   if (status === "idle") return null;
 
   if (status === "thinking") {
-    return t("ai.status.thinking");
+    return t("ai.thinking");
   }
 
   if (status === "processing") {
     switch (capability) {
       case CapabilityType.MEMO:
-        return t("ai.status.searching-memos");
+        return t("ai.parrot.status.searching-memos");
       case CapabilityType.SCHEDULE:
-        return t("ai.status.querying-schedule");
+        return t("ai.parrot.status.querying-schedule");
       case CapabilityType.AMAZING:
-        return t("ai.status.analyzing");
+        return t("ai.parrot.status.analyzing");
       default:
-        return t("ai.status.processing");
+        return t("ai.processing");
     }
   }
 

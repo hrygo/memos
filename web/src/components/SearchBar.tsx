@@ -1,4 +1,4 @@
-import { FileTextIcon, LoaderIcon, SearchIcon, SparklesIcon } from "lucide-react";
+import { AlertCircleIcon, FileTextIcon, LoaderIcon, SearchIcon, SparklesIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMemoFilterContext } from "@/contexts/MemoFilterContext";
@@ -11,11 +11,15 @@ const SearchBar = () => {
   const { t } = useTranslation();
   const { addFilter } = useMemoFilterContext();
   const [queryText, setQueryText] = useState("");
-  const [isSemantic, setIsSemantic] = useState(false);
+  const [isSemantic, setIsSemantic] = useState(true); // AI search as default
   const inputRef = useRef<HTMLInputElement>(null);
   const navigateTo = useNavigateTo();
 
-  const { data: semanticResults, isLoading } = useSemanticSearch(queryText, {
+  const {
+    data: semanticResults,
+    isLoading,
+    isError,
+  } = useSemanticSearch(queryText, {
     enabled: isSemantic && queryText.length > 1,
   });
 
@@ -43,43 +47,56 @@ const SearchBar = () => {
   };
 
   const onMemoClick = (memoId: string) => {
-    // Extract ID from "memos/{id}"
     const id = memoId.split("/").pop();
     if (id) {
       navigateTo(`/m/${id}`);
       setQueryText("");
-      setIsSemantic(false);
     }
   };
 
+  const handleToggleMode = () => {
+    setIsSemantic(!isSemantic);
+  };
+
+  // AI Native Design: Icon in left side acts as mode toggle
+  const ModeIcon = isSemantic ? SparklesIcon : SearchIcon;
+
   return (
     <div className="relative w-full h-auto flex flex-col z-20">
-      <div className="relative w-full flex flex-row justify-start items-center">
-        <SearchIcon className="absolute left-2 w-4 h-auto opacity-40 text-sidebar-foreground" />
-        <input
-          className={cn(
-            "w-full text-sidebar-foreground leading-6 bg-sidebar border border-border text-sm rounded-lg p-1 pl-8 pr-16 outline-0",
-            isSemantic && "border-blue-400 ring-1 ring-blue-400",
-          )}
-          placeholder={isSemantic ? t("common.search") + " (AI)..." : t("memo.search-placeholder")}
-          value={queryText}
-          onChange={onTextChange}
-          onKeyDown={onKeyDown}
-          ref={inputRef}
-        />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+      <div
+        className={cn(
+          "relative w-full flex flex-row items-center rounded-lg transition-all duration-200",
+          isSemantic && "bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 p-[1px]",
+        )}
+      >
+        <div className="relative w-full flex flex-row items-center bg-sidebar rounded-lg">
           <button
-            onClick={() => setIsSemantic(!isSemantic)}
+            onClick={handleToggleMode}
             className={cn(
-              "min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md transition-colors",
-              isSemantic ? "text-blue-500 bg-blue-100 dark:bg-blue-900" : "text-muted-foreground hover:bg-muted",
+              "absolute left-2 p-0.5 rounded transition-colors z-10",
+              isSemantic
+                ? "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+                : "text-sidebar-foreground/40 hover:text-sidebar-foreground/60",
             )}
-            aria-label={isSemantic ? "Disable semantic search" : "Enable semantic search"}
-            title="Toggle Semantic Search"
+            aria-label={isSemantic ? t("search.switch-to-keyword") : t("search.switch-to-ai")}
+            title={isSemantic ? t("search.ai-mode") : t("search.keyword-mode")}
           >
-            <SparklesIcon className="w-4 h-4" />
+            <ModeIcon className="w-4 h-4" />
           </button>
-          <MemoDisplaySettingMenu className="text-sidebar-foreground" />
+          <input
+            className={cn(
+              "w-full text-sidebar-foreground leading-6 bg-transparent border border-transparent text-sm rounded-lg p-1.5 pl-8 pr-9 outline-0",
+              !isSemantic && "border-border",
+            )}
+            placeholder={isSemantic ? t("search.ai-placeholder") : t("memo.search-placeholder")}
+            value={queryText}
+            onChange={onTextChange}
+            onKeyDown={onKeyDown}
+            ref={inputRef}
+          />
+          <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+            <MemoDisplaySettingMenu className="text-sidebar-foreground/60 hover:text-sidebar-foreground" />
+          </div>
         </div>
       </div>
 
@@ -88,13 +105,25 @@ const SearchBar = () => {
           {isLoading && (
             <div className="p-4 flex items-center justify-center text-muted-foreground">
               <LoaderIcon className="w-4 h-4 animate-spin mr-2" />
-              Searching...
+              {t("search.ai-searching")}
             </div>
           )}
-          {!isLoading && semanticResults?.results?.length === 0 && (
-            <div className="p-4 text-center text-muted-foreground text-sm">No relevant memos found.</div>
+          {isError && (
+            <div className="p-4 text-center">
+              <div className="flex items-center justify-center text-amber-600 dark:text-amber-400 mb-2">
+                <AlertCircleIcon className="w-4 h-4 mr-2" />
+                {t("search.ai-error")}
+              </div>
+              <button onClick={handleToggleMode} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                {t("search.fallback-to-keyword")}
+              </button>
+            </div>
+          )}
+          {!isLoading && !isError && semanticResults?.results?.length === 0 && (
+            <div className="p-4 text-center text-muted-foreground text-sm">{t("search.no-results")}</div>
           )}
           {!isLoading &&
+            !isError &&
             semanticResults?.results?.map((result) => (
               <div
                 key={result.name}
@@ -104,7 +133,7 @@ const SearchBar = () => {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center text-xs text-muted-foreground">
                     <FileTextIcon className="w-3 h-3 mr-1" />
-                    Score: {(result.score * 100).toFixed(0)}%
+                    {t("search.score")}: {(result.score * 100).toFixed(0)}%
                   </div>
                 </div>
                 <div className="text-sm line-clamp-2 text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400">

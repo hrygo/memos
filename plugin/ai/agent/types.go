@@ -346,7 +346,6 @@ func GenerateCacheKey(agentName string, userID int32, userInput string) string {
 // These ensure that all parrot types correctly implement the ParrotAgent interface.
 // 如果任何类型未正确实现接口，编译将失败。
 var (
-	_ ParrotAgent = (*CreativeParrot)(nil)   // 灵灵 (Creative)
 	_ ParrotAgent = (*MemoParrot)(nil)       // 灰灰 (Memo)
 	_ ParrotAgent = (*AmazingParrot)(nil)    // 惊奇 (Amazing)
 	_ ParrotAgent = (*ScheduleParrotV2)(nil) // 金刚 (Schedule V2)

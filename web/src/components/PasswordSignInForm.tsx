@@ -62,9 +62,10 @@ function PasswordSignInForm() {
       }
       await initialize();
       navigateTo("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setError(error.message || t("common.failed-to-sign-in"));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setError(errorMessage || t("common.failed-to-sign-in"));
     }
     actionBtnLoadingState.setFinish();
   };

@@ -282,6 +282,18 @@
     "back-to-top": "Back to Top",
     "go-to-home": "Go to Home"
   },
+  "search": {
+    "ai-placeholder": "AI Search...",
+    "ai-searching": "AI searching...",
+    "no-results": "No relevant memos found",
+    "score": "Relevance",
+    "ai-mode": "AI Search (Semantic)",
+    "keyword-mode": "Keyword Search",
+    "switch-to-ai": "Switch to AI search",
+    "switch-to-keyword": "Switch to keyword search",
+    "ai-error": "AI search unavailable",
+    "fallback-to-keyword": "Switch to keyword search"
+  },
   "setting": {
     "access-token-section": {
       "access-token-copied-to-clipboard": "Access token copied to clipboard",
@@ -783,7 +795,6 @@
     "create-anyway": "Create Anyway",
     "schedule-count": "{{count}} schedule",
     "schedule-count_plural": "{{count}} schedules",
-    "schedules": "schedules",
     "jump-to-today": "Jump to today",
     "previous-month": "Previous month",
     "next-month": "Next month",
@@ -909,8 +920,6 @@
       "manual-parse": "Manual input mode",
       "close-card": "Close card",
       "need-more-info": "Need more information",
-      "parse-failed": "Parse failed",
-      "parse-success": "Parse successful",
       "created-regex": "successfully created|Schedule created|successfully created",
       "ai-suggestions": "AI Suggestions",
       "double-click-create": "Double-click to create",

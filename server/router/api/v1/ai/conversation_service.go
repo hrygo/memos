@@ -437,15 +437,13 @@ func CalculateFixedConversationID(userID int32, agentType AgentType) int32 {
 	}
 
 	offsets := map[AgentType]int32{
-		AgentTypeDefault:  1,
 		AgentTypeMemo:     2,
 		AgentTypeSchedule: 3,
 		AgentTypeAmazing:  4,
-		AgentTypeCreative: 5,
 	}
 	offset := offsets[agentType]
 	if offset == 0 {
-		offset = 1
+		offset = 4 // Default to AMAZING offset
 	}
 	return (userID << 8) | offset
 }
@@ -455,14 +453,12 @@ func CalculateFixedConversationID(userID int32, agentType AgentType) int32 {
 func GetFixedConversationTitle(agentType AgentType) string {
 	// Title keys for frontend localization
 	titles := map[AgentType]string{
-		AgentTypeDefault:  "chat.default.title",
 		AgentTypeMemo:     "chat.memo.title",
 		AgentTypeSchedule: "chat.schedule.title",
 		AgentTypeAmazing:  "chat.amazing.title",
-		AgentTypeCreative: "chat.creative.title",
 	}
 	if title, ok := titles[agentType]; ok {
 		return title
 	}
-	return "chat.default.title"
+	return "chat.amazing.title"
 }

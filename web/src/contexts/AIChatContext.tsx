@@ -36,12 +36,16 @@ function getDefaultTitle(parrotId: ParrotAgentType): string {
 /**
  * 根据首条用户消息生成语义化标题
  * 截取前 20 字符，清理特殊字符
+ * 返回 null 表示无法生成有效标题
  */
-function generateSemanticTitle(message: string): string {
+function generateSemanticTitle(message: string): string | null {
   const cleaned = message
     .replace(/[#@\n\r]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  // 空串或纯符号输入，返回 null 表示保持原标题
+  if (cleaned.length === 0) return null;
 
   if (cleaned.length <= 20) return cleaned;
   return cleaned.slice(0, 20) + "...";

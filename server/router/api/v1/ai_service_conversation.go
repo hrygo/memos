@@ -80,16 +80,14 @@ func (s *AIService) ListAIConversations(ctx context.Context, _ *v1pb.ListAIConve
 // This is called on ListAIConversations to guarantee users always see all available parrots.
 // Uses batch query to avoid N+1 problem.
 func (s *AIService) ensureFixedConversations(ctx context.Context, userID int32) {
-	// Calculate all fixed conversation IDs first
+	// Calculate all fixed conversation IDs first (3 core capabilities)
 	agentTypes := []struct {
 		agent v1pb.AgentType
 		ai    aichat.AgentType
 	}{
-		{v1pb.AgentType_AGENT_TYPE_DEFAULT, aichat.AgentTypeDefault},
 		{v1pb.AgentType_AGENT_TYPE_MEMO, aichat.AgentTypeMemo},
 		{v1pb.AgentType_AGENT_TYPE_SCHEDULE, aichat.AgentTypeSchedule},
 		{v1pb.AgentType_AGENT_TYPE_AMAZING, aichat.AgentTypeAmazing},
-		{v1pb.AgentType_AGENT_TYPE_CREATIVE, aichat.AgentTypeCreative},
 	}
 
 	fixedIDs := make([]int32, len(agentTypes))
@@ -329,7 +327,7 @@ func (s *AIService) AddContextSeparator(ctx context.Context, req *v1pb.AddContex
 		ConversationID: req.ConversationId,
 		Type:           store.AIMessageTypeSeparator,
 		Role:           store.AIMessageRoleSystem,
-		Content:        "---",  // Content marker for separator
+		Content:        "---", // Content marker for separator
 		Metadata:       emptyMetadata,
 		CreatedTs:      time.Now().Unix(),
 	})
@@ -350,6 +348,7 @@ func (s *AIService) AddContextSeparator(ctx context.Context, req *v1pb.AddContex
 func convertAIConversationFromStore(c *store.AIConversation) *v1pb.AIConversation {
 	// Convert ParrotID string to AgentType enum
 	// Handle both short format ("MEMO") and long format ("AGENT_TYPE_MEMO")
+	// DEFAULT and CREATIVE are deprecated - map to AMAZING
 	var parrotId int32
 
 	// Try direct lookup first (long format like "AGENT_TYPE_MEMO")
@@ -357,22 +356,23 @@ func convertAIConversationFromStore(c *store.AIConversation) *v1pb.AIConversatio
 		parrotId = val
 	} else {
 		// Try short format lookup ("MEMO" → "AGENT_TYPE_MEMO")
+		// Legacy: DEFAULT/CREATIVE → AMAZING
 		shortToLong := map[string]v1pb.AgentType{
-			"DEFAULT":  v1pb.AgentType_AGENT_TYPE_DEFAULT,
 			"MEMO":     v1pb.AgentType_AGENT_TYPE_MEMO,
-			"SCHEDULE":  v1pb.AgentType_AGENT_TYPE_SCHEDULE,
-			"AMAZING":   v1pb.AgentType_AGENT_TYPE_AMAZING,
-			"CREATIVE":  v1pb.AgentType_AGENT_TYPE_CREATIVE,
+			"SCHEDULE": v1pb.AgentType_AGENT_TYPE_SCHEDULE,
+			"AMAZING":  v1pb.AgentType_AGENT_TYPE_AMAZING,
+			"DEFAULT":  v1pb.AgentType_AGENT_TYPE_AMAZING, // Legacy alias
+			"CREATIVE": v1pb.AgentType_AGENT_TYPE_AMAZING, // Legacy alias
 		}
 		if val, ok := shortToLong[c.ParrotID]; ok {
 			parrotId = int32(val)
 		} else {
-			// Unknown value, log warning and fallback to DEFAULT
-			slog.Default().Warn("Unknown ParrotID in conversation, falling back to DEFAULT",
+			// Unknown value, log warning and fallback to AMAZING
+			slog.Default().Warn("Unknown ParrotID in conversation, falling back to AMAZING",
 				"conversation_id", c.ID,
 				"parrot_id", c.ParrotID,
 			)
-			parrotId = int32(v1pb.AgentType_AGENT_TYPE_DEFAULT)
+			parrotId = int32(v1pb.AgentType_AGENT_TYPE_AMAZING)
 		}
 	}
 

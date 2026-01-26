@@ -1,15 +1,13 @@
 import { ParrotAgentType } from "./parrot";
 
 /**
- * 能力类型 - 从 Agent 概念演进而来
- * 不同于 Agent（对话入口），Capability 是后台能力
+ * 能力类型 - 私人助手三核心能力
  */
 export enum CapabilityType {
   MEMO = "MEMO", // 笔记检索能力
   SCHEDULE = "SCHEDULE", // 日程管理能力
   AMAZING = "AMAZING", // 综合洞察能力
-  CREATIVE = "CREATIVE", // 创意生成能力
-  AUTO = "AUTO", // 自动识别能力（默认）
+  AUTO = "AUTO", // 自动识别能力（默认，fallback 到 AMAZING）
 }
 
 /**
@@ -52,7 +50,7 @@ export interface IntentRecognitionResult {
 }
 
 /**
- * 能力配置映射
+ * 能力配置映射 - 私人助手三核心能力
  */
 export const CAPABILITIES: Record<CapabilityType, Omit<Capability, "id">> = {
   [CapabilityType.MEMO]: {
@@ -100,28 +98,13 @@ export const CAPABILITIES: Record<CapabilityType, Omit<Capability, "id">> = {
     },
     catchphrases: ["看看这个...", "综合来看", "发现规律了"],
   },
-  [CapabilityType.CREATIVE]: {
-    parrotId: ParrotAgentType.CREATIVE,
-    name: "创意",
-    nameAlt: "Creative",
-    description: "头脑风暴",
-    icon: "💡",
-    color: "lime",
-    soundEffects: {
-      thinking: "啾...",
-      idea: "灵感来了~",
-      brainstorm: "咻咻~",
-      done: "噗~搞定",
-    },
-    catchphrases: ["灵感来了~", "想想还有", "有意思！"],
-  },
   [CapabilityType.AUTO]: {
-    parrotId: ParrotAgentType.DEFAULT,
+    parrotId: ParrotAgentType.AMAZING, // AUTO fallback to AMAZING
     name: "自动",
     nameAlt: "Auto",
     description: "智能识别",
     icon: "🤖",
-    color: "indigo",
+    color: "emerald",
     soundEffects: {
       thinking: "嗯...让我想想",
       done: "✓",
@@ -146,12 +129,8 @@ export function parrotAgentToCapability(agentType: ParrotAgentType): CapabilityT
       return CapabilityType.MEMO;
     case ParrotAgentType.SCHEDULE:
       return CapabilityType.SCHEDULE;
-    case ParrotAgentType.AMAZING:
-      return CapabilityType.AMAZING;
-    case ParrotAgentType.CREATIVE:
-      return CapabilityType.CREATIVE;
     default:
-      return CapabilityType.AUTO;
+      return CapabilityType.AMAZING;
   }
 }
 

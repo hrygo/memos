@@ -17,7 +17,7 @@ export function ConversationItem({ conversation, isActive, onSelect, onResetCont
   const { t } = useTranslation();
   const parrot = PARROT_AGENTS[conversation.parrotId];
   const parrotIcon = PARROT_ICONS[conversation.parrotId] || parrot?.icon || "🤖";
-  const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.DEFAULT;
+  const parrotTheme = PARROT_THEMES[conversation.parrotId] || PARROT_THEMES.AMAZING;
 
   // Display message count: show "..." if not loaded yet, 0 if truly empty
   const displayMessageCount = isLoaded ? conversation.messageCount : "...";
@@ -108,7 +108,7 @@ function ClearContextButton({ conversationId, onResetContext }: ClearContextButt
   );
 }
 
-function formatTime(timestamp: number, t: (key: string, options?: any) => string): string {
+function formatTime(timestamp: number, t: (key: string, options?: Record<string, unknown>) => string): string {
   const date = new Date(timestamp);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();

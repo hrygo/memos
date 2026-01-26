@@ -15,9 +15,7 @@ interface TypingCursorProps {
 const PARROT_ANIMATIONS: Record<string, string> = {
   [ParrotAgentType.MEMO]: "memoFloat",
   [ParrotAgentType.SCHEDULE]: "scheduleTick",
-  [ParrotAgentType.CREATIVE]: "creativeSpark",
   [ParrotAgentType.AMAZING]: "amazingSpin",
-  [ParrotAgentType.DEFAULT]: "defaultPulse",
 };
 
 /**
@@ -25,7 +23,7 @@ const PARROT_ANIMATIONS: Record<string, string> = {
  * Creates an intelligent, animated typing indicator with multiple variations
  */
 const TypingCursor = ({ active = true, parrotId, variant = "dots" }: TypingCursorProps) => {
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   if (!active) return null;
 
@@ -59,7 +57,7 @@ const TypingCursor = ({ active = true, parrotId, variant = "dots" }: TypingCurso
 
   // Parrot variant - uses parrot-specific animations
   if (variant === "parrot") {
-    const animationName = PARROT_ANIMATIONS[parrotId || ParrotAgentType.DEFAULT];
+    const animationName = PARROT_ANIMATIONS[parrotId || ParrotAgentType.AMAZING];
     return (
       <span className="inline-flex items-center gap-1 ml-2">
         {[0, 1, 2].map((i) => (
@@ -105,7 +103,7 @@ interface AIThinkingIndicatorProps {
 export function AIThinkingIndicator({ active = true, parrotId, size = "md" }: AIThinkingIndicatorProps) {
   if (!active) return null;
 
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   const sizeClasses = {
     sm: "w-4 h-4",
@@ -143,7 +141,7 @@ interface StreamingIndicatorProps {
 export function StreamingIndicator({ active = true, parrotId }: StreamingIndicatorProps) {
   if (!active) return null;
 
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   return (
     <span className="inline-flex items-center gap-1 ml-2">

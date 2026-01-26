@@ -6,6 +6,7 @@ import { ParrotAgentType } from "@/types/parrot";
 /**
  * 意图识别关键词映射
  * 前端智能路由规则：根据用户输入关键词推断意图
+ * 私人助手三核心能力：MEMO / SCHEDULE / AMAZING
  */
 const INTENT_KEYWORDS: Record<CapabilityType, string[]> = {
   [CapabilityType.MEMO]: [
@@ -60,7 +61,6 @@ const INTENT_KEYWORDS: Record<CapabilityType, string[]> = {
     "今日总结",
     "周报",
   ],
-  [CapabilityType.CREATIVE]: ["创意", "想法", "头脑风暴", "brainstorm", "写", "润色", "优化", "建议", "灵感", "draft", "creative", "idea"],
   [CapabilityType.AUTO]: [],
 };
 
@@ -103,7 +103,7 @@ export function recognizeIntent(input: string, currentCapability: CapabilityType
     };
   }
 
-  // 计算每个能力的置信度
+  // 计算每个能力的置信度（三核心能力）
   const scores: Array<{ capability: CapabilityType; confidence: number }> = [
     {
       capability: CapabilityType.MEMO,
@@ -116,10 +116,6 @@ export function recognizeIntent(input: string, currentCapability: CapabilityType
     {
       capability: CapabilityType.AMAZING,
       confidence: calculateConfidence(input, CapabilityType.AMAZING),
-    },
-    {
-      capability: CapabilityType.CREATIVE,
-      confidence: calculateConfidence(input, CapabilityType.CREATIVE),
     },
   ];
 
@@ -196,13 +192,6 @@ export function useCapabilityRouter() {
           nameAlt: "Amazing",
           description: t("ai.capability.amazing.description") || "笔记 + 日程",
           icon: "🌟",
-        };
-      case CapabilityType.CREATIVE:
-        return {
-          name: t("ai.capability.creative.name") || "创意",
-          nameAlt: "Creative",
-          description: t("ai.capability.creative.description") || "头脑风暴",
-          icon: "💡",
         };
       case CapabilityType.AUTO:
       default:

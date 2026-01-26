@@ -69,8 +69,8 @@ export function ChatMessages({
     }
   }, [isTyping]);
 
-  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
-  const currentIcon = currentParrotId ? PARROT_ICONS[currentParrotId] || PARROT_ICONS.DEFAULT : PARROT_ICONS.DEFAULT;
+  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
+  const currentIcon = currentParrotId ? PARROT_ICONS[currentParrotId] || PARROT_ICONS.AMAZING : PARROT_ICONS.AMAZING;
 
   return (
     <div ref={scrollRef} onScroll={handleScroll} className={cn("flex-1 overflow-y-auto px-3 md:px-6 py-4", className)}>

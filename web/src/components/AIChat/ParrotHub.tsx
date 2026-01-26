@@ -53,17 +53,6 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
     theme: PARROT_THEMES.AMAZING,
     nameAlt: "Amazing",
   },
-  {
-    id: CapabilityType.CREATIVE,
-    parrotId: ParrotAgentType.CREATIVE,
-    icon: "💡",
-    iconAlt: "/images/parrots/icons/creative_icon.webp",
-    nameKey: "ai.capability.creative.name",
-    nameAltKey: "ai.capability.creative.nameAlt",
-    descriptionKey: "ai.capability.creative.description",
-    theme: PARROT_THEMES.CREATIVE,
-    nameAlt: "Creative",
-  },
 ];
 
 interface ParrotHubProps {
@@ -100,7 +89,7 @@ export function ParrotHub({
             <Sparkles className="w-5 h-5 text-indigo-500" />
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {t("ai.capability.subtitle") || "我可以帮你搜索笔记、管理日程、总结分析，或者一起头脑风暴"}
+            {t("ai.capability.subtitle") || "我可以帮你搜索笔记、管理日程、综合分析"}
           </p>
         </div>
 

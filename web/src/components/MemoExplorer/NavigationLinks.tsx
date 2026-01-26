@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Routes } from "@/router";
-import { useTranslate } from "@/utils/i18n";
+import { type Translations, useTranslate } from "@/utils/i18n";
 
 const NavigationLinks = () => {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const NavigationLinks = () => {
     {
       id: "schedule",
       icon: CalendarDays,
-      label: "schedule.title" as const, // i18n key
+      label: "schedule.title" as Translations,
       path: Routes.SCHEDULE,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-900/20",
@@ -23,7 +23,7 @@ const NavigationLinks = () => {
   return (
     <div className="w-full flex flex-col justify-start items-start mt-4 px-1">
       <div className="w-full flex flex-row justify-between items-center mb-2 px-1">
-        <span className="text-sm leading-6 text-muted-foreground select-none">{t("common.add" as any) || "Navigation"}</span>
+        <span className="text-sm leading-6 text-muted-foreground select-none">{t("common.add" as Translations) || "Navigation"}</span>
       </div>
       <div className="w-full flex flex-col gap-1">
         {links.map((link) => {
@@ -42,7 +42,7 @@ const NavigationLinks = () => {
               )}
             >
               <Icon className={cn("w-4 h-auto shrink-0", link.color)} />
-              <span className="truncate">{t(link.label as any) || "Schedule"}</span>
+              <span className="truncate">{t(link.label)}</span>
             </button>
           );
         })}

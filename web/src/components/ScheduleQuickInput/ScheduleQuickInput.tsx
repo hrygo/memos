@@ -6,11 +6,10 @@ import { GenerativeUIContainer } from "@/components/ScheduleAI";
 import type { UIToolEvent } from "@/components/ScheduleAI/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useScheduleAgentChat } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
-import { useTranslate } from "@/utils/i18n";
+import { type Translations, useTranslate } from "@/utils/i18n";
 import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
 import { QuickTemplateDropdown } from "./QuickTemplates";
 import type { ScheduleTemplate } from "./types";
@@ -30,7 +29,7 @@ const MAX_INPUT_HEIGHT = 120;
 const LINE_HEIGHT = 24;
 
 export function ScheduleQuickInput({
-  initialDate: _initialDate,
+  initialDate,
   onScheduleCreated,
   editingSchedule,
   onClearEditing,
@@ -39,7 +38,6 @@ export function ScheduleQuickInput({
   onUIDismiss,
   className,
 }: ScheduleQuickInputProps) {
-  const { selectedDate } = useScheduleContext();
   const agentChat = useScheduleAgentChat();
   const t = useTranslate();
 
@@ -101,7 +99,7 @@ export function ScheduleQuickInput({
 
     // Save the input and clear immediately for better UX
     setLastInput(trimmedInput);
-    setInput("");  // Clear input immediately
+    setInput(""); // Clear input immediately
     setIsProcessing(true);
     setAiMessage("");
 
@@ -162,7 +160,7 @@ export function ScheduleQuickInput({
   const handleTemplateSelect = (template: ScheduleTemplate) => {
     // Get natural language prompt for input display
     const promptText = template.promptI18nKey
-      ? (t(template.promptI18nKey as any) as string) || template.prompt || template.title
+      ? (t(template.promptI18nKey as Translations) as string) || template.prompt || template.title
       : template.prompt || template.title;
 
     // Only fill the input, let user edit before sending
@@ -240,7 +238,7 @@ export function ScheduleQuickInput({
           <Edit3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">
-              {(t as any)("schedule.quick.input.editing") || "Editing"} "{editingInfo?.title}"
+              {t("schedule.quick.input.editing" as Translations) || "Editing"} "{editingInfo?.title}"
             </p>
             <p className="text-xs text-amber-600/70 dark:text-amber-400/70">{editingInfo?.time}</p>
           </div>

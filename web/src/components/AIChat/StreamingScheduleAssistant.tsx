@@ -246,7 +246,7 @@ export function StreamingScheduleAssistant({
                 onError?.(new Error(event.data));
                 return;
             }
-          } catch (e) {
+          } catch (_e) {
             console.error("Failed to parse event:", chunk.event);
           }
         }

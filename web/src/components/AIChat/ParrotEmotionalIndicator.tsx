@@ -86,7 +86,7 @@ export function ParrotEmotionalIndicator({
 }: ParrotEmotionalIndicatorProps) {
   if (!active) return null;
 
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   const baseColor = getBaseColorClass(theme.iconText);
   const glowBg = getGlowBgClass(theme.iconBg);
@@ -142,7 +142,7 @@ interface MoodBadgeProps {
 }
 
 export function MoodBadge({ mood, parrotId, className }: MoodBadgeProps) {
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   return (
     <span
@@ -174,7 +174,7 @@ interface SoundBubbleProps {
 export function SoundBubble({ sound, parrotId, active = true, className }: SoundBubbleProps) {
   if (!active || !sound) return null;
 
-  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
+  const theme = parrotId ? PARROT_THEMES[parrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   return (
     <span

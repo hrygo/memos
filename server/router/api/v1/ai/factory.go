@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
 	"github.com/usememos/memos/plugin/ai"
+	agentpkg "github.com/usememos/memos/plugin/ai/agent"
+	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/retrieval"
 	"github.com/usememos/memos/server/service/schedule"
 	"github.com/usememos/memos/store"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 )
 
 // AgentType represents the type of agent to create.
 type AgentType string
 
 const (
-	AgentTypeDefault  AgentType = "DEFAULT"
 	AgentTypeMemo     AgentType = "MEMO"
 	AgentTypeSchedule AgentType = "SCHEDULE"
 	AgentTypeAmazing  AgentType = "AMAZING"
-	AgentTypeCreative AgentType = "CREATIVE"
 )
 
 // String returns the string representation of the agent type.
@@ -29,18 +27,16 @@ func (t AgentType) String() string {
 }
 
 // AgentTypeFromProto converts proto AgentType to internal AgentType.
+// DEFAULT and CREATIVE are deprecated - fallback to AMAZING for comprehensive assistance.
 func AgentTypeFromProto(protoType v1pb.AgentType) AgentType {
 	switch protoType {
 	case v1pb.AgentType_AGENT_TYPE_MEMO:
 		return AgentTypeMemo
 	case v1pb.AgentType_AGENT_TYPE_SCHEDULE:
 		return AgentTypeSchedule
-	case v1pb.AgentType_AGENT_TYPE_AMAZING:
-		return AgentTypeAmazing
-	case v1pb.AgentType_AGENT_TYPE_CREATIVE:
-		return AgentTypeCreative
 	default:
-		return AgentTypeDefault
+		// AMAZING, DEFAULT, CREATIVE, and unknown types all use AMAZING
+		return AgentTypeAmazing
 	}
 }
 
@@ -51,12 +47,8 @@ func (t AgentType) ToProto() v1pb.AgentType {
 		return v1pb.AgentType_AGENT_TYPE_MEMO
 	case AgentTypeSchedule:
 		return v1pb.AgentType_AGENT_TYPE_SCHEDULE
-	case AgentTypeAmazing:
-		return v1pb.AgentType_AGENT_TYPE_AMAZING
-	case AgentTypeCreative:
-		return v1pb.AgentType_AGENT_TYPE_CREATIVE
 	default:
-		return v1pb.AgentType_AGENT_TYPE_DEFAULT
+		return v1pb.AgentType_AGENT_TYPE_AMAZING
 	}
 }
 
@@ -94,18 +86,15 @@ func (f *AgentFactory) Create(ctx context.Context, cfg *CreateConfig) (agentpkg.
 	}
 
 	switch cfg.Type {
-	case AgentTypeDefault:
-		return f.createDefaultParrot(cfg)
 	case AgentTypeMemo:
 		return f.createMemoParrot(cfg)
 	case AgentTypeSchedule:
 		return f.createScheduleParrot(ctx, cfg)
 	case AgentTypeAmazing:
 		return f.createAmazingParrot(ctx, cfg)
-	case AgentTypeCreative:
-		return f.createCreativeParrot(cfg)
 	default:
-		return nil, fmt.Errorf("unknown agent type: %s", cfg.Type)
+		// Fallback to AMAZING for comprehensive assistance
+		return f.createAmazingParrot(ctx, cfg)
 	}
 }
 
@@ -183,35 +172,4 @@ func (f *AgentFactory) createAmazingParrot(_ context.Context, cfg *CreateConfig)
 	}
 
 	return agent, nil
-}
-
-// createCreativeParrot creates a creative parrot agent.
-func (f *AgentFactory) createCreativeParrot(cfg *CreateConfig) (agentpkg.ParrotAgent, error) {
-	agent, err := agentpkg.NewCreativeParrot(
-		f.llm,
-		cfg.UserID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create creative parrot: %w", err)
-	}
-
-	return agent, nil
-}
-
-// createDefaultParrot creates a default parrot agent (羽飞/Navi).
-func (f *AgentFactory) createDefaultParrot(cfg *CreateConfig) (agentpkg.ParrotAgent, error) {
-	agent, err := agentpkg.NewDefaultParrot(
-		f.llm,
-		cfg.UserID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create default parrot: %w", err)
-	}
-
-	return agent, nil
-}
-
-// IsDefaultType returns true if the agent type is DEFAULT (direct LLM).
-func IsDefaultType(agentType v1pb.AgentType) bool {
-	return agentType == v1pb.AgentType_AGENT_TYPE_DEFAULT
 }

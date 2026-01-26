@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/utils/i18n";
+import { type Translations, useTranslate } from "@/utils/i18n";
 import type { ScheduleSuggestionCardProps } from "./types";
 
 export function ScheduleSuggestionCard({ data, onConfirm, onReject, isLoading = false }: ScheduleSuggestionCardProps) {
@@ -16,9 +16,9 @@ export function ScheduleSuggestionCard({ data, onConfirm, onReject, isLoading = 
   };
 
   // Get translations with fallback
-  const creatingText = (t as any)("schedule.quick-input.creating") || "Creating...";
-  const confirmText = (t as any)("schedule.quick-input.confirm-create") || "Confirm";
-  const cancelText = (t as any)("common.cancel") || "Cancel";
+  const creatingText = t("schedule.quick-input.creating" as Translations) || "Creating...";
+  const confirmText = t("schedule.quick-input.confirm-create" as Translations) || "Confirm";
+  const cancelText = t("common.cancel" as Translations) || "Cancel";
 
   return (
     <div className="bg-primary/10 rounded-xl border border-primary/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">

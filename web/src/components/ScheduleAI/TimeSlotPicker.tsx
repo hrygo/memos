@@ -1,7 +1,7 @@
 import { Clock, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslate } from "@/utils/i18n";
+import { type Translations, useTranslate } from "@/utils/i18n";
 import type { TimeSlotPickerProps } from "./types";
 
 export function TimeSlotPicker({ data, onSelect, onDismiss, isLoading = false }: TimeSlotPickerProps) {
@@ -13,8 +13,8 @@ export function TimeSlotPicker({ data, onSelect, onDismiss, isLoading = false }:
   };
 
   // Get translations with fallback
-  const selectTimeText = (t as any)("schedule.ai.select-time") || "Select a time";
-  const confirmSlotText = (t as any)("schedule.ai.confirm-slot") || "Confirm";
+  const selectTimeText = t("schedule.ai.select-time" as Translations) || "Select a time";
+  const confirmSlotText = t("schedule.ai.confirm-slot" as Translations) || "Confirm";
 
   return (
     <div className="bg-muted/50 rounded-xl border border-border p-4 animate-in fade-in slide-in-from-top-2 duration-300">

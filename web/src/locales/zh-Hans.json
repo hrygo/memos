@@ -282,6 +282,18 @@
     "back-to-top": "回到顶部",
     "go-to-home": "回到首页"
   },
+  "search": {
+    "ai-placeholder": "AI 搜索...",
+    "ai-searching": "AI 搜索中...",
+    "no-results": "未找到相关笔记",
+    "score": "相关度",
+    "ai-mode": "AI 搜索（语义）",
+    "keyword-mode": "关键词搜索",
+    "switch-to-ai": "切换到 AI 搜索",
+    "switch-to-keyword": "切换到关键词搜索",
+    "ai-error": "AI 搜索不可用",
+    "fallback-to-keyword": "切换到关键词搜索"
+  },
   "setting": {
     "access-token-section": {
       "access-token-copied-to-clipboard": "访问令牌已复制到剪贴板",
@@ -778,7 +790,6 @@
     "create-anyway": "仍要创建",
     "schedule-count": "{{count}} 个日程",
     "schedule-count_plural": "{{count}} 个日程",
-    "schedules": "日程",
     "jump-to-today": "跳转到今天",
     "previous-month": "上个月",
     "next-month": "下个月",
@@ -904,8 +915,6 @@
       "manual-parse": "手动输入模式",
       "close-card": "关闭卡片",
       "need-more-info": "需要更多信息",
-      "parse-failed": "解析失败",
-      "parse-success": "解析成功",
       "created-regex": "已成功创建|成功创建日程|successfully created",
       "ai-suggestions": "AI 建议",
       "double-click-create": "双击创建",

@@ -1,12 +1,9 @@
 import { EraserIcon, MoreHorizontalIcon, SendIcon } from "lucide-react";
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AgentMentionPopover } from "@/components/AIChat/AgentMentionPopover";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import type { ParrotAgentI18n } from "@/hooks/useParrots";
-import { useAvailableParrots } from "@/hooks/useParrots";
 import { cn } from "@/lib/utils";
 import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
@@ -23,7 +20,6 @@ interface ChatInputProps {
   className?: string;
   showQuickActions?: boolean;
   quickActions?: React.ReactNode;
-  onParrotChange?: (parrot: ParrotAgentI18n) => void;
 }
 
 export function ChatInput({
@@ -39,89 +35,12 @@ export function ChatInput({
   className,
   showQuickActions = false,
   quickActions,
-  onParrotChange,
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const availableParrots = useAvailableParrots();
 
-  // Mention/Autocomplete state
-  const [mentionOpen, setMentionOpen] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState("");
-  const [mentionStartPos, setMentionStartPos] = useState<number | null>(null);
-
-  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.DEFAULT : PARROT_THEMES.DEFAULT;
-
-  // Check if should show mention popup based on value and cursor position
-  const checkMentionTrigger = useCallback(() => {
-    if (!textareaRef.current || !value) return false;
-
-    const cursorPos = textareaRef.current.selectionStart;
-    const charBeforeCursor = value[cursorPos - 1];
-    const charBeforeThat = value[cursorPos - 2];
-
-    // Trigger on @ when:
-    // 1. @ is at the start of input, or
-    // 2. @ is preceded by a space
-    return charBeforeCursor === "@" && (cursorPos === 1 || charBeforeThat === " " || charBeforeThat === undefined);
-  }, [value]);
-
-  // Handle input change with mention check
-  const handleChange = useCallback(
-    (newValue: string) => {
-      onChange(newValue);
-
-      // Check if @ was just typed
-      const cursorPos = textareaRef.current?.selectionStart ?? newValue.length;
-      const charBeforeCursor = newValue[cursorPos - 1];
-      const charBeforeThat = newValue[cursorPos - 2];
-
-      // Trigger on @ when:
-      // 1. @ is at the start of input, or
-      // 2. @ is preceded by a space
-      const shouldTrigger = charBeforeCursor === "@" && (cursorPos === 1 || charBeforeThat === " " || charBeforeThat === undefined);
-
-      if (shouldTrigger) {
-        setMentionStartPos(cursorPos - 1);
-        setMentionQuery("");
-        setMentionOpen(true);
-        return;
-      }
-
-      // Close mention if conditions not met
-      if (mentionOpen && !checkMentionTrigger()) {
-        setMentionOpen(false);
-        setMentionQuery("");
-        setMentionStartPos(null);
-      }
-    },
-    [onChange, mentionOpen, checkMentionTrigger],
-  );
-
-  // Handle cursor position changes (click, arrow keys)
-  const handleCursorChange = useCallback(() => {
-    if (mentionOpen && !checkMentionTrigger()) {
-      setMentionOpen(false);
-      setMentionQuery("");
-      setMentionStartPos(null);
-    }
-  }, [mentionOpen, checkMentionTrigger]);
-
-  // Listen for cursor changes
-  useEffect(() => {
-    if (!mentionOpen) return;
-
-    const handleKeyUp = () => handleCursorChange();
-    const handleClick = () => handleCursorChange();
-
-    document.addEventListener("keyup", handleKeyUp);
-    document.addEventListener("click", handleClick);
-    return () => {
-      document.removeEventListener("keyup", handleKeyUp);
-      document.removeEventListener("click", handleClick);
-    };
-  }, [mentionOpen, value]);
+  const theme = currentParrotId ? PARROT_THEMES[currentParrotId] || PARROT_THEMES.AMAZING : PARROT_THEMES.AMAZING;
 
   // Handle mobile keyboard visibility
   useEffect(() => {
@@ -142,53 +61,14 @@ export function ChatInput({
     return () => window.visualViewport?.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle agent selection from mention popover
-  const handleSelectAgent = useCallback(
-    (agent: ParrotAgentI18n) => {
-      if (mentionStartPos === null) return;
-
-      // Clear the @ from input and switch to the selected agent
-      const beforeMention = value.slice(0, mentionStartPos);
-      const afterMention = value.slice(mentionStartPos + 1); // +1 to skip the @
-      const newValue = `${beforeMention}${afterMention}`.trim();
-
-      onChange(newValue);
-      setMentionOpen(false);
-      setMentionQuery("");
-      setMentionStartPos(null);
-
-      // Trigger parrot change
-      if (onParrotChange) {
-        onParrotChange(agent);
-      }
-
-      // Focus textarea
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 0);
-    },
-    [mentionStartPos, value, onChange, onParrotChange],
-  );
-
-  // Close mention popover
-  const handleCloseMention = useCallback(() => {
-    setMentionOpen(false);
-    setMentionQuery("");
-    setMentionStartPos(null);
-  }, []);
-
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Don't handle Enter if mention is open (let the popover handle it)
-      if (mentionOpen && (e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Escape")) {
-        return;
-      }
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         onSend();
       }
     },
-    [mentionOpen, onSend],
+    [onSend],
   );
 
   const handleInput = useCallback((e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -271,7 +151,7 @@ export function ChatInput({
             ref={textareaRef}
             value={value}
             onChange={(e) => {
-              handleChange(e.target.value);
+              onChange(e.target.value);
               handleInput(e);
             }}
             onKeyDown={handleKeyDown}
@@ -300,19 +180,9 @@ export function ChatInput({
 
         {/* Hint Text - Desktop only */}
         <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1.5 text-center hidden md:block">
-          Press Enter to send, Shift + Enter for new line, @ to mention agent
+          {t("ai.input-hint") || "Press Enter to send, Shift + Enter for new line"}
         </p>
       </div>
-
-      {/* Agent Mention Popover */}
-      <AgentMentionPopover
-        open={mentionOpen}
-        onClose={handleCloseMention}
-        onSelectAgent={handleSelectAgent}
-        agents={availableParrots}
-        filterText={mentionQuery}
-        triggerRef={textareaRef}
-      />
     </div>
   );
 }

@@ -16,7 +16,6 @@ const CAPABILITY_ICONS: Record<CapabilityType, React.ReactNode> = {
   [CapabilityType.MEMO]: "🦜",
   [CapabilityType.SCHEDULE]: "⏰",
   [CapabilityType.AMAZING]: "🌟",
-  [CapabilityType.CREATIVE]: "💡",
   [CapabilityType.AUTO]: "🤖",
 };
 
@@ -36,11 +35,6 @@ const CAPABILITY_COLORS: Record<CapabilityType, { bg: string; text: string; bord
     bg: "bg-emerald-50 dark:bg-emerald-900/20",
     text: "text-emerald-700 dark:text-emerald-300",
     border: "border-emerald-200 dark:border-emerald-800",
-  },
-  [CapabilityType.CREATIVE]: {
-    bg: "bg-amber-50 dark:bg-amber-900/20",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-200 dark:border-amber-800",
   },
   [CapabilityType.AUTO]: {
     bg: "bg-indigo-50 dark:bg-indigo-900/20",
@@ -142,7 +136,6 @@ export function CapabilityPanel({ currentCapability, status, onCapabilityChange,
     { type: CapabilityType.MEMO, icon: "🦜", label: "笔记" },
     { type: CapabilityType.SCHEDULE, icon: "⏰", label: "日程" },
     { type: CapabilityType.AMAZING, icon: "🌟", label: "综合" },
-    { type: CapabilityType.CREATIVE, icon: "💡", label: "创意" },
     { type: CapabilityType.AUTO, icon: "🤖", label: "自动" },
   ];
 
