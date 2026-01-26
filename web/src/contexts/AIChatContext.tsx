@@ -200,7 +200,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     return {
       id: String(m.id),
       uid: m.uid, // Include UID for incremental sync
-      role: m.role.toLowerCase() as any,
+      role: m.role.toLowerCase() as "user" | "assistant",
       content: m.content,
       timestamp: Number(m.createdTs) * 1000,
       metadata,
@@ -426,9 +426,11 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       const shouldUpdateTitle =
         isFirstUserMessage && (conversation.title.startsWith("chat.") || conversation.title === getDefaultTitle(conversation.parrotId));
 
-      // If first user message, update title semantically
-      if (shouldUpdateTitle && message.content) {
-        const newTitle = generateSemanticTitle(message.content);
+      // Generate semantic title (may return null for invalid input like pure symbols)
+      const newTitle = shouldUpdateTitle && message.content ? generateSemanticTitle(message.content) : null;
+
+      // If first user message and valid title generated, update on backend
+      if (newTitle) {
         const numericId = parseInt(conversationId);
         if (!isNaN(numericId)) {
           aiServiceClient.updateAIConversation({ id: numericId, title: newTitle });
@@ -443,12 +445,10 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
           // Increment messageCount for real messages (SEPARATOR uses addContextSeparator)
           const newMessageCount = (c.messageCount ?? 0) + 1;
 
-          // Update title if needed
-          const updatedTitle = shouldUpdateTitle && message.content ? generateSemanticTitle(message.content) : c.title;
-
           return {
             ...c,
-            title: updatedTitle,
+            // Only update title if valid new title generated, otherwise keep original
+            title: newTitle || c.title,
             messages: [...c.messages, { ...message, id: newMessageId, timestamp: now }],
             messageCount: newMessageCount, // Update message count for conversation list
             updatedAt: now,
