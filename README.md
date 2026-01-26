@@ -278,26 +278,39 @@ Memos 使用**基于意图的智能路由**，由混合 Rule + LLM 分类器驱�
 git clone https://github.com/hrygo/memos.git
 cd memos
 
-# 2. 安装依赖
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入 AI API Key：
+#   SILICONFLOW_API_KEY=sk-xxx  (嵌入/重排序)
+#   DEEPSEEK_API_KEY=sk-xxx     (LLM)
+
+# 3. 安装依赖
 make deps-all
 
-# 3. 启动开发环境
+# 4. 一键启动
 make start
 ```
 
 自动启动：
-- **PostgreSQL**（Docker 容器，含 pgvector）
+- **PostgreSQL** `localhost:25432`（Docker 容器，含 pgvector）
 - **后端** http://localhost:28081
 - **前端** http://localhost:25173
+
+### 常用命令
+
+```bash
+make status   # 查看服务状态
+make logs     # 查看所有日志
+make stop     # 停止所有服务
+make restart  # 重启所有服务
+```
 
 ### 构建
 
 ```bash
-# 后端
-make build
-
-# 前端
-make build-web
+make build      # 构建后端
+make build-web  # 构建前端
+make build-all  # 构建全部
 ```
 
 ### Docker 部署
