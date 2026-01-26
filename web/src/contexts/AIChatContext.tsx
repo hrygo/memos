@@ -26,13 +26,25 @@ const generateId = () => `chat_${Date.now()}_${Math.random().toString(36).substr
 // localized by the backend using title keys (e.g., "chat.default.title").
 function getDefaultTitle(parrotId: ParrotAgentType): string {
   const titles: Record<string, string> = {
-    [ParrotAgentType.DEFAULT]: "Chat with Default Assistant",
     [ParrotAgentType.MEMO]: "Chat with Memo",
     [ParrotAgentType.SCHEDULE]: "Chat with Schedule",
     [ParrotAgentType.AMAZING]: "Chat with Amazing",
-    [ParrotAgentType.CREATIVE]: "Chat with Creative",
   };
   return titles[parrotId] || "AI Chat";
+}
+
+/**
+ * 根据首条用户消息生成语义化标题
+ * 截取前 20 字符，清理特殊字符
+ */
+function generateSemanticTitle(message: string): string {
+  const cleaned = message
+    .replace(/[#@\n\r]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (cleaned.length <= 20) return cleaned;
+  return cleaned.slice(0, 20) + "...";
 }
 
 const DEFAULT_STATE: AIChatState = {
@@ -198,13 +210,9 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         return ParrotAgentType.MEMO;
       case AgentType.SCHEDULE:
         return ParrotAgentType.SCHEDULE;
-      case AgentType.AMAZING:
-        return ParrotAgentType.AMAZING;
-      case AgentType.CREATIVE:
-        return ParrotAgentType.CREATIVE;
-      case AgentType.DEFAULT:
       default:
-        return ParrotAgentType.DEFAULT;
+        // AMAZING, DEFAULT, CREATIVE all map to AMAZING
+        return ParrotAgentType.AMAZING;
     }
   }, []);
 
@@ -215,13 +223,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         return AgentType.MEMO;
       case ParrotAgentType.SCHEDULE:
         return AgentType.SCHEDULE;
-      case ParrotAgentType.AMAZING:
-        return AgentType.AMAZING;
-      case ParrotAgentType.CREATIVE:
-        return AgentType.CREATIVE;
-      case ParrotAgentType.DEFAULT:
       default:
-        return AgentType.DEFAULT;
+        return AgentType.AMAZING;
     }
   }, []);
 
@@ -233,7 +236,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         parrotId: convertAgentTypeToParrotId(pb.parrotId),
         createdAt: Number(pb.createdTs) * 1000,
         updatedAt: Number(pb.updatedTs) * 1000,
-        messages: pb.messages.map((m) => convertMessageFromPb(m)),
+        messages: (pb.messages ?? []).map((m) => convertMessageFromPb(m)),
         referencedMemos: [], // Backend managed for RAG, but state can store it if needed
         pinned: pb.pinned,
         messageCount: pb.messageCount, // Use backend-provided message count
@@ -292,15 +295,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
       // Asynchronously create on backend
       const agentType =
-        parrotId === ParrotAgentType.MEMO
-          ? AgentType.MEMO
-          : parrotId === ParrotAgentType.SCHEDULE
-            ? AgentType.SCHEDULE
-            : parrotId === ParrotAgentType.AMAZING
-              ? AgentType.AMAZING
-              : parrotId === ParrotAgentType.CREATIVE
-                ? AgentType.CREATIVE
-                : AgentType.DEFAULT;
+        parrotId === ParrotAgentType.MEMO ? AgentType.MEMO : parrotId === ParrotAgentType.SCHEDULE ? AgentType.SCHEDULE : AgentType.AMAZING;
 
       aiServiceClient
         .createAIConversation({
@@ -416,22 +411,47 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     const newMessageId = generateId();
     const now = Date.now();
 
-    setState((prev) => ({
-      ...prev,
-      conversations: prev.conversations.map((c) => {
-        if (c.id !== conversationId) return c;
+    setState((prev) => {
+      const conversation = prev.conversations.find((c) => c.id === conversationId);
+      if (!conversation) return prev;
 
-        // Increment messageCount for real messages (SEPARATOR uses addContextSeparator)
-        const newMessageCount = (c.messageCount ?? 0) + 1;
+      // Check if this is the first user message - auto-generate semantic title
+      const isFirstUserMessage =
+        message.role === "user" && conversation.messages.filter((m) => !isContextSeparator(m) && m.role === "user").length === 0;
 
-        return {
-          ...c,
-          messages: [...c.messages, { ...message, id: newMessageId, timestamp: now }],
-          messageCount: newMessageCount, // Update message count for conversation list
-          updatedAt: now,
-        };
-      }),
-    }));
+      const shouldUpdateTitle =
+        isFirstUserMessage && (conversation.title.startsWith("chat.") || conversation.title === getDefaultTitle(conversation.parrotId));
+
+      // If first user message, update title semantically
+      if (shouldUpdateTitle && message.content) {
+        const newTitle = generateSemanticTitle(message.content);
+        const numericId = parseInt(conversationId);
+        if (!isNaN(numericId)) {
+          aiServiceClient.updateAIConversation({ id: numericId, title: newTitle });
+        }
+      }
+
+      return {
+        ...prev,
+        conversations: prev.conversations.map((c) => {
+          if (c.id !== conversationId) return c;
+
+          // Increment messageCount for real messages (SEPARATOR uses addContextSeparator)
+          const newMessageCount = (c.messageCount ?? 0) + 1;
+
+          // Update title if needed
+          const updatedTitle = shouldUpdateTitle && message.content ? generateSemanticTitle(message.content) : c.title;
+
+          return {
+            ...c,
+            title: updatedTitle,
+            messages: [...c.messages, { ...message, id: newMessageId, timestamp: now }],
+            messageCount: newMessageCount, // Update message count for conversation list
+            updatedAt: now,
+          };
+        }),
+      };
+    });
     return newMessageId;
   }, []);
 

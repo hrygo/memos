@@ -89,6 +89,7 @@
     "restore": "恢复",
     "role": "身份",
     "save": "保存",
+    "saving": "保存中...",
     "search": "搜索",
     "select": "选择",
     "settings": "设置",
@@ -146,7 +147,14 @@
     "no-changes-detected": "未检测到更改",
     "focus-mode": "聚焦模式",
     "exit-focus-mode": "退出聚焦模式",
-    "slash-commands": "按下 `/` 输入命令"
+    "slash-commands": "按下 `/` 输入命令",
+    "ai-suggest-tags": "AI 推荐标签",
+    "ai-suggest-tags-title": "推荐标签",
+    "ai-suggest-tags-empty": "暂无推荐标签",
+    "ai-suggest-tags-insert": "插入选中",
+    "ai-suggest-tags-inserted": "标签已插入",
+    "ai-suggest-tags-error": "推荐失败",
+    "content-too-short": "内容过短，无法分析"
   },
   "filters": {
     "has-code": "有代码",
@@ -524,47 +532,9 @@
       "title": "AI 助手中心",
       "subtitle": "选择一个 AI 助手来帮助您完成任务、激发创意和规划生活"
     },
-    "aichat": {
-      "sidebar": {
-        "history": "历史记录",
-        "memos": "引用笔记",
-        "new-chat": "新建对话",
-        "no-conversations": "暂无对话记录",
-        "start-new-chat": "开始一个新对话",
-        "no-referenced-memos": "暂无引用笔记",
-        "search-memos-hint": "与笔记鹦鹉对话以搜索和引用您的笔记",
-        "search-placeholder": "搜索笔记...",
-        "no-results": "未找到结果",
-        "try-different-search": "尝试不同的搜索词",
-        "conversation-count_one": "{{count}} 个对话",
-        "conversation-count_other": "{{count}} 个对话",
-        "message-count_one": "{{count}} 条消息",
-        "message-count_other": "{{count}} 条消息",
-        "time-just-now": "刚刚",
-        "time-minutes-ago_one": "{{count}} 分钟前",
-        "time-minutes-ago_other": "{{count}} 分钟前",
-        "time-hours-ago_one": "{{count}} 小时前",
-        "time-hours-ago_other": "{{count}} 小时前",
-        "time-days-ago_one": "{{count}} 天前",
-        "time-days-ago_other": "{{count}} 天前"
-      },
-      "memo-query": {
-        "no-results": "未找到相关笔记",
-        "query-label": "查询",
-        "results-title": "笔记查询结果",
-        "found-count": "找到 {{count}} 条相关笔记",
-        "sorted": "已排序"
-      },
-      "amazing-insight": {
-        "title": "惊奇洞察",
-        "key-memos": "关键笔记",
-        "upcoming-events": "近期日程",
-        "insight-prefix": "洞察"
-      }
-    },
     "parrot": {
       "chat-placeholder": "与 {{name}} 对话...",
-      "chat-default-placeholder": "输入消息，输入 @ 选择鹦鹉助手...",
+      "chat-default-placeholder": "询问你的笔记或日程...",
       "error-processing": "鹦鹉处理出错",
       "error-chat-failed": "鹦鹉聊天失败",
       "selector-title": "选择鹦鹉助手",
@@ -579,7 +549,6 @@
       "memo-tagline": "搜索与问答",
       "schedule-tagline": "规划与管理",
       "amazing-tagline": "全能助手",
-      "creative-tagline": "创意与写作",
       "try-asking": "试着这样问",
       "cognition": {
         "title": "鹦鹉拟态认知",
@@ -608,17 +577,6 @@
           "catchphrases": ["安排好啦", "时间搞定", "妥妥的", "确认一下时间"],
           "behaviors": ["用喙整理时间", "精准啄食安排", "展开羽翼规划"]
         },
-        "creative": {
-          "sound_effects": {
-            "thinking": "啾...",
-            "idea": "灵感来了~",
-            "brainstorm": "咻咻~",
-            "done": "噗~搞定",
-            "excited": "啾啾！"
-          },
-          "catchphrases": ["灵感来了~", "想想还有", "有意思！", "让羽毛变色"],
-          "behaviors": ["羽毛变色", "思维跳跃", "自由飞翔想象"]
-        },
         "amazing": {
           "sound_effects": {
             "searching": "咻...",
@@ -629,16 +587,6 @@
           },
           "catchphrases": ["看看这个...", "综合来看", "发现规律了", "多维飞行中"],
           "behaviors": ["在数据树丛中穿梭", "多维飞行", "综合视野", "在笔记和日程间跳跃"]
-        },
-        "default": {
-          "sound_effects": {
-            "thinking": "嗯...让我想想",
-            "insight": "咻~有了",
-            "done": "✓",
-            "analyzing": "看看这个..."
-          },
-          "catchphrases": ["看看这个...", "综合来看", "发现规律了"],
-          "behaviors": ["展开羽翼导航", "翱翔在信息天空", "用锐利的目光洞察"]
         },
         "emotional-states": {
           "focused": "专注",
@@ -653,12 +601,6 @@
         }
       },
       "agents": {
-        "default": {
-          "name": "羽飞",
-          "nameAlt": "Navi",
-          "description": "直连顶级大模型的全能领航员，为您提供无边界的创意启发、逻辑推演与全球知识洞察。",
-          "examples": ["帮我构建一个复杂问题的思考逻辑框架", "根据我的初步想法起草一份正式的沟通邮件"]
-        },
         "memo": {
           "name": "灰灰",
           "nameAlt": "Memo",
@@ -676,17 +618,11 @@
           "nameAlt": "Amazing",
           "description": "综合助手，结合笔记和日程功能。",
           "examples": ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"]
-        },
-        "creative": {
-          "name": "灵灵",
-          "nameAlt": "Creative",
-          "description": "创意助手，提供创意写作和头脑风暴。",
-          "examples": ["帮我头脑风暴产品推广创意", "写一封项目进度汇报邮件", "优化这段文字的表达"]
         }
       },
       "capability": {
         "title": "我的能力",
-        "subtitle": "我可以帮你搜索笔记、管理日程、总结分析，或者一起头脑风暴",
+        "subtitle": "我可以帮你搜索笔记、管理日程、综合分析",
         "active": "使用中",
         "in-use": "正在使用",
         "tap-to-activate": "点击激活",
@@ -707,11 +643,6 @@
           "nameAlt": "Amazing",
           "description": "笔记 + 日程"
         },
-        "creative": {
-          "name": "创意",
-          "nameAlt": "Creative",
-          "description": "头脑风暴"
-        },
         "auto": {
           "name": "自动",
           "nameAlt": "Auto",
@@ -723,6 +654,10 @@
         "greeting-afternoon": "下午好",
         "greeting-evening": "晚上好",
         "greeting-night": "夜深了",
+        "hint-morning": "新的一天，有什么计划？",
+        "hint-afternoon": "下午茶时间，来聊聊？",
+        "hint-evening": "辛苦了一天，放松一下",
+        "hint-night": "夜深了，注意休息",
         "quick-memo": "查看笔记",
         "quick-memo-desc": "搜索最近的记录",
         "quick-schedule": "查看日程",
@@ -732,9 +667,60 @@
         "quick-chat": "随便聊聊",
         "quick-chat-desc": "自由对话",
         "input-hint": "直接输入消息，我会自动理解你的意图",
-        "prompt-memo": "搜索一下我最近记录的笔记",
+        "default-hint": "我可以帮你搜索笔记、管理日程，或者一起头脑风暴",
+        "prompt-memo": "最近记了什么笔记？",
         "prompt-schedule": "今天还有什么安排？",
-        "prompt-summary": "总结一下我今天的笔记和日程"
+        "prompt-summary": "帮我回顾一下这周",
+        "prompt-creative": "写一段关于..."
+      },
+      "status": {
+        "thinking": "思考中...",
+        "processing": "处理中...",
+        "searching-memos": "搜索笔记中...",
+        "querying-schedule": "查询日程中...",
+        "analyzing": "综合分析中..."
+      }
+    },
+    "aichat": {
+      "sidebar": {
+        "history": "历史记录",
+        "memos": "引用笔记",
+        "new-chat": "新建对话",
+        "no-conversations": "暂无对话记录",
+        "start-new-chat": "开始一个新对话",
+        "no-referenced-memos": "暂无引用笔记",
+        "search-memos-hint": "与笔记鹦鹉对话以搜索和引用您的笔记",
+        "search-placeholder": "搜索笔记...",
+        "no-results": "未找到结果",
+        "try-different-search": "尝试不同的搜索词",
+        "conversation-count_one": "{{count}} 个对话",
+        "conversation-count_other": "{{count}} 个对话",
+        "message-count_one": "{{count}} 条消息",
+        "message-count_other": "{{count}} 条消息",
+        "time-just-now": "刚刚",
+        "time-minutes-ago_one": "{{count}} 分钟前",
+        "time-minutes-ago_other": "{{count}} 分钟前",
+        "time-hours-ago_one": "{{count}} 小时前",
+        "time-hours-ago_other": "{{count}} 小时前",
+        "time-days-ago_one": "{{count}} 天前",
+        "time-days-ago_other": "{{count}} 天前",
+        "time-group-today": "今天",
+        "time-group-yesterday": "昨天",
+        "time-group-this-week": "本周",
+        "time-group-earlier": "更早"
+      },
+      "memo-query": {
+        "no-results": "未找到相关笔记",
+        "query-label": "查询",
+        "results-title": "笔记查询结果",
+        "found-count": "找到 {{count}} 条相关笔记",
+        "sorted": "已排序"
+      },
+      "amazing-insight": {
+        "title": "惊奇洞察",
+        "key-memos": "关键笔记",
+        "upcoming-events": "近期日程",
+        "insight-prefix": "洞察"
       }
     }
   },
@@ -1028,9 +1014,6 @@
     }
   },
   "chat": {
-    "default": {
-      "title": "羽飞 - 领航员"
-    },
     "memo": {
       "title": "灰灰 - 笔记助手"
     },
@@ -1040,15 +1023,10 @@
     "amazing": {
       "title": "惊奇 - 综合助手"
     },
-    "creative": {
-      "title": "灵灵 - 创意助手"
-    },
     "new": "新对话"
   },
   "chat.new": "新对话",
-  "chat.default.title": "默认对话",
   "chat.memo.title": "笔记对话",
   "chat.schedule.title": "日程对话",
-  "chat.amazing.title": "惊奇对话",
-  "chat.creative.title": "创意对话"
+  "chat.amazing.title": "惊奇对话"
 }

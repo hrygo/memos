@@ -37,7 +37,6 @@ interface UnifiedChatViewProps {
   items: ChatItem[];
   currentCapability: CapabilityType;
   capabilityStatus: CapabilityStatus;
-  onCapabilityChange: (capability: CapabilityType) => void;
   recentMemoCount?: number;
   upcomingScheduleCount?: number;
 }
@@ -57,7 +56,6 @@ function UnifiedChatView({
   items,
   currentCapability,
   capabilityStatus,
-  onCapabilityChange,
   recentMemoCount,
   upcomingScheduleCount,
 }: UnifiedChatViewProps) {
@@ -76,39 +74,6 @@ function UnifiedChatView({
     // TODO: Implement message deletion
   };
 
-  // 处理快捷操作
-  const handleQuickAction = useCallback(
-    (action: "memo" | "schedule" | "summary" | "chat") => {
-      let prompt = "";
-      let targetCapability = CapabilityType.AUTO;
-
-      switch (action) {
-        case "memo":
-          prompt = t("ai.parrot.partner.prompt-memo") || "搜索一下我最近记录的笔记";
-          targetCapability = CapabilityType.MEMO;
-          break;
-        case "schedule":
-          prompt = t("ai.parrot.partner.prompt-schedule") || "今天还有什么安排？";
-          targetCapability = CapabilityType.SCHEDULE;
-          break;
-        case "summary":
-          prompt = t("ai.parrot.partner.prompt-summary") || "总结一下我今天的笔记和日程";
-          targetCapability = CapabilityType.AMAZING;
-          break;
-        case "chat":
-          prompt = "";
-          targetCapability = CapabilityType.AUTO;
-          break;
-      }
-
-      onCapabilityChange(targetCapability);
-      if (prompt) {
-        setTimeout(() => onSend(prompt), 100);
-      }
-    },
-    [t, onCapabilityChange, onSend],
-  );
-
   return (
     <div className="w-full h-full flex flex-col relative bg-white dark:bg-zinc-900">
       {/* Desktop Header */}
@@ -117,7 +82,6 @@ function UnifiedChatView({
           currentCapability={currentCapability}
           capabilityStatus={capabilityStatus}
           isThinking={isThinking}
-          onBack={() => {}}
           onClearContext={onClearContext}
           onClearChat={onClearChat}
         />
@@ -127,7 +91,7 @@ function UnifiedChatView({
       <ChatMessages
         items={items}
         isTyping={isTyping}
-        currentParrotId={ParrotAgentType.DEFAULT}
+        currentParrotId={ParrotAgentType.AMAZING}
         onCopyMessage={handleCopyMessage}
         onDeleteMessage={handleDeleteMessage}
         amazingInsightCard={
@@ -136,14 +100,9 @@ function UnifiedChatView({
           ) : undefined
         }
       >
-        {/* Welcome message - 伙伴型问候 */}
+        {/* Welcome message - 统一入口，示例提问直接发送 */}
         {items.length === 0 && (
-          <PartnerGreeting
-            recentMemoCount={recentMemoCount}
-            upcomingScheduleCount={upcomingScheduleCount}
-            conversationCount={0}
-            onQuickAction={handleQuickAction}
-          />
+          <PartnerGreeting recentMemoCount={recentMemoCount} upcomingScheduleCount={upcomingScheduleCount} onSendMessage={onSend} />
         )}
       </ChatMessages>
 
@@ -156,8 +115,7 @@ function UnifiedChatView({
         onClearContext={onClearContext}
         disabled={isTyping}
         isTyping={isTyping}
-        currentParrotId={ParrotAgentType.DEFAULT}
-        onParrotChange={() => {}}
+        currentParrotId={ParrotAgentType.AMAZING}
       />
 
       {/* Clear Chat Confirmation Dialog */}
@@ -408,14 +366,14 @@ const AIChat = () => {
       let targetConversationId = currentConversation?.id;
 
       if (!targetConversationId) {
-        // No active conversation - create one with default agent
+        // No active conversation - create one with AMAZING agent (综合助手)
         // (会话不再绑定特定Agent，能力可以在会话中动态切换)
-        const existingConversation = conversations.find((c) => !c.parrotId || c.parrotId === ParrotAgentType.DEFAULT);
+        const existingConversation = conversations.find((c) => !c.parrotId || c.parrotId === ParrotAgentType.AMAZING);
         if (existingConversation) {
           targetConversationId = existingConversation.id;
           selectConversation(existingConversation.id);
         } else {
-          targetConversationId = createConversation(ParrotAgentType.DEFAULT);
+          targetConversationId = createConversation(ParrotAgentType.AMAZING);
         }
       }
 
@@ -491,13 +449,6 @@ const AIChat = () => {
     [currentConversation, addContextSeparator, t],
   );
 
-  const handleCapabilityChange = useCallback(
-    (capability: CapabilityType) => {
-      setCurrentCapability(capability);
-    },
-    [setCurrentCapability],
-  );
-
   // Handle custom event for sending messages (from suggested prompts)
   useEffect(() => {
     const handler = (e: CustomEvent<string>) => {
@@ -560,7 +511,6 @@ const AIChat = () => {
       items={items}
       currentCapability={currentCapability}
       capabilityStatus={capabilityStatus}
-      onCapabilityChange={handleCapabilityChange}
     />
   );
 };

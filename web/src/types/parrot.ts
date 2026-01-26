@@ -2,27 +2,19 @@ import { AgentType } from "@/types/proto/api/v1/ai_service_pb";
 
 /**
  * Parrot agent types enumeration
- * 鹦鹉代理类型枚举
+ * 鹦鹉代理类型枚举 - 私人助手三核心能力
  */
 export enum ParrotAgentType {
-  DEFAULT = "DEFAULT",
   MEMO = "MEMO", // 🦜 灰灰 - Memo Parrot
   SCHEDULE = "SCHEDULE", // 🦜 金刚 - Schedule Parrot
-  AMAZING = "AMAZING", // 🦜 惊奇 - Amazing Parrot (Milestone 2)
-  CREATIVE = "CREATIVE", // 🦜 灵灵 - Creative Parrot (Milestone 4)
+  AMAZING = "AMAZING", // 🦜 惊奇 - Amazing Parrot (综合助手)
 }
 
 /**
  * Default pinned agents in the sidebar
  * 侧边栏默认固定的鹦鹉代理
  */
-export const PINNED_PARROT_AGENTS = [
-  ParrotAgentType.DEFAULT,
-  ParrotAgentType.MEMO,
-  ParrotAgentType.SCHEDULE,
-  ParrotAgentType.AMAZING,
-  ParrotAgentType.CREATIVE,
-];
+export const PINNED_PARROT_AGENTS = [ParrotAgentType.MEMO, ParrotAgentType.SCHEDULE, ParrotAgentType.AMAZING];
 
 /**
  * Emotional state of a parrot
@@ -76,25 +68,12 @@ export const PARROT_SOUND_EFFECTS: Record<ParrotAgentType, Record<string, string
     scheduled: "安排好了",
     free_time: "这片时间空着呢",
   },
-  [ParrotAgentType.CREATIVE]: {
-    thinking: "啾...",
-    idea: "灵感来了~",
-    brainstorm: "咻咻~",
-    done: "噗~搞定",
-    excited: "啾啾！",
-  },
   [ParrotAgentType.AMAZING]: {
     searching: "咻...",
     insight: "哇哦~",
     done: "噢！综合完成",
     analyzing: "看看这个...",
     multi_task: "同时搜索中",
-  },
-  [ParrotAgentType.DEFAULT]: {
-    thinking: "嗯...让我想想",
-    insight: "咻~有了",
-    done: "✓",
-    analyzing: "看看这个...",
   },
 };
 
@@ -105,9 +84,7 @@ export const PARROT_SOUND_EFFECTS: Record<ParrotAgentType, Record<string, string
 export const PARROT_CATCHPHRASES: Record<ParrotAgentType, string[]> = {
   [ParrotAgentType.MEMO]: ["让我想想...", "笔记里说...", "在记忆里找找..."],
   [ParrotAgentType.SCHEDULE]: ["安排好啦", "时间搞定", "妥妥的"],
-  [ParrotAgentType.CREATIVE]: ["灵感来了~", "想想还有", "有意思！"],
   [ParrotAgentType.AMAZING]: ["看看这个...", "综合来看", "发现规律了"],
-  [ParrotAgentType.DEFAULT]: ["看看这个...", "综合来看", "发现规律了"],
 };
 
 /**
@@ -117,14 +94,13 @@ export const PARROT_CATCHPHRASES: Record<ParrotAgentType, string[]> = {
 export const PARROT_BEHAVIORS: Record<ParrotAgentType, string[]> = {
   [ParrotAgentType.MEMO]: ["用翅膀翻找笔记", "在记忆森林中飞翔", "用喙精准啄取信息"],
   [ParrotAgentType.SCHEDULE]: ["用喙整理时间", "精准啄食安排", "展开羽翼规划"],
-  [ParrotAgentType.CREATIVE]: ["羽毛变色", "思维跳跃", "自由飞翔想象"],
   [ParrotAgentType.AMAZING]: ["在数据树丛中穿梭", "多维飞行", "综合视野"],
-  [ParrotAgentType.DEFAULT]: ["展开羽翼导航", "翱翔在信息天空", "用锐利的目光洞察"],
 };
 
 /**
  * Convert AgentType enum from proto to ParrotAgentType
  * 将 proto 的 AgentType 枚举转换为 ParrotAgentType
+ * DEFAULT and CREATIVE are deprecated - fallback to AMAZING
  */
 export function protoToParrotAgentType(agentType: AgentType): ParrotAgentType {
   switch (agentType) {
@@ -132,13 +108,9 @@ export function protoToParrotAgentType(agentType: AgentType): ParrotAgentType {
       return ParrotAgentType.MEMO;
     case AgentType.SCHEDULE:
       return ParrotAgentType.SCHEDULE;
-    case AgentType.AMAZING:
-      return ParrotAgentType.AMAZING;
-    case AgentType.CREATIVE:
-      return ParrotAgentType.CREATIVE;
-    case AgentType.DEFAULT:
     default:
-      return ParrotAgentType.DEFAULT;
+      // AMAZING, DEFAULT, CREATIVE all map to AMAZING
+      return ParrotAgentType.AMAZING;
   }
 }
 
@@ -152,13 +124,8 @@ export function parrotToProtoAgentType(agentType: ParrotAgentType): AgentType {
       return AgentType.MEMO;
     case ParrotAgentType.SCHEDULE:
       return AgentType.SCHEDULE;
-    case ParrotAgentType.AMAZING:
-      return AgentType.AMAZING;
-    case ParrotAgentType.CREATIVE:
-      return AgentType.CREATIVE;
-    case ParrotAgentType.DEFAULT:
     default:
-      return AgentType.DEFAULT;
+      return AgentType.AMAZING;
   }
 }
 
@@ -181,21 +148,10 @@ export interface ParrotAgent {
 
 /**
  * All parrot agents configuration (English defaults)
- * 所有鹦鹉代理配置（英文默认值）
+ * 所有鹦鹉代理配置（英文默认值）- 私人助手三核心能力
  * Localized versions are provided by useParrots hook
  */
 export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
-  [ParrotAgentType.DEFAULT]: {
-    id: ParrotAgentType.DEFAULT,
-    name: "default",
-    icon: "/images/parrots/icons/navi_icon.webp",
-    displayName: "Navi",
-    description: "Universal Navigator directly connected to top-tier LLMs, providing boundless creative inspiration",
-    color: "indigo",
-    available: true,
-    examplePrompts: ["Help me build a logical framework", "Draft a formal communication email"],
-    backgroundImage: "/images/parrots/navi_bg.webp",
-  },
   [ParrotAgentType.MEMO]: {
     id: ParrotAgentType.MEMO,
     name: "memo",
@@ -229,17 +185,6 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
     examplePrompts: ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"],
     backgroundImage: "/images/parrots/amazing_bg.webp",
   },
-  [ParrotAgentType.CREATIVE]: {
-    id: ParrotAgentType.CREATIVE,
-    name: "creative",
-    icon: "/images/parrots/icons/creative_icon.webp",
-    displayName: "Creative",
-    description: "Creative writing assistant for brainstorming and content creation",
-    color: "pink",
-    available: true,
-    examplePrompts: ["Brainstorm product promotion ideas", "Write a project progress email", "Improve this text expression"],
-    backgroundImage: "/images/parrots/creative_bg.webp",
-  },
 };
 
 /**
@@ -252,10 +197,10 @@ export function getAvailableParrots(): ParrotAgent[] {
 
 /**
  * Get parrot agent by type
- * 根据类型获取鹦鹉代理
+ * 根据类型获取鹦鹉代理 - fallback 到 AMAZING
  */
 export function getParrotAgent(type: ParrotAgentType): ParrotAgent {
-  return PARROT_AGENTS[type] || PARROT_AGENTS[ParrotAgentType.DEFAULT];
+  return PARROT_AGENTS[type] || PARROT_AGENTS[ParrotAgentType.AMAZING];
 }
 
 /**
@@ -348,34 +293,10 @@ export enum ParrotEventType {
 
 /**
  * Parrot theme configuration
- * 鹦鹉主题配置 - 信息清晰优先 design
- *
- * 设计原则:
- * - 信息清晰优先于视觉效果
- * - 高对比度确保可读性
- * - 简洁干净的视觉
- * - 每个鹦鹉独立且协调的色系
+ * 鹦鹉主题配置 - 私人助手三核心能力
  */
 export const PARROT_THEMES = {
-  DEFAULT: {
-    // 默认助手 - 领航员 (Navi) - 靛青色 (Indigo)
-    bubbleUser: "bg-indigo-600 dark:bg-indigo-500 text-white",
-    bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-indigo-200 dark:border-indigo-700",
-    text: "text-slate-800 dark:text-indigo-50",
-    textSecondary: "text-slate-600 dark:text-indigo-200",
-    iconBg: "bg-indigo-50 dark:bg-indigo-900/30",
-    iconText: "text-indigo-700 dark:text-indigo-300",
-    inputBg: "bg-indigo-50/50 dark:bg-indigo-950/20",
-    inputBorder: "border-indigo-200 dark:border-indigo-700",
-    inputFocus: "focus:ring-indigo-500 focus:border-indigo-500",
-    cardBg: "bg-white dark:bg-zinc-800",
-    cardBorder: "border-indigo-200 dark:border-indigo-700",
-    accent: "bg-indigo-500",
-    accentText: "text-white",
-  },
   // 灰灰 - 非洲灰鹦鹉 (African Grey Parrot)
-  // DNA: 银灰羽毛 + 红色点缀 (subtle)
   MEMO: {
     bubbleUser: "bg-slate-800 dark:bg-slate-300 text-white dark:text-slate-800",
     bubbleBg: "bg-white dark:bg-zinc-800",
@@ -393,7 +314,6 @@ export const PARROT_THEMES = {
     accentText: "text-white",
   },
   // 金刚 - 蓝黄金刚鹦鹉 (Blue-and-yellow Macaw)
-  // DNA: 蓝黄 (simplified, high contrast)
   SCHEDULE: {
     bubbleUser: "bg-cyan-600 dark:bg-cyan-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
@@ -410,8 +330,7 @@ export const PARROT_THEMES = {
     accent: "bg-cyan-500",
     accentText: "text-white",
   },
-  // 惊奇 - 亚马逊鹦鹉 (Amazon Parrot)
-  // DNA: 绿色 (simplified, high contrast)
+  // 惊奇 - 亚马逊鹦鹉 (Amazon Parrot) - 综合助手
   AMAZING: {
     bubbleUser: "bg-emerald-600 dark:bg-emerald-500 text-white",
     bubbleBg: "bg-white dark:bg-zinc-800",
@@ -428,24 +347,6 @@ export const PARROT_THEMES = {
     accent: "bg-emerald-500",
     accentText: "text-white",
   },
-  // 灵灵 - 虎皮鹦鹉 (Budgerigar)
-  // DNA: 绿色 (simplified, high contrast)
-  CREATIVE: {
-    bubbleUser: "bg-lime-600 dark:bg-lime-500 text-white",
-    bubbleBg: "bg-white dark:bg-zinc-800",
-    bubbleBorder: "border-lime-200 dark:border-lime-700",
-    text: "text-slate-800 dark:text-lime-50",
-    textSecondary: "text-slate-600 dark:text-lime-200",
-    iconBg: "bg-lime-100 dark:bg-lime-900",
-    iconText: "text-lime-700 dark:text-lime-300",
-    inputBg: "bg-lime-50 dark:bg-lime-950",
-    inputBorder: "border-lime-200 dark:border-lime-700",
-    inputFocus: "focus:ring-lime-500 focus:border-lime-500",
-    cardBg: "bg-white dark:bg-zinc-800",
-    cardBorder: "border-lime-200 dark:border-lime-700",
-    accent: "bg-lime-500",
-    accentText: "text-white",
-  },
 } as const;
 
 /**
@@ -453,9 +354,7 @@ export const PARROT_THEMES = {
  * 每个鹦鹉的图标
  */
 export const PARROT_ICONS: Record<string, string> = {
-  DEFAULT: "/images/parrots/icons/navi_icon.webp",
   MEMO: "/images/parrots/icons/memo_icon.webp",
   SCHEDULE: "/images/parrots/icons/schedule_icon.webp",
   AMAZING: "/images/parrots/icons/amazing_icon.webp",
-  CREATIVE: "/images/parrots/icons/creative_icon.webp",
 };

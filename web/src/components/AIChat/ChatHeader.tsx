@@ -1,4 +1,4 @@
-import { ChevronLeft, Eraser, MoreHorizontal, Sparkles } from "lucide-react";
+import { Eraser, MoreHorizontal, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,6 @@ import { CapabilityType } from "@/types/capability";
 
 interface ChatHeaderProps {
   isThinking?: boolean;
-  onBack: () => void;
   onClearContext?: () => void;
   onClearChat?: () => void;
   className?: string;
@@ -15,59 +14,43 @@ interface ChatHeaderProps {
 }
 
 /**
- * Chat Header - 精简统一设计
+ * Chat Header - 统一入口设计
  *
- * UX/UI 改进：
- * - 移除冗余的助手信息显示（已在侧边栏显示）
- * - 简化能力徽章样式
- * - 优化间距和视觉层次
- * - 统一与侧边栏的设计语言
+ * UX/UI 设计原则：
+ * - 移除能力徽章，不暴露系统内部能力边界
+ * - 状态展示改为动作描述（"搜索笔记中..."而非"笔记能力"）
+ * - 简洁清晰的视觉层次
  */
-// 统一的助手形象配置
 const ASSISTANT_ICON = "🦜";
 
-// 能力信息配置 - 简化样式
-const CAPABILITY_INFO: Record<CapabilityType, { icon: string; name: string; bg: string; text: string; border: string }> = {
-  [CapabilityType.AUTO]: {
-    icon: "🤖",
-    name: "自动",
-    bg: "bg-indigo-50 dark:bg-indigo-900/20",
-    text: "text-indigo-700 dark:text-indigo-300",
-    border: "border-indigo-200 dark:border-indigo-800",
-  },
-  [CapabilityType.MEMO]: {
-    icon: "🦜",
-    name: "笔记",
-    bg: "bg-slate-100 dark:bg-slate-800/50",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-200 dark:border-slate-700",
-  },
-  [CapabilityType.SCHEDULE]: {
-    icon: "⏰",
-    name: "日程",
-    bg: "bg-cyan-50 dark:bg-cyan-900/20",
-    text: "text-cyan-700 dark:text-cyan-300",
-    border: "border-cyan-200 dark:border-cyan-800",
-  },
-  [CapabilityType.AMAZING]: {
-    icon: "🌟",
-    name: "综合",
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-200 dark:border-emerald-800",
-  },
-  [CapabilityType.CREATIVE]: {
-    icon: "💡",
-    name: "创意",
-    bg: "bg-amber-50 dark:bg-amber-900/20",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-200 dark:border-amber-800",
-  },
-};
+/**
+ * 根据当前能力和状态获取动作描述
+ */
+function getActionDescription(capability: CapabilityType, status: string, t: (key: string) => string): string | null {
+  if (status === "idle") return null;
+
+  if (status === "thinking") {
+    return t("ai.status.thinking");
+  }
+
+  if (status === "processing") {
+    switch (capability) {
+      case CapabilityType.MEMO:
+        return t("ai.status.searching-memos");
+      case CapabilityType.SCHEDULE:
+        return t("ai.status.querying-schedule");
+      case CapabilityType.AMAZING:
+        return t("ai.status.analyzing");
+      default:
+        return t("ai.status.processing");
+    }
+  }
+
+  return null;
+}
 
 export function ChatHeader({
   isThinking = false,
-  onBack,
   onClearContext,
   onClearChat,
   className,
@@ -75,8 +58,8 @@ export function ChatHeader({
   capabilityStatus = "idle",
 }: ChatHeaderProps) {
   const { t } = useTranslation();
-  const capInfo = CAPABILITY_INFO[currentCapability];
-  const assistantName = t("ai.assistant-name") || "AI 助手";
+  const assistantName = t("ai.assistant-name");
+  const actionDescription = getActionDescription(currentCapability, capabilityStatus, t);
 
   return (
     <header
@@ -88,33 +71,21 @@ export function ChatHeader({
       )}
     >
       {/* Left Section */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="p-2 -ml-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-all active:scale-95 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          aria-label="Go back"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        {/* 简化的助手标题 */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">{ASSISTANT_ICON}</span>
-          <h1 className="font-semibold text-zinc-900 dark:text-zinc-100">{assistantName}</h1>
-
-          {/* 能力徽章 - 精简样式 */}
-          <span
-            className={cn(
-              "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
-              capInfo.bg,
-              capInfo.text,
-              capInfo.border,
-            )}
-          >
-            <span>{capInfo.icon}</span>
-            <span>{capInfo.name}</span>
-            {capabilityStatus === "thinking" && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
-          </span>
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-lg shadow-sm">
+          {ASSISTANT_ICON}
+        </div>
+        <div className="flex flex-col">
+          <h1 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-tight">{assistantName}</h1>
+          {/* 动作描述 - 替代能力徽章 */}
+          {actionDescription ? (
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              {actionDescription}
+            </span>
+          ) : (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">{t("ai.ready")}</span>
+          )}
         </div>
       </div>
 
@@ -123,7 +94,6 @@ export function ChatHeader({
         {isThinking && (
           <div className="hidden sm:flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 mr-1">
             <Sparkles className="w-4 h-4 animate-pulse text-amber-500" />
-            <span>{t("ai.thinking")}</span>
           </div>
         )}
 

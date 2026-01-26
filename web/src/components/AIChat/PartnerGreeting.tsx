@@ -9,7 +9,7 @@ interface PartnerGreetingProps {
   recentMemoCount?: number;
   upcomingScheduleCount?: number;
   conversationCount?: number;
-  onQuickAction?: (action: "memo" | "schedule" | "summary" | "chat") => void;
+  onSendMessage?: (message: string) => void;
   className?: string;
 }
 
@@ -48,67 +48,62 @@ function getTimeBasedGreeting(): { greeting: string; timeOfDay: string; emoji: s
 }
 
 /**
- * Partner Greeting - 精简优化的欢迎界面
+ * Partner Greeting - 统一入口设计
  *
  * UX/UI 设计原则：
- * - 清晰的视觉层次：问候语 > 快捷操作 > 提示文本
- * - 统一的间距系统：基于 4px 的倍数
- * - 简洁的交互：明确的点击反馈
+ * - 示例提问代替能力选择，降低认知负担
+ * - 用户无需理解系统内部能力边界
+ * - 点击示例直接发送消息，智能路由自动处理
  */
-export const PartnerGreeting = memo(function PartnerGreeting({
-  onQuickAction,
-  className,
-}: PartnerGreetingProps) {
+export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, className }: PartnerGreetingProps) {
   const { t } = useTranslation();
   const { greeting, timeOfDay } = useMemo(() => getTimeBasedGreeting(), []);
 
   const greetingText = t(greeting);
 
-  // 时间相关提示
+  // 时间相关提示（国际化）
   const timeHint = useMemo(() => {
-    const hints = {
-      morning: "新的一天，有什么计划？",
-      afternoon: "下午茶时间，来聊聊？",
-      evening: "辛苦了一天，放松一下",
-      night: "夜深了，注意休息",
+    const hintKeys: Record<string, string> = {
+      morning: "ai.parrot.partner.hint-morning",
+      afternoon: "ai.parrot.partner.hint-afternoon",
+      evening: "ai.parrot.partner.hint-evening",
+      night: "ai.parrot.partner.hint-night",
     };
-    return hints[timeOfDay as keyof typeof hints];
-  }, [timeOfDay]);
+    return t(hintKeys[timeOfDay]);
+  }, [timeOfDay, t]);
 
-  // 快捷操作配置
-  const quickActions = useMemo(
+  // 示例提问 - 用户意图导向，而非能力导向
+  const suggestedPrompts = useMemo(
     () => [
-      { key: "memo" as const, icon: "🦜", labelKey: "ai.parrot.partner.quick-memo" },
-      { key: "schedule" as const, icon: "⏰", labelKey: "ai.parrot.partner.quick-schedule" },
-      { key: "summary" as const, icon: "🌟", labelKey: "ai.parrot.partner.quick-summary" },
-      { key: "chat" as const, icon: "💬", labelKey: "ai.parrot.partner.quick-chat" },
+      { icon: "📝", promptKey: "ai.parrot.partner.prompt-memo", prompt: t("ai.parrot.partner.prompt-memo") },
+      { icon: "📅", promptKey: "ai.parrot.partner.prompt-schedule", prompt: t("ai.parrot.partner.prompt-schedule") },
+      { icon: "📊", promptKey: "ai.parrot.partner.prompt-summary", prompt: t("ai.parrot.partner.prompt-summary") },
+      { icon: "✨", promptKey: "ai.parrot.partner.prompt-creative", prompt: t("ai.parrot.partner.prompt-creative") },
     ],
-    [],
+    [t],
   );
 
   return (
     <div className={cn("flex flex-col items-center justify-center h-full w-full px-6 py-8", className)}>
-      {/* 主图标 - 简化设计 */}
+      {/* 主图标 */}
       <div className="mb-6">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-3xl shadow-sm">
           🦜
         </div>
       </div>
 
-      {/* 问候语区域 - 主要内容 */}
+      {/* 问候语区域 */}
       <div className="text-center mb-8">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-          {greetingText}
-        </h2>
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">{greetingText}</h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">{timeHint}</p>
       </div>
 
-      {/* 快捷操作 - 统一样式 */}
+      {/* 示例提问 - 点击直接发送 */}
       <div className="grid grid-cols-2 gap-3 w-full mb-8">
-        {quickActions.map((action) => (
+        {suggestedPrompts.map((item, index) => (
           <button
-            key={action.key}
-            onClick={() => onQuickAction?.(action.key)}
+            key={index}
+            onClick={() => onSendMessage?.(item.prompt)}
             className={cn(
               "flex flex-row items-center gap-3 p-3 rounded-xl",
               "bg-white dark:bg-zinc-800",
@@ -119,20 +114,18 @@ export const PartnerGreeting = memo(function PartnerGreeting({
               "active:scale-95",
               "min-h-[56px]",
             )}
-            title={t(action.labelKey)}
+            title={item.prompt}
           >
-            <span className="text-2xl shrink-0">{action.icon}</span>
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 text-left leading-tight">
-              {t(action.labelKey)}
-            </span>
+            <span className="text-2xl shrink-0">{item.icon}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 text-left leading-tight line-clamp-2">{item.prompt}</span>
           </button>
         ))}
       </div>
 
-      {/* 底部提示 - 次要信息 */}
+      {/* 底部提示 */}
       <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
         <MessageSquare className="w-3.5 h-3.5" />
-        {t("ai.parrot.partner.input-hint") || "直接输入消息，我会自动理解你的意图"}
+        {t("ai.parrot.partner.input-hint")}
       </p>
     </div>
   );
@@ -147,11 +140,7 @@ interface MiniPartnerGreetingProps {
   className?: string;
 }
 
-export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
-  message,
-  capability,
-  className,
-}: MiniPartnerGreetingProps) {
+export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({ message, capability, className }: MiniPartnerGreetingProps) {
   const { t } = useTranslation();
   const { greeting } = useMemo(() => getTimeBasedGreeting(), []);
   const greetingText = t(greeting);
@@ -160,7 +149,6 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
     [CapabilityType.MEMO]: "🦜",
     [CapabilityType.SCHEDULE]: "⏰",
     [CapabilityType.AMAZING]: "🌟",
-    [CapabilityType.CREATIVE]: "💡",
     [CapabilityType.AUTO]: "🤖",
   };
 
@@ -170,12 +158,8 @@ export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
         {capability ? capabilityEmojis[capability] : "🦜"}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-          {greetingText}！{message || "今天想聊点什么？"}
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-2">
-          我可以帮你搜索笔记、管理日程，或者一起头脑风暴 💡
-        </p>
+        <p className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{greetingText}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-2">{message || t("ai.parrot.partner.default-hint")}</p>
       </div>
     </div>
   );

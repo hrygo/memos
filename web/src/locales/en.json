@@ -89,6 +89,7 @@
     "restore": "Restore",
     "role": "Role",
     "save": "Save",
+    "saving": "Saving...",
     "search": "Search",
     "select": "Select",
     "settings": "Settings",
@@ -146,7 +147,14 @@
     "no-changes-detected": "No changes detected",
     "focus-mode": "Focus Mode",
     "exit-focus-mode": "Exit Focus Mode",
-    "slash-commands": "Type `/` for commands"
+    "slash-commands": "Type `/` for commands",
+    "ai-suggest-tags": "AI Suggest Tags",
+    "ai-suggest-tags-title": "Suggested Tags",
+    "ai-suggest-tags-empty": "No tags suggested",
+    "ai-suggest-tags-insert": "Insert Selected",
+    "ai-suggest-tags-inserted": "Tags inserted",
+    "ai-suggest-tags-error": "Failed to suggest tags",
+    "content-too-short": "Content too short for analysis"
   },
   "filters": {
     "has-code": "hasCode",
@@ -524,47 +532,9 @@
       "title": "AI Assistants",
       "subtitle": "Choose an AI assistant to help you with your tasks, creativity, and organization."
     },
-    "aichat": {
-      "sidebar": {
-        "history": "History",
-        "memos": "Referenced Memos",
-        "new-chat": "New Chat",
-        "no-conversations": "No conversations yet",
-        "start-new-chat": "Start a new chat to begin",
-        "no-referenced-memos": "No referenced memos yet",
-        "search-memos-hint": "Chat with the Memo parrot to search and reference your notes",
-        "search-placeholder": "Search memos...",
-        "no-results": "No results found",
-        "try-different-search": "Try a different search term",
-        "conversation-count_one": "{{count}} conversation",
-        "conversation-count_other": "{{count}} conversations",
-        "message-count_one": "{{count}} message",
-        "message-count_other": "{{count}} messages",
-        "time-just-now": "Just now",
-        "time-minutes-ago_one": "{{count}}m ago",
-        "time-minutes-ago_other": "{{count}}m ago",
-        "time-hours-ago_one": "{{count}}h ago",
-        "time-hours-ago_other": "{{count}}h ago",
-        "time-days-ago_one": "{{count}}d ago",
-        "time-days-ago_other": "{{count}}d ago"
-      },
-      "memo-query": {
-        "no-results": "No related memos found",
-        "query-label": "Query",
-        "results-title": "Memo Query Results",
-        "found-count": "Found {{count}} related memos",
-        "sorted": "Sorted"
-      },
-      "amazing-insight": {
-        "title": "Amazing Insight",
-        "key-memos": "Key Memos",
-        "upcoming-events": "Upcoming Events",
-        "insight-prefix": "Insight"
-      }
-    },
     "parrot": {
       "chat-placeholder": "Chat with {{name}}...",
-      "chat-default-placeholder": "Type a message, type @ to select a parrot assistant...",
+      "chat-default-placeholder": "Ask about your notes or schedules...",
       "error-processing": "Parrot processing error",
       "error-chat-failed": "Parrot chat failed",
       "selector-title": "Select Parrot Assistant",
@@ -579,7 +549,6 @@
       "memo-tagline": "Search & Ask",
       "schedule-tagline": "Plan & Manage",
       "amazing-tagline": "All-in-One",
-      "creative-tagline": "Create & Write",
       "try-asking": "Try asking",
       "cognition": {
         "title": "Parrot Cognition",
@@ -608,17 +577,6 @@
           "catchphrases": ["All arranged", "Time handled", "Got it", "Checking the time"],
           "behaviors": ["Organizing time with beak", "Precise pecking arrangements", "Spreading wings to plan"]
         },
-        "creative": {
-          "sound_effects": {
-            "thinking": "chirp...",
-            "idea": "inspiration coming~",
-            "brainstorm": "whoosh~",
-            "done": "pop~ done",
-            "excited": "chirp chirp!"
-          },
-          "catchphrases": ["Inspiration coming~", "What else...", "Interesting!", "Changing feather colors"],
-          "behaviors": ["Feather color changing", "Mind jumping", "Flying freely in imagination"]
-        },
         "amazing": {
           "sound_effects": {
             "searching": "whoosh...",
@@ -635,16 +593,6 @@
             "Jumping between notes and schedules"
           ]
         },
-        "default": {
-          "sound_effects": {
-            "thinking": "Hmm... let me think",
-            "insight": "whoosh~ got it",
-            "done": "✓",
-            "analyzing": "look at this..."
-          },
-          "catchphrases": ["Look at this...", "Overall view", "Found a pattern"],
-          "behaviors": ["Spreading wings to navigate", "Soaring in the information sky", "Insight with sharp gaze"]
-        },
         "emotional-states": {
           "focused": "Focused",
           "curious": "Curious",
@@ -658,15 +606,6 @@
         }
       },
       "agents": {
-        "default": {
-          "name": "Navi",
-          "nameAlt": "羽飞",
-          "description": "Universal Navigator directly connected to top-tier LLMs, providing boundless creative inspiration, logical reasoning, and global knowledge insights.",
-          "examples": [
-            "Help me build a logical framework for solving a complex problem",
-            "Draft a formal communication email based on my initial thoughts"
-          ]
-        },
         "memo": {
           "name": "Memo",
           "nameAlt": "灰灰",
@@ -684,17 +623,11 @@
           "nameAlt": "惊奇",
           "description": "Comprehensive assistant combining memo and schedule features",
           "examples": ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"]
-        },
-        "creative": {
-          "name": "Creative",
-          "nameAlt": "灵灵",
-          "description": "Creative writing assistant for brainstorming and content creation",
-          "examples": ["Brainstorm product promotion ideas", "Write a project progress email", "Improve this text expression"]
         }
       },
       "capability": {
         "title": "My Capabilities",
-        "subtitle": "I can help you search notes, manage schedules, analyze insights, or brainstorm together",
+        "subtitle": "I can help you search notes, manage schedules, and analyze insights",
         "active": "Active",
         "in-use": "In Use",
         "tap-to-activate": "Tap to Activate",
@@ -715,11 +648,6 @@
           "nameAlt": "Amazing",
           "description": "Memo + Schedule"
         },
-        "creative": {
-          "name": "Creative",
-          "nameAlt": "Creative",
-          "description": "Brainstorm"
-        },
         "auto": {
           "name": "Auto",
           "nameAlt": "Auto",
@@ -731,6 +659,10 @@
         "greeting-afternoon": "Good afternoon",
         "greeting-evening": "Good evening",
         "greeting-night": "It's getting late",
+        "hint-morning": "A new day, any plans?",
+        "hint-afternoon": "Tea time, let's chat?",
+        "hint-evening": "After a long day, time to relax",
+        "hint-night": "It's late, get some rest",
         "quick-memo": "View Memos",
         "quick-memo-desc": "Search recent notes",
         "quick-schedule": "View Schedule",
@@ -740,9 +672,60 @@
         "quick-chat": "Free Chat",
         "quick-chat-desc": "Open conversation",
         "input-hint": "Just type a message, I'll automatically understand your intent",
-        "prompt-memo": "Search my recent notes",
+        "default-hint": "I can help you search memos, manage schedules, or brainstorm together",
+        "prompt-memo": "What memos did I take recently?",
         "prompt-schedule": "What's on my schedule today?",
-        "prompt-summary": "Summarize my memos and schedule for today"
+        "prompt-summary": "Help me review this week",
+        "prompt-creative": "Write something about..."
+      },
+      "status": {
+        "thinking": "Thinking...",
+        "processing": "Processing...",
+        "searching-memos": "Searching memos...",
+        "querying-schedule": "Querying schedule...",
+        "analyzing": "Analyzing..."
+      }
+    },
+    "aichat": {
+      "sidebar": {
+        "history": "History",
+        "memos": "Referenced Memos",
+        "new-chat": "New Chat",
+        "no-conversations": "No conversations yet",
+        "start-new-chat": "Start a new chat to begin",
+        "no-referenced-memos": "No referenced memos yet",
+        "search-memos-hint": "Chat with the Memo parrot to search and reference your notes",
+        "search-placeholder": "Search memos...",
+        "no-results": "No results found",
+        "try-different-search": "Try a different search term",
+        "conversation-count_one": "{{count}} conversation",
+        "conversation-count_other": "{{count}} conversations",
+        "message-count_one": "{{count}} message",
+        "message-count_other": "{{count}} messages",
+        "time-just-now": "Just now",
+        "time-minutes-ago_one": "{{count}}m ago",
+        "time-minutes-ago_other": "{{count}}m ago",
+        "time-hours-ago_one": "{{count}}h ago",
+        "time-hours-ago_other": "{{count}}h ago",
+        "time-days-ago_one": "{{count}}d ago",
+        "time-days-ago_other": "{{count}}d ago",
+        "time-group-today": "Today",
+        "time-group-yesterday": "Yesterday",
+        "time-group-this-week": "This Week",
+        "time-group-earlier": "Earlier"
+      },
+      "memo-query": {
+        "no-results": "No related memos found",
+        "query-label": "Query",
+        "results-title": "Memo Query Results",
+        "found-count": "Found {{count}} related memos",
+        "sorted": "Sorted"
+      },
+      "amazing-insight": {
+        "title": "Amazing Insight",
+        "key-memos": "Key Memos",
+        "upcoming-events": "Upcoming Events",
+        "insight-prefix": "Insight"
       }
     }
   },
@@ -1036,9 +1019,6 @@
     }
   },
   "chat": {
-    "default": {
-      "title": "Default Assistant"
-    },
     "memo": {
       "title": "Memo Assistant"
     },
@@ -1048,15 +1028,10 @@
     "amazing": {
       "title": "Amazing Assistant"
     },
-    "creative": {
-      "title": "Creative Assistant"
-    },
     "new": "New Chat"
   },
   "chat.new": "New Chat",
-  "chat.default.title": "Default Chat",
   "chat.memo.title": "Memo Chat",
   "chat.schedule.title": "Schedule Chat",
-  "chat.amazing.title": "Amazing Chat",
-  "chat.creative.title": "Creative Chat"
+  "chat.amazing.title": "Amazing Chat"
 }
