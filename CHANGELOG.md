@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.53.0] - 2026-01-26
+
+### 📝 Documentation & Code Quality
+
+- **Tailwind Grid Guidelines**: Added critical CSS pitfalls to CLAUDE.md - avoid `max-w-*` on Grid containers
+- **Code Formatting**: Standardized AIChat component code style for consistency
+
+---
+
 ## [v0.52.0] - 2026-01-25
 
 ### 💬 AI Chat Session Persistence
