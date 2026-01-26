@@ -13,8 +13,8 @@ import {
   ReferencedMemo,
   SidebarTab,
 } from "@/types/aichat";
+import { CapabilityStatus, CapabilityType } from "@/types/capability";
 import { ParrotAgentType } from "@/types/parrot";
-import { CapabilityType, CapabilityStatus } from "@/types/capability";
 import { AgentType, AIConversation, AIMessage } from "@/types/proto/api/v1/ai_service_pb";
 
 const MESSAGE_CACHE_LIMIT = 100; // Maximum MSG messages to cache per conversation

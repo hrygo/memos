@@ -1,7 +1,7 @@
 import { MessageSquarePlus, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CapabilityType, CapabilityStatus } from "@/types/capability";
+import { CapabilityStatus, CapabilityType } from "@/types/capability";
 import { PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
 
 /**
@@ -15,7 +15,7 @@ interface CapabilityCard {
   nameKey: string;
   nameAltKey: string;
   descriptionKey: string;
-  theme: typeof PARROT_THEMES[keyof typeof PARROT_THEMES];
+  theme: (typeof PARROT_THEMES)[keyof typeof PARROT_THEMES];
   nameAlt: string;
 }
 
@@ -96,9 +96,7 @@ export function ParrotHub({
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              {t("ai.capability.title") || "我的能力"}
-            </h2>
+            <h2 className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100">{t("ai.capability.title") || "我的能力"}</h2>
             <Sparkles className="w-5 h-5 text-indigo-500" />
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -120,7 +118,9 @@ export function ParrotHub({
                 className={cn(
                   "flex flex-col text-left p-5 md:p-6 rounded-2xl border-2 transition-all duration-300 group relative overflow-hidden",
                   "bg-white dark:bg-zinc-800",
-                  isActive ? theme.cardBorder + " ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-100 shadow-lg scale-[1.02]" : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md",
+                  isActive
+                    ? theme.cardBorder + " ring-2 ring-offset-2 ring-zinc-900 dark:ring-zinc-100 shadow-lg scale-[1.02]"
+                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md",
                   "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:focus:ring-zinc-100",
                 )}
               >
@@ -153,15 +153,11 @@ export function ParrotHub({
                 {/* 名称 */}
                 <h3 className={cn("text-base md:text-lg font-bold mb-1 transition-colors", theme.text)}>
                   {t(card.nameKey) || card.nameAlt}
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-2">
-                    {t(card.nameAltKey)}
-                  </span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 ml-2">{t(card.nameAltKey)}</span>
                 </h3>
 
                 {/* 描述 */}
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4 flex-grow">
-                  {t(card.descriptionKey)}
-                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4 flex-grow">{t(card.descriptionKey)}</p>
 
                 {/* 底部提示 */}
                 <div className={cn("flex items-center text-sm font-medium", theme.iconText)}>
@@ -196,10 +192,7 @@ export function ParrotHub({
         <div className="mt-8 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
           <p className="text-sm text-center text-indigo-700 dark:text-indigo-300 flex items-center justify-center gap-2">
             <Sparkles className="w-4 h-4" />
-            <span>
-              {t("ai.capability.auto-hint") ||
-                "💡 提示：你也可以直接开始聊天，我会自动理解你的意图并调用相应能力"}
-            </span>
+            <span>{t("ai.capability.auto-hint") || "💡 提示：你也可以直接开始聊天，我会自动理解你的意图并调用相应能力"}</span>
           </p>
         </div>
       </div>

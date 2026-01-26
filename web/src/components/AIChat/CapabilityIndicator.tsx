@@ -1,7 +1,7 @@
 import { Wand2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CapabilityType, CapabilityStatus, getCapabilitySound } from "@/types/capability";
+import { CapabilityStatus, CapabilityType } from "@/types/capability";
 
 interface CapabilityIndicatorProps {
   capability: CapabilityType;
@@ -57,13 +57,7 @@ const CAPABILITY_COLORS: Record<CapabilityType, { bg: string; text: string; bord
  * - 统一颜色主题
  * - 优化动画效果
  */
-export function CapabilityIndicator({
-  capability,
-  status,
-  onCapabilityChange,
-  className,
-  compact = false,
-}: CapabilityIndicatorProps) {
+export function CapabilityIndicator({ capability, status, onCapabilityChange, className, compact = false }: CapabilityIndicatorProps) {
   const { t } = useTranslation();
   const colors = CAPABILITY_COLORS[capability];
   const icon = CAPABILITY_ICONS[capability];
@@ -72,20 +66,6 @@ export function CapabilityIndicator({
   const getCapabilityName = (cap: CapabilityType): string => {
     return t(`ai.capability.${cap.toLowerCase()}.name`) || cap;
   };
-
-  // 获取拟声词
-  const getSoundEffect = (): string => {
-    switch (status) {
-      case "thinking":
-        return getCapabilitySound(capability, "thinking");
-      case "processing":
-        return getCapabilitySound(capability, "searching");
-      default:
-        return "";
-    }
-  };
-
-  const soundEffect = getSoundEffect();
 
   if (compact) {
     return (
@@ -157,12 +137,7 @@ interface CapabilityPanelProps {
   className?: string;
 }
 
-export function CapabilityPanel({
-  currentCapability,
-  status,
-  onCapabilityChange,
-  className,
-}: CapabilityPanelProps) {
+export function CapabilityPanel({ currentCapability, status, onCapabilityChange, className }: CapabilityPanelProps) {
   const capabilities: Array<{ type: CapabilityType; icon: string; label: string }> = [
     { type: CapabilityType.MEMO, icon: "🦜", label: "笔记" },
     { type: CapabilityType.SCHEDULE, icon: "⏰", label: "日程" },
@@ -187,9 +162,7 @@ export function CapabilityPanel({
               colors.text,
               colors.border,
               "border",
-              isActive
-                ? "ring-1 ring-zinc-400 dark:ring-zinc-600 scale-105 shadow-sm"
-                : "opacity-60 hover:opacity-100 hover:scale-102",
+              isActive ? "ring-1 ring-zinc-400 dark:ring-zinc-600 scale-105 shadow-sm" : "opacity-60 hover:opacity-100 hover:scale-102",
               status === "thinking" && isActive && "animate-pulse",
             )}
             aria-label={cap.label}

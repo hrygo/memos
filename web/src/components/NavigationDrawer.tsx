@@ -22,7 +22,7 @@ const NavigationDrawer = () => {
           <img src="/full-logo.webp" alt={title} className="h-10 w-auto object-contain" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 max-w-full overflow-auto px-2 bg-background">
+      <SheetContent side="left" className="w-80 max-w-full overflow-auto px-2 bg-background [&_.absolute.top-4.right-4]:hidden">
         <SheetHeader>
           <SheetTitle />
         </SheetHeader>

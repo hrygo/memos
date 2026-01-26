@@ -88,12 +88,8 @@ function EmptyState({ onStartChat }: EmptyStateProps) {
       <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
         <MessageSquarePlus className="w-5 h-5 text-zinc-400" />
       </div>
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
-        {t("ai.aichat.sidebar.no-conversations")}
-      </h3>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-        {t("ai.aichat.sidebar.start-new-chat")}
-      </p>
+      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">{t("ai.aichat.sidebar.no-conversations")}</h3>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">{t("ai.aichat.sidebar.start-new-chat")}</p>
       <NewChatButton onStartChat={onStartChat} />
     </div>
   );
@@ -116,7 +112,7 @@ function NewChatButton({ onStartChat }: NewChatButtonProps) {
           "w-full flex items-center justify-center gap-2 px-3 py-2",
           "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
           "text-white text-sm font-medium rounded-lg transition-all",
-          "shadow-sm"
+          "shadow-sm",
         )}
       >
         <MessageSquarePlus className="w-4 h-4" />

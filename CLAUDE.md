@@ -36,6 +36,32 @@
 *   **React**: PascalCase components. `use` prefix for hooks. `feature-based` naming.
 *   **Agent Routing**: All AI chat logic routes via `ParrotRouter` (`server/router/api/v1/ai_service_chat.go`).
 
+### 4. Frontend Layout - Tailwind CSS Pitfalls
+**CRITICAL: Avoid `max-w-*` on Grid containers**
+
+❌ **Wrong Pattern** (causes overlap/squash):
+```tsx
+<div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+  {/* 320px ÷ 2 = 160px per column → content crushed! */}
+</div>
+```
+
+✅ **Correct Pattern**:
+```tsx
+<div className="grid grid-cols-2 gap-3 w-full">
+  {/* Let gap and parent padding control width naturally */}
+</div>
+```
+
+| Use `max-w-*` for | Don't use `max-w-*` for |
+| :--- | :--- |
+| Dialog/Modal/Popover | Grid containers |
+| Tooltip/Alert text | Flex items that need to fill |
+| Sidebar/Drawer | Cards/buttons in responsive layouts |
+| Content paragraphs | Containers with parent padding already set |
+
+**Rule of thumb**: Grid uses `gap`, not `max-w-*`. Calculate column width: `max-width ÷ column-count = space-per-column`. If < 200px per column, don't use `max-w-*`.
+
 ---
 
 ## 📚 Documentation Index

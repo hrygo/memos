@@ -7,21 +7,17 @@ import { AmazingInsightCard } from "@/components/AIChat/AmazingInsightCard";
 import { ChatHeader } from "@/components/AIChat/ChatHeader";
 import { ChatInput } from "@/components/AIChat/ChatInput";
 import { ChatMessages } from "@/components/AIChat/ChatMessages";
-import { PartnerGreeting } from "@/components/AIChat/PartnerGreeting";
 import { ParrotHub } from "@/components/AIChat/ParrotHub";
+import { PartnerGreeting } from "@/components/AIChat/PartnerGreeting";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { useChat } from "@/hooks/useAIQueries";
 import { useCapabilityRouter } from "@/hooks/useCapabilityRouter";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import type { ChatItem } from "@/types/aichat";
+import { CapabilityStatus, CapabilityType, capabilityToParrotAgent } from "@/types/capability";
 import type { MemoQueryResultData, ScheduleQueryResultData } from "@/types/parrot";
 import { ParrotAgentType } from "@/types/parrot";
-import {
-  CapabilityType,
-  CapabilityStatus,
-  capabilityToParrotAgent,
-} from "@/types/capability";
 
 // ============================================================
 // UNIFIED CHAT VIEW - 单一对话视图
@@ -88,15 +84,15 @@ function UnifiedChatView({
 
       switch (action) {
         case "memo":
-          prompt = t("ai.partner.prompt-memo") || "搜索一下我最近记录的笔记";
+          prompt = t("ai.parrot.partner.prompt-memo") || "搜索一下我最近记录的笔记";
           targetCapability = CapabilityType.MEMO;
           break;
         case "schedule":
-          prompt = t("ai.partner.prompt-schedule") || "今天还有什么安排？";
+          prompt = t("ai.parrot.partner.prompt-schedule") || "今天还有什么安排？";
           targetCapability = CapabilityType.SCHEDULE;
           break;
         case "summary":
-          prompt = t("ai.partner.prompt-summary") || "总结一下我今天的笔记和日程";
+          prompt = t("ai.parrot.partner.prompt-summary") || "总结一下我今天的笔记和日程";
           targetCapability = CapabilityType.AMAZING;
           break;
         case "chat":
@@ -135,12 +131,8 @@ function UnifiedChatView({
         onCopyMessage={handleCopyMessage}
         onDeleteMessage={handleDeleteMessage}
         amazingInsightCard={
-          currentCapability === CapabilityType.AMAZING &&
-          (memoQueryResults.length > 0 || scheduleQueryResults.length > 0) ? (
-            <AmazingInsightCard
-              memos={memoQueryResults[0]?.memos ?? []}
-              schedules={scheduleQueryResults[0]?.schedules ?? []}
-            />
+          currentCapability === CapabilityType.AMAZING && (memoQueryResults.length > 0 || scheduleQueryResults.length > 0) ? (
+            <AmazingInsightCard memos={memoQueryResults[0]?.memos ?? []} schedules={scheduleQueryResults[0]?.schedules ?? []} />
           ) : undefined
         }
       >
@@ -193,12 +185,7 @@ interface CapabilityPanelViewProps {
   onBack: () => void;
 }
 
-function CapabilityPanelView({
-  currentCapability,
-  capabilityStatus,
-  onCapabilitySelect,
-  onBack,
-}: CapabilityPanelViewProps) {
+function CapabilityPanelView({ currentCapability, capabilityStatus, onCapabilitySelect, onBack }: CapabilityPanelViewProps) {
   const md = useMediaQuery("md");
   const { t } = useTranslation();
 
@@ -214,19 +201,13 @@ function CapabilityPanelView({
             <X className="w-4 h-4" />
             <span className="text-xs font-medium">{t("common.close") || "Close"}</span>
           </button>
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {t("ai.capability.title") || "我的能力"}
-          </span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("ai.capability.title") || "我的能力"}</span>
           <div className="w-16" />
         </header>
       )}
 
       {/* Capability Panel */}
-      <ParrotHub
-        currentCapability={currentCapability}
-        capabilityStatus={capabilityStatus}
-        onCapabilitySelect={onCapabilitySelect}
-      />
+      <ParrotHub currentCapability={currentCapability} capabilityStatus={capabilityStatus} onCapabilitySelect={onCapabilitySelect} />
     </div>
   );
 }
@@ -297,12 +278,7 @@ const AIChat = () => {
 
   // Handle parrot chat with callbacks
   const handleParrotChat = useCallback(
-    async (
-      conversationId: string,
-      parrotId: ParrotAgentType,
-      userMessage: string,
-      _conversationIdNum: number,
-    ) => {
+    async (conversationId: string, parrotId: ParrotAgentType, userMessage: string, _conversationIdNum: number) => {
       setIsTyping(true);
       setIsThinking(true);
       setCapabilityStatus("thinking");
@@ -384,10 +360,7 @@ const AIChat = () => {
               console.error("[Parrot Error]", error);
               if (lastAssistantMessageIdRef.current) {
                 updateMessage(conversationId, lastAssistantMessageIdRef.current, {
-                  content:
-                    streamingContentRef.current ||
-                    t("ai.error-generic") ||
-                    "Sorry, something went wrong. Please try again.",
+                  content: streamingContentRef.current || t("ai.error-generic") || "Sorry, something went wrong. Please try again.",
                   error: true,
                 });
               }

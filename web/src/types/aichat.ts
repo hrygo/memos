@@ -1,5 +1,5 @@
+import { CapabilityStatus, CapabilityType } from "./capability";
 import { ParrotAgentType } from "./parrot";
-import { CapabilityType, CapabilityStatus } from "./capability";
 
 // Re-export capability types for convenience
 export type { CapabilityType, CapabilityStatus };

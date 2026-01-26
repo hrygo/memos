@@ -5,13 +5,13 @@ import { ScheduleCalendar } from "@/components/AIChat/ScheduleCalendar";
 import { ScheduleInput } from "@/components/AIChat/ScheduleInput";
 import { ScheduleSearchBar } from "@/components/AIChat/ScheduleSearchBar";
 import { ScheduleTimeline } from "@/components/AIChat/ScheduleTimeline";
+import type { UIToolEvent } from "@/components/ScheduleAI/types";
 import { ScheduleQuickInput } from "@/components/ScheduleQuickInput/ScheduleQuickInput";
 import { Button } from "@/components/ui/button";
 import { useScheduleContext } from "@/contexts/ScheduleContext";
 import { useSchedulesOptimized } from "@/hooks/useScheduleQueries";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import type { UIToolEvent } from "@/components/ScheduleAI/types";
 
 type ViewTab = "calendar" | "timeline";
 

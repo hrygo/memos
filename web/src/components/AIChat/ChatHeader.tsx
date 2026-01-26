@@ -79,12 +79,14 @@ export function ChatHeader({
   const assistantName = t("ai.assistant-name") || "AI 助手";
 
   return (
-    <header className={cn(
-      "flex items-center justify-between px-4 h-14 shrink-0",
-      "border-b border-zinc-200/80 dark:border-zinc-800/80",
-      "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm",
-      className
-    )}>
+    <header
+      className={cn(
+        "flex items-center justify-between px-4 h-14 shrink-0",
+        "border-b border-zinc-200/80 dark:border-zinc-800/80",
+        "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm",
+        className,
+      )}
+    >
       {/* Left Section */}
       <div className="flex items-center gap-3">
         <button
@@ -101,15 +103,17 @@ export function ChatHeader({
           <h1 className="font-semibold text-zinc-900 dark:text-zinc-100">{assistantName}</h1>
 
           {/* 能力徽章 - 精简样式 */}
-          <span className={cn(
-            "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
-            capInfo.bg, capInfo.text, capInfo.border
-          )}>
+          <span
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
+              capInfo.bg,
+              capInfo.text,
+              capInfo.border,
+            )}
+          >
             <span>{capInfo.icon}</span>
             <span>{capInfo.name}</span>
-            {capabilityStatus === "thinking" && (
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-            )}
+            {capabilityStatus === "thinking" && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
           </span>
         </div>
       </div>
@@ -145,7 +149,10 @@ export function ChatHeader({
                 </DropdownMenuItem>
               )}
               {onClearChat && (
-                <DropdownMenuItem onClick={onClearChat} className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 cursor-pointer">
+                <DropdownMenuItem
+                  onClick={onClearChat}
+                  className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 cursor-pointer"
+                >
                   <Eraser className="w-4 h-4 mr-2" />
                   <div>
                     <div className="font-medium">{t("ai.clear-chat")}</div>

@@ -39,9 +39,7 @@ const AIChatLayoutContent = () => {
         {/* Center - Title */}
         <div className="flex items-center gap-2 overflow-hidden px-8">
           <span className="text-xl">{ASSISTANT_ICON}</span>
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm truncate">
-            {assistantName}
-          </span>
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm truncate">{assistantName}</span>
         </div>
 
         {/* Right - Sidebar Toggle */}
@@ -54,13 +52,7 @@ const AIChatLayoutContent = () => {
               <AIChatSidebar className="h-full" onClose={() => setMobileSidebarOpen(false)} />
             </SheetContent>
           </Sheet>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileSidebarOpen(true)}
-            aria-label="Open sidebar"
-            className="h-9 w-9"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} aria-label="Open sidebar" className="h-9 w-9">
             <MenuIcon className="w-5 h-5" />
           </Button>
         </div>

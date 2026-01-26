@@ -1,11 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  CapabilityType,
-  IntentRecognitionResult,
-  capabilityToParrotAgent,
-  parrotAgentToCapability,
-} from "@/types/capability";
+import { CapabilityType, capabilityToParrotAgent, IntentRecognitionResult, parrotAgentToCapability } from "@/types/capability";
 import { ParrotAgentType } from "@/types/parrot";
 
 /**
@@ -65,20 +60,7 @@ const INTENT_KEYWORDS: Record<CapabilityType, string[]> = {
     "今日总结",
     "周报",
   ],
-  [CapabilityType.CREATIVE]: [
-    "创意",
-    "想法",
-    "头脑风暴",
-    "brainstorm",
-    "写",
-    "润色",
-    "优化",
-    "建议",
-    "灵感",
-    "draft",
-    "creative",
-    "idea",
-  ],
+  [CapabilityType.CREATIVE]: ["创意", "想法", "头脑风暴", "brainstorm", "写", "润色", "优化", "建议", "灵感", "draft", "creative", "idea"],
   [CapabilityType.AUTO]: [],
 };
 
@@ -110,10 +92,7 @@ function calculateConfidence(input: string, capability: CapabilityType): number 
  * @param input 用户输入
  * @param currentCapability 当前能力（用于上下文）
  */
-export function recognizeIntent(
-  input: string,
-  currentCapability: CapabilityType = CapabilityType.AUTO,
-): IntentRecognitionResult {
+export function recognizeIntent(input: string, currentCapability: CapabilityType = CapabilityType.AUTO): IntentRecognitionResult {
   const lowerInput = input.trim().toLowerCase();
 
   // 空输入返回 AUTO
@@ -145,9 +124,7 @@ export function recognizeIntent(
   ];
 
   // 找出最高分的能力
-  const bestMatch = scores.reduce((best, current) =>
-    current.confidence > best.confidence ? current : best,
-  );
+  const bestMatch = scores.reduce((best, current) => (current.confidence > best.confidence ? current : best));
 
   // 如果最高分太低，返回 AUTO
   if (bestMatch.confidence < 0.3) {
@@ -160,9 +137,7 @@ export function recognizeIntent(
 
   // 特殊规则：如果同时涉及笔记和日程，使用 AMAZING
   const hasMemoKeyword = INTENT_KEYWORDS[CapabilityType.MEMO].some((k) => lowerInput.includes(k.toLowerCase()));
-  const hasScheduleKeyword = INTENT_KEYWORDS[CapabilityType.SCHEDULE].some((k) =>
-    lowerInput.includes(k.toLowerCase()),
-  );
+  const hasScheduleKeyword = INTENT_KEYWORDS[CapabilityType.SCHEDULE].some((k) => lowerInput.includes(k.toLowerCase()));
 
   if (hasMemoKeyword && hasScheduleKeyword) {
     return {
@@ -187,10 +162,7 @@ export function useCapabilityRouter() {
   const { t } = useTranslation();
 
   // 所有可用能力列表
-  const availableCapabilities = useMemo(
-    () => Object.values(CapabilityType).filter((c) => c !== CapabilityType.AUTO),
-    [],
-  );
+  const availableCapabilities = useMemo(() => Object.values(CapabilityType).filter((c) => c !== CapabilityType.AUTO), []);
 
   /**
    * 根据用户输入路由到合适的能力

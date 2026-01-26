@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { useAIChat } from "@/contexts/AIChatContext";
-import { CapabilityType } from "@/types/capability";
 import { cn } from "@/lib/utils";
 import { SidebarTab } from "@/types/aichat";
+import { CapabilityType } from "@/types/capability";
 import { ConversationHistoryPanel } from "./ConversationHistoryPanel";
 import { ReferencedMemosPanel } from "./ReferencedMemosPanel";
 import { SidebarTabs } from "./SidebarTabs";
@@ -39,15 +39,15 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-xl shadow-sm">
               🦜
             </div>
-            <div className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900",
-              capabilityStatus === "idle" ? "bg-green-500" : "bg-amber-500 animate-pulse"
-            )} />
+            <div
+              className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900",
+                capabilityStatus === "idle" ? "bg-green-500" : "bg-amber-500 animate-pulse",
+              )}
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-              {t("ai.assistant-name")}
-            </div>
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{t("ai.assistant-name")}</div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
               {capabilityStatus === "thinking" ? t("ai.thinking") : t("ai.ready")}
             </div>
@@ -68,7 +68,7 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
                     ? "bg-white dark:bg-zinc-800 shadow-sm border border-zinc-200 dark:border-zinc-700"
                     : "hover:bg-white/50 dark:hover:bg-zinc-800/50",
                 )}
-                title={t(cap.labelKey as any)}
+                title={t(cap.labelKey)}
               >
                 <span className="text-lg">{cap.icon}</span>
               </button>
