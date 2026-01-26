@@ -4,14 +4,13 @@ import { Outlet } from "react-router-dom";
 import { AIChatSidebar } from "@/components/AIChat/AIChatSidebar";
 import NavigationDrawer from "@/components/NavigationDrawer";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AIChatProvider } from "@/contexts/AIChatContext";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 
-// 统一的助手图标
-const ASSISTANT_ICON = "🦜";
+
 
 /**
  * AI Chat Layout - 优化的聊天布局
@@ -38,7 +37,6 @@ const AIChatLayoutContent = () => {
 
         {/* Center - Title */}
         <div className="flex items-center gap-2 overflow-hidden px-8">
-          <span className="text-xl">{ASSISTANT_ICON}</span>
           <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm truncate">{assistantName}</span>
         </div>
 
@@ -47,8 +45,11 @@ const AIChatLayoutContent = () => {
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
             <SheetContent
               side="right"
-              className="w-80 max-w-full bg-zinc-50 dark:bg-zinc-900 p-0 gap-0 [&_.absolute.top-4.right-4]:hidden border-l border-zinc-200 dark:border-zinc-800"
+              className="w-80 max-w-full bg-zinc-50 dark:bg-zinc-900 [&_.absolute.top-4.right-4]:hidden border-l border-zinc-200 dark:border-zinc-800"
             >
+              <SheetHeader>
+                <SheetTitle className="sr-only">AI Assistant</SheetTitle>
+              </SheetHeader>
               <AIChatSidebar className="h-full" onClose={() => setMobileSidebarOpen(false)} />
             </SheetContent>
           </Sheet>
@@ -60,7 +61,7 @@ const AIChatLayoutContent = () => {
 
       {/* Desktop Sidebar */}
       {lg && (
-        <div className="fixed top-0 left-16 shrink-0 h-svh border-r border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-sm w-72 overflow-hidden">
+        <div className="fixed top-0 left-16 shrink-0 h-svh border-r border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-sm w-72 overflow-hidden pt-2">
           <AIChatSidebar className="h-full" />
         </div>
       )}

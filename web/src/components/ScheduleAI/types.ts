@@ -55,7 +55,7 @@ export interface UIAction {
 export interface ScheduleSuggestionCardProps {
   data: UIScheduleSuggestionData;
   onConfirm: (data: UIScheduleSuggestionData) => void;
-  onReject: () => void;
+  onReject?: () => void;
   isLoading?: boolean;
 }
 

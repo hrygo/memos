@@ -18,7 +18,7 @@ interface ChatHeaderProps {
  * - 工具按钮移至输入框工具栏
  * - 简洁清晰的视觉层次
  */
-const ASSISTANT_ICON = "🦜";
+
 
 /**
  * 根据当前能力和状态获取动作描述
@@ -67,8 +67,8 @@ export function ChatHeader({
     >
       {/* Left Section */}
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-lg shadow-sm">
-          {ASSISTANT_ICON}
+        <div className="w-9 h-9 flex items-center justify-center">
+          <img src="/logo.webp" alt={assistantName} className="h-9 w-auto object-contain" />
         </div>
         <div className="flex flex-col">
           <h1 className="font-semibold text-foreground text-sm leading-tight">{assistantName}</h1>

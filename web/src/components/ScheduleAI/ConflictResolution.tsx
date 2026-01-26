@@ -1,13 +1,68 @@
 import dayjs from "dayjs";
 import { AlertTriangle, Calendar, Clock, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 import type { ConflictResolutionProps } from "./types";
 
+// Check if auto-resolve is enabled (default: true)
+const isAutoResolveEnabled = () => localStorage.getItem("schedule.autoResolve") !== "false";
+
 export function ConflictResolution({ data, onAction, onDismiss, isLoading = false }: ConflictResolutionProps) {
   const t = useTranslate();
   const [selectedSlotIdx, setSelectedSlotIdx] = useState<number | null>(null);
+  const [showManualSelection, setShowManualSelection] = useState(false);
+  const autoResolveExecuted = useRef(false);
+
+  // Auto-resolve when auto_resolved is available
+  useEffect(() => {
+    if (autoResolveExecuted.current || !isAutoResolveEnabled()) return;
+    if (!data.auto_resolved) return;
+
+    autoResolveExecuted.current = true;
+    const autoSlot = data.auto_resolved;
+
+    // Convert auto_resolved to UITimeSlotData format
+    const slotData = {
+      label: autoSlot.label,
+      start_ts: autoSlot.start_ts,
+      end_ts: autoSlot.end_ts,
+      duration: autoSlot.end_ts - autoSlot.start_ts,
+      reason: autoSlot.reason,
+    };
+
+    // Auto reschedule
+    onAction("reschedule", slotData);
+
+    // Show toast with undo option
+    toast(
+      (toastInstance) => (
+        <div className="flex items-center gap-3">
+          <span className="text-sm">
+            {t("schedule.conflict.auto-resolved", { time: autoSlot.label }) || `已调整到 ${autoSlot.label}`}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(toastInstance.id);
+              setShowManualSelection(true);
+              autoResolveExecuted.current = false;
+            }}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            {t("common.undo") || "撤销"}
+          </button>
+        </div>
+      ),
+      { duration: 4000 },
+    );
+  }, [data.auto_resolved, onAction, t]);
+
+  // If auto-resolved and not showing manual, don't render the panel
+  if (data.auto_resolved && !showManualSelection && isAutoResolveEnabled()) {
+    return null;
+  }
 
   const handleOverride = () => {
     onAction("override");

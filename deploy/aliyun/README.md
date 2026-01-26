@@ -42,7 +42,8 @@
 ```bash
 # 上传到服务器
 scp -r deploy/aliyun user@your-server:/root/memos-deploy
-scp docker/compose/prod.yml user@your-server:/root/memos-deploy/
+scp -r docker/compose user@your-server:/root/memos-deploy/docker/
+scp -r store/migration user@your-server:/root/memos-deploy/store/
 
 # SSH 登录
 ssh user@your-server
@@ -56,29 +57,34 @@ cp .env.prod.example .env.prod
 vi .env.prod  # 修改密码和 API Keys
 ```
 
-**必填配置**:
+**必填配置** (详见 `.env.prod.example` 内说明):
 
 ```bash
-POSTGRES_PASSWORD=your_secure_password
-MEMOS_INSTANCE_URL=http://your-server-ip:5230
-MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx
-MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx
+POSTGRES_PASSWORD=your_secure_password        # 数据库密码
+MEMOS_INSTANCE_URL=http://your-server-ip:5230 # 公网地址
+MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx           # 向量/重排
+MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx              # 对话 LLM
 ```
+
+> **配置方案**: 文件内提供 4 种配置方案 (SiliconFlow+DeepSeek / 纯 SiliconFlow / OpenAI / Ollama 本地)
 
 ### 3. 部署
 
 ```bash
-# 方式 1: 直接部署 (需要已有镜像)
-./deploy.sh deploy
+# 方式 1: 使用预构建镜像 (推荐，无需 Go/Node.js)
+./deploy.sh pull       # 拉取镜像
+./deploy.sh deploy     # 部署
 
-# 方式 2: 本地构建后部署
-./deploy.sh build && ./deploy.sh deploy
+# 方式 2: 本地构建 (需 Go 1.25+ / pnpm)
+./deploy.sh build      # 构建镜像
+./deploy.sh deploy     # 部署
 ```
 
 ### 4. 验证
 
 ```bash
-./deploy.sh status
+./deploy.sh status     # 查看服务状态
+./deploy.sh logs       # 查看日志
 ```
 
 浏览器访问: `http://your-server-ip:5230`
@@ -260,7 +266,7 @@ PostgreSQL 容器首次启动时自动执行 `LATEST.sql`，初始化数据库�
 
 ```
 deploy/aliyun/
-├── .env.prod.example          # 环境变量模板
+├── .env.prod.example          # 环境变量模板 (含 4 种配置方案)
 ├── deploy.sh                  # 部署脚本
 └── README.md                  # 本文档
 ```

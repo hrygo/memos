@@ -524,7 +524,7 @@
     "clear-context-shortcut": "按 ⌘K 裁剪上下文",
     "context-cleared": "上下文已裁剪",
     "context-cleared-toast": "上下文已裁剪",
-    "welcome-title": "欢迎使用 AI 助手",
+    "welcome-title": "欢迎使用智能助理",
     "welcome-intro": "嗨，我是 {{name}}",
     "welcome-description": "我可以帮您搜索、总结、讨论备忘内容，以及管理您的日程",
     "send-shortcut": "发送",
@@ -537,11 +537,11 @@
     "error-generic": "抱歉，出了点问题，请重试",
     "retry": "重试",
     "start-chat": "开始对话",
-    "assistants": "AI 助手",
-    "assistant-name": "AI 助手",
+    "assistants": "智能助理",
+    "assistant-name": "智能助理",
     "assistant-description": "你的数字伙伴",
     "hub": {
-      "title": "AI 助手中心",
+      "title": "智能助理中心",
       "subtitle": "选择一个 AI 助手来帮助您完成任务、激发创意和规划生活"
     },
     "parrot": {
@@ -555,8 +555,8 @@
       "select": "选择",
       "confirm": "确认",
       "close": "关闭",
-      "select-agent": "选择 AI 助手",
-      "select-agent-desc": "点击下方卡片选择一个 AI 助手开始对话",
+      "select-agent": "选择智能助理",
+      "select-agent-desc": "点击下方卡片选择一个智能助理开始对话",
       "mention-hint": "选择一个助手...",
       "memo-tagline": "搜索与问答",
       "schedule-tagline": "规划与管理",
@@ -575,8 +575,16 @@
             "no_result": "咕...",
             "done": "扑棱！"
           },
-          "catchphrases": ["让我想想...", "笔记里说...", "在记忆里找找..."],
-          "behaviors": ["用翅膀翻找笔记", "在记忆森林中飞翔", "用喙精准啄取信息"]
+          "catchphrases": [
+            "让我想想...",
+            "笔记里说...",
+            "在记忆里找找..."
+          ],
+          "behaviors": [
+            "用翅膀翻找笔记",
+            "在记忆森林中飞翔",
+            "用喙精准啄取信息"
+          ]
         },
         "schedule": {
           "sound_effects": {
@@ -586,8 +594,17 @@
             "scheduled": "安排好了",
             "free_time": "这片时间空着呢"
           },
-          "catchphrases": ["安排好啦", "时间搞定", "妥妥的", "确认一下时间"],
-          "behaviors": ["用喙整理时间", "精准啄食安排", "展开羽翼规划"]
+          "catchphrases": [
+            "安排好啦",
+            "时间搞定",
+            "妥妥的",
+            "确认一下时间"
+          ],
+          "behaviors": [
+            "用喙整理时间",
+            "精准啄食安排",
+            "展开羽翼规划"
+          ]
         },
         "amazing": {
           "sound_effects": {
@@ -597,8 +614,18 @@
             "analyzing": "看看这个...",
             "multi_task": "同时搜索中"
           },
-          "catchphrases": ["看看这个...", "综合来看", "发现规律了", "多维飞行中"],
-          "behaviors": ["在数据树丛中穿梭", "多维飞行", "综合视野", "在笔记和日程间跳跃"]
+          "catchphrases": [
+            "看看这个...",
+            "综合来看",
+            "发现规律了",
+            "多维飞行中"
+          ],
+          "behaviors": [
+            "在数据树丛中穿梭",
+            "多维飞行",
+            "综合视野",
+            "在笔记和日程间跳跃"
+          ]
         },
         "emotional-states": {
           "focused": "专注",
@@ -617,19 +644,31 @@
           "name": "灰灰",
           "nameAlt": "Memo",
           "description": "笔记助手，专注于检索、总结和管理笔记。",
-          "examples": ["搜索关于编程的笔记", "总结最近的工作备忘", "查找包含项目管理的笔记"]
+          "examples": [
+            "搜索关于编程的笔记",
+            "总结最近的工作备忘",
+            "查找包含项目管理的笔记"
+          ]
         },
         "schedule": {
           "name": "金刚",
           "nameAlt": "Schedule",
           "description": "日程助手，帮助创建、查询和管理日程。",
-          "examples": ["今天有什么安排", "明天下午有空吗", "帮我创建下周会议提醒"]
+          "examples": [
+            "今天有什么安排",
+            "明天下午有空吗",
+            "帮我创建下周会议提醒"
+          ]
         },
         "amazing": {
           "name": "惊奇",
           "nameAlt": "Amazing",
           "description": "综合助手，结合笔记和日程功能。",
-          "examples": ["总结今天的笔记和日程", "帮我规划下周工作", "查询最近的项目相关内容"]
+          "examples": [
+            "总结今天的笔记和日程",
+            "帮我规划下周工作",
+            "查询最近的项目相关内容"
+          ]
         }
       },
       "capability": {
@@ -835,6 +874,7 @@
       "tool-completed": "完成",
       "error": "发生错误",
       "alternatives": "可选时间段",
+      "status-history": "状态历史",
       "placeholder": "输入如「明天下午3点开会」或「我什么时候有空」",
       "select-time": "选择时间",
       "confirm-slot": "确认",
@@ -889,7 +929,7 @@
       "template-meeting-15": "15分钟会议",
       "prompt-meeting-15": "和同事开15分钟短会讨论进度",
       "template-meeting-30": "30分钟会议",
-      "prompt-meeting-30": "下午3点开会讨论项目",
+      "prompt-meeting-30": "下午3点开一个30分钟的会议讨论项目",
       "template-call": "电话",
       "prompt-call": "给客户打个电话沟通需求",
       "template-video": "视频会议",
@@ -939,6 +979,8 @@
       "ai-suggestions": "AI 建议",
       "double-click-create": "双击创建",
       "click-again-create": "再次点击创建",
+      "click-to-create": "点击创建",
+      "creating": "创建中...",
       "default-title": "新日程",
       "reply-placeholder": "输入回复...",
       "title-placeholder": "日程标题",
@@ -1001,12 +1043,13 @@
       "ai-suggestions": "AI 建议的解决方案",
       "suggestions-available": "个可用建议",
       "manual-resolve": "手动调整",
-      "override": "仍要创建"
+      "override": "仍要创建",
+      "auto-resolved": "已调整到 {{time}}"
     },
     "dialog-history": "对话历史",
-    "ai-assistant-reply": "AI 助手回复",
+    "ai-assistant-reply": "智能助理回复",
     "your-message": "您的消息",
-    "ai-assistant-question": "AI 助手提问",
+    "ai-assistant-question": "智能助理提问",
     "confirm-schedule": "确认日程",
     "schedule-details": "日程详情",
     "action-buttons": "操作按钮",
@@ -1025,7 +1068,7 @@
       "hint": "告诉我你想安排什么，支持自然语言输入"
     },
     "ai-sidebar": {
-      "title": "AI 助手",
+      "title": "智能助理",
       "subtitle": "智能日程管理",
       "quick-suggestions": "快捷操作",
       "placeholder": "告诉我你想安排什么...",

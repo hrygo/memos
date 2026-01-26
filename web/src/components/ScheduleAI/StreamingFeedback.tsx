@@ -1,4 +1,4 @@
-import { Calendar, CheckCircle2, Clock, Loader2, Search, Sparkles, Zap } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronDown, ChevronUp, Clock, Loader2, Search, Sparkles, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Translations, useTranslate } from "@/utils/i18n";
@@ -93,46 +93,102 @@ function getEventIcon(event: StreamingEvent): React.ReactNode {
 }
 
 /**
- * StreamingFeedback - Real-time display of AI thinking process
+ * StreamingFeedback - Simplified real-time display of AI status
  *
- * Shows the user what the AI is doing:
- * - Parsing input
- * - Checking conflicts
- * - Creating schedule
+ * Shows minimal status by default, expandable for details
  */
 export function StreamingFeedback({ events, isStreaming, className }: StreamingFeedbackProps) {
   const t = useTranslate();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [visibleEvents, setVisibleEvents] = useState<StreamingEvent[]>([]);
+  const [expanded, setExpanded] = useState(false);
 
-  // Auto-scroll to bottom when new events arrive
+  // Auto-scroll when expanded
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && expanded) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }, [visibleEvents]);
-
-  // Animate events appearing
-  useEffect(() => {
-    // Only show the last 3 events for compact display
-    const recentEvents = events.slice(-3);
-    setVisibleEvents(recentEvents);
-  }, [events]);
+  }, [events, expanded]);
 
   // Don't render if no events and not streaming
   if (!isStreaming && events.length === 0) {
     return null;
   }
 
+  // Get the latest event for compact display
+  const latestEvent = events[events.length - 1];
+  const hasHistory = events.length > 1;
+
+  // Compact mode: only show latest status
+  if (!expanded) {
+    return (
+      <div className={cn("rounded-lg border border-border/50 bg-muted/30 transition-all duration-200", className)}>
+        <div className="px-3 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {isStreaming ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary flex-shrink-0" />
+            ) : latestEvent ? (
+              <div
+                className={cn(
+                  "flex-shrink-0 p-1 rounded-md",
+                  latestEvent.type === "tool_result" && "text-green-600 dark:text-green-400 bg-green-500/10",
+                  latestEvent.type === "error" && "text-red-600 dark:text-red-400 bg-red-500/10",
+                  latestEvent.type !== "tool_result" && latestEvent.type !== "error" && "text-primary bg-primary/10",
+                )}
+              >
+                {getEventIcon(latestEvent)}
+              </div>
+            ) : null}
+            <span className="text-sm text-muted-foreground truncate">
+              {latestEvent ? formatEventMessage(latestEvent, t) : t(tr("schedule.ai.processing"))}
+            </span>
+          </div>
+
+          {hasHistory && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 flex-shrink-0"
+            >
+              <span>{events.length}</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        {isStreaming && (
+          <div className="h-0.5 bg-muted overflow-hidden">
+            <div className="h-full bg-primary/60 w-full" style={{ animation: "pulse 1.5s ease-in-out infinite" }} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Expanded mode: show all events
   return (
     <div
       ref={containerRef}
-      className={cn("overflow-hidden rounded-lg border border-border/50 bg-muted/30", "transition-all duration-300 ease-out", className)}
+      className={cn(
+        "rounded-lg border border-border/50 bg-muted/30 transition-all duration-200",
+        "max-h-[200px] overflow-y-auto",
+        className,
+      )}
     >
+      <div className="px-3 py-2 flex items-center justify-between border-b border-border/30">
+        <span className="text-xs text-muted-foreground">{t(tr("schedule.ai.status-history"))}</span>
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+        >
+          <ChevronUp className="h-3 w-3" />
+        </button>
+      </div>
+
       <div className="p-3 space-y-2">
-        {/* Event list */}
-        {visibleEvents.map((event, idx) => {
-          const isLatest = idx === visibleEvents.length - 1;
+        {events.map((event, idx) => {
+          const isLatest = idx === events.length - 1;
           const message = formatEventMessage(event, t);
           const icon = getEventIcon(event);
 
@@ -141,11 +197,9 @@ export function StreamingFeedback({ events, isStreaming, className }: StreamingF
               key={`${event.type}-${idx}`}
               className={cn(
                 "flex items-start gap-2 text-sm",
-                "animate-in fade-in slide-in-from-bottom-2 duration-300",
                 isLatest ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              {/* Icon with animation */}
               <div
                 className={cn(
                   "flex-shrink-0 mt-0.5 p-1 rounded-md",
@@ -153,31 +207,20 @@ export function StreamingFeedback({ events, isStreaming, className }: StreamingF
                   event.type === "tool_use" && "text-blue-600 dark:text-blue-400 bg-blue-500/10",
                   event.type === "thinking" && "text-primary bg-primary/10",
                   event.type === "error" && "text-red-600 dark:text-red-400 bg-red-500/10",
-                  isLatest && isStreaming && event.type !== "tool_result" && "animate-pulse",
                 )}
               >
                 {icon}
               </div>
-
-              {/* Message */}
               <span className={cn("flex-1 leading-relaxed", isLatest && "font-medium")}>{message}</span>
             </div>
           );
         })}
-
-        {/* Loading indicator when streaming with no recent events */}
-        {isStreaming && visibleEvents.length === 0 && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            <span>{t(tr("schedule.ai.processing"))}</span>
-          </div>
-        )}
       </div>
 
       {/* Progress bar */}
       {isStreaming && (
         <div className="h-0.5 bg-muted overflow-hidden">
-          <div className="h-full bg-primary/60 animate-pulse w-full origin-left" style={{ animation: "pulse 1.5s ease-in-out infinite" }} />
+          <div className="h-full bg-primary/60 w-full" style={{ animation: "pulse 1.5s ease-in-out infinite" }} />
         </div>
       )}
     </div>

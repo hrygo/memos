@@ -26,7 +26,7 @@ const MemoDetailSidebarDrawer = ({ memo, parentPage }: Props) => {
           <GanttChartIcon className="w-5 h-auto text-muted-foreground" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:w-80 px-4 bg-background">
+      <SheetContent side="right" className="w-full sm:w-80 px-4 bg-background [&_.absolute.top-4.right-4]:hidden">
         <MemoDetailSidebar className="py-4" memo={memo} parentPage={parentPage} />
       </SheetContent>
     </Sheet>

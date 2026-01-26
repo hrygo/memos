@@ -64,12 +64,21 @@ export interface UIConflictSchedule {
   all_day: boolean;
 }
 
+export interface UIAutoResolvedSlot {
+  label: string;
+  start_ts: number;
+  end_ts: number;
+  reason: string;
+  score: number;
+}
+
 export interface UIConflictResolutionData {
   new_schedule: UIScheduleSuggestionData;
   conflicting_schedules: UIConflictSchedule[];
   suggested_slots: UITimeSlotData[];
   actions: string[];
   session_id?: string;
+  auto_resolved?: UIAutoResolvedSlot;
 }
 
 export interface UIQuickActionData {

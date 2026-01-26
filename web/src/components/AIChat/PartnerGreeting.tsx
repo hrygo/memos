@@ -1,4 +1,4 @@
-import { MessageSquare } from "lucide-react";
+
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -87,7 +87,9 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
     <div className={cn("flex flex-col items-center justify-center h-full w-full px-6 py-8", className)}>
       {/* 主图标 */}
       <div className="mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-3xl shadow-sm">🦜</div>
+        <div className="w-16 h-16 flex items-center justify-center">
+          <img src="/logo.webp" alt="AI Agent" className="h-16 w-auto object-contain" />
+        </div>
       </div>
 
       {/* 问候语区域 */}
@@ -120,11 +122,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
         ))}
       </div>
 
-      {/* 底部提示 */}
-      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-        <MessageSquare className="w-3.5 h-3.5" />
-        {t("ai.parrot.partner.input-hint")}
-      </p>
+
     </div>
   );
 });

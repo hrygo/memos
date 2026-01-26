@@ -437,6 +437,24 @@ export function useParseAndCreateSchedule() {
 }
 
 /**
+ * Hook to parse natural language into a schedule without creating it
+ * Useful for semantic search to understand time ranges
+ */
+export function useParseScheduleQuery() {
+  return useMutation({
+    mutationFn: async (text: string) => {
+      const response = await scheduleServiceClient.parseAndCreateSchedule(
+        create(ParseAndCreateScheduleRequestSchema, {
+          text,
+          autoConfirm: false,
+        }),
+      );
+      return response.parsedSchedule;
+    },
+  });
+}
+
+/**
  * Hook to fetch schedules by month with buffer days for cross-month schedules
  * Query range: month start - 7 days to month end + 7 days
  * Handles pagination to ensure all schedules are fetched.

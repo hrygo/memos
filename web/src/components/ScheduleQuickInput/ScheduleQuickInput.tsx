@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Check, ChevronRight, Edit3, Loader2, Send, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Loader2, Send, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { GenerativeUIContainer } from "@/components/ScheduleAI";
@@ -211,40 +211,15 @@ export function ScheduleQuickInput({
   // Don't show lastInput during processing - user wants input cleared
   const displayText = input;
 
-  // Format editing schedule info for display
-  const editingInfo = editingSchedule
-    ? {
-        title: editingSchedule.title,
-        time: `${dayjs.unix(Number(editingSchedule.startTs)).format("HH:mm")}-${dayjs.unix(Number(editingSchedule.endTs)).format("HH:mm")}`,
-      }
-    : null;
 
   return (
     <div className={cn("w-full flex flex-col gap-2", className)}>
       {/* Editing Status Bar */}
-      {editingSchedule && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-500/10 rounded-lg border border-amber-500/20">
-          <Edit3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">
-              {t("schedule.quick.input.editing" as Translations) || "Editing"} "{editingInfo?.title}"
-            </p>
-            <p className="text-xs text-amber-600/70 dark:text-amber-400/70">{editingInfo?.time}</p>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onClearEditing}
-            className="h-7 w-7 p-0 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+
 
       {/* Generative UI - AI confirmation cards */}
       {uiTools.length > 0 && (
-        <GenerativeUIContainer tools={uiTools} onAction={onUIAction || (() => {})} onDismiss={onUIDismiss || (() => {})} />
+        <GenerativeUIContainer tools={uiTools} onAction={onUIAction || (() => { })} onDismiss={onUIDismiss || (() => { })} />
       )}
 
       {/* Streaming Feedback - Real-time AI thinking process */}
@@ -377,13 +352,7 @@ export function ScheduleQuickInput({
         </div>
       </div>
 
-      {/* Hint text */}
-      {!input && !isProcessing && !showSuccess && (
-        <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-          <Sparkles className="h-3 w-3 text-primary/60" />
-          <span>{t("schedule.quick.input.ai-hint") as string}</span>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -166,10 +166,7 @@ const Schedule = () => {
           <ScheduleQuickInput
             initialDate={selectedDate}
             onScheduleCreated={handleScheduleCreated}
-            editingSchedule={editSchedule}
-            onClearEditing={() => {
-              setEditSchedule(null);
-            }}
+            // editingSchedule prop removed to decouple from edit mode (Unified Dialog handles edits now)
             uiTools={uiTools}
             onUIAction={handleUIAction}
             onUIDismiss={handleUIDismiss}

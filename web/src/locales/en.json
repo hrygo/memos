@@ -575,8 +575,16 @@
             "no_result": "hmm...",
             "done": "flap!"
           },
-          "catchphrases": ["Let me think...", "Notes say...", "Searching my memory..."],
-          "behaviors": ["Fluttering wings through notes", "Soaring through memory forest", "Pecking precisely with beak"]
+          "catchphrases": [
+            "Let me think...",
+            "Notes say...",
+            "Searching my memory..."
+          ],
+          "behaviors": [
+            "Fluttering wings through notes",
+            "Soaring through memory forest",
+            "Pecking precisely with beak"
+          ]
         },
         "schedule": {
           "sound_effects": {
@@ -586,8 +594,17 @@
             "scheduled": "arranged",
             "free_time": "this slot is free"
           },
-          "catchphrases": ["All arranged", "Time handled", "Got it", "Checking the time"],
-          "behaviors": ["Organizing time with beak", "Precise pecking arrangements", "Spreading wings to plan"]
+          "catchphrases": [
+            "All arranged",
+            "Time handled",
+            "Got it",
+            "Checking the time"
+          ],
+          "behaviors": [
+            "Organizing time with beak",
+            "Precise pecking arrangements",
+            "Spreading wings to plan"
+          ]
         },
         "amazing": {
           "sound_effects": {
@@ -597,7 +614,12 @@
             "analyzing": "look at this...",
             "multi_task": "searching simultaneously"
           },
-          "catchphrases": ["Look at this...", "Overall view", "Found a pattern", "Multi-dimensional flight"],
+          "catchphrases": [
+            "Look at this...",
+            "Overall view",
+            "Found a pattern",
+            "Multi-dimensional flight"
+          ],
           "behaviors": [
             "Navigating through data bushes",
             "Multi-dimensional flight",
@@ -622,19 +644,31 @@
           "name": "Memo",
           "nameAlt": "灰灰",
           "description": "Note assistant for searching, summarizing, and managing memos",
-          "examples": ["Search for programming notes", "Summarize recent work memos", "Find project management notes"]
+          "examples": [
+            "Search for programming notes",
+            "Summarize recent work memos",
+            "Find project management notes"
+          ]
         },
         "schedule": {
           "name": "Schedule",
           "nameAlt": "金刚",
           "description": "Schedule assistant for creating, querying, and managing schedules",
-          "examples": ["What's on my schedule today", "Am I free tomorrow afternoon", "Create a meeting reminder for next week"]
+          "examples": [
+            "What's on my schedule today",
+            "Am I free tomorrow afternoon",
+            "Create a meeting reminder for next week"
+          ]
         },
         "amazing": {
           "name": "Amazing",
           "nameAlt": "惊奇",
           "description": "Comprehensive assistant combining memo and schedule features",
-          "examples": ["Summarize today's memos and schedule", "Help me plan next week's work", "Search recent project-related content"]
+          "examples": [
+            "Summarize today's memos and schedule",
+            "Help me plan next week's work",
+            "Search recent project-related content"
+          ]
         }
       },
       "capability": {
@@ -839,7 +873,8 @@
       "using-tool": "Using tool",
       "tool-completed": "Done",
       "error": "An error occurred",
-      "alternatives": "Alternative time slots"
+      "alternatives": "Alternative time slots",
+      "status-history": "Status history"
     },
     "recurrence": {
       "daily": "Daily",
@@ -889,7 +924,7 @@
       "template-meeting-15": "15min Meeting",
       "prompt-meeting-15": "Have a 15min meeting with colleagues to discuss progress",
       "template-meeting-30": "30min Meeting",
-      "prompt-meeting-30": "Meeting at 3pm to discuss project",
+      "prompt-meeting-30": "A 30-minute meeting at 3pm to discuss the project",
       "template-call": "Call",
       "prompt-call": "Call the client to discuss requirements",
       "template-video": "Video Call",
@@ -939,6 +974,8 @@
       "ai-suggestions": "AI Suggestions",
       "double-click-create": "Double-click to create",
       "click-again-create": "Click again to create",
+      "click-to-create": "Click to create",
+      "creating": "Creating...",
       "default-title": "New Schedule",
       "reply-placeholder": "Type a reply...",
       "title-placeholder": "Schedule title",
@@ -951,7 +988,16 @@
       "template-applied": "From template: {title}",
       "template-applied-message": "Applied \"{title}\" template, duration {duration} minutes",
       "selected-label": "Selected: {title}, {date} {time}",
-      "create-schedule-label": "Create schedule: {title}, {date} {time}{endTime}"
+      "create-schedule-label": "Create schedule: {title}, {date} {time}{endTime}",
+      "ai-command": "AI Copilot",
+      "ai-create": "AI Smart Create",
+      "edit-placeholder": "Tell AI to change time, location, or content...",
+      "create-placeholder": "Describe your schedule naturally...",
+      "action-delay-30m": "Delay this by 30 minutes",
+      "action-move-tomorrow": "Move this to tomorrow same time",
+      "action-cancel": "Cancel this schedule",
+      "apply-changes": "Apply Changes",
+      "generate": "Generate"
     },
     "quick": {
       "input": {
@@ -1001,7 +1047,8 @@
       "ai-suggestions": "AI suggested solutions",
       "suggestions-available": "suggestions available",
       "manual-resolve": "Manual adjust",
-      "override": "Create anyway"
+      "override": "Create anyway",
+      "auto-resolved": "Adjusted to {{time}}"
     },
     "dialog-history": "Dialog history",
     "ai-assistant-reply": "AI assistant reply",

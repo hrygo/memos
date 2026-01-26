@@ -88,7 +88,7 @@ function GenerativeUIComponent({ tool, onAction, onDismiss }: GenerativeUICompon
 
   switch (tool.type) {
     case "schedule_suggestion":
-      return <ScheduleSuggestionCard data={tool.data as UIScheduleSuggestionData} onConfirm={handleConfirm} onReject={handleReject} />;
+      return <ScheduleSuggestionCard data={tool.data as UIScheduleSuggestionData} onConfirm={handleConfirm} />;
 
     case "time_slot_picker":
       return <TimeSlotPicker data={tool.data as UITimeSlotPickerData} onSelect={handleSlotSelect} onDismiss={onDismiss} />;

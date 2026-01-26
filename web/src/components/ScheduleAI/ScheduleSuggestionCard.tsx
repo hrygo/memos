@@ -1,33 +1,67 @@
 import dayjs from "dayjs";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Check, Clock, MapPin } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Translations, useTranslate } from "@/utils/i18n";
 import type { ScheduleSuggestionCardProps } from "./types";
 
-export function ScheduleSuggestionCard({ data, onConfirm, onReject, isLoading = false }: ScheduleSuggestionCardProps) {
+export function ScheduleSuggestionCard({ data, onConfirm, isLoading = false }: ScheduleSuggestionCardProps) {
   const t = useTranslate();
+  const [isCreating, setIsCreating] = useState(false);
 
   const startTime = dayjs.unix(data.start_ts).format("HH:mm");
   const endTime = dayjs.unix(data.end_ts).format("HH:mm");
   const dateStr = dayjs.unix(data.start_ts).format("YYYY-MM-DD");
 
-  const handleConfirm = () => {
+  const handleClick = () => {
+    if (isLoading || isCreating) return;
+    setIsCreating(true);
     onConfirm(data);
   };
 
   // Get translations with fallback
+  const clickToCreateText = t("schedule.suggestion.click-to-create" as Translations) || "Click to create";
   const creatingText = t("schedule.quick-input.creating" as Translations) || "Creating...";
-  const confirmText = t("schedule.quick-input.confirm-create" as Translations) || "Confirm";
-  const cancelText = t("common.cancel" as Translations) || "Cancel";
+
+  const showCreating = isLoading || isCreating;
 
   return (
-    <div className="bg-primary/10 rounded-xl border border-primary/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={showCreating}
+      className={cn(
+        "w-full text-left rounded-xl border p-4 transition-all duration-200",
+        "animate-in fade-in slide-in-from-top-2",
+        showCreating
+          ? "bg-green-500/10 border-green-500/30 scale-[0.98]"
+          : "bg-primary/10 border-primary/20 hover:bg-primary/15 hover:border-primary/30 hover:shadow-md cursor-pointer",
+        "disabled:cursor-default",
+      )}
+    >
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-primary" />
+        <div
+          className={cn(
+            "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200",
+            showCreating ? "bg-green-500/20" : "bg-primary/20",
+          )}
+        >
+          {showCreating ? (
+            <Check className="w-5 h-5 text-green-600 dark:text-green-400 animate-in zoom-in duration-200" />
+          ) : (
+            <Calendar className="w-5 h-5 text-primary" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-foreground">{data.title}</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-foreground">{data.title}</h4>
+            {!showCreating && (
+              <span className="text-xs text-primary/70 hidden sm:inline">{clickToCreateText}</span>
+            )}
+            {showCreating && (
+              <span className="text-xs text-green-600 dark:text-green-400">{creatingText}</span>
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -47,33 +81,6 @@ export function ScheduleSuggestionCard({ data, onConfirm, onReject, isLoading = 
           {data.reason && <p className="mt-2 text-xs text-muted-foreground">{data.reason}</p>}
         </div>
       </div>
-
-      <div className="flex gap-2 mt-4">
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={isLoading}
-          className={cn(
-            "flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-colors",
-            "bg-primary text-primary-foreground hover:bg-primary/90",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-          )}
-        >
-          {isLoading ? creatingText : confirmText}
-        </button>
-        <button
-          type="button"
-          onClick={onReject}
-          disabled={isLoading}
-          className={cn(
-            "py-2 px-4 rounded-lg font-medium text-sm transition-colors",
-            "bg-muted text-muted-foreground hover:bg-muted/70",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-          )}
-        >
-          {cancelText}
-        </button>
-      </div>
-    </div>
+    </button>
   );
 }

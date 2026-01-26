@@ -346,13 +346,23 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         })
         .catch((err) => {
           console.error("Failed to create conversation:", err);
-          // Remove temp conversation on error
-          setState((prev) => ({
-            ...prev,
-            conversations: prev.conversations.filter((c) => c.id !== tempId),
-            currentConversationId: null,
-            viewMode: "hub",
-          }));
+          // Remove temp conversation on error, BUT only if no messages were added
+          // This prevents UI jumping back to empty state if user already sent a message
+          setState((prev) => {
+            const tempConv = prev.conversations.find((c) => c.id === tempId);
+            // If conversation has messages (user sent something), don't delete it
+            if (tempConv && tempConv.messages.length > 0) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+              conversations: prev.conversations.filter((c) => c.id !== tempId),
+              currentConversationId:
+                prev.currentConversationId === tempId ? null : prev.currentConversationId,
+              viewMode: prev.currentConversationId === tempId ? "hub" : prev.viewMode,
+            };
+          });
         });
 
       return tempId;
@@ -698,9 +708,9 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
                   messages: [...olderMessages, ...c.messages],
                   messageCache: c.messageCache
                     ? {
-                        ...c.messageCache,
-                        hasMore: response.hasMore,
-                      }
+                      ...c.messageCache,
+                      hasMore: response.hasMore,
+                    }
                     : undefined,
                 };
               }),

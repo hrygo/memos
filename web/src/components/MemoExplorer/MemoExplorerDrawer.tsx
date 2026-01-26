@@ -29,7 +29,7 @@ const MemoExplorerDrawer = (props: Props) => {
           <MenuIcon className="size-5 text-foreground" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-80 max-w-full bg-background">
+      <SheetContent side="right" className="w-80 max-w-full bg-background [&_.absolute.top-4.right-4]:hidden">
         <SheetHeader>
           <SheetTitle />
         </SheetHeader>

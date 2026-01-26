@@ -1,4 +1,4 @@
-import { Coffee, Dumbbell, Phone, UtensilsCrossed, Video } from "lucide-react";
+import { Dumbbell, Video } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
@@ -74,16 +74,6 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     color: "bg-blue-500",
   },
   {
-    id: "call",
-    title: "电话",
-    i18nKey: "schedule.quick-input.template-call",
-    promptI18nKey: "schedule.quick-input.prompt-call",
-    icon: "phone",
-    duration: 30,
-    defaultTitle: "电话会议",
-    color: "bg-green-500",
-  },
-  {
     id: "video-call",
     title: "视频会议",
     i18nKey: "schedule.quick-input.template-video",
@@ -92,26 +82,6 @@ export const DEFAULT_TEMPLATES: ScheduleTemplate[] = [
     duration: 45,
     defaultTitle: "视频会议",
     color: "bg-purple-500",
-  },
-  {
-    id: "lunch",
-    title: "午餐",
-    i18nKey: "schedule.quick-input.template-lunch",
-    promptI18nKey: "schedule.quick-input.prompt-lunch",
-    icon: "lunch",
-    duration: 60,
-    defaultTitle: "午餐",
-    color: "bg-orange-500",
-  },
-  {
-    id: "coffee",
-    title: "咖啡",
-    i18nKey: "schedule.quick-input.template-coffee",
-    promptI18nKey: "schedule.quick-input.prompt-coffee",
-    icon: "coffee",
-    duration: 30,
-    defaultTitle: "咖啡聊天",
-    color: "bg-amber-600",
   },
   {
     id: "workout",
@@ -155,10 +125,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
-  phone: Phone,
   video: Video,
-  lunch: UtensilsCrossed,
-  coffee: Coffee,
   dumbbell: Dumbbell,
   focus: ({ className }: { className?: string }) => (
     <svg

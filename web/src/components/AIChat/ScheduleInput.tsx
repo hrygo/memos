@@ -2,12 +2,9 @@ import { create } from "@bufbuild/protobuf";
 import { TimestampSchema, timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { AlertTriangle, Bot, Loader2, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import ReactMarkdown from "react-markdown";
-import remarkBreaks from "remark-breaks";
-import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,11 +14,10 @@ import {
   useCheckConflict,
   useCreateSchedule,
   useDeleteSchedule,
-  useScheduleAgentChat,
   useUpdateSchedule,
 } from "@/hooks/useScheduleQueries";
 import { cn } from "@/lib/utils";
-import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
+import { ScheduleSchema, type Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { ScheduleConflictAlert } from "./ScheduleConflictAlert";
 import { ScheduleErrorBoundary } from "./ScheduleErrorBoundary";
@@ -35,149 +31,46 @@ interface ScheduleInputProps {
   contextDate?: string;
 }
 
-// Type definitions for conversation history
-type ConversationRole = "user" | "assistant";
-
-interface ConversationMessage {
-  role: ConversationRole;
-  content: string;
-}
-
-// Constants
-const MAX_CONVERSATION_ROUNDS = 5;
-const SUCCESS_AUTO_CLOSE_DELAY_MS = 1500;
-const MAX_INPUT_LENGTH = 500;
-
-export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedule, onSuccess }: ScheduleInputProps) => {
+export const ScheduleInput = ({ open, onOpenChange, editSchedule, onSuccess }: ScheduleInputProps) => {
   const t = useTranslate();
   const queryClient = useQueryClient();
   const createSchedule = useCreateSchedule();
   const updateSchedule = useUpdateSchedule();
   const deleteSchedule = useDeleteSchedule();
   const checkConflict = useCheckConflict();
-  const agentChat = useScheduleAgentChat();
   const isEditMode = !!editSchedule;
 
-  const [input, setInput] = useState(initialText);
-  const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(editSchedule || null);
+  const [parsedSchedule, setParsedSchedule] = useState<Schedule | null>(null);
   const [conflicts, setConflicts] = useState<Schedule[]>([]);
   const [showConflictAlert, setShowConflictAlert] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Agent mode states
-  const [agentResponse, setAgentResponse] = useState<string | null>(null);
-  const [isProcessingAgent, setIsProcessingAgent] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
-
-  // Ref for auto-close timeout to prevent memory leaks
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  // Cleanup timeout on unmount
+  // Initialize/Reset state when dialog opens or editSchedule changes
   useEffect(() => {
-    return () => {
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
+    if (open) {
+      if (editSchedule) {
+        setParsedSchedule({ ...editSchedule });
+      } else {
+        // Default values for new schedule
+        const now = dayjs();
+        const start = now.add(10 - (now.minute() % 10) + 10, "minute").startOf("minute");
+        const end = start.add(1, "hour");
+
+        // We initialize as a Partial/compatible object and cast since we handle creation later
+        setParsedSchedule(create(ScheduleSchema, {
+          title: "",
+          startTs: BigInt(start.unix()),
+          endTs: BigInt(end.unix()),
+          location: "",
+          description: "",
+          reminders: [],
+          name: "",
+        }));
       }
-    };
-  }, []);
-
-  // Track when we're sending to prevent useEffect from clearing the input
-  const isSendingRef = useRef(false);
-
-  // Initialize with editSchedule when it changes
-  useEffect(() => {
-    // Don't reset input while user is sending a message
-    if (isSendingRef.current) return;
-
-    if (editSchedule) {
-      setParsedSchedule(editSchedule);
-      setInput(editSchedule.title || "");
-    } else {
-      setParsedSchedule(null);
-      setInput(initialText);
+      setConflicts([]);
+      setShowConflictAlert(false);
     }
-  }, [editSchedule, initialText]);
-
-  // Handle Agent-based parsing
-  const handleAgentParse = async () => {
-    if (!input.trim()) return;
-
-    // Validate input length
-    if (input.length > MAX_INPUT_LENGTH) {
-      const errorMsg = t("schedule.input-too-long");
-      toast.error(typeof errorMsg === "string" ? errorMsg : "Input too long");
-      return;
-    }
-
-    // Save the current input and clear immediately for better UX
-    const currentInput = input;
-    setInput("");
-    isSendingRef.current = true;
-
-    setIsProcessingAgent(true);
-
-    // Limit conversation history to prevent excessive context
-    const trimmedHistory = conversationHistory.slice(-MAX_CONVERSATION_ROUNDS * 2);
-
-    // Add user message to history
-    const newHistory: ConversationMessage[] = [...trimmedHistory, { role: "user", content: currentInput }];
-
-    try {
-      const result = await agentChat.mutateAsync({
-        message: currentInput,
-        history: newHistory,
-        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
-      });
-
-      if (result.response) {
-        // Add assistant response to history
-        const updatedHistory: ConversationMessage[] = [...newHistory, { role: "assistant", content: result.response }];
-        setConversationHistory(updatedHistory);
-        setAgentResponse(result.response);
-
-        // Check if agent successfully created a schedule
-        const createdRegex = new RegExp(t("schedule.quick-input.created-regex") as string, "i");
-        const createdSchedule = createdRegex.test(result.response);
-
-        if (createdSchedule) {
-          toast.success(t("schedule.quick-input.schedule-created-success") as string);
-          // Refresh schedules
-          queryClient.invalidateQueries({ queryKey: ["schedules"] });
-          // Clear history after successful creation
-          setConversationHistory([]);
-          // Close dialog after short delay with cleanup
-          if (closeTimeoutRef.current) {
-            clearTimeout(closeTimeoutRef.current);
-          }
-          closeTimeoutRef.current = setTimeout(() => {
-            handleClose();
-          }, SUCCESS_AUTO_CLOSE_DELAY_MS);
-        }
-      }
-    } catch (error) {
-      console.error("Agent error:", error);
-
-      // Improved error handling
-      let errorMessage = t("schedule.quick-input.parse-failed") as string;
-      if (error instanceof Error) {
-        if (error.message.includes("timeout") || error.message.includes("TIMEOUT")) {
-          errorMessage = t("schedule.quick-input.timeout-error") as string;
-        } else if (error.message.includes("network") || error.message.includes("fetch")) {
-          errorMessage = t("schedule.quick-input.network-error") as string;
-        } else if (error.message.includes("401") || error.message.includes("Unauthorized")) {
-          errorMessage = t("schedule.quick-input.unauthorized-error") as string;
-        }
-      }
-
-      const retrySuffix = t("schedule.quick-input.retry-manual-mode") as string;
-      toast.error(errorMessage + retrySuffix);
-      // On error, restore the input so user can retry
-      setInput(currentInput);
-    } finally {
-      setIsProcessingAgent(false);
-      isSendingRef.current = false;
-    }
-  };
+  }, [open, editSchedule]);
 
   const executeCreate = async () => {
     if (!parsedSchedule) return;
@@ -197,17 +90,8 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         }
       } else {
         // Create new schedule
-        const validName =
-          parsedSchedule.name && parsedSchedule.name.startsWith("schedules/") && parsedSchedule.name.length > 10
-            ? parsedSchedule.name
-            : `schedules/${
-                typeof crypto !== "undefined" && crypto.randomUUID
-                  ? crypto.randomUUID()
-                  : `${Date.now()}_${Math.random().toString(36).slice(2)}`
-              }`;
-
+        const validName = `schedules/${Date.now()}`;
         const scheduleToCreate = { ...parsedSchedule, name: validName };
-
         const createdSchedule = await createSchedule.mutateAsync(scheduleToCreate);
 
         if (createdSchedule) {
@@ -217,40 +101,12 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         }
       }
     } catch (error) {
-      // Check if error is due to schedule conflicts
       const isConflictError =
         error && typeof error === "object" && "message" in error ? (error.message as string).includes("conflicts detected") : false;
 
       if (isConflictError) {
-        // Extract conflict details from error message if available
         const errorMessage = (error as { message?: string }).message || "";
-
-        // Try to fetch conflicts again to show them in the alert dialog
-        try {
-          const conflictResult = await checkConflict.mutateAsync({
-            startTs: parsedSchedule.startTs,
-            endTs: parsedSchedule.endTs,
-            excludeNames: isEditMode && parsedSchedule.name ? [parsedSchedule.name] : [],
-          });
-
-          if (conflictResult.conflicts.length > 0) {
-            // Show conflicts in the alert dialog instead of toast
-            setConflicts(conflictResult.conflicts);
-            setShowConflictAlert(true);
-          } else {
-            // Fallback to toast if we can't fetch conflicts
-            toast.error(errorMessage, {
-              duration: 6000,
-              id: "schedule-conflict-error",
-            });
-          }
-        } catch (_conflictCheckError) {
-          // If conflict check fails, show the original error message
-          toast.error(errorMessage, {
-            duration: 6000,
-            id: "schedule-conflict-error",
-          });
-        }
+        toast.error(errorMessage);
       } else {
         toast.error(
           isEditMode ? (t("schedule.quick-input.failed-to-update") as string) : (t("schedule.quick-input.failed-to-create") as string),
@@ -263,14 +119,13 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
   const handleCreate = async () => {
     if (!parsedSchedule) return;
 
-    try {
-      // Ensure parsedSchedule has a valid endTs (default 1 hour if 0)
-      if (parsedSchedule.endTs === BigInt(0)) {
-        parsedSchedule.endTs = parsedSchedule.startTs + BigInt(3600);
-        setParsedSchedule({ ...parsedSchedule });
-      }
+    if (!parsedSchedule.title?.trim()) {
+      toast.error(t("message.fill-all-required-fields") || "Please fill all required fields");
+      return;
+    }
 
-      // Check conflict - exclude self if editing
+    try {
+      // Check conflict
       const conflict = await checkConflict.mutateAsync({
         startTs: parsedSchedule.startTs,
         endTs: parsedSchedule.endTs,
@@ -285,37 +140,21 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
 
       await executeCreate();
     } catch (error) {
-      console.error("Conflict check error:", error);
-      // If conflict check fails, try to create anyway? Or just show error?
-      // For now, proceed to create which might fail if backend enforces strictly, but usually it doesn't.
       await executeCreate();
     }
   };
 
-  const handleAdjust = () => {
-    setShowConflictAlert(false);
-    // Keep parsedSchedule to allow editing
-  };
-
-  const handleDiscard = () => {
-    handleClose();
-  };
+  const handleAdjust = () => setShowConflictAlert(false);
+  const handleDiscard = () => handleClose();
 
   const handleClose = () => {
-    setInput("");
     setParsedSchedule(null);
     setConflicts([]);
     setShowConflictAlert(false);
-    setAgentResponse(null);
-    setConversationHistory([]); // Clear conversation history
-    isSendingRef.current = false; // Reset sending flag
     onOpenChange(false);
   };
 
-  // Handle delete schedule
-  const handleDeleteClick = () => {
-    setShowDeleteConfirm(true);
-  };
+  const handleDeleteClick = () => setShowDeleteConfirm(true);
 
   const confirmDelete = async () => {
     if (!parsedSchedule?.name) return;
@@ -337,207 +176,94 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ScheduleErrorBoundary>
-          <DialogContent size="md" className="overflow-hidden min-w-[320px]">
-            <DialogTitle>{isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}</DialogTitle>
-            <DialogDescription>{isEditMode ? "" : t("schedule.natural-language-hint")}</DialogDescription>
+          <DialogContent size="sm" className="overflow-hidden min-w-[360px]">
+            <DialogTitle className="text-lg font-semibold">
+              {isEditMode ? t("schedule.edit-schedule") : t("schedule.create-schedule")}
+            </DialogTitle>
+            <DialogDescription className="hidden">Schedule Form</DialogDescription>
 
-            <div className="space-y-4 mt-4 overflow-y-auto max-h-[70vh] overflow-x-hidden">
-              {/* Natural Language Input - Only for create mode */}
-              {!isEditMode && !parsedSchedule && (
-                <div className="space-y-2">
-                  <Label htmlFor="schedule-input">
-                    {t("schedule.description") || "Description"}
-                    {agentResponse && <span className="text-primary ml-2">{t("schedule.quick-input.reply-to-assistant-hint")}</span>}
-                  </Label>
-                  <Textarea
-                    id="schedule-input"
-                    placeholder={
-                      agentResponse
-                        ? (t("schedule.quick-input.input-placeholder-agent-active") as string)
-                        : (t("schedule.quick-input.input-placeholder-default") as string)
-                    }
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAgentParse();
-                      }
-                    }}
-                    className="min-h-24 resize-none"
-                  />
-                </div>
-              )}
-
-              {/* Parse Button - Only for create mode */}
-              {!isEditMode && !parsedSchedule && (
-                <Button onClick={handleAgentParse} disabled={!input.trim() || isProcessingAgent} className="w-full cursor-pointer">
-                  {isProcessingAgent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Bot className="mr-2 h-4 w-4" />
-                  {agentResponse ? (t("schedule.quick-input.continue-chat") as string) : (t("schedule.quick-input.smart-parse") as string)}
-                </Button>
-              )}
-
-              {/* Agent Response Display */}
-              {agentResponse && !parsedSchedule && (
-                <div className="rounded-lg border bg-primary/5 p-4">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Bot className="h-4 w-4 text-primary mt-0.5" />
-                    <h4 className="text-sm font-medium">{t("schedule.quick-input.assistant-reply") as string}</h4>
-                  </div>
-                  <div className="prose dark:prose-invert prose-sm max-w-none break-words text-sm text-muted-foreground">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkBreaks]}
-                      components={{
-                        a: ({ node, ...props }) => (
-                          <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" />
-                        ),
-                        p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
-                        ul: ({ node, ...props }) => <ul {...props} className="list-disc list-inside mb-2 space-y-1" />,
-                        ol: ({ node, ...props }) => <ol {...props} className="list-decimal list-inside mb-2 space-y-1" />,
-                      }}
-                    >
-                      {agentResponse}
-                    </ReactMarkdown>
-                  </div>
-                  <div className="mt-3 flex justify-end gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAgentResponse(null);
-                        setInput("");
-                        setConversationHistory([]);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {t("common.clear")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setAgentResponse(null);
-                        queryClient.invalidateQueries({ queryKey: ["schedules"] });
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {t("schedule.quick-input.refresh-schedules") as string}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Schedule Details Form */}
+            <div className="space-y-4 pt-4">
               {parsedSchedule && (
-                <div className="space-y-3 rounded-lg border bg-muted/50 p-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">
-                      {isEditMode ? (t("schedule.edit-schedule") as string) : (t("schedule.quick-input.parse-result") as string)}
-                    </h4>
-                    {/* Only show reset button in create mode */}
-                    {!isEditMode && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setParsedSchedule(null);
-                          setConflicts([]);
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid gap-2.5 text-sm">
-                    {/* Title */}
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{t("common.title")}</Label>
                     <Input
                       value={parsedSchedule.title}
                       onChange={(e) => setParsedSchedule({ ...parsedSchedule, title: e.target.value })}
-                      className="h-9 font-medium"
+                      className="font-medium"
                       placeholder={t("common.title")}
+                      autoFocus
                     />
+                  </div>
 
-                    {/* Start Time */}
-                    <div className="relative">
+                  {/* Time Range */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">{t("schedule.start-time")}</Label>
                       <Input
                         type="datetime-local"
-                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format(
-                          "YYYY-MM-DDTHH:mm",
-                        )}
+                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.startTs, nanos: 0 }))).format("YYYY-MM-DDTHH:mm")}
                         onChange={(e) => {
-                          const ts = BigInt(dayjs(e.target.value).unix());
-                          setParsedSchedule({ ...parsedSchedule, startTs: ts });
+                          const val = e.target.value;
+                          if (val) setParsedSchedule({ ...parsedSchedule, startTs: BigInt(dayjs(val).unix()) });
                         }}
-                        className="h-9 pr-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2"
+                        className="bg-muted/30"
                       />
                     </div>
-
-                    {/* End Time */}
-                    <div className="relative">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">{t("schedule.end-time")}</Label>
                       <Input
                         type="datetime-local"
-                        value={
-                          parsedSchedule.endTs > 0
-                            ? dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format(
-                                "YYYY-MM-DDTHH:mm",
-                              )
-                            : ""
-                        }
+                        value={dayjs(timestampDate(create(TimestampSchema, { seconds: parsedSchedule.endTs, nanos: 0 }))).format("YYYY-MM-DDTHH:mm")}
                         onChange={(e) => {
-                          const ts = BigInt(dayjs(e.target.value).unix());
-                          setParsedSchedule({ ...parsedSchedule, endTs: ts });
+                          const val = e.target.value;
+                          if (val) setParsedSchedule({ ...parsedSchedule, endTs: BigInt(dayjs(val).unix()) });
                         }}
-                        className="h-9 pr-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2"
+                        className="bg-muted/30"
                       />
                     </div>
+                  </div>
 
-                    {/* Location */}
+                  {/* Location */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{t("common.location")}</Label>
                     <Input
                       value={parsedSchedule.location || ""}
                       onChange={(e) => setParsedSchedule({ ...parsedSchedule, location: e.target.value })}
-                      className="h-9"
-                      placeholder={t("common.location") || "Location"}
+                      placeholder={t("common.location")}
                     />
+                  </div>
 
-                    {/* Description */}
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{t("common.description")}</Label>
                     <Textarea
                       value={parsedSchedule.description || ""}
                       onChange={(e) => setParsedSchedule({ ...parsedSchedule, description: e.target.value })}
-                      className="min-h-[60px] text-sm resize-none"
-                      placeholder={t("schedule.description")}
+                      className="min-h-[80px] text-sm resize-none bg-muted/30"
+                      placeholder={t("common.description")}
                     />
-
-                    {parsedSchedule.reminders.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {parsedSchedule.reminders.map((reminder, idx) => (
-                          <span key={idx} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                            {reminder.type === "before" && (t("schedule.reminders") as string)}: {reminder.value} {reminder.unit}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Actions */}
-                  <div className={cn("flex justify-between gap-2 pt-2", isEditMode ? "border-t border-border/50" : "justify-end")}>
+                  {/* Footer Actions */}
+                  <div className={cn("flex justify-between gap-3 pt-4 border-t", isEditMode ? "" : "justify-end")}>
                     {isEditMode && (
                       <Button
                         variant="ghost"
                         onClick={handleDeleteClick}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                        className="text-destructive hover:bg-destructive/10 px-2"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4 mr-2" />
                         {t("common.delete")}
                       </Button>
                     )}
-                    <div className="flex gap-2 ml-auto">
-                      <Button variant="outline" onClick={handleClose} className="cursor-pointer">
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={handleClose}>
                         {t("common.cancel")}
                       </Button>
-                      <Button onClick={handleCreate} className="cursor-pointer">
-                        {isEditMode ? t("common.save") : t("schedule.create-schedule")}
+                      <Button onClick={handleCreate} className="min-w-[80px]">
+                        {isEditMode ? t("common.save") : t("common.create")}
                       </Button>
                     </div>
                   </div>
@@ -548,7 +274,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         </ScheduleErrorBoundary>
       </Dialog>
 
-      {/* Conflict Alert */}
       <ScheduleConflictAlert
         open={showConflictAlert}
         onOpenChange={setShowConflictAlert}
@@ -557,7 +282,6 @@ export const ScheduleInput = ({ open, onOpenChange, initialText = "", editSchedu
         onDiscard={handleDiscard}
       />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent size="sm">
           <DialogHeader>

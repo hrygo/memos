@@ -33,31 +33,27 @@ docker run -d --name memos -p 5230:5230 -v ~/.memos:/var/opt/memos hrygo/memos:s
 git clone https://github.com/hrygo/memos.git && cd memos
 
 # 2. 配置环境变量
-cp deploy/aliyun/.env.prod.example .env.prod
-# 编辑 .env.prod 填入：
-#   POSTGRES_PASSWORD=your_password
-#   MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx
-#   MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx
+cp .env.example .env
+# 编辑 .env 填入 API Key（见文件内详细说明）
 
-# 3. 构建镜像
-make build && docker build -t memos:latest -f docker/Dockerfile .
+# 3. 安装依赖
+make deps-all
 
-# 4. 启动 (PostgreSQL + Memos)
-docker compose -f docker/compose/prod.yml --env-file .env.prod up -d
+# 4. 启动 (PostgreSQL + 后端 + 前端)
+make start
 ```
 
-打开 http://localhost:5230 开始使用！
+打开 http://localhost:25173 开始使用！
 
 <details>
-<summary><b>本地开发环境</b></summary>
+<summary><b>服务管理命令</b></summary>
 
 ```bash
-git clone https://github.com/hrygo/memos.git && cd memos
-cp .env.example .env  # 编辑填入 API Key
-make deps-all && make start
+make status   # 查看服务状态
+make logs     # 查看日志
+make stop     # 停止服务
+make restart  # 重启服务
 ```
-
-访问：前端 http://localhost:25173 | 后端 http://localhost:28081
 
 </details>
 
