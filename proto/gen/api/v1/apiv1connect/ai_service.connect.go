@@ -61,6 +61,13 @@ const (
 	// AIServiceGetKnowledgeGraphProcedure is the fully-qualified name of the AIService's
 	// GetKnowledgeGraph RPC.
 	AIServiceGetKnowledgeGraphProcedure = "/memos.api.v1.AIService/GetKnowledgeGraph"
+	// AIServiceGetDueReviewsProcedure is the fully-qualified name of the AIService's GetDueReviews RPC.
+	AIServiceGetDueReviewsProcedure = "/memos.api.v1.AIService/GetDueReviews"
+	// AIServiceRecordReviewProcedure is the fully-qualified name of the AIService's RecordReview RPC.
+	AIServiceRecordReviewProcedure = "/memos.api.v1.AIService/RecordReview"
+	// AIServiceGetReviewStatsProcedure is the fully-qualified name of the AIService's GetReviewStats
+	// RPC.
+	AIServiceGetReviewStatsProcedure = "/memos.api.v1.AIService/GetReviewStats"
 	// AIServiceListAIConversationsProcedure is the fully-qualified name of the AIService's
 	// ListAIConversations RPC.
 	AIServiceListAIConversationsProcedure = "/memos.api.v1.AIService/ListAIConversations"
@@ -114,6 +121,12 @@ type AIServiceClient interface {
 	LinkMemos(context.Context, *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error)
 	// GetKnowledgeGraph returns the knowledge graph for the current user.
 	GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error)
+	// GetDueReviews returns memos that are due for review.
+	GetDueReviews(context.Context, *connect.Request[v1.GetDueReviewsRequest]) (*connect.Response[v1.GetDueReviewsResponse], error)
+	// RecordReview records a review result and updates spaced repetition state.
+	RecordReview(context.Context, *connect.Request[v1.RecordReviewRequest]) (*connect.Response[emptypb.Empty], error)
+	// GetReviewStats returns review statistics for the current user.
+	GetReviewStats(context.Context, *connect.Request[v1.GetReviewStatsRequest]) (*connect.Response[v1.GetReviewStatsResponse], error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -203,6 +216,24 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("GetKnowledgeGraph")),
 			connect.WithClientOptions(opts...),
 		),
+		getDueReviews: connect.NewClient[v1.GetDueReviewsRequest, v1.GetDueReviewsResponse](
+			httpClient,
+			baseURL+AIServiceGetDueReviewsProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetDueReviews")),
+			connect.WithClientOptions(opts...),
+		),
+		recordReview: connect.NewClient[v1.RecordReviewRequest, emptypb.Empty](
+			httpClient,
+			baseURL+AIServiceRecordReviewProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("RecordReview")),
+			connect.WithClientOptions(opts...),
+		),
+		getReviewStats: connect.NewClient[v1.GetReviewStatsRequest, v1.GetReviewStatsResponse](
+			httpClient,
+			baseURL+AIServiceGetReviewStatsProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetReviewStats")),
+			connect.WithClientOptions(opts...),
+		),
 		listAIConversations: connect.NewClient[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse](
 			httpClient,
 			baseURL+AIServiceListAIConversationsProcedure,
@@ -266,6 +297,9 @@ type aIServiceClient struct {
 	mergeMemos                *connect.Client[v1.MergeMemosRequest, v1.MergeMemosResponse]
 	linkMemos                 *connect.Client[v1.LinkMemosRequest, v1.LinkMemosResponse]
 	getKnowledgeGraph         *connect.Client[v1.GetKnowledgeGraphRequest, v1.GetKnowledgeGraphResponse]
+	getDueReviews             *connect.Client[v1.GetDueReviewsRequest, v1.GetDueReviewsResponse]
+	recordReview              *connect.Client[v1.RecordReviewRequest, emptypb.Empty]
+	getReviewStats            *connect.Client[v1.GetReviewStatsRequest, v1.GetReviewStatsResponse]
 	listAIConversations       *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
 	getAIConversation         *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
 	createAIConversation      *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
@@ -324,6 +358,21 @@ func (c *aIServiceClient) LinkMemos(ctx context.Context, req *connect.Request[v1
 // GetKnowledgeGraph calls memos.api.v1.AIService.GetKnowledgeGraph.
 func (c *aIServiceClient) GetKnowledgeGraph(ctx context.Context, req *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error) {
 	return c.getKnowledgeGraph.CallUnary(ctx, req)
+}
+
+// GetDueReviews calls memos.api.v1.AIService.GetDueReviews.
+func (c *aIServiceClient) GetDueReviews(ctx context.Context, req *connect.Request[v1.GetDueReviewsRequest]) (*connect.Response[v1.GetDueReviewsResponse], error) {
+	return c.getDueReviews.CallUnary(ctx, req)
+}
+
+// RecordReview calls memos.api.v1.AIService.RecordReview.
+func (c *aIServiceClient) RecordReview(ctx context.Context, req *connect.Request[v1.RecordReviewRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.recordReview.CallUnary(ctx, req)
+}
+
+// GetReviewStats calls memos.api.v1.AIService.GetReviewStats.
+func (c *aIServiceClient) GetReviewStats(ctx context.Context, req *connect.Request[v1.GetReviewStatsRequest]) (*connect.Response[v1.GetReviewStatsResponse], error) {
+	return c.getReviewStats.CallUnary(ctx, req)
 }
 
 // ListAIConversations calls memos.api.v1.AIService.ListAIConversations.
@@ -388,6 +437,12 @@ type AIServiceHandler interface {
 	LinkMemos(context.Context, *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error)
 	// GetKnowledgeGraph returns the knowledge graph for the current user.
 	GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error)
+	// GetDueReviews returns memos that are due for review.
+	GetDueReviews(context.Context, *connect.Request[v1.GetDueReviewsRequest]) (*connect.Response[v1.GetDueReviewsResponse], error)
+	// RecordReview records a review result and updates spaced repetition state.
+	RecordReview(context.Context, *connect.Request[v1.RecordReviewRequest]) (*connect.Response[emptypb.Empty], error)
+	// GetReviewStats returns review statistics for the current user.
+	GetReviewStats(context.Context, *connect.Request[v1.GetReviewStatsRequest]) (*connect.Response[v1.GetReviewStatsResponse], error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -473,6 +528,24 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		connect.WithSchema(aIServiceMethods.ByName("GetKnowledgeGraph")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aIServiceGetDueReviewsHandler := connect.NewUnaryHandler(
+		AIServiceGetDueReviewsProcedure,
+		svc.GetDueReviews,
+		connect.WithSchema(aIServiceMethods.ByName("GetDueReviews")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceRecordReviewHandler := connect.NewUnaryHandler(
+		AIServiceRecordReviewProcedure,
+		svc.RecordReview,
+		connect.WithSchema(aIServiceMethods.ByName("RecordReview")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceGetReviewStatsHandler := connect.NewUnaryHandler(
+		AIServiceGetReviewStatsProcedure,
+		svc.GetReviewStats,
+		connect.WithSchema(aIServiceMethods.ByName("GetReviewStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aIServiceListAIConversationsHandler := connect.NewUnaryHandler(
 		AIServiceListAIConversationsProcedure,
 		svc.ListAIConversations,
@@ -543,6 +616,12 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceLinkMemosHandler.ServeHTTP(w, r)
 		case AIServiceGetKnowledgeGraphProcedure:
 			aIServiceGetKnowledgeGraphHandler.ServeHTTP(w, r)
+		case AIServiceGetDueReviewsProcedure:
+			aIServiceGetDueReviewsHandler.ServeHTTP(w, r)
+		case AIServiceRecordReviewProcedure:
+			aIServiceRecordReviewHandler.ServeHTTP(w, r)
+		case AIServiceGetReviewStatsProcedure:
+			aIServiceGetReviewStatsHandler.ServeHTTP(w, r)
 		case AIServiceListAIConversationsProcedure:
 			aIServiceListAIConversationsHandler.ServeHTTP(w, r)
 		case AIServiceGetAIConversationProcedure:
@@ -606,6 +685,18 @@ func (UnimplementedAIServiceHandler) LinkMemos(context.Context, *connect.Request
 
 func (UnimplementedAIServiceHandler) GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetKnowledgeGraph is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) GetDueReviews(context.Context, *connect.Request[v1.GetDueReviewsRequest]) (*connect.Response[v1.GetDueReviewsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetDueReviews is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) RecordReview(context.Context, *connect.Request[v1.RecordReviewRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.RecordReview is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) GetReviewStats(context.Context, *connect.Request[v1.GetReviewStatsRequest]) (*connect.Response[v1.GetReviewStatsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetReviewStats is not implemented"))
 }
 
 func (UnimplementedAIServiceHandler) ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error) {

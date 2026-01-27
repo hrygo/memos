@@ -87,6 +87,28 @@ service AIService {
     };
   }
 
+  // GetDueReviews returns memos that are due for review.
+  rpc GetDueReviews(GetDueReviewsRequest) returns (GetDueReviewsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/reviews/due"
+    };
+  }
+
+  // RecordReview records a review result and updates spaced repetition state.
+  rpc RecordReview(RecordReviewRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/reviews/{memo_uid}/record"
+      body: "*"
+    };
+  }
+
+  // GetReviewStats returns review statistics for the current user.
+  rpc GetReviewStats(GetReviewStatsRequest) returns (GetReviewStatsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/reviews/stats"
+    };
+  }
+
   // ListAIConversations returns a list of AI conversations.
   rpc ListAIConversations(ListAIConversationsRequest) returns (ListAIConversationsResponse) {
     option (google.api.http) = {
@@ -512,4 +534,61 @@ message GraphStats {
   int32 link_edges = 4;                  // Explicit link edge count
   int32 tag_edges = 5;                   // Tag co-occurrence edge count
   int32 semantic_edges = 6;              // Semantic similarity edge count
+}
+
+// ========== Review System Messages (P3-C002) ==========
+
+// GetDueReviewsRequest is the request for GetDueReviews.
+message GetDueReviewsRequest {
+  int32 limit = 1;                       // Max items to return (default: 20)
+}
+
+// GetDueReviewsResponse is the response for GetDueReviews.
+message GetDueReviewsResponse {
+  repeated ReviewItem items = 1;
+  int32 total_due = 2;                   // Total items due for review
+}
+
+// ReviewItem represents a memo in the review queue.
+message ReviewItem {
+  string memo_uid = 1;                   // Memo UID
+  string memo_name = 2;                  // memos/{uid} format
+  string title = 3;                      // Memo title
+  string snippet = 4;                    // Content snippet
+  repeated string tags = 5;              // Memo tags
+  int64 last_review_ts = 6;              // Last review timestamp
+  int32 review_count = 7;                // Total review count
+  int64 next_review_ts = 8;              // Next scheduled review timestamp
+  double priority = 9;                   // Computed priority score
+  int64 created_ts = 10;                 // Memo creation timestamp
+}
+
+// RecordReviewRequest is the request for RecordReview.
+message RecordReviewRequest {
+  string memo_uid = 1 [(google.api.field_behavior) = REQUIRED];
+  ReviewQuality quality = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// ReviewQuality represents the user's assessment of recall difficulty.
+enum ReviewQuality {
+  REVIEW_QUALITY_UNSPECIFIED = 0;
+  REVIEW_QUALITY_AGAIN = 1;              // Complete blackout
+  REVIEW_QUALITY_HARD = 2;               // Correct with difficulty
+  REVIEW_QUALITY_GOOD = 3;               // Correct with hesitation
+  REVIEW_QUALITY_EASY = 4;               // Perfect response
+}
+
+// GetReviewStatsRequest is the request for GetReviewStats.
+message GetReviewStatsRequest {}
+
+// GetReviewStatsResponse is the response for GetReviewStats.
+message GetReviewStatsResponse {
+  int32 total_memos = 1;                 // Total memos in review system
+  int32 due_today = 2;                   // Memos due for review today
+  int32 reviewed_today = 3;              // Memos reviewed today
+  int32 new_memos = 4;                   // Memos never reviewed
+  int32 mastered_memos = 5;              // Memos with interval > 30 days
+  int32 streak_days = 6;                 // Consecutive days of review
+  int32 total_reviews = 7;               // Total review count
+  int32 average_accuracy = 8;            // Average accuracy percentage
 }

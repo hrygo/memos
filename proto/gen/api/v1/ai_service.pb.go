@@ -129,6 +129,62 @@ func (AgentType) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{1}
 }
 
+// ReviewQuality represents the user's assessment of recall difficulty.
+type ReviewQuality int32
+
+const (
+	ReviewQuality_REVIEW_QUALITY_UNSPECIFIED ReviewQuality = 0
+	ReviewQuality_REVIEW_QUALITY_AGAIN       ReviewQuality = 1 // Complete blackout
+	ReviewQuality_REVIEW_QUALITY_HARD        ReviewQuality = 2 // Correct with difficulty
+	ReviewQuality_REVIEW_QUALITY_GOOD        ReviewQuality = 3 // Correct with hesitation
+	ReviewQuality_REVIEW_QUALITY_EASY        ReviewQuality = 4 // Perfect response
+)
+
+// Enum value maps for ReviewQuality.
+var (
+	ReviewQuality_name = map[int32]string{
+		0: "REVIEW_QUALITY_UNSPECIFIED",
+		1: "REVIEW_QUALITY_AGAIN",
+		2: "REVIEW_QUALITY_HARD",
+		3: "REVIEW_QUALITY_GOOD",
+		4: "REVIEW_QUALITY_EASY",
+	}
+	ReviewQuality_value = map[string]int32{
+		"REVIEW_QUALITY_UNSPECIFIED": 0,
+		"REVIEW_QUALITY_AGAIN":       1,
+		"REVIEW_QUALITY_HARD":        2,
+		"REVIEW_QUALITY_GOOD":        3,
+		"REVIEW_QUALITY_EASY":        4,
+	}
+)
+
+func (x ReviewQuality) Enum() *ReviewQuality {
+	p := new(ReviewQuality)
+	*p = x
+	return p
+}
+
+func (x ReviewQuality) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReviewQuality) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_ai_service_proto_enumTypes[2].Descriptor()
+}
+
+func (ReviewQuality) Type() protoreflect.EnumType {
+	return &file_api_v1_ai_service_proto_enumTypes[2]
+}
+
+func (x ReviewQuality) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReviewQuality.Descriptor instead.
+func (ReviewQuality) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{2}
+}
+
 // ScheduleAgentChatRequest is the request for schedule agent chat.
 type ScheduleAgentChatRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -3021,6 +3077,412 @@ func (x *GraphStats) GetSemanticEdges() int32 {
 	return 0
 }
 
+// GetDueReviewsRequest is the request for GetDueReviews.
+type GetDueReviewsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"` // Max items to return (default: 20)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDueReviewsRequest) Reset() {
+	*x = GetDueReviewsRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDueReviewsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDueReviewsRequest) ProtoMessage() {}
+
+func (x *GetDueReviewsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDueReviewsRequest.ProtoReflect.Descriptor instead.
+func (*GetDueReviewsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *GetDueReviewsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// GetDueReviewsResponse is the response for GetDueReviews.
+type GetDueReviewsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*ReviewItem          `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	TotalDue      int32                  `protobuf:"varint,2,opt,name=total_due,json=totalDue,proto3" json:"total_due,omitempty"` // Total items due for review
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDueReviewsResponse) Reset() {
+	*x = GetDueReviewsResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDueReviewsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDueReviewsResponse) ProtoMessage() {}
+
+func (x *GetDueReviewsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDueReviewsResponse.ProtoReflect.Descriptor instead.
+func (*GetDueReviewsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *GetDueReviewsResponse) GetItems() []*ReviewItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *GetDueReviewsResponse) GetTotalDue() int32 {
+	if x != nil {
+		return x.TotalDue
+	}
+	return 0
+}
+
+// ReviewItem represents a memo in the review queue.
+type ReviewItem struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemoUid       string                 `protobuf:"bytes,1,opt,name=memo_uid,json=memoUid,proto3" json:"memo_uid,omitempty"`                   // Memo UID
+	MemoName      string                 `protobuf:"bytes,2,opt,name=memo_name,json=memoName,proto3" json:"memo_name,omitempty"`                // memos/{uid} format
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`                                      // Memo title
+	Snippet       string                 `protobuf:"bytes,4,opt,name=snippet,proto3" json:"snippet,omitempty"`                                  // Content snippet
+	Tags          []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`                                        // Memo tags
+	LastReviewTs  int64                  `protobuf:"varint,6,opt,name=last_review_ts,json=lastReviewTs,proto3" json:"last_review_ts,omitempty"` // Last review timestamp
+	ReviewCount   int32                  `protobuf:"varint,7,opt,name=review_count,json=reviewCount,proto3" json:"review_count,omitempty"`      // Total review count
+	NextReviewTs  int64                  `protobuf:"varint,8,opt,name=next_review_ts,json=nextReviewTs,proto3" json:"next_review_ts,omitempty"` // Next scheduled review timestamp
+	Priority      float64                `protobuf:"fixed64,9,opt,name=priority,proto3" json:"priority,omitempty"`                              // Computed priority score
+	CreatedTs     int64                  `protobuf:"varint,10,opt,name=created_ts,json=createdTs,proto3" json:"created_ts,omitempty"`           // Memo creation timestamp
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewItem) Reset() {
+	*x = ReviewItem{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewItem) ProtoMessage() {}
+
+func (x *ReviewItem) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewItem.ProtoReflect.Descriptor instead.
+func (*ReviewItem) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *ReviewItem) GetMemoUid() string {
+	if x != nil {
+		return x.MemoUid
+	}
+	return ""
+}
+
+func (x *ReviewItem) GetMemoName() string {
+	if x != nil {
+		return x.MemoName
+	}
+	return ""
+}
+
+func (x *ReviewItem) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ReviewItem) GetSnippet() string {
+	if x != nil {
+		return x.Snippet
+	}
+	return ""
+}
+
+func (x *ReviewItem) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *ReviewItem) GetLastReviewTs() int64 {
+	if x != nil {
+		return x.LastReviewTs
+	}
+	return 0
+}
+
+func (x *ReviewItem) GetReviewCount() int32 {
+	if x != nil {
+		return x.ReviewCount
+	}
+	return 0
+}
+
+func (x *ReviewItem) GetNextReviewTs() int64 {
+	if x != nil {
+		return x.NextReviewTs
+	}
+	return 0
+}
+
+func (x *ReviewItem) GetPriority() float64 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *ReviewItem) GetCreatedTs() int64 {
+	if x != nil {
+		return x.CreatedTs
+	}
+	return 0
+}
+
+// RecordReviewRequest is the request for RecordReview.
+type RecordReviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemoUid       string                 `protobuf:"bytes,1,opt,name=memo_uid,json=memoUid,proto3" json:"memo_uid,omitempty"`
+	Quality       ReviewQuality          `protobuf:"varint,2,opt,name=quality,proto3,enum=memos.api.v1.ReviewQuality" json:"quality,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordReviewRequest) Reset() {
+	*x = RecordReviewRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordReviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordReviewRequest) ProtoMessage() {}
+
+func (x *RecordReviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordReviewRequest.ProtoReflect.Descriptor instead.
+func (*RecordReviewRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *RecordReviewRequest) GetMemoUid() string {
+	if x != nil {
+		return x.MemoUid
+	}
+	return ""
+}
+
+func (x *RecordReviewRequest) GetQuality() ReviewQuality {
+	if x != nil {
+		return x.Quality
+	}
+	return ReviewQuality_REVIEW_QUALITY_UNSPECIFIED
+}
+
+// GetReviewStatsRequest is the request for GetReviewStats.
+type GetReviewStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReviewStatsRequest) Reset() {
+	*x = GetReviewStatsRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReviewStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReviewStatsRequest) ProtoMessage() {}
+
+func (x *GetReviewStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReviewStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetReviewStatsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{50}
+}
+
+// GetReviewStatsResponse is the response for GetReviewStats.
+type GetReviewStatsResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	TotalMemos      int32                  `protobuf:"varint,1,opt,name=total_memos,json=totalMemos,proto3" json:"total_memos,omitempty"`                // Total memos in review system
+	DueToday        int32                  `protobuf:"varint,2,opt,name=due_today,json=dueToday,proto3" json:"due_today,omitempty"`                      // Memos due for review today
+	ReviewedToday   int32                  `protobuf:"varint,3,opt,name=reviewed_today,json=reviewedToday,proto3" json:"reviewed_today,omitempty"`       // Memos reviewed today
+	NewMemos        int32                  `protobuf:"varint,4,opt,name=new_memos,json=newMemos,proto3" json:"new_memos,omitempty"`                      // Memos never reviewed
+	MasteredMemos   int32                  `protobuf:"varint,5,opt,name=mastered_memos,json=masteredMemos,proto3" json:"mastered_memos,omitempty"`       // Memos with interval > 30 days
+	StreakDays      int32                  `protobuf:"varint,6,opt,name=streak_days,json=streakDays,proto3" json:"streak_days,omitempty"`                // Consecutive days of review
+	TotalReviews    int32                  `protobuf:"varint,7,opt,name=total_reviews,json=totalReviews,proto3" json:"total_reviews,omitempty"`          // Total review count
+	AverageAccuracy int32                  `protobuf:"varint,8,opt,name=average_accuracy,json=averageAccuracy,proto3" json:"average_accuracy,omitempty"` // Average accuracy percentage
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetReviewStatsResponse) Reset() {
+	*x = GetReviewStatsResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReviewStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReviewStatsResponse) ProtoMessage() {}
+
+func (x *GetReviewStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReviewStatsResponse.ProtoReflect.Descriptor instead.
+func (*GetReviewStatsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *GetReviewStatsResponse) GetTotalMemos() int32 {
+	if x != nil {
+		return x.TotalMemos
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetDueToday() int32 {
+	if x != nil {
+		return x.DueToday
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetReviewedToday() int32 {
+	if x != nil {
+		return x.ReviewedToday
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetNewMemos() int32 {
+	if x != nil {
+		return x.NewMemos
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetMasteredMemos() int32 {
+	if x != nil {
+		return x.MasteredMemos
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetStreakDays() int32 {
+	if x != nil {
+		return x.StreakDays
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetTotalReviews() int32 {
+	if x != nil {
+		return x.TotalReviews
+	}
+	return 0
+}
+
+func (x *GetReviewStatsResponse) GetAverageAccuracy() int32 {
+	if x != nil {
+		return x.AverageAccuracy
+	}
+	return 0
+}
+
 var File_api_v1_ai_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_ai_service_proto_rawDesc = "" +
@@ -3254,7 +3716,41 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\n" +
 	"link_edges\x18\x04 \x01(\x05R\tlinkEdges\x12\x1b\n" +
 	"\ttag_edges\x18\x05 \x01(\x05R\btagEdges\x12%\n" +
-	"\x0esemantic_edges\x18\x06 \x01(\x05R\rsemanticEdges*7\n" +
+	"\x0esemantic_edges\x18\x06 \x01(\x05R\rsemanticEdges\",\n" +
+	"\x14GetDueReviewsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\"d\n" +
+	"\x15GetDueReviewsResponse\x12.\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.memos.api.v1.ReviewItemR\x05items\x12\x1b\n" +
+	"\ttotal_due\x18\x02 \x01(\x05R\btotalDue\"\xb2\x02\n" +
+	"\n" +
+	"ReviewItem\x12\x19\n" +
+	"\bmemo_uid\x18\x01 \x01(\tR\amemoUid\x12\x1b\n" +
+	"\tmemo_name\x18\x02 \x01(\tR\bmemoName\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x18\n" +
+	"\asnippet\x18\x04 \x01(\tR\asnippet\x12\x12\n" +
+	"\x04tags\x18\x05 \x03(\tR\x04tags\x12$\n" +
+	"\x0elast_review_ts\x18\x06 \x01(\x03R\flastReviewTs\x12!\n" +
+	"\freview_count\x18\a \x01(\x05R\vreviewCount\x12$\n" +
+	"\x0enext_review_ts\x18\b \x01(\x03R\fnextReviewTs\x12\x1a\n" +
+	"\bpriority\x18\t \x01(\x01R\bpriority\x12\x1d\n" +
+	"\n" +
+	"created_ts\x18\n" +
+	" \x01(\x03R\tcreatedTs\"q\n" +
+	"\x13RecordReviewRequest\x12\x1e\n" +
+	"\bmemo_uid\x18\x01 \x01(\tB\x03\xe0A\x02R\amemoUid\x12:\n" +
+	"\aquality\x18\x02 \x01(\x0e2\x1b.memos.api.v1.ReviewQualityB\x03\xe0A\x02R\aquality\"\x17\n" +
+	"\x15GetReviewStatsRequest\"\xb2\x02\n" +
+	"\x16GetReviewStatsResponse\x12\x1f\n" +
+	"\vtotal_memos\x18\x01 \x01(\x05R\n" +
+	"totalMemos\x12\x1b\n" +
+	"\tdue_today\x18\x02 \x01(\x05R\bdueToday\x12%\n" +
+	"\x0ereviewed_today\x18\x03 \x01(\x05R\rreviewedToday\x12\x1b\n" +
+	"\tnew_memos\x18\x04 \x01(\x05R\bnewMemos\x12%\n" +
+	"\x0emastered_memos\x18\x05 \x01(\x05R\rmasteredMemos\x12\x1f\n" +
+	"\vstreak_days\x18\x06 \x01(\x05R\n" +
+	"streakDays\x12#\n" +
+	"\rtotal_reviews\x18\a \x01(\x05R\ftotalReviews\x12)\n" +
+	"\x10average_accuracy\x18\b \x01(\x05R\x0faverageAccuracy*7\n" +
 	"\x11ScheduleQueryMode\x12\b\n" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
@@ -3265,7 +3761,13 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\xf9\x12\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x04*\x94\x01\n" +
+	"\rReviewQuality\x12\x1e\n" +
+	"\x1aREVIEW_QUALITY_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14REVIEW_QUALITY_AGAIN\x10\x01\x12\x17\n" +
+	"\x13REVIEW_QUALITY_HARD\x10\x02\x12\x17\n" +
+	"\x13REVIEW_QUALITY_GOOD\x10\x03\x12\x17\n" +
+	"\x13REVIEW_QUALITY_EASY\x10\x042\xee\x15\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12[\n" +
@@ -3277,7 +3779,10 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\n" +
 	"MergeMemos\x12\x1f.memos.api.v1.MergeMemosRequest\x1a .memos.api.v1.MergeMemosResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/ai/merge-memos\x12n\n" +
 	"\tLinkMemos\x12\x1e.memos.api.v1.LinkMemosRequest\x1a\x1f.memos.api.v1.LinkMemosResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/api/v1/ai/link-memos\x12\x88\x01\n" +
-	"\x11GetKnowledgeGraph\x12&.memos.api.v1.GetKnowledgeGraphRequest\x1a'.memos.api.v1.GetKnowledgeGraphResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/v1/ai/knowledge-graph\x12\x8c\x01\n" +
+	"\x11GetKnowledgeGraph\x12&.memos.api.v1.GetKnowledgeGraphRequest\x1a'.memos.api.v1.GetKnowledgeGraphResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/v1/ai/knowledge-graph\x12x\n" +
+	"\rGetDueReviews\x12\".memos.api.v1.GetDueReviewsRequest\x1a#.memos.api.v1.GetDueReviewsResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/ai/reviews/due\x12z\n" +
+	"\fRecordReview\x12!.memos.api.v1.RecordReviewRequest\x1a\x16.google.protobuf.Empty\"/\x82\xd3\xe4\x93\x02):\x01*\"$/api/v1/ai/reviews/{memo_uid}/record\x12}\n" +
+	"\x0eGetReviewStats\x12#.memos.api.v1.GetReviewStatsRequest\x1a$.memos.api.v1.GetReviewStatsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/v1/ai/reviews/stats\x12\x8c\x01\n" +
 	"\x13ListAIConversations\x12(.memos.api.v1.ListAIConversationsRequest\x1a).memos.api.v1.ListAIConversationsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/v1/ai/conversations\x12\x80\x01\n" +
 	"\x11GetAIConversation\x12&.memos.api.v1.GetAIConversationRequest\x1a\x1c.memos.api.v1.AIConversation\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/ai/conversations/{id}\x12\x84\x01\n" +
 	"\x14CreateAIConversation\x12).memos.api.v1.CreateAIConversationRequest\x1a\x1c.memos.api.v1.AIConversation\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/ai/conversations\x12\x89\x01\n" +
@@ -3304,128 +3809,143 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_ai_service_proto_rawDescData
 }
 
-var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
 var file_api_v1_ai_service_proto_goTypes = []any{
 	(ScheduleQueryMode)(0),                   // 0: memos.api.v1.ScheduleQueryMode
 	(AgentType)(0),                           // 1: memos.api.v1.AgentType
-	(*ScheduleAgentChatRequest)(nil),         // 2: memos.api.v1.ScheduleAgentChatRequest
-	(*ScheduleAgentChatResponse)(nil),        // 3: memos.api.v1.ScheduleAgentChatResponse
-	(*ScheduleAgentStreamResponse)(nil),      // 4: memos.api.v1.ScheduleAgentStreamResponse
-	(*SemanticSearchRequest)(nil),            // 5: memos.api.v1.SemanticSearchRequest
-	(*SemanticSearchResponse)(nil),           // 6: memos.api.v1.SemanticSearchResponse
-	(*SearchResult)(nil),                     // 7: memos.api.v1.SearchResult
-	(*SuggestTagsRequest)(nil),               // 8: memos.api.v1.SuggestTagsRequest
-	(*SuggestTagsResponse)(nil),              // 9: memos.api.v1.SuggestTagsResponse
-	(*ChatRequest)(nil),                      // 10: memos.api.v1.ChatRequest
-	(*AIConversation)(nil),                   // 11: memos.api.v1.AIConversation
-	(*AIMessage)(nil),                        // 12: memos.api.v1.AIMessage
-	(*ListAIConversationsRequest)(nil),       // 13: memos.api.v1.ListAIConversationsRequest
-	(*ListAIConversationsResponse)(nil),      // 14: memos.api.v1.ListAIConversationsResponse
-	(*GetAIConversationRequest)(nil),         // 15: memos.api.v1.GetAIConversationRequest
-	(*CreateAIConversationRequest)(nil),      // 16: memos.api.v1.CreateAIConversationRequest
-	(*UpdateAIConversationRequest)(nil),      // 17: memos.api.v1.UpdateAIConversationRequest
-	(*DeleteAIConversationRequest)(nil),      // 18: memos.api.v1.DeleteAIConversationRequest
-	(*AddContextSeparatorRequest)(nil),       // 19: memos.api.v1.AddContextSeparatorRequest
-	(*ListMessagesRequest)(nil),              // 20: memos.api.v1.ListMessagesRequest
-	(*ListMessagesResponse)(nil),             // 21: memos.api.v1.ListMessagesResponse
-	(*ClearConversationMessagesRequest)(nil), // 22: memos.api.v1.ClearConversationMessagesRequest
-	(*ChatResponse)(nil),                     // 23: memos.api.v1.ChatResponse
-	(*ScheduleCreationIntent)(nil),           // 24: memos.api.v1.ScheduleCreationIntent
-	(*ScheduleQueryResult)(nil),              // 25: memos.api.v1.ScheduleQueryResult
-	(*ScheduleSummary)(nil),                  // 26: memos.api.v1.ScheduleSummary
-	(*GetRelatedMemosRequest)(nil),           // 27: memos.api.v1.GetRelatedMemosRequest
-	(*GetRelatedMemosResponse)(nil),          // 28: memos.api.v1.GetRelatedMemosResponse
-	(*ParrotSelfCognition)(nil),              // 29: memos.api.v1.ParrotSelfCognition
-	(*GetParrotSelfCognitionRequest)(nil),    // 30: memos.api.v1.GetParrotSelfCognitionRequest
-	(*GetParrotSelfCognitionResponse)(nil),   // 31: memos.api.v1.GetParrotSelfCognitionResponse
-	(*ListParrotsRequest)(nil),               // 32: memos.api.v1.ListParrotsRequest
-	(*ListParrotsResponse)(nil),              // 33: memos.api.v1.ListParrotsResponse
-	(*ParrotInfo)(nil),                       // 34: memos.api.v1.ParrotInfo
-	(*DetectDuplicatesRequest)(nil),          // 35: memos.api.v1.DetectDuplicatesRequest
-	(*DetectDuplicatesResponse)(nil),         // 36: memos.api.v1.DetectDuplicatesResponse
-	(*SimilarMemo)(nil),                      // 37: memos.api.v1.SimilarMemo
-	(*SimilarityBreakdown)(nil),              // 38: memos.api.v1.SimilarityBreakdown
-	(*MergeMemosRequest)(nil),                // 39: memos.api.v1.MergeMemosRequest
-	(*MergeMemosResponse)(nil),               // 40: memos.api.v1.MergeMemosResponse
-	(*LinkMemosRequest)(nil),                 // 41: memos.api.v1.LinkMemosRequest
-	(*LinkMemosResponse)(nil),                // 42: memos.api.v1.LinkMemosResponse
-	(*GetKnowledgeGraphRequest)(nil),         // 43: memos.api.v1.GetKnowledgeGraphRequest
-	(*GetKnowledgeGraphResponse)(nil),        // 44: memos.api.v1.GetKnowledgeGraphResponse
-	(*GraphNode)(nil),                        // 45: memos.api.v1.GraphNode
-	(*GraphEdge)(nil),                        // 46: memos.api.v1.GraphEdge
-	(*GraphStats)(nil),                       // 47: memos.api.v1.GraphStats
-	(*emptypb.Empty)(nil),                    // 48: google.protobuf.Empty
+	(ReviewQuality)(0),                       // 2: memos.api.v1.ReviewQuality
+	(*ScheduleAgentChatRequest)(nil),         // 3: memos.api.v1.ScheduleAgentChatRequest
+	(*ScheduleAgentChatResponse)(nil),        // 4: memos.api.v1.ScheduleAgentChatResponse
+	(*ScheduleAgentStreamResponse)(nil),      // 5: memos.api.v1.ScheduleAgentStreamResponse
+	(*SemanticSearchRequest)(nil),            // 6: memos.api.v1.SemanticSearchRequest
+	(*SemanticSearchResponse)(nil),           // 7: memos.api.v1.SemanticSearchResponse
+	(*SearchResult)(nil),                     // 8: memos.api.v1.SearchResult
+	(*SuggestTagsRequest)(nil),               // 9: memos.api.v1.SuggestTagsRequest
+	(*SuggestTagsResponse)(nil),              // 10: memos.api.v1.SuggestTagsResponse
+	(*ChatRequest)(nil),                      // 11: memos.api.v1.ChatRequest
+	(*AIConversation)(nil),                   // 12: memos.api.v1.AIConversation
+	(*AIMessage)(nil),                        // 13: memos.api.v1.AIMessage
+	(*ListAIConversationsRequest)(nil),       // 14: memos.api.v1.ListAIConversationsRequest
+	(*ListAIConversationsResponse)(nil),      // 15: memos.api.v1.ListAIConversationsResponse
+	(*GetAIConversationRequest)(nil),         // 16: memos.api.v1.GetAIConversationRequest
+	(*CreateAIConversationRequest)(nil),      // 17: memos.api.v1.CreateAIConversationRequest
+	(*UpdateAIConversationRequest)(nil),      // 18: memos.api.v1.UpdateAIConversationRequest
+	(*DeleteAIConversationRequest)(nil),      // 19: memos.api.v1.DeleteAIConversationRequest
+	(*AddContextSeparatorRequest)(nil),       // 20: memos.api.v1.AddContextSeparatorRequest
+	(*ListMessagesRequest)(nil),              // 21: memos.api.v1.ListMessagesRequest
+	(*ListMessagesResponse)(nil),             // 22: memos.api.v1.ListMessagesResponse
+	(*ClearConversationMessagesRequest)(nil), // 23: memos.api.v1.ClearConversationMessagesRequest
+	(*ChatResponse)(nil),                     // 24: memos.api.v1.ChatResponse
+	(*ScheduleCreationIntent)(nil),           // 25: memos.api.v1.ScheduleCreationIntent
+	(*ScheduleQueryResult)(nil),              // 26: memos.api.v1.ScheduleQueryResult
+	(*ScheduleSummary)(nil),                  // 27: memos.api.v1.ScheduleSummary
+	(*GetRelatedMemosRequest)(nil),           // 28: memos.api.v1.GetRelatedMemosRequest
+	(*GetRelatedMemosResponse)(nil),          // 29: memos.api.v1.GetRelatedMemosResponse
+	(*ParrotSelfCognition)(nil),              // 30: memos.api.v1.ParrotSelfCognition
+	(*GetParrotSelfCognitionRequest)(nil),    // 31: memos.api.v1.GetParrotSelfCognitionRequest
+	(*GetParrotSelfCognitionResponse)(nil),   // 32: memos.api.v1.GetParrotSelfCognitionResponse
+	(*ListParrotsRequest)(nil),               // 33: memos.api.v1.ListParrotsRequest
+	(*ListParrotsResponse)(nil),              // 34: memos.api.v1.ListParrotsResponse
+	(*ParrotInfo)(nil),                       // 35: memos.api.v1.ParrotInfo
+	(*DetectDuplicatesRequest)(nil),          // 36: memos.api.v1.DetectDuplicatesRequest
+	(*DetectDuplicatesResponse)(nil),         // 37: memos.api.v1.DetectDuplicatesResponse
+	(*SimilarMemo)(nil),                      // 38: memos.api.v1.SimilarMemo
+	(*SimilarityBreakdown)(nil),              // 39: memos.api.v1.SimilarityBreakdown
+	(*MergeMemosRequest)(nil),                // 40: memos.api.v1.MergeMemosRequest
+	(*MergeMemosResponse)(nil),               // 41: memos.api.v1.MergeMemosResponse
+	(*LinkMemosRequest)(nil),                 // 42: memos.api.v1.LinkMemosRequest
+	(*LinkMemosResponse)(nil),                // 43: memos.api.v1.LinkMemosResponse
+	(*GetKnowledgeGraphRequest)(nil),         // 44: memos.api.v1.GetKnowledgeGraphRequest
+	(*GetKnowledgeGraphResponse)(nil),        // 45: memos.api.v1.GetKnowledgeGraphResponse
+	(*GraphNode)(nil),                        // 46: memos.api.v1.GraphNode
+	(*GraphEdge)(nil),                        // 47: memos.api.v1.GraphEdge
+	(*GraphStats)(nil),                       // 48: memos.api.v1.GraphStats
+	(*GetDueReviewsRequest)(nil),             // 49: memos.api.v1.GetDueReviewsRequest
+	(*GetDueReviewsResponse)(nil),            // 50: memos.api.v1.GetDueReviewsResponse
+	(*ReviewItem)(nil),                       // 51: memos.api.v1.ReviewItem
+	(*RecordReviewRequest)(nil),              // 52: memos.api.v1.RecordReviewRequest
+	(*GetReviewStatsRequest)(nil),            // 53: memos.api.v1.GetReviewStatsRequest
+	(*GetReviewStatsResponse)(nil),           // 54: memos.api.v1.GetReviewStatsResponse
+	(*emptypb.Empty)(nil),                    // 55: google.protobuf.Empty
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
-	7,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
+	8,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
 	0,  // 1: memos.api.v1.ChatRequest.schedule_query_mode:type_name -> memos.api.v1.ScheduleQueryMode
 	1,  // 2: memos.api.v1.ChatRequest.agent_type:type_name -> memos.api.v1.AgentType
 	1,  // 3: memos.api.v1.AIConversation.parrot_id:type_name -> memos.api.v1.AgentType
-	12, // 4: memos.api.v1.AIConversation.messages:type_name -> memos.api.v1.AIMessage
-	11, // 5: memos.api.v1.ListAIConversationsResponse.conversations:type_name -> memos.api.v1.AIConversation
+	13, // 4: memos.api.v1.AIConversation.messages:type_name -> memos.api.v1.AIMessage
+	12, // 5: memos.api.v1.ListAIConversationsResponse.conversations:type_name -> memos.api.v1.AIConversation
 	1,  // 6: memos.api.v1.CreateAIConversationRequest.parrot_id:type_name -> memos.api.v1.AgentType
-	12, // 7: memos.api.v1.ListMessagesResponse.messages:type_name -> memos.api.v1.AIMessage
-	24, // 8: memos.api.v1.ChatResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
-	25, // 9: memos.api.v1.ChatResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
-	26, // 10: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
-	7,  // 11: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
+	13, // 7: memos.api.v1.ListMessagesResponse.messages:type_name -> memos.api.v1.AIMessage
+	25, // 8: memos.api.v1.ChatResponse.schedule_creation_intent:type_name -> memos.api.v1.ScheduleCreationIntent
+	26, // 9: memos.api.v1.ChatResponse.schedule_query_result:type_name -> memos.api.v1.ScheduleQueryResult
+	27, // 10: memos.api.v1.ScheduleQueryResult.schedules:type_name -> memos.api.v1.ScheduleSummary
+	8,  // 11: memos.api.v1.GetRelatedMemosResponse.memos:type_name -> memos.api.v1.SearchResult
 	1,  // 12: memos.api.v1.GetParrotSelfCognitionRequest.agent_type:type_name -> memos.api.v1.AgentType
-	29, // 13: memos.api.v1.GetParrotSelfCognitionResponse.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
-	34, // 14: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
+	30, // 13: memos.api.v1.GetParrotSelfCognitionResponse.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	35, // 14: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
 	1,  // 15: memos.api.v1.ParrotInfo.agent_type:type_name -> memos.api.v1.AgentType
-	29, // 16: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
-	37, // 17: memos.api.v1.DetectDuplicatesResponse.duplicates:type_name -> memos.api.v1.SimilarMemo
-	37, // 18: memos.api.v1.DetectDuplicatesResponse.related:type_name -> memos.api.v1.SimilarMemo
-	38, // 19: memos.api.v1.SimilarMemo.breakdown:type_name -> memos.api.v1.SimilarityBreakdown
-	45, // 20: memos.api.v1.GetKnowledgeGraphResponse.nodes:type_name -> memos.api.v1.GraphNode
-	46, // 21: memos.api.v1.GetKnowledgeGraphResponse.edges:type_name -> memos.api.v1.GraphEdge
-	47, // 22: memos.api.v1.GetKnowledgeGraphResponse.stats:type_name -> memos.api.v1.GraphStats
-	5,  // 23: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	8,  // 24: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	10, // 25: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatRequest
-	27, // 26: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	30, // 27: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
-	32, // 28: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
-	35, // 29: memos.api.v1.AIService.DetectDuplicates:input_type -> memos.api.v1.DetectDuplicatesRequest
-	39, // 30: memos.api.v1.AIService.MergeMemos:input_type -> memos.api.v1.MergeMemosRequest
-	41, // 31: memos.api.v1.AIService.LinkMemos:input_type -> memos.api.v1.LinkMemosRequest
-	43, // 32: memos.api.v1.AIService.GetKnowledgeGraph:input_type -> memos.api.v1.GetKnowledgeGraphRequest
-	13, // 33: memos.api.v1.AIService.ListAIConversations:input_type -> memos.api.v1.ListAIConversationsRequest
-	15, // 34: memos.api.v1.AIService.GetAIConversation:input_type -> memos.api.v1.GetAIConversationRequest
-	16, // 35: memos.api.v1.AIService.CreateAIConversation:input_type -> memos.api.v1.CreateAIConversationRequest
-	17, // 36: memos.api.v1.AIService.UpdateAIConversation:input_type -> memos.api.v1.UpdateAIConversationRequest
-	18, // 37: memos.api.v1.AIService.DeleteAIConversation:input_type -> memos.api.v1.DeleteAIConversationRequest
-	19, // 38: memos.api.v1.AIService.AddContextSeparator:input_type -> memos.api.v1.AddContextSeparatorRequest
-	20, // 39: memos.api.v1.AIService.ListMessages:input_type -> memos.api.v1.ListMessagesRequest
-	22, // 40: memos.api.v1.AIService.ClearConversationMessages:input_type -> memos.api.v1.ClearConversationMessagesRequest
-	2,  // 41: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	2,  // 42: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	6,  // 43: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	9,  // 44: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	23, // 45: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
-	28, // 46: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	31, // 47: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
-	33, // 48: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
-	36, // 49: memos.api.v1.AIService.DetectDuplicates:output_type -> memos.api.v1.DetectDuplicatesResponse
-	40, // 50: memos.api.v1.AIService.MergeMemos:output_type -> memos.api.v1.MergeMemosResponse
-	42, // 51: memos.api.v1.AIService.LinkMemos:output_type -> memos.api.v1.LinkMemosResponse
-	44, // 52: memos.api.v1.AIService.GetKnowledgeGraph:output_type -> memos.api.v1.GetKnowledgeGraphResponse
-	14, // 53: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
-	11, // 54: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 55: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 56: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
-	48, // 57: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
-	48, // 58: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
-	21, // 59: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
-	48, // 60: memos.api.v1.AIService.ClearConversationMessages:output_type -> google.protobuf.Empty
-	3,  // 61: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
-	4,  // 62: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
-	43, // [43:63] is the sub-list for method output_type
-	23, // [23:43] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	30, // 16: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
+	38, // 17: memos.api.v1.DetectDuplicatesResponse.duplicates:type_name -> memos.api.v1.SimilarMemo
+	38, // 18: memos.api.v1.DetectDuplicatesResponse.related:type_name -> memos.api.v1.SimilarMemo
+	39, // 19: memos.api.v1.SimilarMemo.breakdown:type_name -> memos.api.v1.SimilarityBreakdown
+	46, // 20: memos.api.v1.GetKnowledgeGraphResponse.nodes:type_name -> memos.api.v1.GraphNode
+	47, // 21: memos.api.v1.GetKnowledgeGraphResponse.edges:type_name -> memos.api.v1.GraphEdge
+	48, // 22: memos.api.v1.GetKnowledgeGraphResponse.stats:type_name -> memos.api.v1.GraphStats
+	51, // 23: memos.api.v1.GetDueReviewsResponse.items:type_name -> memos.api.v1.ReviewItem
+	2,  // 24: memos.api.v1.RecordReviewRequest.quality:type_name -> memos.api.v1.ReviewQuality
+	6,  // 25: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	9,  // 26: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	11, // 27: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatRequest
+	28, // 28: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	31, // 29: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
+	33, // 30: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
+	36, // 31: memos.api.v1.AIService.DetectDuplicates:input_type -> memos.api.v1.DetectDuplicatesRequest
+	40, // 32: memos.api.v1.AIService.MergeMemos:input_type -> memos.api.v1.MergeMemosRequest
+	42, // 33: memos.api.v1.AIService.LinkMemos:input_type -> memos.api.v1.LinkMemosRequest
+	44, // 34: memos.api.v1.AIService.GetKnowledgeGraph:input_type -> memos.api.v1.GetKnowledgeGraphRequest
+	49, // 35: memos.api.v1.AIService.GetDueReviews:input_type -> memos.api.v1.GetDueReviewsRequest
+	52, // 36: memos.api.v1.AIService.RecordReview:input_type -> memos.api.v1.RecordReviewRequest
+	53, // 37: memos.api.v1.AIService.GetReviewStats:input_type -> memos.api.v1.GetReviewStatsRequest
+	14, // 38: memos.api.v1.AIService.ListAIConversations:input_type -> memos.api.v1.ListAIConversationsRequest
+	16, // 39: memos.api.v1.AIService.GetAIConversation:input_type -> memos.api.v1.GetAIConversationRequest
+	17, // 40: memos.api.v1.AIService.CreateAIConversation:input_type -> memos.api.v1.CreateAIConversationRequest
+	18, // 41: memos.api.v1.AIService.UpdateAIConversation:input_type -> memos.api.v1.UpdateAIConversationRequest
+	19, // 42: memos.api.v1.AIService.DeleteAIConversation:input_type -> memos.api.v1.DeleteAIConversationRequest
+	20, // 43: memos.api.v1.AIService.AddContextSeparator:input_type -> memos.api.v1.AddContextSeparatorRequest
+	21, // 44: memos.api.v1.AIService.ListMessages:input_type -> memos.api.v1.ListMessagesRequest
+	23, // 45: memos.api.v1.AIService.ClearConversationMessages:input_type -> memos.api.v1.ClearConversationMessagesRequest
+	3,  // 46: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	3,  // 47: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	7,  // 48: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	10, // 49: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	24, // 50: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
+	29, // 51: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	32, // 52: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
+	34, // 53: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
+	37, // 54: memos.api.v1.AIService.DetectDuplicates:output_type -> memos.api.v1.DetectDuplicatesResponse
+	41, // 55: memos.api.v1.AIService.MergeMemos:output_type -> memos.api.v1.MergeMemosResponse
+	43, // 56: memos.api.v1.AIService.LinkMemos:output_type -> memos.api.v1.LinkMemosResponse
+	45, // 57: memos.api.v1.AIService.GetKnowledgeGraph:output_type -> memos.api.v1.GetKnowledgeGraphResponse
+	50, // 58: memos.api.v1.AIService.GetDueReviews:output_type -> memos.api.v1.GetDueReviewsResponse
+	55, // 59: memos.api.v1.AIService.RecordReview:output_type -> google.protobuf.Empty
+	54, // 60: memos.api.v1.AIService.GetReviewStats:output_type -> memos.api.v1.GetReviewStatsResponse
+	15, // 61: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
+	12, // 62: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
+	12, // 63: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
+	12, // 64: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
+	55, // 65: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
+	55, // 66: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
+	22, // 67: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
+	55, // 68: memos.api.v1.AIService.ClearConversationMessages:output_type -> google.protobuf.Empty
+	4,  // 69: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	5,  // 70: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	48, // [48:71] is the sub-list for method output_type
+	25, // [25:48] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -3439,8 +3959,8 @@ func file_api_v1_ai_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   46,
+			NumEnums:      3,
+			NumMessages:   52,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

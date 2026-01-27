@@ -482,6 +482,35 @@
     "no-memos-found": "没有发现备忘录",
     "search-placeholder": "搜索内容"
   },
+  "review": {
+    "title": "每日回顾",
+    "subtitle": "通过间隔重复加强记忆",
+    "stats": {
+      "due-today": "今日待复习",
+      "reviewed-today": "已复习",
+      "new-memos": "新内容",
+      "mastered": "已掌握"
+    },
+    "quality": {
+      "again": "忘记",
+      "again-desc": "完全想不起",
+      "hard": "困难",
+      "hard-desc": "勉强记得",
+      "good": "良好",
+      "good-desc": "正确回忆",
+      "easy": "简单",
+      "easy-desc": "轻松记得"
+    },
+    "show-answer": "显示答案",
+    "how-well": "你记得有多清楚？",
+    "view-memo": "查看完整笔记",
+    "progress": "进度",
+    "review-count": "已复习 {{count}} 次",
+    "untitled": "无标题笔记",
+    "all-done": "全部完成！",
+    "all-done-desc": "你已完成今天的所有复习，继续保持！",
+    "load-error": "加载复习数据失败"
+  },
   "resource": {
     "delete-all-unused": "删除所有未使用资源",
     "delete-all-unused-confirm": "您确定要删除所有未使用资源吗？（此操作不可逆）",

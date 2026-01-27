@@ -28,6 +28,7 @@ const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const MemoDetailRedirect = lazy(() => import("./MemoDetailRedirect"));
 const AIChat = lazy(() => import("@/pages/AIChat"));
 const Schedule = lazy(() => import("@/pages/Schedule"));
+const Review = lazy(() => import("@/pages/Review"));
 
 import { ROUTES } from "./routes";
 
@@ -97,6 +98,7 @@ const router = createBrowserRouter([
             children: [{ index: true, element: <LazyRoute component={AIChat} /> }],
           },
           { path: Routes.ATTACHMENTS, element: <LazyRoute component={Attachments} /> },
+          { path: Routes.REVIEW, element: <LazyRoute component={Review} /> },
           { path: Routes.INBOX, element: <LazyRoute component={Inboxes} /> },
           { path: Routes.SETTING, element: <LazyRoute component={Setting} /> },
           { path: "memos/:uid", element: <LazyRoute component={MemoDetail} /> },

@@ -466,6 +466,78 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/reviews/due:
+        get:
+            tags:
+                - AIService
+            description: GetDueReviews returns memos that are due for review.
+            operationId: AIService_GetDueReviews
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetDueReviewsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/reviews/stats:
+        get:
+            tags:
+                - AIService
+            description: GetReviewStats returns review statistics for the current user.
+            operationId: AIService_GetReviewStats
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetReviewStatsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/reviews/{memoUid}/record:
+        post:
+            tags:
+                - AIService
+            description: RecordReview records a review result and updates spaced repetition state.
+            operationId: AIService_RecordReview
+            parameters:
+                - name: memoUid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RecordReviewRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/search:
         post:
             tags:
@@ -3265,6 +3337,17 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/User'
                     description: The authenticated user's information.
+        GetDueReviewsResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ReviewItem'
+                totalDue:
+                    type: integer
+                    format: int32
+            description: GetDueReviewsResponse is the response for GetDueReviews.
         GetKnowledgeGraphResponse:
             type: object
             properties:
@@ -3295,6 +3378,34 @@ components:
                     items:
                         $ref: '#/components/schemas/SearchResult'
             description: GetRelatedMemosResponse is the response for GetRelatedMemos.
+        GetReviewStatsResponse:
+            type: object
+            properties:
+                totalMemos:
+                    type: integer
+                    format: int32
+                dueToday:
+                    type: integer
+                    format: int32
+                reviewedToday:
+                    type: integer
+                    format: int32
+                newMemos:
+                    type: integer
+                    format: int32
+                masteredMemos:
+                    type: integer
+                    format: int32
+                streakDays:
+                    type: integer
+                    format: int32
+                totalReviews:
+                    type: integer
+                    format: int32
+                averageAccuracy:
+                    type: integer
+                    format: int32
+            description: GetReviewStatsResponse is the response for GetReviewStats.
         GoogleProtobufAny:
             type: object
             properties:
@@ -4189,6 +4300,24 @@ components:
                     type: string
                     description: Output only. The creation timestamp.
                     format: date-time
+        RecordReviewRequest:
+            required:
+                - memoUid
+                - quality
+            type: object
+            properties:
+                memoUid:
+                    type: string
+                quality:
+                    enum:
+                        - REVIEW_QUALITY_UNSPECIFIED
+                        - REVIEW_QUALITY_AGAIN
+                        - REVIEW_QUALITY_HARD
+                        - REVIEW_QUALITY_GOOD
+                        - REVIEW_QUALITY_EASY
+                    type: string
+                    format: enum
+            description: RecordReviewRequest is the request for RecordReview.
         RefreshTokenRequest:
             type: object
             properties: {}
@@ -4213,6 +4342,34 @@ components:
                 unit:
                     type: string
             description: Reminder represents a schedule reminder.
+        ReviewItem:
+            type: object
+            properties:
+                memoUid:
+                    type: string
+                memoName:
+                    type: string
+                title:
+                    type: string
+                snippet:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                lastReviewTs:
+                    type: string
+                reviewCount:
+                    type: integer
+                    format: int32
+                nextReviewTs:
+                    type: string
+                priority:
+                    type: number
+                    format: double
+                createdTs:
+                    type: string
+            description: ReviewItem represents a memo in the review queue.
         Schedule:
             required:
                 - name

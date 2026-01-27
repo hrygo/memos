@@ -19,6 +19,8 @@ message UserSetting {
     REFRESH_TOKENS = 6;
     // Personal access tokens for the user.
     PERSONAL_ACCESS_TOKENS = 7;
+    // Review states for spaced repetition (P3-C002).
+    REVIEW_STATES = 8;
   }
 
   int32 user_id = 1;
@@ -30,6 +32,7 @@ message UserSetting {
     WebhooksUserSetting webhooks = 7;
     RefreshTokensUserSetting refresh_tokens = 8;
     PersonalAccessTokensUserSetting personal_access_tokens = 9;
+    ReviewStatesUserSetting review_states = 10;
   }
 }
 
@@ -110,4 +113,24 @@ message WebhooksUserSetting {
     string url = 3;
   }
   repeated Webhook webhooks = 1;
+}
+
+// ReviewStatesUserSetting stores spaced repetition states for memos.
+message ReviewStatesUserSetting {
+  message ReviewState {
+    // Memo UID
+    string memo_uid = 1;
+    // Number of reviews completed
+    int32 review_count = 2;
+    // Last review timestamp (Unix seconds)
+    int64 last_review_ts = 3;
+    // Next scheduled review timestamp (Unix seconds)
+    int64 next_review_ts = 4;
+    // SM-2 ease factor (default: 2.5)
+    double ease_factor = 5;
+    // Current interval in days
+    int32 interval_days = 6;
+  }
+  // Map of memo_uid to review state
+  repeated ReviewState states = 1;
 }

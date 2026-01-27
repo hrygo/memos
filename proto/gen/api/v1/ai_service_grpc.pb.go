@@ -30,6 +30,9 @@ const (
 	AIService_MergeMemos_FullMethodName                = "/memos.api.v1.AIService/MergeMemos"
 	AIService_LinkMemos_FullMethodName                 = "/memos.api.v1.AIService/LinkMemos"
 	AIService_GetKnowledgeGraph_FullMethodName         = "/memos.api.v1.AIService/GetKnowledgeGraph"
+	AIService_GetDueReviews_FullMethodName             = "/memos.api.v1.AIService/GetDueReviews"
+	AIService_RecordReview_FullMethodName              = "/memos.api.v1.AIService/RecordReview"
+	AIService_GetReviewStats_FullMethodName            = "/memos.api.v1.AIService/GetReviewStats"
 	AIService_ListAIConversations_FullMethodName       = "/memos.api.v1.AIService/ListAIConversations"
 	AIService_GetAIConversation_FullMethodName         = "/memos.api.v1.AIService/GetAIConversation"
 	AIService_CreateAIConversation_FullMethodName      = "/memos.api.v1.AIService/CreateAIConversation"
@@ -66,6 +69,12 @@ type AIServiceClient interface {
 	LinkMemos(ctx context.Context, in *LinkMemosRequest, opts ...grpc.CallOption) (*LinkMemosResponse, error)
 	// GetKnowledgeGraph returns the knowledge graph for the current user.
 	GetKnowledgeGraph(ctx context.Context, in *GetKnowledgeGraphRequest, opts ...grpc.CallOption) (*GetKnowledgeGraphResponse, error)
+	// GetDueReviews returns memos that are due for review.
+	GetDueReviews(ctx context.Context, in *GetDueReviewsRequest, opts ...grpc.CallOption) (*GetDueReviewsResponse, error)
+	// RecordReview records a review result and updates spaced repetition state.
+	RecordReview(ctx context.Context, in *RecordReviewRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// GetReviewStats returns review statistics for the current user.
+	GetReviewStats(ctx context.Context, in *GetReviewStatsRequest, opts ...grpc.CallOption) (*GetReviewStatsResponse, error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(ctx context.Context, in *ListAIConversationsRequest, opts ...grpc.CallOption) (*ListAIConversationsResponse, error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -201,6 +210,36 @@ func (c *aIServiceClient) GetKnowledgeGraph(ctx context.Context, in *GetKnowledg
 	return out, nil
 }
 
+func (c *aIServiceClient) GetDueReviews(ctx context.Context, in *GetDueReviewsRequest, opts ...grpc.CallOption) (*GetDueReviewsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDueReviewsResponse)
+	err := c.cc.Invoke(ctx, AIService_GetDueReviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) RecordReview(ctx context.Context, in *RecordReviewRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AIService_RecordReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) GetReviewStats(ctx context.Context, in *GetReviewStatsRequest, opts ...grpc.CallOption) (*GetReviewStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetReviewStatsResponse)
+	err := c.cc.Invoke(ctx, AIService_GetReviewStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aIServiceClient) ListAIConversations(ctx context.Context, in *ListAIConversationsRequest, opts ...grpc.CallOption) (*ListAIConversationsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListAIConversationsResponse)
@@ -307,6 +346,12 @@ type AIServiceServer interface {
 	LinkMemos(context.Context, *LinkMemosRequest) (*LinkMemosResponse, error)
 	// GetKnowledgeGraph returns the knowledge graph for the current user.
 	GetKnowledgeGraph(context.Context, *GetKnowledgeGraphRequest) (*GetKnowledgeGraphResponse, error)
+	// GetDueReviews returns memos that are due for review.
+	GetDueReviews(context.Context, *GetDueReviewsRequest) (*GetDueReviewsResponse, error)
+	// RecordReview records a review result and updates spaced repetition state.
+	RecordReview(context.Context, *RecordReviewRequest) (*emptypb.Empty, error)
+	// GetReviewStats returns review statistics for the current user.
+	GetReviewStats(context.Context, *GetReviewStatsRequest) (*GetReviewStatsResponse, error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -362,6 +407,15 @@ func (UnimplementedAIServiceServer) LinkMemos(context.Context, *LinkMemosRequest
 }
 func (UnimplementedAIServiceServer) GetKnowledgeGraph(context.Context, *GetKnowledgeGraphRequest) (*GetKnowledgeGraphResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetKnowledgeGraph not implemented")
+}
+func (UnimplementedAIServiceServer) GetDueReviews(context.Context, *GetDueReviewsRequest) (*GetDueReviewsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDueReviews not implemented")
+}
+func (UnimplementedAIServiceServer) RecordReview(context.Context, *RecordReviewRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordReview not implemented")
+}
+func (UnimplementedAIServiceServer) GetReviewStats(context.Context, *GetReviewStatsRequest) (*GetReviewStatsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetReviewStats not implemented")
 }
 func (UnimplementedAIServiceServer) ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAIConversations not implemented")
@@ -581,6 +635,60 @@ func _AIService_GetKnowledgeGraph_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AIService_GetDueReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDueReviewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetDueReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetDueReviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetDueReviews(ctx, req.(*GetDueReviewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_RecordReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).RecordReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_RecordReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).RecordReview(ctx, req.(*RecordReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_GetReviewStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReviewStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetReviewStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetReviewStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetReviewStats(ctx, req.(*GetReviewStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AIService_ListAIConversations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAIConversationsRequest)
 	if err := dec(in); err != nil {
@@ -767,6 +875,18 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetKnowledgeGraph",
 			Handler:    _AIService_GetKnowledgeGraph_Handler,
+		},
+		{
+			MethodName: "GetDueReviews",
+			Handler:    _AIService_GetDueReviews_Handler,
+		},
+		{
+			MethodName: "RecordReview",
+			Handler:    _AIService_RecordReview_Handler,
+		},
+		{
+			MethodName: "GetReviewStats",
+			Handler:    _AIService_GetReviewStats_Handler,
 		},
 		{
 			MethodName: "ListAIConversations",

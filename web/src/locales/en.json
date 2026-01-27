@@ -482,6 +482,35 @@
     "no-memos-found": "No memos found",
     "search-placeholder": "Search content"
   },
+  "review": {
+    "title": "Daily Review",
+    "subtitle": "Strengthen your memory with spaced repetition",
+    "stats": {
+      "due-today": "Due Today",
+      "reviewed-today": "Reviewed",
+      "new-memos": "New",
+      "mastered": "Mastered"
+    },
+    "quality": {
+      "again": "Again",
+      "again-desc": "Forgot",
+      "hard": "Hard",
+      "hard-desc": "Difficult",
+      "good": "Good",
+      "good-desc": "Correct",
+      "easy": "Easy",
+      "easy-desc": "Perfect"
+    },
+    "show-answer": "Show Answer",
+    "how-well": "How well did you remember?",
+    "view-memo": "View Full Memo",
+    "progress": "Progress",
+    "review-count": "Reviewed {{count}} times",
+    "untitled": "Untitled Memo",
+    "all-done": "All Done!",
+    "all-done-desc": "You've completed all reviews for today. Great job!",
+    "load-error": "Failed to load review data"
+  },
   "resource": {
     "delete-all-unused": "Delete all unused",
     "delete-all-unused-confirm": "Are you sure you want to delete all unused resources? THIS ACTION IS IRREVERSIBLE",

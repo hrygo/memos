@@ -36,6 +36,8 @@ const (
 	UserSetting_REFRESH_TOKENS UserSetting_Key = 6
 	// Personal access tokens for the user.
 	UserSetting_PERSONAL_ACCESS_TOKENS UserSetting_Key = 7
+	// Review states for spaced repetition (P3-C002).
+	UserSetting_REVIEW_STATES UserSetting_Key = 8
 )
 
 // Enum value maps for UserSetting_Key.
@@ -47,6 +49,7 @@ var (
 		5: "WEBHOOKS",
 		6: "REFRESH_TOKENS",
 		7: "PERSONAL_ACCESS_TOKENS",
+		8: "REVIEW_STATES",
 	}
 	UserSetting_Key_value = map[string]int32{
 		"KEY_UNSPECIFIED":        0,
@@ -55,6 +58,7 @@ var (
 		"WEBHOOKS":               5,
 		"REFRESH_TOKENS":         6,
 		"PERSONAL_ACCESS_TOKENS": 7,
+		"REVIEW_STATES":          8,
 	}
 )
 
@@ -96,6 +100,7 @@ type UserSetting struct {
 	//	*UserSetting_Webhooks
 	//	*UserSetting_RefreshTokens
 	//	*UserSetting_PersonalAccessTokens
+	//	*UserSetting_ReviewStates
 	Value         isUserSetting_Value `protobuf_oneof:"value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -197,6 +202,15 @@ func (x *UserSetting) GetPersonalAccessTokens() *PersonalAccessTokensUserSetting
 	return nil
 }
 
+func (x *UserSetting) GetReviewStates() *ReviewStatesUserSetting {
+	if x != nil {
+		if x, ok := x.Value.(*UserSetting_ReviewStates); ok {
+			return x.ReviewStates
+		}
+	}
+	return nil
+}
+
 type isUserSetting_Value interface {
 	isUserSetting_Value()
 }
@@ -221,6 +235,10 @@ type UserSetting_PersonalAccessTokens struct {
 	PersonalAccessTokens *PersonalAccessTokensUserSetting `protobuf:"bytes,9,opt,name=personal_access_tokens,json=personalAccessTokens,proto3,oneof"`
 }
 
+type UserSetting_ReviewStates struct {
+	ReviewStates *ReviewStatesUserSetting `protobuf:"bytes,10,opt,name=review_states,json=reviewStates,proto3,oneof"`
+}
+
 func (*UserSetting_General) isUserSetting_Value() {}
 
 func (*UserSetting_Shortcuts) isUserSetting_Value() {}
@@ -230,6 +248,8 @@ func (*UserSetting_Webhooks) isUserSetting_Value() {}
 func (*UserSetting_RefreshTokens) isUserSetting_Value() {}
 
 func (*UserSetting_PersonalAccessTokens) isUserSetting_Value() {}
+
+func (*UserSetting_ReviewStates) isUserSetting_Value() {}
 
 type GeneralUserSetting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -471,6 +491,52 @@ func (x *WebhooksUserSetting) GetWebhooks() []*WebhooksUserSetting_Webhook {
 	return nil
 }
 
+// ReviewStatesUserSetting stores spaced repetition states for memos.
+type ReviewStatesUserSetting struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Map of memo_uid to review state
+	States        []*ReviewStatesUserSetting_ReviewState `protobuf:"bytes,1,rep,name=states,proto3" json:"states,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewStatesUserSetting) Reset() {
+	*x = ReviewStatesUserSetting{}
+	mi := &file_store_user_setting_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewStatesUserSetting) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewStatesUserSetting) ProtoMessage() {}
+
+func (x *ReviewStatesUserSetting) ProtoReflect() protoreflect.Message {
+	mi := &file_store_user_setting_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewStatesUserSetting.ProtoReflect.Descriptor instead.
+func (*ReviewStatesUserSetting) Descriptor() ([]byte, []int) {
+	return file_store_user_setting_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ReviewStatesUserSetting) GetStates() []*ReviewStatesUserSetting_ReviewState {
+	if x != nil {
+		return x.States
+	}
+	return nil
+}
+
 type RefreshTokensUserSetting_RefreshToken struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Unique identifier (matches 'tid' claim in JWT)
@@ -489,7 +555,7 @@ type RefreshTokensUserSetting_RefreshToken struct {
 
 func (x *RefreshTokensUserSetting_RefreshToken) Reset() {
 	*x = RefreshTokensUserSetting_RefreshToken{}
-	mi := &file_store_user_setting_proto_msgTypes[6]
+	mi := &file_store_user_setting_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -501,7 +567,7 @@ func (x *RefreshTokensUserSetting_RefreshToken) String() string {
 func (*RefreshTokensUserSetting_RefreshToken) ProtoMessage() {}
 
 func (x *RefreshTokensUserSetting_RefreshToken) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[6]
+	mi := &file_store_user_setting_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +636,7 @@ type RefreshTokensUserSetting_ClientInfo struct {
 
 func (x *RefreshTokensUserSetting_ClientInfo) Reset() {
 	*x = RefreshTokensUserSetting_ClientInfo{}
-	mi := &file_store_user_setting_proto_msgTypes[7]
+	mi := &file_store_user_setting_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -582,7 +648,7 @@ func (x *RefreshTokensUserSetting_ClientInfo) String() string {
 func (*RefreshTokensUserSetting_ClientInfo) ProtoMessage() {}
 
 func (x *RefreshTokensUserSetting_ClientInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[7]
+	mi := &file_store_user_setting_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -653,7 +719,7 @@ type PersonalAccessTokensUserSetting_PersonalAccessToken struct {
 
 func (x *PersonalAccessTokensUserSetting_PersonalAccessToken) Reset() {
 	*x = PersonalAccessTokensUserSetting_PersonalAccessToken{}
-	mi := &file_store_user_setting_proto_msgTypes[8]
+	mi := &file_store_user_setting_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +731,7 @@ func (x *PersonalAccessTokensUserSetting_PersonalAccessToken) String() string {
 func (*PersonalAccessTokensUserSetting_PersonalAccessToken) ProtoMessage() {}
 
 func (x *PersonalAccessTokensUserSetting_PersonalAccessToken) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[8]
+	mi := &file_store_user_setting_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -734,7 +800,7 @@ type ShortcutsUserSetting_Shortcut struct {
 
 func (x *ShortcutsUserSetting_Shortcut) Reset() {
 	*x = ShortcutsUserSetting_Shortcut{}
-	mi := &file_store_user_setting_proto_msgTypes[9]
+	mi := &file_store_user_setting_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -746,7 +812,7 @@ func (x *ShortcutsUserSetting_Shortcut) String() string {
 func (*ShortcutsUserSetting_Shortcut) ProtoMessage() {}
 
 func (x *ShortcutsUserSetting_Shortcut) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[9]
+	mi := &file_store_user_setting_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -797,7 +863,7 @@ type WebhooksUserSetting_Webhook struct {
 
 func (x *WebhooksUserSetting_Webhook) Reset() {
 	*x = WebhooksUserSetting_Webhook{}
-	mi := &file_store_user_setting_proto_msgTypes[10]
+	mi := &file_store_user_setting_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -809,7 +875,7 @@ func (x *WebhooksUserSetting_Webhook) String() string {
 func (*WebhooksUserSetting_Webhook) ProtoMessage() {}
 
 func (x *WebhooksUserSetting_Webhook) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[10]
+	mi := &file_store_user_setting_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -846,11 +912,101 @@ func (x *WebhooksUserSetting_Webhook) GetUrl() string {
 	return ""
 }
 
+type ReviewStatesUserSetting_ReviewState struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Memo UID
+	MemoUid string `protobuf:"bytes,1,opt,name=memo_uid,json=memoUid,proto3" json:"memo_uid,omitempty"`
+	// Number of reviews completed
+	ReviewCount int32 `protobuf:"varint,2,opt,name=review_count,json=reviewCount,proto3" json:"review_count,omitempty"`
+	// Last review timestamp (Unix seconds)
+	LastReviewTs int64 `protobuf:"varint,3,opt,name=last_review_ts,json=lastReviewTs,proto3" json:"last_review_ts,omitempty"`
+	// Next scheduled review timestamp (Unix seconds)
+	NextReviewTs int64 `protobuf:"varint,4,opt,name=next_review_ts,json=nextReviewTs,proto3" json:"next_review_ts,omitempty"`
+	// SM-2 ease factor (default: 2.5)
+	EaseFactor float64 `protobuf:"fixed64,5,opt,name=ease_factor,json=easeFactor,proto3" json:"ease_factor,omitempty"`
+	// Current interval in days
+	IntervalDays  int32 `protobuf:"varint,6,opt,name=interval_days,json=intervalDays,proto3" json:"interval_days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) Reset() {
+	*x = ReviewStatesUserSetting_ReviewState{}
+	mi := &file_store_user_setting_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewStatesUserSetting_ReviewState) ProtoMessage() {}
+
+func (x *ReviewStatesUserSetting_ReviewState) ProtoReflect() protoreflect.Message {
+	mi := &file_store_user_setting_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewStatesUserSetting_ReviewState.ProtoReflect.Descriptor instead.
+func (*ReviewStatesUserSetting_ReviewState) Descriptor() ([]byte, []int) {
+	return file_store_user_setting_proto_rawDescGZIP(), []int{6, 0}
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetMemoUid() string {
+	if x != nil {
+		return x.MemoUid
+	}
+	return ""
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetReviewCount() int32 {
+	if x != nil {
+		return x.ReviewCount
+	}
+	return 0
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetLastReviewTs() int64 {
+	if x != nil {
+		return x.LastReviewTs
+	}
+	return 0
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetNextReviewTs() int64 {
+	if x != nil {
+		return x.NextReviewTs
+	}
+	return 0
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetEaseFactor() float64 {
+	if x != nil {
+		return x.EaseFactor
+	}
+	return 0
+}
+
+func (x *ReviewStatesUserSetting_ReviewState) GetIntervalDays() int32 {
+	if x != nil {
+		return x.IntervalDays
+	}
+	return 0
+}
+
 var File_store_user_setting_proto protoreflect.FileDescriptor
 
 const file_store_user_setting_proto_rawDesc = "" +
 	"\n" +
-	"\x18store/user_setting.proto\x12\vmemos.store\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcb\x04\n" +
+	"\x18store/user_setting.proto\x12\vmemos.store\x1a\x1fgoogle/protobuf/timestamp.proto\"\xac\x05\n" +
 	"\vUserSetting\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12.\n" +
 	"\x03key\x18\x02 \x01(\x0e2\x1c.memos.store.UserSetting.KeyR\x03key\x12;\n" +
@@ -858,14 +1014,17 @@ const file_store_user_setting_proto_rawDesc = "" +
 	"\tshortcuts\x18\x06 \x01(\v2!.memos.store.ShortcutsUserSettingH\x00R\tshortcuts\x12>\n" +
 	"\bwebhooks\x18\a \x01(\v2 .memos.store.WebhooksUserSettingH\x00R\bwebhooks\x12N\n" +
 	"\x0erefresh_tokens\x18\b \x01(\v2%.memos.store.RefreshTokensUserSettingH\x00R\rrefreshTokens\x12d\n" +
-	"\x16personal_access_tokens\x18\t \x01(\v2,.memos.store.PersonalAccessTokensUserSettingH\x00R\x14personalAccessTokens\"t\n" +
+	"\x16personal_access_tokens\x18\t \x01(\v2,.memos.store.PersonalAccessTokensUserSettingH\x00R\x14personalAccessTokens\x12K\n" +
+	"\rreview_states\x18\n" +
+	" \x01(\v2$.memos.store.ReviewStatesUserSettingH\x00R\freviewStates\"\x87\x01\n" +
 	"\x03Key\x12\x13\n" +
 	"\x0fKEY_UNSPECIFIED\x10\x00\x12\v\n" +
 	"\aGENERAL\x10\x01\x12\r\n" +
 	"\tSHORTCUTS\x10\x04\x12\f\n" +
 	"\bWEBHOOKS\x10\x05\x12\x12\n" +
 	"\x0eREFRESH_TOKENS\x10\x06\x12\x1a\n" +
-	"\x16PERSONAL_ACCESS_TOKENS\x10\aB\a\n" +
+	"\x16PERSONAL_ACCESS_TOKENS\x10\a\x12\x11\n" +
+	"\rREVIEW_STATES\x10\bB\a\n" +
 	"\x05value\"k\n" +
 	"\x12GeneralUserSetting\x12\x16\n" +
 	"\x06locale\x18\x01 \x01(\tR\x06locale\x12'\n" +
@@ -916,7 +1075,17 @@ const file_store_user_setting_proto_rawDesc = "" +
 	"\aWebhook\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
-	"\x03url\x18\x03 \x01(\tR\x03urlB\x9b\x01\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\"\xc3\x02\n" +
+	"\x17ReviewStatesUserSetting\x12H\n" +
+	"\x06states\x18\x01 \x03(\v20.memos.store.ReviewStatesUserSetting.ReviewStateR\x06states\x1a\xdd\x01\n" +
+	"\vReviewState\x12\x19\n" +
+	"\bmemo_uid\x18\x01 \x01(\tR\amemoUid\x12!\n" +
+	"\freview_count\x18\x02 \x01(\x05R\vreviewCount\x12$\n" +
+	"\x0elast_review_ts\x18\x03 \x01(\x03R\flastReviewTs\x12$\n" +
+	"\x0enext_review_ts\x18\x04 \x01(\x03R\fnextReviewTs\x12\x1f\n" +
+	"\vease_factor\x18\x05 \x01(\x01R\n" +
+	"easeFactor\x12#\n" +
+	"\rinterval_days\x18\x06 \x01(\x05R\fintervalDaysB\x9b\x01\n" +
 	"\x0fcom.memos.storeB\x10UserSettingProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
@@ -932,7 +1101,7 @@ func file_store_user_setting_proto_rawDescGZIP() []byte {
 }
 
 var file_store_user_setting_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_store_user_setting_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_store_user_setting_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_store_user_setting_proto_goTypes = []any{
 	(UserSetting_Key)(0),                                        // 0: memos.store.UserSetting.Key
 	(*UserSetting)(nil),                                         // 1: memos.store.UserSetting
@@ -941,12 +1110,14 @@ var file_store_user_setting_proto_goTypes = []any{
 	(*PersonalAccessTokensUserSetting)(nil),                     // 4: memos.store.PersonalAccessTokensUserSetting
 	(*ShortcutsUserSetting)(nil),                                // 5: memos.store.ShortcutsUserSetting
 	(*WebhooksUserSetting)(nil),                                 // 6: memos.store.WebhooksUserSetting
-	(*RefreshTokensUserSetting_RefreshToken)(nil),               // 7: memos.store.RefreshTokensUserSetting.RefreshToken
-	(*RefreshTokensUserSetting_ClientInfo)(nil),                 // 8: memos.store.RefreshTokensUserSetting.ClientInfo
-	(*PersonalAccessTokensUserSetting_PersonalAccessToken)(nil), // 9: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
-	(*ShortcutsUserSetting_Shortcut)(nil),                       // 10: memos.store.ShortcutsUserSetting.Shortcut
-	(*WebhooksUserSetting_Webhook)(nil),                         // 11: memos.store.WebhooksUserSetting.Webhook
-	(*timestamppb.Timestamp)(nil),                               // 12: google.protobuf.Timestamp
+	(*ReviewStatesUserSetting)(nil),                             // 7: memos.store.ReviewStatesUserSetting
+	(*RefreshTokensUserSetting_RefreshToken)(nil),               // 8: memos.store.RefreshTokensUserSetting.RefreshToken
+	(*RefreshTokensUserSetting_ClientInfo)(nil),                 // 9: memos.store.RefreshTokensUserSetting.ClientInfo
+	(*PersonalAccessTokensUserSetting_PersonalAccessToken)(nil), // 10: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
+	(*ShortcutsUserSetting_Shortcut)(nil),                       // 11: memos.store.ShortcutsUserSetting.Shortcut
+	(*WebhooksUserSetting_Webhook)(nil),                         // 12: memos.store.WebhooksUserSetting.Webhook
+	(*ReviewStatesUserSetting_ReviewState)(nil),                 // 13: memos.store.ReviewStatesUserSetting.ReviewState
+	(*timestamppb.Timestamp)(nil),                               // 14: google.protobuf.Timestamp
 }
 var file_store_user_setting_proto_depIdxs = []int32{
 	0,  // 0: memos.store.UserSetting.key:type_name -> memos.store.UserSetting.Key
@@ -955,21 +1126,23 @@ var file_store_user_setting_proto_depIdxs = []int32{
 	6,  // 3: memos.store.UserSetting.webhooks:type_name -> memos.store.WebhooksUserSetting
 	3,  // 4: memos.store.UserSetting.refresh_tokens:type_name -> memos.store.RefreshTokensUserSetting
 	4,  // 5: memos.store.UserSetting.personal_access_tokens:type_name -> memos.store.PersonalAccessTokensUserSetting
-	7,  // 6: memos.store.RefreshTokensUserSetting.refresh_tokens:type_name -> memos.store.RefreshTokensUserSetting.RefreshToken
-	9,  // 7: memos.store.PersonalAccessTokensUserSetting.tokens:type_name -> memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
-	10, // 8: memos.store.ShortcutsUserSetting.shortcuts:type_name -> memos.store.ShortcutsUserSetting.Shortcut
-	11, // 9: memos.store.WebhooksUserSetting.webhooks:type_name -> memos.store.WebhooksUserSetting.Webhook
-	12, // 10: memos.store.RefreshTokensUserSetting.RefreshToken.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 11: memos.store.RefreshTokensUserSetting.RefreshToken.created_at:type_name -> google.protobuf.Timestamp
-	8,  // 12: memos.store.RefreshTokensUserSetting.RefreshToken.client_info:type_name -> memos.store.RefreshTokensUserSetting.ClientInfo
-	12, // 13: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 14: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.created_at:type_name -> google.protobuf.Timestamp
-	12, // 15: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.last_used_at:type_name -> google.protobuf.Timestamp
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	7,  // 6: memos.store.UserSetting.review_states:type_name -> memos.store.ReviewStatesUserSetting
+	8,  // 7: memos.store.RefreshTokensUserSetting.refresh_tokens:type_name -> memos.store.RefreshTokensUserSetting.RefreshToken
+	10, // 8: memos.store.PersonalAccessTokensUserSetting.tokens:type_name -> memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
+	11, // 9: memos.store.ShortcutsUserSetting.shortcuts:type_name -> memos.store.ShortcutsUserSetting.Shortcut
+	12, // 10: memos.store.WebhooksUserSetting.webhooks:type_name -> memos.store.WebhooksUserSetting.Webhook
+	13, // 11: memos.store.ReviewStatesUserSetting.states:type_name -> memos.store.ReviewStatesUserSetting.ReviewState
+	14, // 12: memos.store.RefreshTokensUserSetting.RefreshToken.expires_at:type_name -> google.protobuf.Timestamp
+	14, // 13: memos.store.RefreshTokensUserSetting.RefreshToken.created_at:type_name -> google.protobuf.Timestamp
+	9,  // 14: memos.store.RefreshTokensUserSetting.RefreshToken.client_info:type_name -> memos.store.RefreshTokensUserSetting.ClientInfo
+	14, // 15: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.expires_at:type_name -> google.protobuf.Timestamp
+	14, // 16: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.created_at:type_name -> google.protobuf.Timestamp
+	14, // 17: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.last_used_at:type_name -> google.protobuf.Timestamp
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_store_user_setting_proto_init() }
@@ -983,6 +1156,7 @@ func file_store_user_setting_proto_init() {
 		(*UserSetting_Webhooks)(nil),
 		(*UserSetting_RefreshTokens)(nil),
 		(*UserSetting_PersonalAccessTokens)(nil),
+		(*UserSetting_ReviewStates)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -990,7 +1164,7 @@ func file_store_user_setting_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_store_user_setting_proto_rawDesc), len(file_store_user_setting_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
