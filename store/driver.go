@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 // Driver is an interface for store driver.
@@ -103,6 +104,7 @@ type Driver interface {
 	// EpisodicMemory model related methods.
 	CreateEpisodicMemory(ctx context.Context, create *EpisodicMemory) (*EpisodicMemory, error)
 	ListEpisodicMemories(ctx context.Context, find *FindEpisodicMemory) ([]*EpisodicMemory, error)
+	ListActiveUserIDs(ctx context.Context, cutoff time.Time) ([]int32, error)
 	DeleteEpisodicMemory(ctx context.Context, delete *DeleteEpisodicMemory) error
 
 	// UserPreferences model related methods.

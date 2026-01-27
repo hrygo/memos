@@ -85,6 +85,12 @@ func (l *LongTermMemory) SearchEpisodes(ctx context.Context, userID int32, query
 	return episodes, nil
 }
 
+// ListActiveUserIDs returns user IDs with recent episodic activity.
+func (l *LongTermMemory) ListActiveUserIDs(ctx context.Context, lookbackDays int) ([]int32, error) {
+	cutoff := time.Now().AddDate(0, 0, -lookbackDays)
+	return l.store.ListActiveUserIDs(ctx, cutoff)
+}
+
 // GetPreferences retrieves user preferences.
 func (l *LongTermMemory) GetPreferences(ctx context.Context, userID int32) (*UserPreferences, error) {
 	prefs, err := l.store.GetUserPreferences(ctx, &store.FindUserPreferences{UserID: &userID})

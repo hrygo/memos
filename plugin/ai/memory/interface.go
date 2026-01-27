@@ -30,6 +30,11 @@ type MemoryService interface {
 	// limit: maximum number of results to return
 	SearchEpisodes(ctx context.Context, userID int32, query string, limit int) ([]EpisodicMemory, error)
 
+	// ListActiveUserIDs returns user IDs with recent episodic activity.
+	// lookbackDays: how many days to look back for activity
+	// Returns unique user IDs that have at least one episode within the lookback period.
+	ListActiveUserIDs(ctx context.Context, lookbackDays int) ([]int32, error)
+
 	// ========== User Preferences ==========
 
 	// GetPreferences retrieves user preferences.
@@ -41,7 +46,7 @@ type MemoryService interface {
 
 // Message represents a conversation message.
 type Message struct {
-	Role      string    `json:"role"`      // "user" | "assistant" | "system"
+	Role      string    `json:"role"` // "user" | "assistant" | "system"
 	Content   string    `json:"content"`
 	Timestamp time.Time `json:"timestamp"`
 }
@@ -53,7 +58,7 @@ type EpisodicMemory struct {
 	Timestamp  time.Time `json:"timestamp"`
 	AgentType  string    `json:"agent_type"` // memo/schedule/amazing/assistant
 	UserInput  string    `json:"user_input"`
-	Outcome    string    `json:"outcome"`    // success/failure
+	Outcome    string    `json:"outcome"` // success/failure
 	Summary    string    `json:"summary"`
 	Importance float32   `json:"importance"` // 0-1
 }
@@ -61,8 +66,8 @@ type EpisodicMemory struct {
 // UserPreferences represents user preferences.
 type UserPreferences struct {
 	Timezone           string         `json:"timezone"`
-	DefaultDuration    int            `json:"default_duration"`    // minutes
-	PreferredTimes     []string       `json:"preferred_times"`     // ["09:00", "14:00"]
+	DefaultDuration    int            `json:"default_duration"` // minutes
+	PreferredTimes     []string       `json:"preferred_times"`  // ["09:00", "14:00"]
 	FrequentLocations  []string       `json:"frequent_locations"`
 	CommunicationStyle string         `json:"communication_style"` // concise/detailed
 	TagPreferences     []string       `json:"tag_preferences"`

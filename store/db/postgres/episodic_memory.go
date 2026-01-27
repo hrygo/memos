@@ -111,6 +111,31 @@ func (d *DB) ListEpisodicMemories(ctx context.Context, find *store.FindEpisodicM
 	return list, nil
 }
 
+func (d *DB) ListActiveUserIDs(ctx context.Context, cutoff time.Time) ([]int32, error) {
+	query := `SELECT DISTINCT user_id FROM episodic_memory WHERE timestamp > $1`
+
+	rows, err := d.db.QueryContext(ctx, query, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list active user IDs: %w", err)
+	}
+	defer rows.Close()
+
+	var userIDs []int32
+	for rows.Next() {
+		var userID int32
+		if err := rows.Scan(&userID); err != nil {
+			return nil, fmt.Errorf("failed to scan user ID: %w", err)
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate user IDs: %w", err)
+	}
+
+	return userIDs, nil
+}
+
 func (d *DB) DeleteEpisodicMemory(ctx context.Context, delete *store.DeleteEpisodicMemory) error {
 	if delete == nil {
 		return fmt.Errorf("delete parameter cannot be nil")

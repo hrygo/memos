@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/usememos/memos/store"
 )
@@ -21,6 +22,10 @@ func (d *DB) CreateEpisodicMemory(ctx context.Context, create *store.EpisodicMem
 }
 
 func (d *DB) ListEpisodicMemories(ctx context.Context, find *store.FindEpisodicMemory) ([]*store.EpisodicMemory, error) {
+	return nil, errAIFeatureNotSupported
+}
+
+func (d *DB) ListActiveUserIDs(ctx context.Context, cutoff time.Time) ([]int32, error) {
 	return nil, errAIFeatureNotSupported
 }
 

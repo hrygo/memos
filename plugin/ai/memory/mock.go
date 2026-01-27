@@ -163,6 +163,27 @@ func (m *MockMemoryService) SearchEpisodes(ctx context.Context, userID int32, qu
 	return results, nil
 }
 
+// ListActiveUserIDs returns user IDs with recent activity.
+func (m *MockMemoryService) ListActiveUserIDs(ctx context.Context, lookbackDays int) ([]int32, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	cutoff := time.Now().AddDate(0, 0, -lookbackDays)
+	userSet := make(map[int32]struct{})
+
+	for _, ep := range m.episodes {
+		if ep.Timestamp.After(cutoff) {
+			userSet[ep.UserID] = struct{}{}
+		}
+	}
+
+	userIDs := make([]int32, 0, len(userSet))
+	for id := range userSet {
+		userIDs = append(userIDs, id)
+	}
+	return userIDs, nil
+}
+
 // GetPreferences retrieves user preferences.
 func (m *MockMemoryService) GetPreferences(ctx context.Context, userID int32) (*UserPreferences, error) {
 	m.mu.RLock()

@@ -93,6 +93,10 @@ func (s *Store) ListEpisodicMemories(ctx context.Context, find *FindEpisodicMemo
 	return s.driver.ListEpisodicMemories(ctx, find)
 }
 
+func (s *Store) ListActiveUserIDs(ctx context.Context, cutoff time.Time) ([]int32, error) {
+	return s.driver.ListActiveUserIDs(ctx, cutoff)
+}
+
 func (s *Store) DeleteEpisodicMemory(ctx context.Context, delete *DeleteEpisodicMemory) error {
 	return s.driver.DeleteEpisodicMemory(ctx, delete)
 }

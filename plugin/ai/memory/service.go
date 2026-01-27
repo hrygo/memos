@@ -70,6 +70,15 @@ func (s *Service) SearchEpisodes(ctx context.Context, userID int32, query string
 	return s.longTerm.SearchEpisodes(ctx, userID, query, limit)
 }
 
+// ListActiveUserIDs returns user IDs with recent episodic activity.
+// Returns ErrLongTermNotConfigured if long-term memory is not available.
+func (s *Service) ListActiveUserIDs(ctx context.Context, lookbackDays int) ([]int32, error) {
+	if s.longTerm == nil {
+		return nil, ErrLongTermNotConfigured
+	}
+	return s.longTerm.ListActiveUserIDs(ctx, lookbackDays)
+}
+
 // ========== User Preferences ==========
 
 // GetPreferences retrieves user preferences.
