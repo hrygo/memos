@@ -236,5 +236,9 @@ func (s *APIV1Service) RegisterGateway(ctx context.Context, echoServer *echo.Ech
 	connectGroup := echoServer.Group("", corsHandler)
 	connectGroup.Any("/memos.api.v1.*", echo.WrapHandler(connectMux))
 
+	// Register metrics routes (direct REST endpoints)
+	systemGroup := echoServer.Group("/api/v1/system", corsHandler)
+	systemGroup.GET("/metrics/overview", s.GetMetricsOverview)
+
 	return nil
 }

@@ -152,6 +152,10 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 	// Retrieve conversation context from service's ContextStore
 	conversationCtx := s.ContextStore.GetOrCreate(sessionID, userID, userTimezone)
 
+	// Debug: Log context state
+	summary := conversationCtx.GetSummary()
+	logger.Info("Conversation context state", "session_id", sessionID, "turn_count", summary.TurnCount, "existing", summary.TurnCount > 0)
+
 	// Define callback for streaming events
 	eventCallback := func(eventType string, eventData string) {
 		// Log significant events
@@ -256,6 +260,14 @@ func (s *ScheduleAgentService) ChatStream(req *v1pb.ScheduleAgentChatRequest, st
 	// Note: ToolCalls capture is not fully implemented in callback yet,
 	// but we record the text turn at least.
 	conversationCtx.AddTurn(req.Message, sanitizedResponse, nil)
+
+	// Debug: Log updated context state
+	newSummary := conversationCtx.GetSummary()
+	inputPreview := req.Message
+	if len(inputPreview) > 50 {
+		inputPreview = inputPreview[:50] + "..."
+	}
+	logger.Info("Conversation context updated", "turn_count", newSummary.TurnCount, "user_input", inputPreview)
 
 	// Send final response
 	finalJSON, err := json.Marshal(map[string]string{

@@ -216,9 +216,10 @@ func (s *AIService) createChatHandler() aichat.Handler {
 
 	// Configure chat router for auto-routing if intent classifier is enabled
 	if s.IntentClassifierConfig != nil && s.IntentClassifierConfig.Enabled {
-		chatRouter := aichat.NewChatRouter(s.IntentClassifierConfig)
+		routerSvc := s.getRouterService()
+		chatRouter := aichat.NewChatRouter(s.IntentClassifierConfig, routerSvc)
 		parrotHandler.SetChatRouter(chatRouter)
-		slog.Info("Chat router enabled",
+		slog.Info("Chat router enabled with three-layer routing",
 			"model", s.IntentClassifierConfig.Model,
 		)
 	}

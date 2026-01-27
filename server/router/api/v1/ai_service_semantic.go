@@ -86,7 +86,7 @@ func (s *AIService) SemanticSearch(ctx context.Context, req *v1pb.SemanticSearch
 	}
 
 	// Re-rank (optional)
-	if s.RerankerService.IsEnabled() && len(results) > limit {
+	if s.RerankerService != nil && s.RerankerService.IsEnabled() && len(results) > limit {
 		documents := make([]string, len(results))
 		for i, r := range results {
 			documents[i] = r.Memo.Content

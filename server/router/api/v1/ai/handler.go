@@ -11,6 +11,7 @@ import (
 
 	"github.com/usememos/memos/plugin/ai"
 	agentpkg "github.com/usememos/memos/plugin/ai/agent"
+	"github.com/usememos/memos/plugin/ai/router"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/internal/errors"
 	"github.com/usememos/memos/server/internal/observability"
@@ -51,6 +52,9 @@ func (h *ParrotHandler) Handle(ctx context.Context, req *ChatRequest, stream Cha
 	// Auto-route if AgentType is AUTO
 	agentType := req.AgentType
 	if agentType == AgentTypeAuto && h.chatRouter != nil {
+		// Add user ID to context for history matching.
+		// Note: req.UserID is already authenticated by the gRPC interceptor middleware.
+		ctx = router.WithUserID(ctx, req.UserID)
 		routeResult, err := h.chatRouter.Route(ctx, req.Message)
 		if err != nil {
 			slog.Warn("chat router failed, defaulting to amazing",
@@ -242,10 +246,11 @@ func HandleError(err error) error {
 }
 
 // NewChatRouter creates a new chat router for auto-routing based on intent classification.
-func NewChatRouter(cfg *ai.IntentClassifierConfig) *agentpkg.ChatRouter {
+// Optionally accepts a router.Service for enhanced three-layer routing.
+func NewChatRouter(cfg *ai.IntentClassifierConfig, routerSvc *router.Service) *agentpkg.ChatRouter {
 	return agentpkg.NewChatRouter(agentpkg.ChatRouterConfig{
 		APIKey:  cfg.APIKey,
 		BaseURL: cfg.BaseURL,
 		Model:   cfg.Model,
-	})
+	}, routerSvc)
 }
