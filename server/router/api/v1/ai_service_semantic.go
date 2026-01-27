@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/plugin/ai"
+	"github.com/usememos/memos/plugin/ai/tags"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/store"
 )
@@ -131,10 +131,12 @@ func (s *AIService) SemanticSearch(ctx context.Context, req *v1pb.SemanticSearch
 }
 
 // SuggestTags suggests tags for memo content.
+// P2-C001: Uses three-layer progressive strategy (statistics -> rules -> LLM).
 func (s *AIService) SuggestTags(ctx context.Context, req *v1pb.SuggestTagsRequest) (*v1pb.SuggestTagsResponse, error) {
-	if s.LLMService == nil {
-		return nil, status.Errorf(codes.Unavailable, "LLM features are disabled")
-	}
+	const (
+		maxContentLength = 5000 // Maximum content length in characters
+		minContentLength = 3    // Minimum content length
+	)
 
 	// Get current user
 	user, err := getCurrentUser(ctx, s.Store)
@@ -146,6 +148,15 @@ func (s *AIService) SuggestTags(ctx context.Context, req *v1pb.SuggestTagsReques
 		return nil, status.Errorf(codes.InvalidArgument, "content is required")
 	}
 
+	// Validate content length
+	contentLen := len([]rune(req.Content))
+	if contentLen < minContentLength {
+		return nil, status.Errorf(codes.InvalidArgument, "content too short (min %d characters)", minContentLength)
+	}
+	if contentLen > maxContentLength {
+		return nil, status.Errorf(codes.InvalidArgument, "content too long (max %d characters)", maxContentLength)
+	}
+
 	// Validate and set limit
 	limit := int(req.Limit)
 	if limit <= 0 {
@@ -155,90 +166,31 @@ func (s *AIService) SuggestTags(ctx context.Context, req *v1pb.SuggestTagsReques
 		limit = 10
 	}
 
-	// Get existing tags as reference
-	existingTags, err := s.getExistingTags(ctx, user.ID)
-	if err != nil {
-		// Non-critical error, continue with empty tags
-		existingTags = []string{}
-	}
-
-	// Build prompt
-	prompt := fmt.Sprintf(`请为以下内容推荐 %d 个合适的标签。
-
-## 内容
-%s
-
-## 已有标签（参考）
-%s
-
-## 要求
-1. 每个标签不超过10个字符
-2. 标签要准确反映内容主题
-3. 优先使用已有标签列表中的标签
-4. 只返回标签列表，每行一个，不要其他内容
-`, limit, req.Content, strings.Join(existingTags, ", "))
-
-	messages := []ai.Message{
-		{Role: "user", Content: prompt},
-	}
-
-	// Call LLM
-	response, err := s.LLMService.Chat(ctx, messages)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate tags: %v", err)
-	}
-
-	// Parse results
-	tags := parseTagsFromLLM(response, limit)
-
-	return &v1pb.SuggestTagsResponse{Tags: tags}, nil
-}
-
-// getExistingTags retrieves all tags from user's memos.
-func (s *AIService) getExistingTags(ctx context.Context, userID int32) ([]string, error) {
-	memos, err := s.Store.ListMemos(ctx, &store.FindMemo{
-		CreatorID: &userID,
+	// Use TagSuggester for three-layer progressive suggestions
+	suggester := s.getTagSuggester()
+	response, err := suggester.Suggest(ctx, &tags.SuggestRequest{
+		UserID:  user.ID,
+		Content: req.Content,
+		MaxTags: limit,
+		UseLLM:  s.LLMService != nil, // Only use LLM if available
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to suggest tags")
 	}
 
-	tagSet := make(map[string]bool)
-	for _, memo := range memos {
-		if memo.Payload != nil {
-			for _, tag := range memo.Payload.Tags {
-				tagSet[tag] = true
-			}
-		}
+	// Extract tag names from suggestions
+	tagNames := make([]string, 0, len(response.Tags))
+	for _, tag := range response.Tags {
+		tagNames = append(tagNames, tag.Name)
 	}
 
-	tags := make([]string, 0, len(tagSet))
-	for tag := range tagSet {
-		tags = append(tags, tag)
-	}
-	return tags, nil
+	return &v1pb.SuggestTagsResponse{Tags: tagNames}, nil
 }
 
-// parseTagsFromLLM parses tags from LLM response.
-func parseTagsFromLLM(response string, limit int) []string {
-	lines := strings.Split(response, "\n")
-	var tags []string
-
-	for _, line := range lines {
-		tag := strings.TrimSpace(line)
-		tag = strings.TrimPrefix(tag, "-")
-		tag = strings.TrimPrefix(tag, "#")
-		tag = strings.TrimSpace(tag)
-
-		if tag != "" && len(tag) <= 20 {
-			tags = append(tags, tag)
-			if len(tags) >= limit {
-				break
-			}
-		}
-	}
-
-	return tags
+// getTagSuggester returns a TagSuggester instance.
+func (s *AIService) getTagSuggester() tags.TagSuggester {
+	// Note: CacheService is nil for now; caching is handled gracefully
+	return tags.NewTagSuggester(s.Store, s.LLMService, nil)
 }
 
 // GetRelatedMemos finds memos related to a specific memo.
