@@ -90,6 +90,7 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 				service.AIService = &AIService{
 					Store:                  store,
 					EmbeddingService:       embeddingService,
+					EmbeddingModel:         aiConfig.Embedding.Model,
 					RerankerService:        rerankerService,
 					LLMService:             llmService,
 					AdaptiveRetriever:      adaptiveRetriever,

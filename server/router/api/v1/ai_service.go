@@ -24,6 +24,7 @@ type AIService struct {
 	Store *store.Store
 
 	EmbeddingService pluginai.EmbeddingService
+	EmbeddingModel   string // embedding model name for duplicate detection
 	RerankerService  pluginai.RerankerService
 	LLMService       pluginai.LLMService
 

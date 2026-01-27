@@ -125,3 +125,46 @@ Located in `server/retrieval/`:
 - Hybrid BM25 + Vector search
 - Reranking pipeline
 - Caching layer
+
+## AI Database Schema
+
+### Core AI Tables (PostgreSQL only)
+
+| Table | Purpose | Key Columns |
+| ----- | ------- | ----------- |
+| `memo_embedding` | Vector embeddings for semantic search | `memo_id`, `embedding` (vector) |
+| `conversation_context` | Session persistence for AI agents | `session_id`, `user_id`, `context_data` (JSONB) |
+| `episodic_memory` | Long-term user memory | `user_id`, `summary`, `embedding` |
+| `user_preferences` | User communication preferences | `user_id`, `preferences` (JSONB) |
+| `agent_metrics` | Agent performance tracking | `agent_type`, `success_rate`, `avg_latency` |
+
+### conversation_context Schema
+
+```sql
+CREATE TABLE conversation_context (
+  id            SERIAL PRIMARY KEY,
+  session_id    VARCHAR(64) NOT NULL UNIQUE,
+  user_id       INTEGER NOT NULL REFERENCES "user"(id),
+  agent_type    VARCHAR(20) NOT NULL,  -- 'memo', 'schedule', 'amazing', 'assistant'
+  context_data  JSONB NOT NULL,        -- messages + metadata
+  created_ts    BIGINT NOT NULL,
+  updated_ts    BIGINT NOT NULL
+);
+
+-- Indexes
+CREATE INDEX idx_conversation_context_user ON conversation_context(user_id);
+CREATE INDEX idx_conversation_context_updated ON conversation_context(updated_ts DESC);
+```
+
+**context_data Structure**:
+```json
+{
+  "messages": [
+    {"role": "user", "content": "..."},
+    {"role": "assistant", "content": "..."}
+  ],
+  "metadata": {"topic": "...", ...}
+}
+```
+
+**Retention**: Sessions auto-expire after 30 days (configurable via cleanup job).

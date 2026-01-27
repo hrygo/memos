@@ -168,3 +168,65 @@ await chatHook.stream({
 | ------------ | -------------- | ---------------------------- |
 | memo_search  | `memo_search.go` | Semantic memo search       |
 | scheduler    | `scheduler.go`   | Schedule CRUD operations   |
+
+## AI Services (`plugin/ai/`)
+
+### Service Overview
+
+| Service | Package | Description |
+| ------- | ------- | ----------- |
+| Memory | `memory/` | Episodic memory & user preferences |
+| Session | `session/` | Conversation persistence |
+| Router | `router/` | Intent classification & routing |
+| Cache | `cache/` | LRU cache with TTL |
+| Metrics | `metrics/` | Agent & tool performance metrics |
+| RAG | `rag/` | Self-RAG retrieval optimization |
+| Context | `context/` | Context builder with token budget |
+
+### Session Service (`plugin/ai/session/`)
+
+Provides conversation persistence for AI agents, enabling session recovery across restarts and devices.
+
+**Interface**:
+```go
+type SessionService interface {
+    SaveContext(ctx, sessionID, context) error
+    LoadContext(ctx, sessionID) (*ConversationContext, error)
+    ListSessions(ctx, userID, limit) ([]SessionSummary, error)
+    DeleteSession(ctx, sessionID) error
+    CleanupExpired(ctx, retentionDays) (int64, error)
+}
+```
+
+**Components**:
+- `store.go`: PostgreSQL persistence + write-through cache (30min TTL)
+- `recovery.go`: Session recovery workflow + sliding window (max 20 messages)
+- `cleanup.go`: Background job for expired session cleanup (default: 30 days)
+
+**Database**: `conversation_context` table (JSONB storage)
+
+### Context Builder (`plugin/ai/context/`)
+
+Assembles LLM context with intelligent token budget allocation:
+
+```
+Token Budget Allocation (with retrieval):
+┌─────────────────────────────────────────┐
+│ System Prompt      │ 500 tokens (fixed) │
+│ User Preferences   │ 10%                │
+│ Short-term Memory  │ 40%                │
+│ Long-term Memory   │ 15%                │
+│ Retrieval Results  │ 45%                │ (reduced for LLM)
+└─────────────────────────────────────────┘
+```
+
+**Priority-based Truncation**: When budget exceeded, lowest priority segments are truncated first.
+
+### Self-RAG (`plugin/ai/rag/`)
+
+Optimizes retrieval by deciding when and how to retrieve:
+
+1. **RetrievalDecider**: Skip retrieval for chitchat/commands
+2. **StrategySelector**: Choose search strategy by intent (BM25Only, SemanticOnly, HybridStandard, FullPipeline)
+3. **ResultEvaluator**: Assess retrieval quality, decide if reranking needed
+4. **RRF Fusion**: Merge BM25 + vector results with `Σ weight_i / (60 + rank_i)`
