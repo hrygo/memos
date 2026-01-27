@@ -117,10 +117,10 @@ func TestSchedulerAgentV2_Execute(t *testing.T) {
 		Return(mockToolCallResponse("schedule_query", queryArgs, "Checking..."), nil).
 		Once()
 
-	// Step 2: Tool execution
+	// Step 2: Tool execution (called twice: once by tool.Run, once by handleScheduleQuery callback)
 	mockSvc.On("FindSchedules", mock.Anything, int32(1), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
 		Return([]*schedule.ScheduleInstance{}, nil).
-		Once()
+		Times(2)
 
 	// Step 3: LLM calls schedule_add
 	addArgs := `{"title": "Meeting", "start_time": "2026-01-26T10:00:00+08:00"}`
@@ -309,10 +309,10 @@ func TestSchedulerAgentV2_Callback(t *testing.T) {
 		Return(mockToolCallResponse("schedule_query", queryArgs, "Checking..."), nil).
 		Once()
 
-	// Mock: Tool returns empty
+	// Mock: Tool returns empty (called twice: once by tool.Run, once by handleScheduleQuery callback)
 	mockSvc.On("FindSchedules", mock.Anything, int32(1), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
 		Return([]*schedule.ScheduleInstance{}, nil).
-		Once()
+		Times(2)
 
 	// Mock: LLM provides final answer
 	mockLLM.On("ChatWithTools", mock.Anything, mock.Anything, mock.Anything).
