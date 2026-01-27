@@ -139,11 +139,6 @@ func (s *Server) Shutdown(ctx context.Context) {
 }
 
 func (s *Server) StartBackgroundRunners(ctx context.Context) {
-	slog.Info("StartBackgroundRunners: checking conditions",
-		"ai_enabled", s.Profile.IsAIEnabled(),
-		"driver", s.Profile.Driver,
-		"mode", s.Profile.Mode,
-	)
 	// Start embedding runner if AI is enabled
 	if s.Profile.IsAIEnabled() && s.Profile.Driver == "postgres" {
 		aiConfig := ai.NewConfigFromProfile(s.Profile)
