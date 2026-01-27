@@ -267,7 +267,36 @@
     "thinking": "Thinking...",
     "welcome-description": "I can help you search, summarize, and discuss your memos, as well as manage your schedules",
     "welcome-intro": "Hi, I'm {{name}}",
-    "welcome-title": "Welcome to AI Assistant"
+    "welcome-title": "Welcome to AI Assistant",
+    "knowledge-graph": {
+      "title": "Knowledge Graph",
+      "filter": "Filter",
+      "min-importance": "Min Importance",
+      "edge-types": "Edge Types",
+      "edge-type-link": "Explicit Links",
+      "edge-type-tag_co": "Tag Co-occurrence",
+      "edge-type-semantic": "Semantic Similarity",
+      "clusters": "Clusters",
+      "nodes": "Nodes",
+      "edges": "Edges",
+      "clusters-count": "Clusters",
+      "build-time": "Build time",
+      "no-data": "No graph data available"
+    },
+    "prediction": {
+      "suggested": "Suggested",
+      "view-week": "View Week",
+      "view-tomorrow": "Tomorrow",
+      "view-today": "Today's Schedule",
+      "create-schedule": "New Schedule",
+      "set-reminder": "Set Reminder",
+      "search-related": "Search Related",
+      "weekly-report": "Weekly Report",
+      "monthly-review": "Monthly Review",
+      "quick-note": "Quick Note",
+      "reason-morning": "Start your day with a schedule overview",
+      "reason-friday": "End of week - review your progress"
+    }
   },
   "auth": {
     "create-your-account": "Create your account",
@@ -279,6 +308,15 @@
   },
   "chat": {
     "new": "New Chat"
+  },
+  "duplicate": {
+    "found-similar": "Similar memos found",
+    "merge": "Merge",
+    "link": "Link",
+    "ignore": "Ignore, continue creating",
+    "related-memos": "Related memos",
+    "similarity": "Similarity",
+    "untitled": "Untitled"
   },
   "common": {
     "add": "Add",
