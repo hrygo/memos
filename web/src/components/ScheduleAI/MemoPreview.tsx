@@ -1,5 +1,5 @@
 import { Check, FileText, Hash, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 import type { MemoPreviewProps } from "./types";
@@ -15,8 +15,23 @@ export function MemoPreview({ data, onConfirm, onDismiss, isLoading = false }: M
   const handleClick = () => {
     if (isLoading || isCreating) return;
     setIsCreating(true);
-    onConfirm(data);
+    try {
+      onConfirm(data);
+      // Assume success if onConfirm doesn't throw
+      // Parent component should handle error cases and call onDismiss if needed
+    } catch (err) {
+      console.error("Failed to confirm memo preview:", err);
+      setIsCreating(false); // Reset on error
+    }
   };
+
+  // Auto-reset isCreating if isLoading changes from true to false
+  useEffect(() => {
+    if (!isLoading && isCreating) {
+      // Operation completed (either success or failure handled by parent)
+      setIsCreating(false);
+    }
+  }, [isLoading, isCreating]);
 
   // Get translations (keys must exist in i18n files)
   const createText = t("memo.preview.confirm");
