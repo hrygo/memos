@@ -110,10 +110,10 @@ func (r *Runner) processBatch(ctx context.Context, memos []*store.Memo) error {
 		// Continue processing
 	}
 
-	// Extract content
+	// Extract content with attachment text
 	texts := make([]string, len(memos))
 	for i, m := range memos {
-		texts[i] = m.Content
+		texts[i] = r.buildMemoContentWithAttachments(ctx, m)
 	}
 
 	// Generate vectors in batch
@@ -135,4 +135,78 @@ func (r *Runner) processBatch(ctx context.Context, memos []*store.Memo) error {
 	}
 
 	return nil
+}
+
+// buildMemoContentWithAttachments builds the text content for embedding by combining
+// memo content with OCR/extracted text from attachments.
+func (r *Runner) buildMemoContentWithAttachments(ctx context.Context, m *store.Memo) string {
+	content := m.Content
+
+	// Fetch attachments for this memo
+	attachments, err := r.store.ListAttachments(ctx, &store.FindAttachment{
+		MemoID: &m.ID,
+		Limit:  intPtr(50), // Max 50 attachments per memo
+	})
+	if err != nil {
+		slog.Warn("failed to fetch attachments for memo", "memoID", m.ID, "error", err)
+		return content
+	}
+
+	// Collect attachment text
+	var attachmentTexts []string
+	for _, att := range attachments {
+		if att.RowStatus != "NORMAL" {
+			continue
+		}
+		// Prioritize OCR text (for images) over extracted text (for documents)
+		if att.OCRText != "" {
+			attachmentTexts = append(attachmentTexts, att.OCRText)
+		} else if att.ExtractedText != "" {
+			attachmentTexts = append(attachmentTexts, att.ExtractedText)
+		}
+	}
+
+	// Combine content with attachment text
+	if len(attachmentTexts) > 0 {
+		// Use a separator that won't confuse the embedding model
+		combined := content + "\n\n[附件内容]\n" + joinNonEmpty(attachmentTexts, "\n---\n")
+		// Truncate if too long (most models have limits, BAAI/bge-m3 supports up to 8192 tokens)
+		if len(combined) > 8000 {
+			// Keep memo content and truncate attachment text if needed
+			if len(m.Content) < 8000 {
+				combined = m.Content + "\n\n[附件内容]\n" + joinNonEmpty(attachmentTexts, "\n---\n")[:8000-len(m.Content)-20]
+			} else {
+				combined = m.Content[:8000]
+			}
+		}
+		return combined
+	}
+
+	return content
+}
+
+// intPtr returns a pointer to an int.
+func intPtr(i int) *int {
+	return &i
+}
+
+// joinNonEmpty joins non-empty strings with a separator.
+func joinNonEmpty(strs []string, sep string) string {
+	var result []string
+	for _, s := range strs {
+		if s != "" {
+			result = append(result, s)
+		}
+	}
+	if len(result) == 0 {
+		return ""
+	}
+	joined := ""
+	for i, s := range result {
+		if i > 0 {
+			joined += sep
+		}
+		joined += s
+	}
+	return joined
 }
