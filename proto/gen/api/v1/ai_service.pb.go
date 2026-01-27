@@ -2140,6 +2140,887 @@ func (x *ParrotInfo) GetSelfCognition() *ParrotSelfCognition {
 	return nil
 }
 
+// DetectDuplicatesRequest is the request for DetectDuplicates.
+type DetectDuplicatesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`            // Memo title (optional)
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`        // Memo content
+	Tags          []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`              // Memo tags (optional)
+	TopK          int32                  `protobuf:"varint,4,opt,name=top_k,json=topK,proto3" json:"top_k,omitempty"` // Max results to return (default: 5)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DetectDuplicatesRequest) Reset() {
+	*x = DetectDuplicatesRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DetectDuplicatesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DetectDuplicatesRequest) ProtoMessage() {}
+
+func (x *DetectDuplicatesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DetectDuplicatesRequest.ProtoReflect.Descriptor instead.
+func (*DetectDuplicatesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *DetectDuplicatesRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *DetectDuplicatesRequest) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *DetectDuplicatesRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *DetectDuplicatesRequest) GetTopK() int32 {
+	if x != nil {
+		return x.TopK
+	}
+	return 0
+}
+
+// DetectDuplicatesResponse is the response for DetectDuplicates.
+type DetectDuplicatesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HasDuplicate  bool                   `protobuf:"varint,1,opt,name=has_duplicate,json=hasDuplicate,proto3" json:"has_duplicate,omitempty"` // Whether duplicates were found (>90% similarity)
+	HasRelated    bool                   `protobuf:"varint,2,opt,name=has_related,json=hasRelated,proto3" json:"has_related,omitempty"`       // Whether related memos were found (70-90% similarity)
+	Duplicates    []*SimilarMemo         `protobuf:"bytes,3,rep,name=duplicates,proto3" json:"duplicates,omitempty"`                          // Duplicate memos
+	Related       []*SimilarMemo         `protobuf:"bytes,4,rep,name=related,proto3" json:"related,omitempty"`                                // Related memos
+	LatencyMs     int64                  `protobuf:"varint,5,opt,name=latency_ms,json=latencyMs,proto3" json:"latency_ms,omitempty"`          // Detection latency in milliseconds
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DetectDuplicatesResponse) Reset() {
+	*x = DetectDuplicatesResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DetectDuplicatesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DetectDuplicatesResponse) ProtoMessage() {}
+
+func (x *DetectDuplicatesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DetectDuplicatesResponse.ProtoReflect.Descriptor instead.
+func (*DetectDuplicatesResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *DetectDuplicatesResponse) GetHasDuplicate() bool {
+	if x != nil {
+		return x.HasDuplicate
+	}
+	return false
+}
+
+func (x *DetectDuplicatesResponse) GetHasRelated() bool {
+	if x != nil {
+		return x.HasRelated
+	}
+	return false
+}
+
+func (x *DetectDuplicatesResponse) GetDuplicates() []*SimilarMemo {
+	if x != nil {
+		return x.Duplicates
+	}
+	return nil
+}
+
+func (x *DetectDuplicatesResponse) GetRelated() []*SimilarMemo {
+	if x != nil {
+		return x.Related
+	}
+	return nil
+}
+
+func (x *DetectDuplicatesResponse) GetLatencyMs() int64 {
+	if x != nil {
+		return x.LatencyMs
+	}
+	return 0
+}
+
+// SimilarMemo represents a memo similar to the input.
+type SimilarMemo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                   // Memo ID
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                               // Memo resource name (memos/{uid})
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`                             // Memo title
+	Snippet       string                 `protobuf:"bytes,4,opt,name=snippet,proto3" json:"snippet,omitempty"`                         // Content snippet
+	Similarity    float64                `protobuf:"fixed64,5,opt,name=similarity,proto3" json:"similarity,omitempty"`                 // Similarity score (0-1)
+	SharedTags    []string               `protobuf:"bytes,6,rep,name=shared_tags,json=sharedTags,proto3" json:"shared_tags,omitempty"` // Tags shared with input
+	Level         string                 `protobuf:"bytes,7,opt,name=level,proto3" json:"level,omitempty"`                             // "duplicate" or "related"
+	Breakdown     *SimilarityBreakdown   `protobuf:"bytes,8,opt,name=breakdown,proto3" json:"breakdown,omitempty"`                     // Similarity breakdown
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SimilarMemo) Reset() {
+	*x = SimilarMemo{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SimilarMemo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SimilarMemo) ProtoMessage() {}
+
+func (x *SimilarMemo) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SimilarMemo.ProtoReflect.Descriptor instead.
+func (*SimilarMemo) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *SimilarMemo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SimilarMemo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SimilarMemo) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *SimilarMemo) GetSnippet() string {
+	if x != nil {
+		return x.Snippet
+	}
+	return ""
+}
+
+func (x *SimilarMemo) GetSimilarity() float64 {
+	if x != nil {
+		return x.Similarity
+	}
+	return 0
+}
+
+func (x *SimilarMemo) GetSharedTags() []string {
+	if x != nil {
+		return x.SharedTags
+	}
+	return nil
+}
+
+func (x *SimilarMemo) GetLevel() string {
+	if x != nil {
+		return x.Level
+	}
+	return ""
+}
+
+func (x *SimilarMemo) GetBreakdown() *SimilarityBreakdown {
+	if x != nil {
+		return x.Breakdown
+	}
+	return nil
+}
+
+// SimilarityBreakdown shows how similarity was calculated.
+type SimilarityBreakdown struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Vector        float64                `protobuf:"fixed64,1,opt,name=vector,proto3" json:"vector,omitempty"`                             // Vector similarity score
+	TagCoOccur    float64                `protobuf:"fixed64,2,opt,name=tag_co_occur,json=tagCoOccur,proto3" json:"tag_co_occur,omitempty"` // Tag co-occurrence score
+	TimeProx      float64                `protobuf:"fixed64,3,opt,name=time_prox,json=timeProx,proto3" json:"time_prox,omitempty"`         // Time proximity score
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SimilarityBreakdown) Reset() {
+	*x = SimilarityBreakdown{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SimilarityBreakdown) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SimilarityBreakdown) ProtoMessage() {}
+
+func (x *SimilarityBreakdown) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SimilarityBreakdown.ProtoReflect.Descriptor instead.
+func (*SimilarityBreakdown) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *SimilarityBreakdown) GetVector() float64 {
+	if x != nil {
+		return x.Vector
+	}
+	return 0
+}
+
+func (x *SimilarityBreakdown) GetTagCoOccur() float64 {
+	if x != nil {
+		return x.TagCoOccur
+	}
+	return 0
+}
+
+func (x *SimilarityBreakdown) GetTimeProx() float64 {
+	if x != nil {
+		return x.TimeProx
+	}
+	return 0
+}
+
+// MergeMemosRequest is the request for MergeMemos.
+type MergeMemosRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceName    string                 `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"` // Source memo name (memos/{uid})
+	TargetName    string                 `protobuf:"bytes,2,opt,name=target_name,json=targetName,proto3" json:"target_name,omitempty"` // Target memo name (memos/{uid})
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeMemosRequest) Reset() {
+	*x = MergeMemosRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeMemosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeMemosRequest) ProtoMessage() {}
+
+func (x *MergeMemosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeMemosRequest.ProtoReflect.Descriptor instead.
+func (*MergeMemosRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *MergeMemosRequest) GetSourceName() string {
+	if x != nil {
+		return x.SourceName
+	}
+	return ""
+}
+
+func (x *MergeMemosRequest) GetTargetName() string {
+	if x != nil {
+		return x.TargetName
+	}
+	return ""
+}
+
+// MergeMemosResponse is the response for MergeMemos.
+type MergeMemosResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MergedName    string                 `protobuf:"bytes,1,opt,name=merged_name,json=mergedName,proto3" json:"merged_name,omitempty"` // Merged memo name
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MergeMemosResponse) Reset() {
+	*x = MergeMemosResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MergeMemosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergeMemosResponse) ProtoMessage() {}
+
+func (x *MergeMemosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergeMemosResponse.ProtoReflect.Descriptor instead.
+func (*MergeMemosResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *MergeMemosResponse) GetMergedName() string {
+	if x != nil {
+		return x.MergedName
+	}
+	return ""
+}
+
+// LinkMemosRequest is the request for LinkMemos.
+type LinkMemosRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemoName_1    string                 `protobuf:"bytes,1,opt,name=memo_name_1,json=memoName1,proto3" json:"memo_name_1,omitempty"` // First memo name (memos/{uid})
+	MemoName_2    string                 `protobuf:"bytes,2,opt,name=memo_name_2,json=memoName2,proto3" json:"memo_name_2,omitempty"` // Second memo name (memos/{uid})
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkMemosRequest) Reset() {
+	*x = LinkMemosRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkMemosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkMemosRequest) ProtoMessage() {}
+
+func (x *LinkMemosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkMemosRequest.ProtoReflect.Descriptor instead.
+func (*LinkMemosRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *LinkMemosRequest) GetMemoName_1() string {
+	if x != nil {
+		return x.MemoName_1
+	}
+	return ""
+}
+
+func (x *LinkMemosRequest) GetMemoName_2() string {
+	if x != nil {
+		return x.MemoName_2
+	}
+	return ""
+}
+
+// LinkMemosResponse is the response for LinkMemos.
+type LinkMemosResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // Whether linking was successful
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkMemosResponse) Reset() {
+	*x = LinkMemosResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkMemosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkMemosResponse) ProtoMessage() {}
+
+func (x *LinkMemosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkMemosResponse.ProtoReflect.Descriptor instead.
+func (*LinkMemosResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *LinkMemosResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// GetKnowledgeGraphRequest is the request for GetKnowledgeGraph.
+type GetKnowledgeGraphRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tags          []string               `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`                                          // Filter by tags (optional)
+	MinImportance float64                `protobuf:"fixed64,2,opt,name=min_importance,json=minImportance,proto3" json:"min_importance,omitempty"` // Minimum importance score (optional, 0-1)
+	Clusters      []int32                `protobuf:"varint,3,rep,packed,name=clusters,proto3" json:"clusters,omitempty"`                          // Filter by cluster IDs (optional)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetKnowledgeGraphRequest) Reset() {
+	*x = GetKnowledgeGraphRequest{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetKnowledgeGraphRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetKnowledgeGraphRequest) ProtoMessage() {}
+
+func (x *GetKnowledgeGraphRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetKnowledgeGraphRequest.ProtoReflect.Descriptor instead.
+func (*GetKnowledgeGraphRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *GetKnowledgeGraphRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *GetKnowledgeGraphRequest) GetMinImportance() float64 {
+	if x != nil {
+		return x.MinImportance
+	}
+	return 0
+}
+
+func (x *GetKnowledgeGraphRequest) GetClusters() []int32 {
+	if x != nil {
+		return x.Clusters
+	}
+	return nil
+}
+
+// GetKnowledgeGraphResponse is the response for GetKnowledgeGraph.
+type GetKnowledgeGraphResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Nodes         []*GraphNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`                     // Graph nodes
+	Edges         []*GraphEdge           `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"`                     // Graph edges
+	Stats         *GraphStats            `protobuf:"bytes,3,opt,name=stats,proto3" json:"stats,omitempty"`                     // Graph statistics
+	BuildMs       int64                  `protobuf:"varint,4,opt,name=build_ms,json=buildMs,proto3" json:"build_ms,omitempty"` // Build latency in milliseconds
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetKnowledgeGraphResponse) Reset() {
+	*x = GetKnowledgeGraphResponse{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetKnowledgeGraphResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetKnowledgeGraphResponse) ProtoMessage() {}
+
+func (x *GetKnowledgeGraphResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetKnowledgeGraphResponse.ProtoReflect.Descriptor instead.
+func (*GetKnowledgeGraphResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *GetKnowledgeGraphResponse) GetNodes() []*GraphNode {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+func (x *GetKnowledgeGraphResponse) GetEdges() []*GraphEdge {
+	if x != nil {
+		return x.Edges
+	}
+	return nil
+}
+
+func (x *GetKnowledgeGraphResponse) GetStats() *GraphStats {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
+
+func (x *GetKnowledgeGraphResponse) GetBuildMs() int64 {
+	if x != nil {
+		return x.BuildMs
+	}
+	return 0
+}
+
+// GraphNode represents a node in the knowledge graph.
+type GraphNode struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                 // Node ID (memo UID)
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`                           // Node label (memo title)
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`                             // Node type ("memo" or "tag")
+	Tags          []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`                             // Node tags
+	Importance    float64                `protobuf:"fixed64,5,opt,name=importance,proto3" json:"importance,omitempty"`               // Importance score (0-1, PageRank)
+	Cluster       int32                  `protobuf:"varint,6,opt,name=cluster,proto3" json:"cluster,omitempty"`                      // Community cluster ID
+	CreatedTs     int64                  `protobuf:"varint,7,opt,name=created_ts,json=createdTs,proto3" json:"created_ts,omitempty"` // Creation timestamp
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GraphNode) Reset() {
+	*x = GraphNode{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GraphNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GraphNode) ProtoMessage() {}
+
+func (x *GraphNode) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GraphNode.ProtoReflect.Descriptor instead.
+func (*GraphNode) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *GraphNode) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GraphNode) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *GraphNode) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *GraphNode) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *GraphNode) GetImportance() float64 {
+	if x != nil {
+		return x.Importance
+	}
+	return 0
+}
+
+func (x *GraphNode) GetCluster() int32 {
+	if x != nil {
+		return x.Cluster
+	}
+	return 0
+}
+
+func (x *GraphNode) GetCreatedTs() int64 {
+	if x != nil {
+		return x.CreatedTs
+	}
+	return 0
+}
+
+// GraphEdge represents an edge in the knowledge graph.
+type GraphEdge struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`   // Source node ID
+	Target        string                 `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`   // Target node ID
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`       // Edge type ("link", "tag_co", "semantic")
+	Weight        float64                `protobuf:"fixed64,4,opt,name=weight,proto3" json:"weight,omitempty"` // Edge weight (0-1)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GraphEdge) Reset() {
+	*x = GraphEdge{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GraphEdge) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GraphEdge) ProtoMessage() {}
+
+func (x *GraphEdge) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GraphEdge.ProtoReflect.Descriptor instead.
+func (*GraphEdge) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *GraphEdge) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *GraphEdge) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *GraphEdge) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *GraphEdge) GetWeight() float64 {
+	if x != nil {
+		return x.Weight
+	}
+	return 0
+}
+
+// GraphStats contains graph statistics.
+type GraphStats struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeCount     int32                  `protobuf:"varint,1,opt,name=node_count,json=nodeCount,proto3" json:"node_count,omitempty"`             // Total node count
+	EdgeCount     int32                  `protobuf:"varint,2,opt,name=edge_count,json=edgeCount,proto3" json:"edge_count,omitempty"`             // Total edge count
+	ClusterCount  int32                  `protobuf:"varint,3,opt,name=cluster_count,json=clusterCount,proto3" json:"cluster_count,omitempty"`    // Number of communities
+	LinkEdges     int32                  `protobuf:"varint,4,opt,name=link_edges,json=linkEdges,proto3" json:"link_edges,omitempty"`             // Explicit link edge count
+	TagEdges      int32                  `protobuf:"varint,5,opt,name=tag_edges,json=tagEdges,proto3" json:"tag_edges,omitempty"`                // Tag co-occurrence edge count
+	SemanticEdges int32                  `protobuf:"varint,6,opt,name=semantic_edges,json=semanticEdges,proto3" json:"semantic_edges,omitempty"` // Semantic similarity edge count
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GraphStats) Reset() {
+	*x = GraphStats{}
+	mi := &file_api_v1_ai_service_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GraphStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GraphStats) ProtoMessage() {}
+
+func (x *GraphStats) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_ai_service_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GraphStats.ProtoReflect.Descriptor instead.
+func (*GraphStats) Descriptor() ([]byte, []int) {
+	return file_api_v1_ai_service_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *GraphStats) GetNodeCount() int32 {
+	if x != nil {
+		return x.NodeCount
+	}
+	return 0
+}
+
+func (x *GraphStats) GetEdgeCount() int32 {
+	if x != nil {
+		return x.EdgeCount
+	}
+	return 0
+}
+
+func (x *GraphStats) GetClusterCount() int32 {
+	if x != nil {
+		return x.ClusterCount
+	}
+	return 0
+}
+
+func (x *GraphStats) GetLinkEdges() int32 {
+	if x != nil {
+		return x.LinkEdges
+	}
+	return 0
+}
+
+func (x *GraphStats) GetTagEdges() int32 {
+	if x != nil {
+		return x.TagEdges
+	}
+	return 0
+}
+
+func (x *GraphStats) GetSemanticEdges() int32 {
+	if x != nil {
+		return x.SemanticEdges
+	}
+	return 0
+}
+
 var File_api_v1_ai_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_ai_service_proto_rawDesc = "" +
@@ -2292,7 +3173,88 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\n" +
 	"agent_type\x18\x01 \x01(\x0e2\x17.memos.api.v1.AgentTypeR\tagentType\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12H\n" +
-	"\x0eself_cognition\x18\x03 \x01(\v2!.memos.api.v1.ParrotSelfCognitionR\rselfCognition*7\n" +
+	"\x0eself_cognition\x18\x03 \x01(\v2!.memos.api.v1.ParrotSelfCognitionR\rselfCognition\"w\n" +
+	"\x17DetectDuplicatesRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1d\n" +
+	"\acontent\x18\x02 \x01(\tB\x03\xe0A\x02R\acontent\x12\x12\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x13\n" +
+	"\x05top_k\x18\x04 \x01(\x05R\x04topK\"\xef\x01\n" +
+	"\x18DetectDuplicatesResponse\x12#\n" +
+	"\rhas_duplicate\x18\x01 \x01(\bR\fhasDuplicate\x12\x1f\n" +
+	"\vhas_related\x18\x02 \x01(\bR\n" +
+	"hasRelated\x129\n" +
+	"\n" +
+	"duplicates\x18\x03 \x03(\v2\x19.memos.api.v1.SimilarMemoR\n" +
+	"duplicates\x123\n" +
+	"\arelated\x18\x04 \x03(\v2\x19.memos.api.v1.SimilarMemoR\arelated\x12\x1d\n" +
+	"\n" +
+	"latency_ms\x18\x05 \x01(\x03R\tlatencyMs\"\xf9\x01\n" +
+	"\vSimilarMemo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x18\n" +
+	"\asnippet\x18\x04 \x01(\tR\asnippet\x12\x1e\n" +
+	"\n" +
+	"similarity\x18\x05 \x01(\x01R\n" +
+	"similarity\x12\x1f\n" +
+	"\vshared_tags\x18\x06 \x03(\tR\n" +
+	"sharedTags\x12\x14\n" +
+	"\x05level\x18\a \x01(\tR\x05level\x12?\n" +
+	"\tbreakdown\x18\b \x01(\v2!.memos.api.v1.SimilarityBreakdownR\tbreakdown\"l\n" +
+	"\x13SimilarityBreakdown\x12\x16\n" +
+	"\x06vector\x18\x01 \x01(\x01R\x06vector\x12 \n" +
+	"\ftag_co_occur\x18\x02 \x01(\x01R\n" +
+	"tagCoOccur\x12\x1b\n" +
+	"\ttime_prox\x18\x03 \x01(\x01R\btimeProx\"_\n" +
+	"\x11MergeMemosRequest\x12$\n" +
+	"\vsource_name\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
+	"sourceName\x12$\n" +
+	"\vtarget_name\x18\x02 \x01(\tB\x03\xe0A\x02R\n" +
+	"targetName\"5\n" +
+	"\x12MergeMemosResponse\x12\x1f\n" +
+	"\vmerged_name\x18\x01 \x01(\tR\n" +
+	"mergedName\"\\\n" +
+	"\x10LinkMemosRequest\x12#\n" +
+	"\vmemo_name_1\x18\x01 \x01(\tB\x03\xe0A\x02R\tmemoName1\x12#\n" +
+	"\vmemo_name_2\x18\x02 \x01(\tB\x03\xe0A\x02R\tmemoName2\"-\n" +
+	"\x11LinkMemosResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"q\n" +
+	"\x18GetKnowledgeGraphRequest\x12\x12\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tags\x12%\n" +
+	"\x0emin_importance\x18\x02 \x01(\x01R\rminImportance\x12\x1a\n" +
+	"\bclusters\x18\x03 \x03(\x05R\bclusters\"\xc4\x01\n" +
+	"\x19GetKnowledgeGraphResponse\x12-\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x17.memos.api.v1.GraphNodeR\x05nodes\x12-\n" +
+	"\x05edges\x18\x02 \x03(\v2\x17.memos.api.v1.GraphEdgeR\x05edges\x12.\n" +
+	"\x05stats\x18\x03 \x01(\v2\x18.memos.api.v1.GraphStatsR\x05stats\x12\x19\n" +
+	"\bbuild_ms\x18\x04 \x01(\x03R\abuildMs\"\xb2\x01\n" +
+	"\tGraphNode\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x12\n" +
+	"\x04tags\x18\x04 \x03(\tR\x04tags\x12\x1e\n" +
+	"\n" +
+	"importance\x18\x05 \x01(\x01R\n" +
+	"importance\x12\x18\n" +
+	"\acluster\x18\x06 \x01(\x05R\acluster\x12\x1d\n" +
+	"\n" +
+	"created_ts\x18\a \x01(\x03R\tcreatedTs\"g\n" +
+	"\tGraphEdge\x12\x16\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
+	"\x06target\x18\x02 \x01(\tR\x06target\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x16\n" +
+	"\x06weight\x18\x04 \x01(\x01R\x06weight\"\xd2\x01\n" +
+	"\n" +
+	"GraphStats\x12\x1d\n" +
+	"\n" +
+	"node_count\x18\x01 \x01(\x05R\tnodeCount\x12\x1d\n" +
+	"\n" +
+	"edge_count\x18\x02 \x01(\x05R\tedgeCount\x12#\n" +
+	"\rcluster_count\x18\x03 \x01(\x05R\fclusterCount\x12\x1d\n" +
+	"\n" +
+	"link_edges\x18\x04 \x01(\x05R\tlinkEdges\x12\x1b\n" +
+	"\ttag_edges\x18\x05 \x01(\x05R\btagEdges\x12%\n" +
+	"\x0esemantic_edges\x18\x06 \x01(\x05R\rsemanticEdges*7\n" +
 	"\x11ScheduleQueryMode\x12\b\n" +
 	"\x04AUTO\x10\x00\x12\f\n" +
 	"\bSTANDARD\x10\x01\x12\n" +
@@ -2303,14 +3265,19 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x0fAGENT_TYPE_MEMO\x10\x01\x12\x17\n" +
 	"\x13AGENT_TYPE_SCHEDULE\x10\x02\x12\x16\n" +
 	"\x12AGENT_TYPE_AMAZING\x10\x03\x12\x17\n" +
-	"\x13AGENT_TYPE_CREATIVE\x10\x042\xfd\x0e\n" +
+	"\x13AGENT_TYPE_CREATIVE\x10\x042\xf9\x12\n" +
 	"\tAIService\x12y\n" +
 	"\x0eSemanticSearch\x12#.memos.api.v1.SemanticSearchRequest\x1a$.memos.api.v1.SemanticSearchResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/ai/search\x12v\n" +
 	"\vSuggestTags\x12 .memos.api.v1.SuggestTagsRequest\x1a!.memos.api.v1.SuggestTagsResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/ai/suggest-tags\x12[\n" +
 	"\x04Chat\x12\x19.memos.api.v1.ChatRequest\x1a\x1a.memos.api.v1.ChatResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/ai/chat0\x01\x12\x86\x01\n" +
 	"\x0fGetRelatedMemos\x12$.memos.api.v1.GetRelatedMemosRequest\x1a%.memos.api.v1.GetRelatedMemosResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/v1/{name=memos/*}/related\x12\xab\x01\n" +
 	"\x16GetParrotSelfCognition\x12+.memos.api.v1.GetParrotSelfCognitionRequest\x1a,.memos.api.v1.GetParrotSelfCognitionResponse\"6\x82\xd3\xe4\x93\x020\x12./api/v1/ai/parrots/{agent_type}/self-cognition\x12n\n" +
-	"\vListParrots\x12 .memos.api.v1.ListParrotsRequest\x1a!.memos.api.v1.ListParrotsResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/v1/ai/parrots\x12\x8c\x01\n" +
+	"\vListParrots\x12 .memos.api.v1.ListParrotsRequest\x1a!.memos.api.v1.ListParrotsResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/v1/ai/parrots\x12\x8a\x01\n" +
+	"\x10DetectDuplicates\x12%.memos.api.v1.DetectDuplicatesRequest\x1a&.memos.api.v1.DetectDuplicatesResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/api/v1/ai/detect-duplicates\x12r\n" +
+	"\n" +
+	"MergeMemos\x12\x1f.memos.api.v1.MergeMemosRequest\x1a .memos.api.v1.MergeMemosResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/ai/merge-memos\x12n\n" +
+	"\tLinkMemos\x12\x1e.memos.api.v1.LinkMemosRequest\x1a\x1f.memos.api.v1.LinkMemosResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/api/v1/ai/link-memos\x12\x88\x01\n" +
+	"\x11GetKnowledgeGraph\x12&.memos.api.v1.GetKnowledgeGraphRequest\x1a'.memos.api.v1.GetKnowledgeGraphResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/v1/ai/knowledge-graph\x12\x8c\x01\n" +
 	"\x13ListAIConversations\x12(.memos.api.v1.ListAIConversationsRequest\x1a).memos.api.v1.ListAIConversationsResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/v1/ai/conversations\x12\x80\x01\n" +
 	"\x11GetAIConversation\x12&.memos.api.v1.GetAIConversationRequest\x1a\x1c.memos.api.v1.AIConversation\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/v1/ai/conversations/{id}\x12\x84\x01\n" +
 	"\x14CreateAIConversation\x12).memos.api.v1.CreateAIConversationRequest\x1a\x1c.memos.api.v1.AIConversation\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/ai/conversations\x12\x89\x01\n" +
@@ -2338,7 +3305,7 @@ func file_api_v1_ai_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_ai_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_api_v1_ai_service_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
 var file_api_v1_ai_service_proto_goTypes = []any{
 	(ScheduleQueryMode)(0),                   // 0: memos.api.v1.ScheduleQueryMode
 	(AgentType)(0),                           // 1: memos.api.v1.AgentType
@@ -2375,7 +3342,20 @@ var file_api_v1_ai_service_proto_goTypes = []any{
 	(*ListParrotsRequest)(nil),               // 32: memos.api.v1.ListParrotsRequest
 	(*ListParrotsResponse)(nil),              // 33: memos.api.v1.ListParrotsResponse
 	(*ParrotInfo)(nil),                       // 34: memos.api.v1.ParrotInfo
-	(*emptypb.Empty)(nil),                    // 35: google.protobuf.Empty
+	(*DetectDuplicatesRequest)(nil),          // 35: memos.api.v1.DetectDuplicatesRequest
+	(*DetectDuplicatesResponse)(nil),         // 36: memos.api.v1.DetectDuplicatesResponse
+	(*SimilarMemo)(nil),                      // 37: memos.api.v1.SimilarMemo
+	(*SimilarityBreakdown)(nil),              // 38: memos.api.v1.SimilarityBreakdown
+	(*MergeMemosRequest)(nil),                // 39: memos.api.v1.MergeMemosRequest
+	(*MergeMemosResponse)(nil),               // 40: memos.api.v1.MergeMemosResponse
+	(*LinkMemosRequest)(nil),                 // 41: memos.api.v1.LinkMemosRequest
+	(*LinkMemosResponse)(nil),                // 42: memos.api.v1.LinkMemosResponse
+	(*GetKnowledgeGraphRequest)(nil),         // 43: memos.api.v1.GetKnowledgeGraphRequest
+	(*GetKnowledgeGraphResponse)(nil),        // 44: memos.api.v1.GetKnowledgeGraphResponse
+	(*GraphNode)(nil),                        // 45: memos.api.v1.GraphNode
+	(*GraphEdge)(nil),                        // 46: memos.api.v1.GraphEdge
+	(*GraphStats)(nil),                       // 47: memos.api.v1.GraphStats
+	(*emptypb.Empty)(nil),                    // 48: google.protobuf.Empty
 }
 var file_api_v1_ai_service_proto_depIdxs = []int32{
 	7,  // 0: memos.api.v1.SemanticSearchResponse.results:type_name -> memos.api.v1.SearchResult
@@ -2395,43 +3375,57 @@ var file_api_v1_ai_service_proto_depIdxs = []int32{
 	34, // 14: memos.api.v1.ListParrotsResponse.parrots:type_name -> memos.api.v1.ParrotInfo
 	1,  // 15: memos.api.v1.ParrotInfo.agent_type:type_name -> memos.api.v1.AgentType
 	29, // 16: memos.api.v1.ParrotInfo.self_cognition:type_name -> memos.api.v1.ParrotSelfCognition
-	5,  // 17: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
-	8,  // 18: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
-	10, // 19: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatRequest
-	27, // 20: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
-	30, // 21: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
-	32, // 22: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
-	13, // 23: memos.api.v1.AIService.ListAIConversations:input_type -> memos.api.v1.ListAIConversationsRequest
-	15, // 24: memos.api.v1.AIService.GetAIConversation:input_type -> memos.api.v1.GetAIConversationRequest
-	16, // 25: memos.api.v1.AIService.CreateAIConversation:input_type -> memos.api.v1.CreateAIConversationRequest
-	17, // 26: memos.api.v1.AIService.UpdateAIConversation:input_type -> memos.api.v1.UpdateAIConversationRequest
-	18, // 27: memos.api.v1.AIService.DeleteAIConversation:input_type -> memos.api.v1.DeleteAIConversationRequest
-	19, // 28: memos.api.v1.AIService.AddContextSeparator:input_type -> memos.api.v1.AddContextSeparatorRequest
-	20, // 29: memos.api.v1.AIService.ListMessages:input_type -> memos.api.v1.ListMessagesRequest
-	22, // 30: memos.api.v1.AIService.ClearConversationMessages:input_type -> memos.api.v1.ClearConversationMessagesRequest
-	2,  // 31: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	2,  // 32: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
-	6,  // 33: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
-	9,  // 34: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
-	23, // 35: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
-	28, // 36: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
-	31, // 37: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
-	33, // 38: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
-	14, // 39: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
-	11, // 40: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 41: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
-	11, // 42: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
-	35, // 43: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
-	35, // 44: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
-	21, // 45: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
-	35, // 46: memos.api.v1.AIService.ClearConversationMessages:output_type -> google.protobuf.Empty
-	3,  // 47: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
-	4,  // 48: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
-	33, // [33:49] is the sub-list for method output_type
-	17, // [17:33] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	37, // 17: memos.api.v1.DetectDuplicatesResponse.duplicates:type_name -> memos.api.v1.SimilarMemo
+	37, // 18: memos.api.v1.DetectDuplicatesResponse.related:type_name -> memos.api.v1.SimilarMemo
+	38, // 19: memos.api.v1.SimilarMemo.breakdown:type_name -> memos.api.v1.SimilarityBreakdown
+	45, // 20: memos.api.v1.GetKnowledgeGraphResponse.nodes:type_name -> memos.api.v1.GraphNode
+	46, // 21: memos.api.v1.GetKnowledgeGraphResponse.edges:type_name -> memos.api.v1.GraphEdge
+	47, // 22: memos.api.v1.GetKnowledgeGraphResponse.stats:type_name -> memos.api.v1.GraphStats
+	5,  // 23: memos.api.v1.AIService.SemanticSearch:input_type -> memos.api.v1.SemanticSearchRequest
+	8,  // 24: memos.api.v1.AIService.SuggestTags:input_type -> memos.api.v1.SuggestTagsRequest
+	10, // 25: memos.api.v1.AIService.Chat:input_type -> memos.api.v1.ChatRequest
+	27, // 26: memos.api.v1.AIService.GetRelatedMemos:input_type -> memos.api.v1.GetRelatedMemosRequest
+	30, // 27: memos.api.v1.AIService.GetParrotSelfCognition:input_type -> memos.api.v1.GetParrotSelfCognitionRequest
+	32, // 28: memos.api.v1.AIService.ListParrots:input_type -> memos.api.v1.ListParrotsRequest
+	35, // 29: memos.api.v1.AIService.DetectDuplicates:input_type -> memos.api.v1.DetectDuplicatesRequest
+	39, // 30: memos.api.v1.AIService.MergeMemos:input_type -> memos.api.v1.MergeMemosRequest
+	41, // 31: memos.api.v1.AIService.LinkMemos:input_type -> memos.api.v1.LinkMemosRequest
+	43, // 32: memos.api.v1.AIService.GetKnowledgeGraph:input_type -> memos.api.v1.GetKnowledgeGraphRequest
+	13, // 33: memos.api.v1.AIService.ListAIConversations:input_type -> memos.api.v1.ListAIConversationsRequest
+	15, // 34: memos.api.v1.AIService.GetAIConversation:input_type -> memos.api.v1.GetAIConversationRequest
+	16, // 35: memos.api.v1.AIService.CreateAIConversation:input_type -> memos.api.v1.CreateAIConversationRequest
+	17, // 36: memos.api.v1.AIService.UpdateAIConversation:input_type -> memos.api.v1.UpdateAIConversationRequest
+	18, // 37: memos.api.v1.AIService.DeleteAIConversation:input_type -> memos.api.v1.DeleteAIConversationRequest
+	19, // 38: memos.api.v1.AIService.AddContextSeparator:input_type -> memos.api.v1.AddContextSeparatorRequest
+	20, // 39: memos.api.v1.AIService.ListMessages:input_type -> memos.api.v1.ListMessagesRequest
+	22, // 40: memos.api.v1.AIService.ClearConversationMessages:input_type -> memos.api.v1.ClearConversationMessagesRequest
+	2,  // 41: memos.api.v1.ScheduleAgentService.Chat:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	2,  // 42: memos.api.v1.ScheduleAgentService.ChatStream:input_type -> memos.api.v1.ScheduleAgentChatRequest
+	6,  // 43: memos.api.v1.AIService.SemanticSearch:output_type -> memos.api.v1.SemanticSearchResponse
+	9,  // 44: memos.api.v1.AIService.SuggestTags:output_type -> memos.api.v1.SuggestTagsResponse
+	23, // 45: memos.api.v1.AIService.Chat:output_type -> memos.api.v1.ChatResponse
+	28, // 46: memos.api.v1.AIService.GetRelatedMemos:output_type -> memos.api.v1.GetRelatedMemosResponse
+	31, // 47: memos.api.v1.AIService.GetParrotSelfCognition:output_type -> memos.api.v1.GetParrotSelfCognitionResponse
+	33, // 48: memos.api.v1.AIService.ListParrots:output_type -> memos.api.v1.ListParrotsResponse
+	36, // 49: memos.api.v1.AIService.DetectDuplicates:output_type -> memos.api.v1.DetectDuplicatesResponse
+	40, // 50: memos.api.v1.AIService.MergeMemos:output_type -> memos.api.v1.MergeMemosResponse
+	42, // 51: memos.api.v1.AIService.LinkMemos:output_type -> memos.api.v1.LinkMemosResponse
+	44, // 52: memos.api.v1.AIService.GetKnowledgeGraph:output_type -> memos.api.v1.GetKnowledgeGraphResponse
+	14, // 53: memos.api.v1.AIService.ListAIConversations:output_type -> memos.api.v1.ListAIConversationsResponse
+	11, // 54: memos.api.v1.AIService.GetAIConversation:output_type -> memos.api.v1.AIConversation
+	11, // 55: memos.api.v1.AIService.CreateAIConversation:output_type -> memos.api.v1.AIConversation
+	11, // 56: memos.api.v1.AIService.UpdateAIConversation:output_type -> memos.api.v1.AIConversation
+	48, // 57: memos.api.v1.AIService.DeleteAIConversation:output_type -> google.protobuf.Empty
+	48, // 58: memos.api.v1.AIService.AddContextSeparator:output_type -> google.protobuf.Empty
+	21, // 59: memos.api.v1.AIService.ListMessages:output_type -> memos.api.v1.ListMessagesResponse
+	48, // 60: memos.api.v1.AIService.ClearConversationMessages:output_type -> google.protobuf.Empty
+	3,  // 61: memos.api.v1.ScheduleAgentService.Chat:output_type -> memos.api.v1.ScheduleAgentChatResponse
+	4,  // 62: memos.api.v1.ScheduleAgentService.ChatStream:output_type -> memos.api.v1.ScheduleAgentStreamResponse
+	43, // [43:63] is the sub-list for method output_type
+	23, // [23:43] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_ai_service_proto_init() }
@@ -2446,7 +3440,7 @@ func file_api_v1_ai_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_ai_service_proto_rawDesc), len(file_api_v1_ai_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   33,
+			NumMessages:   46,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

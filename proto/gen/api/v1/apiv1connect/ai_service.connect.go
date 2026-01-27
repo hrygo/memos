@@ -51,6 +51,16 @@ const (
 	AIServiceGetParrotSelfCognitionProcedure = "/memos.api.v1.AIService/GetParrotSelfCognition"
 	// AIServiceListParrotsProcedure is the fully-qualified name of the AIService's ListParrots RPC.
 	AIServiceListParrotsProcedure = "/memos.api.v1.AIService/ListParrots"
+	// AIServiceDetectDuplicatesProcedure is the fully-qualified name of the AIService's
+	// DetectDuplicates RPC.
+	AIServiceDetectDuplicatesProcedure = "/memos.api.v1.AIService/DetectDuplicates"
+	// AIServiceMergeMemosProcedure is the fully-qualified name of the AIService's MergeMemos RPC.
+	AIServiceMergeMemosProcedure = "/memos.api.v1.AIService/MergeMemos"
+	// AIServiceLinkMemosProcedure is the fully-qualified name of the AIService's LinkMemos RPC.
+	AIServiceLinkMemosProcedure = "/memos.api.v1.AIService/LinkMemos"
+	// AIServiceGetKnowledgeGraphProcedure is the fully-qualified name of the AIService's
+	// GetKnowledgeGraph RPC.
+	AIServiceGetKnowledgeGraphProcedure = "/memos.api.v1.AIService/GetKnowledgeGraph"
 	// AIServiceListAIConversationsProcedure is the fully-qualified name of the AIService's
 	// ListAIConversations RPC.
 	AIServiceListAIConversationsProcedure = "/memos.api.v1.AIService/ListAIConversations"
@@ -96,6 +106,14 @@ type AIServiceClient interface {
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
+	// DetectDuplicates checks for duplicate or related memos.
+	DetectDuplicates(context.Context, *connect.Request[v1.DetectDuplicatesRequest]) (*connect.Response[v1.DetectDuplicatesResponse], error)
+	// MergeMemos merges source memo into target memo.
+	MergeMemos(context.Context, *connect.Request[v1.MergeMemosRequest]) (*connect.Response[v1.MergeMemosResponse], error)
+	// LinkMemos creates a bidirectional relation between two memos.
+	LinkMemos(context.Context, *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error)
+	// GetKnowledgeGraph returns the knowledge graph for the current user.
+	GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -161,6 +179,30 @@ func NewAIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...c
 			connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
 			connect.WithClientOptions(opts...),
 		),
+		detectDuplicates: connect.NewClient[v1.DetectDuplicatesRequest, v1.DetectDuplicatesResponse](
+			httpClient,
+			baseURL+AIServiceDetectDuplicatesProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("DetectDuplicates")),
+			connect.WithClientOptions(opts...),
+		),
+		mergeMemos: connect.NewClient[v1.MergeMemosRequest, v1.MergeMemosResponse](
+			httpClient,
+			baseURL+AIServiceMergeMemosProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("MergeMemos")),
+			connect.WithClientOptions(opts...),
+		),
+		linkMemos: connect.NewClient[v1.LinkMemosRequest, v1.LinkMemosResponse](
+			httpClient,
+			baseURL+AIServiceLinkMemosProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("LinkMemos")),
+			connect.WithClientOptions(opts...),
+		),
+		getKnowledgeGraph: connect.NewClient[v1.GetKnowledgeGraphRequest, v1.GetKnowledgeGraphResponse](
+			httpClient,
+			baseURL+AIServiceGetKnowledgeGraphProcedure,
+			connect.WithSchema(aIServiceMethods.ByName("GetKnowledgeGraph")),
+			connect.WithClientOptions(opts...),
+		),
 		listAIConversations: connect.NewClient[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse](
 			httpClient,
 			baseURL+AIServiceListAIConversationsProcedure,
@@ -220,6 +262,10 @@ type aIServiceClient struct {
 	getRelatedMemos           *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
 	getParrotSelfCognition    *connect.Client[v1.GetParrotSelfCognitionRequest, v1.GetParrotSelfCognitionResponse]
 	listParrots               *connect.Client[v1.ListParrotsRequest, v1.ListParrotsResponse]
+	detectDuplicates          *connect.Client[v1.DetectDuplicatesRequest, v1.DetectDuplicatesResponse]
+	mergeMemos                *connect.Client[v1.MergeMemosRequest, v1.MergeMemosResponse]
+	linkMemos                 *connect.Client[v1.LinkMemosRequest, v1.LinkMemosResponse]
+	getKnowledgeGraph         *connect.Client[v1.GetKnowledgeGraphRequest, v1.GetKnowledgeGraphResponse]
 	listAIConversations       *connect.Client[v1.ListAIConversationsRequest, v1.ListAIConversationsResponse]
 	getAIConversation         *connect.Client[v1.GetAIConversationRequest, v1.AIConversation]
 	createAIConversation      *connect.Client[v1.CreateAIConversationRequest, v1.AIConversation]
@@ -258,6 +304,26 @@ func (c *aIServiceClient) GetParrotSelfCognition(ctx context.Context, req *conne
 // ListParrots calls memos.api.v1.AIService.ListParrots.
 func (c *aIServiceClient) ListParrots(ctx context.Context, req *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error) {
 	return c.listParrots.CallUnary(ctx, req)
+}
+
+// DetectDuplicates calls memos.api.v1.AIService.DetectDuplicates.
+func (c *aIServiceClient) DetectDuplicates(ctx context.Context, req *connect.Request[v1.DetectDuplicatesRequest]) (*connect.Response[v1.DetectDuplicatesResponse], error) {
+	return c.detectDuplicates.CallUnary(ctx, req)
+}
+
+// MergeMemos calls memos.api.v1.AIService.MergeMemos.
+func (c *aIServiceClient) MergeMemos(ctx context.Context, req *connect.Request[v1.MergeMemosRequest]) (*connect.Response[v1.MergeMemosResponse], error) {
+	return c.mergeMemos.CallUnary(ctx, req)
+}
+
+// LinkMemos calls memos.api.v1.AIService.LinkMemos.
+func (c *aIServiceClient) LinkMemos(ctx context.Context, req *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error) {
+	return c.linkMemos.CallUnary(ctx, req)
+}
+
+// GetKnowledgeGraph calls memos.api.v1.AIService.GetKnowledgeGraph.
+func (c *aIServiceClient) GetKnowledgeGraph(ctx context.Context, req *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error) {
+	return c.getKnowledgeGraph.CallUnary(ctx, req)
 }
 
 // ListAIConversations calls memos.api.v1.AIService.ListAIConversations.
@@ -314,6 +380,14 @@ type AIServiceHandler interface {
 	GetParrotSelfCognition(context.Context, *connect.Request[v1.GetParrotSelfCognitionRequest]) (*connect.Response[v1.GetParrotSelfCognitionResponse], error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error)
+	// DetectDuplicates checks for duplicate or related memos.
+	DetectDuplicates(context.Context, *connect.Request[v1.DetectDuplicatesRequest]) (*connect.Response[v1.DetectDuplicatesResponse], error)
+	// MergeMemos merges source memo into target memo.
+	MergeMemos(context.Context, *connect.Request[v1.MergeMemosRequest]) (*connect.Response[v1.MergeMemosResponse], error)
+	// LinkMemos creates a bidirectional relation between two memos.
+	LinkMemos(context.Context, *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error)
+	// GetKnowledgeGraph returns the knowledge graph for the current user.
+	GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -373,6 +447,30 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 		AIServiceListParrotsProcedure,
 		svc.ListParrots,
 		connect.WithSchema(aIServiceMethods.ByName("ListParrots")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceDetectDuplicatesHandler := connect.NewUnaryHandler(
+		AIServiceDetectDuplicatesProcedure,
+		svc.DetectDuplicates,
+		connect.WithSchema(aIServiceMethods.ByName("DetectDuplicates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceMergeMemosHandler := connect.NewUnaryHandler(
+		AIServiceMergeMemosProcedure,
+		svc.MergeMemos,
+		connect.WithSchema(aIServiceMethods.ByName("MergeMemos")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceLinkMemosHandler := connect.NewUnaryHandler(
+		AIServiceLinkMemosProcedure,
+		svc.LinkMemos,
+		connect.WithSchema(aIServiceMethods.ByName("LinkMemos")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aIServiceGetKnowledgeGraphHandler := connect.NewUnaryHandler(
+		AIServiceGetKnowledgeGraphProcedure,
+		svc.GetKnowledgeGraph,
+		connect.WithSchema(aIServiceMethods.ByName("GetKnowledgeGraph")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aIServiceListAIConversationsHandler := connect.NewUnaryHandler(
@@ -437,6 +535,14 @@ func NewAIServiceHandler(svc AIServiceHandler, opts ...connect.HandlerOption) (s
 			aIServiceGetParrotSelfCognitionHandler.ServeHTTP(w, r)
 		case AIServiceListParrotsProcedure:
 			aIServiceListParrotsHandler.ServeHTTP(w, r)
+		case AIServiceDetectDuplicatesProcedure:
+			aIServiceDetectDuplicatesHandler.ServeHTTP(w, r)
+		case AIServiceMergeMemosProcedure:
+			aIServiceMergeMemosHandler.ServeHTTP(w, r)
+		case AIServiceLinkMemosProcedure:
+			aIServiceLinkMemosHandler.ServeHTTP(w, r)
+		case AIServiceGetKnowledgeGraphProcedure:
+			aIServiceGetKnowledgeGraphHandler.ServeHTTP(w, r)
 		case AIServiceListAIConversationsProcedure:
 			aIServiceListAIConversationsHandler.ServeHTTP(w, r)
 		case AIServiceGetAIConversationProcedure:
@@ -484,6 +590,22 @@ func (UnimplementedAIServiceHandler) GetParrotSelfCognition(context.Context, *co
 
 func (UnimplementedAIServiceHandler) ListParrots(context.Context, *connect.Request[v1.ListParrotsRequest]) (*connect.Response[v1.ListParrotsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.ListParrots is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) DetectDuplicates(context.Context, *connect.Request[v1.DetectDuplicatesRequest]) (*connect.Response[v1.DetectDuplicatesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.DetectDuplicates is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) MergeMemos(context.Context, *connect.Request[v1.MergeMemosRequest]) (*connect.Response[v1.MergeMemosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.MergeMemos is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) LinkMemos(context.Context, *connect.Request[v1.LinkMemosRequest]) (*connect.Response[v1.LinkMemosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.LinkMemos is not implemented"))
+}
+
+func (UnimplementedAIServiceHandler) GetKnowledgeGraph(context.Context, *connect.Request[v1.GetKnowledgeGraphRequest]) (*connect.Response[v1.GetKnowledgeGraphResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AIService.GetKnowledgeGraph is not implemented"))
 }
 
 func (UnimplementedAIServiceHandler) ListAIConversations(context.Context, *connect.Request[v1.ListAIConversationsRequest]) (*connect.Response[v1.ListAIConversationsResponse], error) {

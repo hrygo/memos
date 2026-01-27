@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/ai_service.proto.
  */
 export const file_api_v1_ai_service: GenFile = /*@__PURE__*/
-  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIu0BCgtDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUSFwoPY29udmVyc2F0aW9uX2lkGAYgASgFEhwKFGlzX3RlbXBfY29udmVyc2F0aW9uGAcgASgIIvIBCg5BSUNvbnZlcnNhdGlvbhIKCgJpZBgBIAEoBRILCgN1aWQYAiABKAkSEgoKY3JlYXRvcl9pZBgDIAEoBRINCgV0aXRsZRgEIAEoCRIqCglwYXJyb3RfaWQYBSABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlEg4KBnBpbm5lZBgGIAEoCBISCgpjcmVhdGVkX3RzGAcgASgDEhIKCnVwZGF0ZWRfdHMYCCABKAMSKQoIbWVzc2FnZXMYCSADKAsyFy5tZW1vcy5hcGkudjEuQUlNZXNzYWdlEhUKDW1lc3NhZ2VfY291bnQYCiABKAUikAEKCUFJTWVzc2FnZRIKCgJpZBgBIAEoBRILCgN1aWQYAiABKAkSFwoPY29udmVyc2F0aW9uX2lkGAMgASgFEgwKBHR5cGUYBCABKAkSDAoEcm9sZRgFIAEoCRIPCgdjb250ZW50GAYgASgJEhAKCG1ldGFkYXRhGAcgASgJEhIKCmNyZWF0ZWRfdHMYCCABKAMiHAoaTGlzdEFJQ29udmVyc2F0aW9uc1JlcXVlc3QiUgobTGlzdEFJQ29udmVyc2F0aW9uc1Jlc3BvbnNlEjMKDWNvbnZlcnNhdGlvbnMYASADKAsyHC5tZW1vcy5hcGkudjEuQUlDb252ZXJzYXRpb24iJgoYR2V0QUlDb252ZXJzYXRpb25SZXF1ZXN0EgoKAmlkGAEgASgFIlgKG0NyZWF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBINCgV0aXRsZRgBIAEoCRIqCglwYXJyb3RfaWQYAiABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlImcKG1VwZGF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBIKCgJpZBgBIAEoBRISCgV0aXRsZRgCIAEoCUgAiAEBEhMKBnBpbm5lZBgDIAEoCEgBiAEBQggKBl90aXRsZUIJCgdfcGlubmVkIikKG0RlbGV0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBIKCgJpZBgBIAEoBSI6ChpBZGRDb250ZXh0U2VwYXJhdG9yUmVxdWVzdBIcCg9jb252ZXJzYXRpb25faWQYASABKAVCA+BBAiJcChNMaXN0TWVzc2FnZXNSZXF1ZXN0EhwKD2NvbnZlcnNhdGlvbl9pZBgBIAEoBUID4EECEg0KBWxpbWl0GAIgASgFEhgKEGxhc3RfbWVzc2FnZV91aWQYAyABKAkimwEKFExpc3RNZXNzYWdlc1Jlc3BvbnNlEikKCG1lc3NhZ2VzGAEgAygLMhcubWVtb3MuYXBpLnYxLkFJTWVzc2FnZRIQCghoYXNfbW9yZRgCIAEoCBITCgt0b3RhbF9jb3VudBgDIAEoBRIaChJsYXRlc3RfbWVzc2FnZV91aWQYBCABKAkSFQoNc3luY19yZXF1aXJlZBgFIAEoCCJACiBDbGVhckNvbnZlcnNhdGlvbk1lc3NhZ2VzUmVxdWVzdBIcCg9jb252ZXJzYXRpb25faWQYASABKAVCA+BBAiLwAQoMQ2hhdFJlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSDwoHc291cmNlcxgCIAMoCRIMCgRkb25lGAMgASgIEkYKGHNjaGVkdWxlX2NyZWF0aW9uX2ludGVudBgEIAEoCzIkLm1lbW9zLmFwaS52MS5TY2hlZHVsZUNyZWF0aW9uSW50ZW50EkAKFXNjaGVkdWxlX3F1ZXJ5X3Jlc3VsdBgFIAEoCzIhLm1lbW9zLmFwaS52MS5TY2hlZHVsZVF1ZXJ5UmVzdWx0EhIKCmV2ZW50X3R5cGUYBiABKAkSEgoKZXZlbnRfZGF0YRgHIAEoCSJbChZTY2hlZHVsZUNyZWF0aW9uSW50ZW50EhAKCGRldGVjdGVkGAEgASgIEhwKFHNjaGVkdWxlX2Rlc2NyaXB0aW9uGAIgASgJEhEKCXJlYXNvbmluZxgDIAEoCSKNAQoTU2NoZWR1bGVRdWVyeVJlc3VsdBIQCghkZXRlY3RlZBgBIAEoCBIwCglzY2hlZHVsZXMYAiADKAsyHS5tZW1vcy5hcGkudjEuU2NoZWR1bGVTdW1tYXJ5Eh4KFnRpbWVfcmFuZ2VfZGVzY3JpcHRpb24YAyABKAkSEgoKcXVlcnlfdHlwZRgEIAEoCSKbAQoPU2NoZWR1bGVTdW1tYXJ5EgsKA3VpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzdGFydF90cxgDIAEoAxIOCgZlbmRfdHMYBCABKAMSDwoHYWxsX2RheRgFIAEoCBIQCghsb2NhdGlvbhgGIAEoCRIXCg9yZWN1cnJlbmNlX3J1bGUYByABKAkSDgoGc3RhdHVzGAggASgJIjoKFkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkQKF0dldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlEikKBW1lbW9zGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCLdAQoTUGFycm90U2VsZkNvZ25pdGlvbhIMCgRuYW1lGAEgASgJEg0KBWVtb2ppGAIgASgJEg0KBXRpdGxlGAMgASgJEhMKC3BlcnNvbmFsaXR5GAQgAygJEhQKDGNhcGFiaWxpdGllcxgFIAMoCRITCgtsaW1pdGF0aW9ucxgGIAMoCRIVCg13b3JraW5nX3N0eWxlGAcgASgJEhYKDmZhdm9yaXRlX3Rvb2xzGAggAygJEhkKEXNlbGZfaW50cm9kdWN0aW9uGAkgASgJEhAKCGZ1bl9mYWN0GAogASgJIlEKHUdldFBhcnJvdFNlbGZDb2duaXRpb25SZXF1ZXN0EjAKCmFnZW50X3R5cGUYASABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlQgPgQQIiWwoeR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlEjkKDnNlbGZfY29nbml0aW9uGAEgASgLMiEubWVtb3MuYXBpLnYxLlBhcnJvdFNlbGZDb2duaXRpb24iFAoSTGlzdFBhcnJvdHNSZXF1ZXN0IkAKE0xpc3RQYXJyb3RzUmVzcG9uc2USKQoHcGFycm90cxgBIAMoCzIYLm1lbW9zLmFwaS52MS5QYXJyb3RJbmZvIoIBCgpQYXJyb3RJbmZvEisKCmFnZW50X3R5cGUYASABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlEgwKBG5hbWUYAiABKAkSOQoOc2VsZl9jb2duaXRpb24YAyABKAsyIS5tZW1vcy5hcGkudjEuUGFycm90U2VsZkNvZ25pdGlvbio3ChFTY2hlZHVsZVF1ZXJ5TW9kZRIICgRBVVRPEAASDAoIU1RBTkRBUkQQARIKCgZTVFJJQ1QQAiqCAQoJQWdlbnRUeXBlEhYKEkFHRU5UX1RZUEVfREVGQVVMVBAAEhMKD0FHRU5UX1RZUEVfTUVNTxABEhcKE0FHRU5UX1RZUEVfU0NIRURVTEUQAhIWChJBR0VOVF9UWVBFX0FNQVpJTkcQAxIXChNBR0VOVF9UWVBFX0NSRUFUSVZFEAQy/Q4KCUFJU2VydmljZRJ5Cg5TZW1hbnRpY1NlYXJjaBIjLm1lbW9zLmFwaS52MS5TZW1hbnRpY1NlYXJjaFJlcXVlc3QaJC5tZW1vcy5hcGkudjEuU2VtYW50aWNTZWFyY2hSZXNwb25zZSIcgtPkkwIWOgEqIhEvYXBpL3YxL2FpL3NlYXJjaBJ2CgtTdWdnZXN0VGFncxIgLm1lbW9zLmFwaS52MS5TdWdnZXN0VGFnc1JlcXVlc3QaIS5tZW1vcy5hcGkudjEuU3VnZ2VzdFRhZ3NSZXNwb25zZSIigtPkkwIcOgEqIhcvYXBpL3YxL2FpL3N1Z2dlc3QtdGFncxJbCgRDaGF0EhkubWVtb3MuYXBpLnYxLkNoYXRSZXF1ZXN0GhoubWVtb3MuYXBpLnYxLkNoYXRSZXNwb25zZSIagtPkkwIUOgEqIg8vYXBpL3YxL2FpL2NoYXQwARKGAQoPR2V0UmVsYXRlZE1lbW9zEiQubWVtb3MuYXBpLnYxLkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QaJS5tZW1vcy5hcGkudjEuR2V0UmVsYXRlZE1lbW9zUmVzcG9uc2UiJoLT5JMCIBIeL2FwaS92MS97bmFtZT1tZW1vcy8qfS9yZWxhdGVkEqsBChZHZXRQYXJyb3RTZWxmQ29nbml0aW9uEisubWVtb3MuYXBpLnYxLkdldFBhcnJvdFNlbGZDb2duaXRpb25SZXF1ZXN0GiwubWVtb3MuYXBpLnYxLkdldFBhcnJvdFNlbGZDb2duaXRpb25SZXNwb25zZSI2gtPkkwIwEi4vYXBpL3YxL2FpL3BhcnJvdHMve2FnZW50X3R5cGV9L3NlbGYtY29nbml0aW9uEm4KC0xpc3RQYXJyb3RzEiAubWVtb3MuYXBpLnYxLkxpc3RQYXJyb3RzUmVxdWVzdBohLm1lbW9zLmFwaS52MS5MaXN0UGFycm90c1Jlc3BvbnNlIhqC0+STAhQSEi9hcGkvdjEvYWkvcGFycm90cxKMAQoTTGlzdEFJQ29udmVyc2F0aW9ucxIoLm1lbW9zLmFwaS52MS5MaXN0QUlDb252ZXJzYXRpb25zUmVxdWVzdBopLm1lbW9zLmFwaS52MS5MaXN0QUlDb252ZXJzYXRpb25zUmVzcG9uc2UiIILT5JMCGhIYL2FwaS92MS9haS9jb252ZXJzYXRpb25zEoABChFHZXRBSUNvbnZlcnNhdGlvbhImLm1lbW9zLmFwaS52MS5HZXRBSUNvbnZlcnNhdGlvblJlcXVlc3QaHC5tZW1vcy5hcGkudjEuQUlDb252ZXJzYXRpb24iJYLT5JMCHxIdL2FwaS92MS9haS9jb252ZXJzYXRpb25zL3tpZH0ShAEKFENyZWF0ZUFJQ29udmVyc2F0aW9uEikubWVtb3MuYXBpLnYxLkNyZWF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBocLm1lbW9zLmFwaS52MS5BSUNvbnZlcnNhdGlvbiIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMSiQEKFFVwZGF0ZUFJQ29udmVyc2F0aW9uEikubWVtb3MuYXBpLnYxLlVwZGF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBocLm1lbW9zLmFwaS52MS5BSUNvbnZlcnNhdGlvbiIogtPkkwIiOgEqMh0vYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMve2lkfRKAAQoURGVsZXRlQUlDb252ZXJzYXRpb24SKS5tZW1vcy5hcGkudjEuRGVsZXRlQUlDb252ZXJzYXRpb25SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IiWC0+STAh8qHS9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97aWR9EpgBChNBZGRDb250ZXh0U2VwYXJhdG9yEigubWVtb3MuYXBpLnYxLkFkZENvbnRleHRTZXBhcmF0b3JSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ij+C0+STAjk6ASoiNC9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97Y29udmVyc2F0aW9uX2lkfS9zZXBhcmF0b3ISkgEKDExpc3RNZXNzYWdlcxIhLm1lbW9zLmFwaS52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0GiIubWVtb3MuYXBpLnYxLkxpc3RNZXNzYWdlc1Jlc3BvbnNlIjuC0+STAjUSMy9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97Y29udmVyc2F0aW9uX2lkfS9tZXNzYWdlcxKgAQoZQ2xlYXJDb252ZXJzYXRpb25NZXNzYWdlcxIuLm1lbW9zLmFwaS52MS5DbGVhckNvbnZlcnNhdGlvbk1lc3NhZ2VzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI7gtPkkwI1KjMvYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMve2NvbnZlcnNhdGlvbl9pZH0vbWVzc2FnZXMyqgIKFFNjaGVkdWxlQWdlbnRTZXJ2aWNlEn8KBENoYXQSJi5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXF1ZXN0GicubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVzcG9uc2UiJoLT5JMCIDoBKiIbL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0EpABCgpDaGF0U3RyZWFtEiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBopLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50U3RyZWFtUmVzcG9uc2UiLYLT5JMCJzoBKiIiL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0L3N0cmVhbTABQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior, file_google_protobuf_empty]);
+  fileDesc("ChdhcGkvdjEvYWlfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIkcKGFNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISFQoNdXNlcl90aW1lem9uZRgCIAEoCSItChlTY2hlZHVsZUFnZW50Q2hhdFJlc3BvbnNlEhAKCHJlc3BvbnNlGAEgASgJIksKG1NjaGVkdWxlQWdlbnRTdHJlYW1SZXNwb25zZRINCgVldmVudBgBIAEoCRIPCgdjb250ZW50GAIgASgJEgwKBGRvbmUYAyABKAgiOgoVU2VtYW50aWNTZWFyY2hSZXF1ZXN0EhIKBXF1ZXJ5GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiRQoWU2VtYW50aWNTZWFyY2hSZXNwb25zZRIrCgdyZXN1bHRzGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCI8CgxTZWFyY2hSZXN1bHQSDAoEbmFtZRgBIAEoCRIPCgdzbmlwcGV0GAIgASgJEg0KBXNjb3JlGAMgASgCIjkKElN1Z2dlc3RUYWdzUmVxdWVzdBIUCgdjb250ZW50GAEgASgJQgPgQQISDQoFbGltaXQYAiABKAUiIwoTU3VnZ2VzdFRhZ3NSZXNwb25zZRIMCgR0YWdzGAEgAygJIu0BCgtDaGF0UmVxdWVzdBIUCgdtZXNzYWdlGAEgASgJQgPgQQISDwoHaGlzdG9yeRgCIAMoCRIVCg11c2VyX3RpbWV6b25lGAMgASgJEjwKE3NjaGVkdWxlX3F1ZXJ5X21vZGUYBCABKA4yHy5tZW1vcy5hcGkudjEuU2NoZWR1bGVRdWVyeU1vZGUSKwoKYWdlbnRfdHlwZRgFIAEoDjIXLm1lbW9zLmFwaS52MS5BZ2VudFR5cGUSFwoPY29udmVyc2F0aW9uX2lkGAYgASgFEhwKFGlzX3RlbXBfY29udmVyc2F0aW9uGAcgASgIIvIBCg5BSUNvbnZlcnNhdGlvbhIKCgJpZBgBIAEoBRILCgN1aWQYAiABKAkSEgoKY3JlYXRvcl9pZBgDIAEoBRINCgV0aXRsZRgEIAEoCRIqCglwYXJyb3RfaWQYBSABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlEg4KBnBpbm5lZBgGIAEoCBISCgpjcmVhdGVkX3RzGAcgASgDEhIKCnVwZGF0ZWRfdHMYCCABKAMSKQoIbWVzc2FnZXMYCSADKAsyFy5tZW1vcy5hcGkudjEuQUlNZXNzYWdlEhUKDW1lc3NhZ2VfY291bnQYCiABKAUikAEKCUFJTWVzc2FnZRIKCgJpZBgBIAEoBRILCgN1aWQYAiABKAkSFwoPY29udmVyc2F0aW9uX2lkGAMgASgFEgwKBHR5cGUYBCABKAkSDAoEcm9sZRgFIAEoCRIPCgdjb250ZW50GAYgASgJEhAKCG1ldGFkYXRhGAcgASgJEhIKCmNyZWF0ZWRfdHMYCCABKAMiHAoaTGlzdEFJQ29udmVyc2F0aW9uc1JlcXVlc3QiUgobTGlzdEFJQ29udmVyc2F0aW9uc1Jlc3BvbnNlEjMKDWNvbnZlcnNhdGlvbnMYASADKAsyHC5tZW1vcy5hcGkudjEuQUlDb252ZXJzYXRpb24iJgoYR2V0QUlDb252ZXJzYXRpb25SZXF1ZXN0EgoKAmlkGAEgASgFIlgKG0NyZWF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBINCgV0aXRsZRgBIAEoCRIqCglwYXJyb3RfaWQYAiABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlImcKG1VwZGF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBIKCgJpZBgBIAEoBRISCgV0aXRsZRgCIAEoCUgAiAEBEhMKBnBpbm5lZBgDIAEoCEgBiAEBQggKBl90aXRsZUIJCgdfcGlubmVkIikKG0RlbGV0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBIKCgJpZBgBIAEoBSI6ChpBZGRDb250ZXh0U2VwYXJhdG9yUmVxdWVzdBIcCg9jb252ZXJzYXRpb25faWQYASABKAVCA+BBAiJcChNMaXN0TWVzc2FnZXNSZXF1ZXN0EhwKD2NvbnZlcnNhdGlvbl9pZBgBIAEoBUID4EECEg0KBWxpbWl0GAIgASgFEhgKEGxhc3RfbWVzc2FnZV91aWQYAyABKAkimwEKFExpc3RNZXNzYWdlc1Jlc3BvbnNlEikKCG1lc3NhZ2VzGAEgAygLMhcubWVtb3MuYXBpLnYxLkFJTWVzc2FnZRIQCghoYXNfbW9yZRgCIAEoCBITCgt0b3RhbF9jb3VudBgDIAEoBRIaChJsYXRlc3RfbWVzc2FnZV91aWQYBCABKAkSFQoNc3luY19yZXF1aXJlZBgFIAEoCCJACiBDbGVhckNvbnZlcnNhdGlvbk1lc3NhZ2VzUmVxdWVzdBIcCg9jb252ZXJzYXRpb25faWQYASABKAVCA+BBAiLwAQoMQ2hhdFJlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSDwoHc291cmNlcxgCIAMoCRIMCgRkb25lGAMgASgIEkYKGHNjaGVkdWxlX2NyZWF0aW9uX2ludGVudBgEIAEoCzIkLm1lbW9zLmFwaS52MS5TY2hlZHVsZUNyZWF0aW9uSW50ZW50EkAKFXNjaGVkdWxlX3F1ZXJ5X3Jlc3VsdBgFIAEoCzIhLm1lbW9zLmFwaS52MS5TY2hlZHVsZVF1ZXJ5UmVzdWx0EhIKCmV2ZW50X3R5cGUYBiABKAkSEgoKZXZlbnRfZGF0YRgHIAEoCSJbChZTY2hlZHVsZUNyZWF0aW9uSW50ZW50EhAKCGRldGVjdGVkGAEgASgIEhwKFHNjaGVkdWxlX2Rlc2NyaXB0aW9uGAIgASgJEhEKCXJlYXNvbmluZxgDIAEoCSKNAQoTU2NoZWR1bGVRdWVyeVJlc3VsdBIQCghkZXRlY3RlZBgBIAEoCBIwCglzY2hlZHVsZXMYAiADKAsyHS5tZW1vcy5hcGkudjEuU2NoZWR1bGVTdW1tYXJ5Eh4KFnRpbWVfcmFuZ2VfZGVzY3JpcHRpb24YAyABKAkSEgoKcXVlcnlfdHlwZRgEIAEoCSKbAQoPU2NoZWR1bGVTdW1tYXJ5EgsKA3VpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzdGFydF90cxgDIAEoAxIOCgZlbmRfdHMYBCABKAMSDwoHYWxsX2RheRgFIAEoCBIQCghsb2NhdGlvbhgGIAEoCRIXCg9yZWN1cnJlbmNlX3J1bGUYByABKAkSDgoGc3RhdHVzGAggASgJIjoKFkdldFJlbGF0ZWRNZW1vc1JlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECEg0KBWxpbWl0GAIgASgFIkQKF0dldFJlbGF0ZWRNZW1vc1Jlc3BvbnNlEikKBW1lbW9zGAEgAygLMhoubWVtb3MuYXBpLnYxLlNlYXJjaFJlc3VsdCLdAQoTUGFycm90U2VsZkNvZ25pdGlvbhIMCgRuYW1lGAEgASgJEg0KBWVtb2ppGAIgASgJEg0KBXRpdGxlGAMgASgJEhMKC3BlcnNvbmFsaXR5GAQgAygJEhQKDGNhcGFiaWxpdGllcxgFIAMoCRITCgtsaW1pdGF0aW9ucxgGIAMoCRIVCg13b3JraW5nX3N0eWxlGAcgASgJEhYKDmZhdm9yaXRlX3Rvb2xzGAggAygJEhkKEXNlbGZfaW50cm9kdWN0aW9uGAkgASgJEhAKCGZ1bl9mYWN0GAogASgJIlEKHUdldFBhcnJvdFNlbGZDb2duaXRpb25SZXF1ZXN0EjAKCmFnZW50X3R5cGUYASABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlQgPgQQIiWwoeR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlEjkKDnNlbGZfY29nbml0aW9uGAEgASgLMiEubWVtb3MuYXBpLnYxLlBhcnJvdFNlbGZDb2duaXRpb24iFAoSTGlzdFBhcnJvdHNSZXF1ZXN0IkAKE0xpc3RQYXJyb3RzUmVzcG9uc2USKQoHcGFycm90cxgBIAMoCzIYLm1lbW9zLmFwaS52MS5QYXJyb3RJbmZvIoIBCgpQYXJyb3RJbmZvEisKCmFnZW50X3R5cGUYASABKA4yFy5tZW1vcy5hcGkudjEuQWdlbnRUeXBlEgwKBG5hbWUYAiABKAkSOQoOc2VsZl9jb2duaXRpb24YAyABKAsyIS5tZW1vcy5hcGkudjEuUGFycm90U2VsZkNvZ25pdGlvbiJbChdEZXRlY3REdXBsaWNhdGVzUmVxdWVzdBINCgV0aXRsZRgBIAEoCRIUCgdjb250ZW50GAIgASgJQgPgQQISDAoEdGFncxgDIAMoCRINCgV0b3BfaxgEIAEoBSK1AQoYRGV0ZWN0RHVwbGljYXRlc1Jlc3BvbnNlEhUKDWhhc19kdXBsaWNhdGUYASABKAgSEwoLaGFzX3JlbGF0ZWQYAiABKAgSLQoKZHVwbGljYXRlcxgDIAMoCzIZLm1lbW9zLmFwaS52MS5TaW1pbGFyTWVtbxIqCgdyZWxhdGVkGAQgAygLMhkubWVtb3MuYXBpLnYxLlNpbWlsYXJNZW1vEhIKCmxhdGVuY3lfbXMYBSABKAMitQEKC1NpbWlsYXJNZW1vEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFdGl0bGUYAyABKAkSDwoHc25pcHBldBgEIAEoCRISCgpzaW1pbGFyaXR5GAUgASgBEhMKC3NoYXJlZF90YWdzGAYgAygJEg0KBWxldmVsGAcgASgJEjQKCWJyZWFrZG93bhgIIAEoCzIhLm1lbW9zLmFwaS52MS5TaW1pbGFyaXR5QnJlYWtkb3duIk4KE1NpbWlsYXJpdHlCcmVha2Rvd24SDgoGdmVjdG9yGAEgASgBEhQKDHRhZ19jb19vY2N1chgCIAEoARIRCgl0aW1lX3Byb3gYAyABKAEiRwoRTWVyZ2VNZW1vc1JlcXVlc3QSGAoLc291cmNlX25hbWUYASABKAlCA+BBAhIYCgt0YXJnZXRfbmFtZRgCIAEoCUID4EECIikKEk1lcmdlTWVtb3NSZXNwb25zZRITCgttZXJnZWRfbmFtZRgBIAEoCSJGChBMaW5rTWVtb3NSZXF1ZXN0EhgKC21lbW9fbmFtZV8xGAEgASgJQgPgQQISGAoLbWVtb19uYW1lXzIYAiABKAlCA+BBAiIkChFMaW5rTWVtb3NSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIlIKGEdldEtub3dsZWRnZUdyYXBoUmVxdWVzdBIMCgR0YWdzGAEgAygJEhYKDm1pbl9pbXBvcnRhbmNlGAIgASgBEhAKCGNsdXN0ZXJzGAMgAygFIqYBChlHZXRLbm93bGVkZ2VHcmFwaFJlc3BvbnNlEiYKBW5vZGVzGAEgAygLMhcubWVtb3MuYXBpLnYxLkdyYXBoTm9kZRImCgVlZGdlcxgCIAMoCzIXLm1lbW9zLmFwaS52MS5HcmFwaEVkZ2USJwoFc3RhdHMYAyABKAsyGC5tZW1vcy5hcGkudjEuR3JhcGhTdGF0cxIQCghidWlsZF9tcxgEIAEoAyJ7CglHcmFwaE5vZGUSCgoCaWQYASABKAkSDQoFbGFiZWwYAiABKAkSDAoEdHlwZRgDIAEoCRIMCgR0YWdzGAQgAygJEhIKCmltcG9ydGFuY2UYBSABKAESDwoHY2x1c3RlchgGIAEoBRISCgpjcmVhdGVkX3RzGAcgASgDIkkKCUdyYXBoRWRnZRIOCgZzb3VyY2UYASABKAkSDgoGdGFyZ2V0GAIgASgJEgwKBHR5cGUYAyABKAkSDgoGd2VpZ2h0GAQgASgBIooBCgpHcmFwaFN0YXRzEhIKCm5vZGVfY291bnQYASABKAUSEgoKZWRnZV9jb3VudBgCIAEoBRIVCg1jbHVzdGVyX2NvdW50GAMgASgFEhIKCmxpbmtfZWRnZXMYBCABKAUSEQoJdGFnX2VkZ2VzGAUgASgFEhYKDnNlbWFudGljX2VkZ2VzGAYgASgFKjcKEVNjaGVkdWxlUXVlcnlNb2RlEggKBEFVVE8QABIMCghTVEFOREFSRBABEgoKBlNUUklDVBACKoIBCglBZ2VudFR5cGUSFgoSQUdFTlRfVFlQRV9ERUZBVUxUEAASEwoPQUdFTlRfVFlQRV9NRU1PEAESFwoTQUdFTlRfVFlQRV9TQ0hFRFVMRRACEhYKEkFHRU5UX1RZUEVfQU1BWklORxADEhcKE0FHRU5UX1RZUEVfQ1JFQVRJVkUQBDL5EgoJQUlTZXJ2aWNlEnkKDlNlbWFudGljU2VhcmNoEiMubWVtb3MuYXBpLnYxLlNlbWFudGljU2VhcmNoUmVxdWVzdBokLm1lbW9zLmFwaS52MS5TZW1hbnRpY1NlYXJjaFJlc3BvbnNlIhyC0+STAhY6ASoiES9hcGkvdjEvYWkvc2VhcmNoEnYKC1N1Z2dlc3RUYWdzEiAubWVtb3MuYXBpLnYxLlN1Z2dlc3RUYWdzUmVxdWVzdBohLm1lbW9zLmFwaS52MS5TdWdnZXN0VGFnc1Jlc3BvbnNlIiKC0+STAhw6ASoiFy9hcGkvdjEvYWkvc3VnZ2VzdC10YWdzElsKBENoYXQSGS5tZW1vcy5hcGkudjEuQ2hhdFJlcXVlc3QaGi5tZW1vcy5hcGkudjEuQ2hhdFJlc3BvbnNlIhqC0+STAhQ6ASoiDy9hcGkvdjEvYWkvY2hhdDABEoYBCg9HZXRSZWxhdGVkTWVtb3MSJC5tZW1vcy5hcGkudjEuR2V0UmVsYXRlZE1lbW9zUmVxdWVzdBolLm1lbW9zLmFwaS52MS5HZXRSZWxhdGVkTWVtb3NSZXNwb25zZSImgtPkkwIgEh4vYXBpL3YxL3tuYW1lPW1lbW9zLyp9L3JlbGF0ZWQSqwEKFkdldFBhcnJvdFNlbGZDb2duaXRpb24SKy5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlcXVlc3QaLC5tZW1vcy5hcGkudjEuR2V0UGFycm90U2VsZkNvZ25pdGlvblJlc3BvbnNlIjaC0+STAjASLi9hcGkvdjEvYWkvcGFycm90cy97YWdlbnRfdHlwZX0vc2VsZi1jb2duaXRpb24SbgoLTGlzdFBhcnJvdHMSIC5tZW1vcy5hcGkudjEuTGlzdFBhcnJvdHNSZXF1ZXN0GiEubWVtb3MuYXBpLnYxLkxpc3RQYXJyb3RzUmVzcG9uc2UiGoLT5JMCFBISL2FwaS92MS9haS9wYXJyb3RzEooBChBEZXRlY3REdXBsaWNhdGVzEiUubWVtb3MuYXBpLnYxLkRldGVjdER1cGxpY2F0ZXNSZXF1ZXN0GiYubWVtb3MuYXBpLnYxLkRldGVjdER1cGxpY2F0ZXNSZXNwb25zZSIngtPkkwIhOgEqIhwvYXBpL3YxL2FpL2RldGVjdC1kdXBsaWNhdGVzEnIKCk1lcmdlTWVtb3MSHy5tZW1vcy5hcGkudjEuTWVyZ2VNZW1vc1JlcXVlc3QaIC5tZW1vcy5hcGkudjEuTWVyZ2VNZW1vc1Jlc3BvbnNlIiGC0+STAhs6ASoiFi9hcGkvdjEvYWkvbWVyZ2UtbWVtb3MSbgoJTGlua01lbW9zEh4ubWVtb3MuYXBpLnYxLkxpbmtNZW1vc1JlcXVlc3QaHy5tZW1vcy5hcGkudjEuTGlua01lbW9zUmVzcG9uc2UiIILT5JMCGjoBKiIVL2FwaS92MS9haS9saW5rLW1lbW9zEogBChFHZXRLbm93bGVkZ2VHcmFwaBImLm1lbW9zLmFwaS52MS5HZXRLbm93bGVkZ2VHcmFwaFJlcXVlc3QaJy5tZW1vcy5hcGkudjEuR2V0S25vd2xlZGdlR3JhcGhSZXNwb25zZSIigtPkkwIcEhovYXBpL3YxL2FpL2tub3dsZWRnZS1ncmFwaBKMAQoTTGlzdEFJQ29udmVyc2F0aW9ucxIoLm1lbW9zLmFwaS52MS5MaXN0QUlDb252ZXJzYXRpb25zUmVxdWVzdBopLm1lbW9zLmFwaS52MS5MaXN0QUlDb252ZXJzYXRpb25zUmVzcG9uc2UiIILT5JMCGhIYL2FwaS92MS9haS9jb252ZXJzYXRpb25zEoABChFHZXRBSUNvbnZlcnNhdGlvbhImLm1lbW9zLmFwaS52MS5HZXRBSUNvbnZlcnNhdGlvblJlcXVlc3QaHC5tZW1vcy5hcGkudjEuQUlDb252ZXJzYXRpb24iJYLT5JMCHxIdL2FwaS92MS9haS9jb252ZXJzYXRpb25zL3tpZH0ShAEKFENyZWF0ZUFJQ29udmVyc2F0aW9uEikubWVtb3MuYXBpLnYxLkNyZWF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBocLm1lbW9zLmFwaS52MS5BSUNvbnZlcnNhdGlvbiIjgtPkkwIdOgEqIhgvYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMSiQEKFFVwZGF0ZUFJQ29udmVyc2F0aW9uEikubWVtb3MuYXBpLnYxLlVwZGF0ZUFJQ29udmVyc2F0aW9uUmVxdWVzdBocLm1lbW9zLmFwaS52MS5BSUNvbnZlcnNhdGlvbiIogtPkkwIiOgEqMh0vYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMve2lkfRKAAQoURGVsZXRlQUlDb252ZXJzYXRpb24SKS5tZW1vcy5hcGkudjEuRGVsZXRlQUlDb252ZXJzYXRpb25SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IiWC0+STAh8qHS9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97aWR9EpgBChNBZGRDb250ZXh0U2VwYXJhdG9yEigubWVtb3MuYXBpLnYxLkFkZENvbnRleHRTZXBhcmF0b3JSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ij+C0+STAjk6ASoiNC9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97Y29udmVyc2F0aW9uX2lkfS9zZXBhcmF0b3ISkgEKDExpc3RNZXNzYWdlcxIhLm1lbW9zLmFwaS52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0GiIubWVtb3MuYXBpLnYxLkxpc3RNZXNzYWdlc1Jlc3BvbnNlIjuC0+STAjUSMy9hcGkvdjEvYWkvY29udmVyc2F0aW9ucy97Y29udmVyc2F0aW9uX2lkfS9tZXNzYWdlcxKgAQoZQ2xlYXJDb252ZXJzYXRpb25NZXNzYWdlcxIuLm1lbW9zLmFwaS52MS5DbGVhckNvbnZlcnNhdGlvbk1lc3NhZ2VzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI7gtPkkwI1KjMvYXBpL3YxL2FpL2NvbnZlcnNhdGlvbnMve2NvbnZlcnNhdGlvbl9pZH0vbWVzc2FnZXMyqgIKFFNjaGVkdWxlQWdlbnRTZXJ2aWNlEn8KBENoYXQSJi5tZW1vcy5hcGkudjEuU2NoZWR1bGVBZ2VudENoYXRSZXF1ZXN0GicubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVzcG9uc2UiJoLT5JMCIDoBKiIbL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0EpABCgpDaGF0U3RyZWFtEiYubWVtb3MuYXBpLnYxLlNjaGVkdWxlQWdlbnRDaGF0UmVxdWVzdBopLm1lbW9zLmFwaS52MS5TY2hlZHVsZUFnZW50U3RyZWFtUmVzcG9uc2UiLYLT5JMCJzoBKiIiL2FwaS92MS9zY2hlZHVsZS1hZ2VudC9jaGF0L3N0cmVhbTABQqYBChBjb20ubWVtb3MuYXBpLnYxQg5BaVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_api_field_behavior, file_google_protobuf_empty]);
 
 /**
  * ScheduleAgentChatRequest is the request for schedule agent chat.
@@ -1107,6 +1107,538 @@ export const ParrotInfoSchema: GenMessage<ParrotInfo> = /*@__PURE__*/
   messageDesc(file_api_v1_ai_service, 32);
 
 /**
+ * DetectDuplicatesRequest is the request for DetectDuplicates.
+ *
+ * @generated from message memos.api.v1.DetectDuplicatesRequest
+ */
+export type DetectDuplicatesRequest = Message<"memos.api.v1.DetectDuplicatesRequest"> & {
+  /**
+   * Memo title (optional)
+   *
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * Memo content
+   *
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * Memo tags (optional)
+   *
+   * @generated from field: repeated string tags = 3;
+   */
+  tags: string[];
+
+  /**
+   * Max results to return (default: 5)
+   *
+   * @generated from field: int32 top_k = 4;
+   */
+  topK: number;
+};
+
+/**
+ * Describes the message memos.api.v1.DetectDuplicatesRequest.
+ * Use `create(DetectDuplicatesRequestSchema)` to create a new message.
+ */
+export const DetectDuplicatesRequestSchema: GenMessage<DetectDuplicatesRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 33);
+
+/**
+ * DetectDuplicatesResponse is the response for DetectDuplicates.
+ *
+ * @generated from message memos.api.v1.DetectDuplicatesResponse
+ */
+export type DetectDuplicatesResponse = Message<"memos.api.v1.DetectDuplicatesResponse"> & {
+  /**
+   * Whether duplicates were found (>90% similarity)
+   *
+   * @generated from field: bool has_duplicate = 1;
+   */
+  hasDuplicate: boolean;
+
+  /**
+   * Whether related memos were found (70-90% similarity)
+   *
+   * @generated from field: bool has_related = 2;
+   */
+  hasRelated: boolean;
+
+  /**
+   * Duplicate memos
+   *
+   * @generated from field: repeated memos.api.v1.SimilarMemo duplicates = 3;
+   */
+  duplicates: SimilarMemo[];
+
+  /**
+   * Related memos
+   *
+   * @generated from field: repeated memos.api.v1.SimilarMemo related = 4;
+   */
+  related: SimilarMemo[];
+
+  /**
+   * Detection latency in milliseconds
+   *
+   * @generated from field: int64 latency_ms = 5;
+   */
+  latencyMs: bigint;
+};
+
+/**
+ * Describes the message memos.api.v1.DetectDuplicatesResponse.
+ * Use `create(DetectDuplicatesResponseSchema)` to create a new message.
+ */
+export const DetectDuplicatesResponseSchema: GenMessage<DetectDuplicatesResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 34);
+
+/**
+ * SimilarMemo represents a memo similar to the input.
+ *
+ * @generated from message memos.api.v1.SimilarMemo
+ */
+export type SimilarMemo = Message<"memos.api.v1.SimilarMemo"> & {
+  /**
+   * Memo ID
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Memo resource name (memos/{uid})
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * Memo title
+   *
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * Content snippet
+   *
+   * @generated from field: string snippet = 4;
+   */
+  snippet: string;
+
+  /**
+   * Similarity score (0-1)
+   *
+   * @generated from field: double similarity = 5;
+   */
+  similarity: number;
+
+  /**
+   * Tags shared with input
+   *
+   * @generated from field: repeated string shared_tags = 6;
+   */
+  sharedTags: string[];
+
+  /**
+   * "duplicate" or "related"
+   *
+   * @generated from field: string level = 7;
+   */
+  level: string;
+
+  /**
+   * Similarity breakdown
+   *
+   * @generated from field: memos.api.v1.SimilarityBreakdown breakdown = 8;
+   */
+  breakdown?: SimilarityBreakdown;
+};
+
+/**
+ * Describes the message memos.api.v1.SimilarMemo.
+ * Use `create(SimilarMemoSchema)` to create a new message.
+ */
+export const SimilarMemoSchema: GenMessage<SimilarMemo> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 35);
+
+/**
+ * SimilarityBreakdown shows how similarity was calculated.
+ *
+ * @generated from message memos.api.v1.SimilarityBreakdown
+ */
+export type SimilarityBreakdown = Message<"memos.api.v1.SimilarityBreakdown"> & {
+  /**
+   * Vector similarity score
+   *
+   * @generated from field: double vector = 1;
+   */
+  vector: number;
+
+  /**
+   * Tag co-occurrence score
+   *
+   * @generated from field: double tag_co_occur = 2;
+   */
+  tagCoOccur: number;
+
+  /**
+   * Time proximity score
+   *
+   * @generated from field: double time_prox = 3;
+   */
+  timeProx: number;
+};
+
+/**
+ * Describes the message memos.api.v1.SimilarityBreakdown.
+ * Use `create(SimilarityBreakdownSchema)` to create a new message.
+ */
+export const SimilarityBreakdownSchema: GenMessage<SimilarityBreakdown> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 36);
+
+/**
+ * MergeMemosRequest is the request for MergeMemos.
+ *
+ * @generated from message memos.api.v1.MergeMemosRequest
+ */
+export type MergeMemosRequest = Message<"memos.api.v1.MergeMemosRequest"> & {
+  /**
+   * Source memo name (memos/{uid})
+   *
+   * @generated from field: string source_name = 1;
+   */
+  sourceName: string;
+
+  /**
+   * Target memo name (memos/{uid})
+   *
+   * @generated from field: string target_name = 2;
+   */
+  targetName: string;
+};
+
+/**
+ * Describes the message memos.api.v1.MergeMemosRequest.
+ * Use `create(MergeMemosRequestSchema)` to create a new message.
+ */
+export const MergeMemosRequestSchema: GenMessage<MergeMemosRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 37);
+
+/**
+ * MergeMemosResponse is the response for MergeMemos.
+ *
+ * @generated from message memos.api.v1.MergeMemosResponse
+ */
+export type MergeMemosResponse = Message<"memos.api.v1.MergeMemosResponse"> & {
+  /**
+   * Merged memo name
+   *
+   * @generated from field: string merged_name = 1;
+   */
+  mergedName: string;
+};
+
+/**
+ * Describes the message memos.api.v1.MergeMemosResponse.
+ * Use `create(MergeMemosResponseSchema)` to create a new message.
+ */
+export const MergeMemosResponseSchema: GenMessage<MergeMemosResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 38);
+
+/**
+ * LinkMemosRequest is the request for LinkMemos.
+ *
+ * @generated from message memos.api.v1.LinkMemosRequest
+ */
+export type LinkMemosRequest = Message<"memos.api.v1.LinkMemosRequest"> & {
+  /**
+   * First memo name (memos/{uid})
+   *
+   * @generated from field: string memo_name_1 = 1;
+   */
+  memoName1: string;
+
+  /**
+   * Second memo name (memos/{uid})
+   *
+   * @generated from field: string memo_name_2 = 2;
+   */
+  memoName2: string;
+};
+
+/**
+ * Describes the message memos.api.v1.LinkMemosRequest.
+ * Use `create(LinkMemosRequestSchema)` to create a new message.
+ */
+export const LinkMemosRequestSchema: GenMessage<LinkMemosRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 39);
+
+/**
+ * LinkMemosResponse is the response for LinkMemos.
+ *
+ * @generated from message memos.api.v1.LinkMemosResponse
+ */
+export type LinkMemosResponse = Message<"memos.api.v1.LinkMemosResponse"> & {
+  /**
+   * Whether linking was successful
+   *
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message memos.api.v1.LinkMemosResponse.
+ * Use `create(LinkMemosResponseSchema)` to create a new message.
+ */
+export const LinkMemosResponseSchema: GenMessage<LinkMemosResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 40);
+
+/**
+ * GetKnowledgeGraphRequest is the request for GetKnowledgeGraph.
+ *
+ * @generated from message memos.api.v1.GetKnowledgeGraphRequest
+ */
+export type GetKnowledgeGraphRequest = Message<"memos.api.v1.GetKnowledgeGraphRequest"> & {
+  /**
+   * Filter by tags (optional)
+   *
+   * @generated from field: repeated string tags = 1;
+   */
+  tags: string[];
+
+  /**
+   * Minimum importance score (optional, 0-1)
+   *
+   * @generated from field: double min_importance = 2;
+   */
+  minImportance: number;
+
+  /**
+   * Filter by cluster IDs (optional)
+   *
+   * @generated from field: repeated int32 clusters = 3;
+   */
+  clusters: number[];
+};
+
+/**
+ * Describes the message memos.api.v1.GetKnowledgeGraphRequest.
+ * Use `create(GetKnowledgeGraphRequestSchema)` to create a new message.
+ */
+export const GetKnowledgeGraphRequestSchema: GenMessage<GetKnowledgeGraphRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 41);
+
+/**
+ * GetKnowledgeGraphResponse is the response for GetKnowledgeGraph.
+ *
+ * @generated from message memos.api.v1.GetKnowledgeGraphResponse
+ */
+export type GetKnowledgeGraphResponse = Message<"memos.api.v1.GetKnowledgeGraphResponse"> & {
+  /**
+   * Graph nodes
+   *
+   * @generated from field: repeated memos.api.v1.GraphNode nodes = 1;
+   */
+  nodes: GraphNode[];
+
+  /**
+   * Graph edges
+   *
+   * @generated from field: repeated memos.api.v1.GraphEdge edges = 2;
+   */
+  edges: GraphEdge[];
+
+  /**
+   * Graph statistics
+   *
+   * @generated from field: memos.api.v1.GraphStats stats = 3;
+   */
+  stats?: GraphStats;
+
+  /**
+   * Build latency in milliseconds
+   *
+   * @generated from field: int64 build_ms = 4;
+   */
+  buildMs: bigint;
+};
+
+/**
+ * Describes the message memos.api.v1.GetKnowledgeGraphResponse.
+ * Use `create(GetKnowledgeGraphResponseSchema)` to create a new message.
+ */
+export const GetKnowledgeGraphResponseSchema: GenMessage<GetKnowledgeGraphResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 42);
+
+/**
+ * GraphNode represents a node in the knowledge graph.
+ *
+ * @generated from message memos.api.v1.GraphNode
+ */
+export type GraphNode = Message<"memos.api.v1.GraphNode"> & {
+  /**
+   * Node ID (memo UID)
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Node label (memo title)
+   *
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * Node type ("memo" or "tag")
+   *
+   * @generated from field: string type = 3;
+   */
+  type: string;
+
+  /**
+   * Node tags
+   *
+   * @generated from field: repeated string tags = 4;
+   */
+  tags: string[];
+
+  /**
+   * Importance score (0-1, PageRank)
+   *
+   * @generated from field: double importance = 5;
+   */
+  importance: number;
+
+  /**
+   * Community cluster ID
+   *
+   * @generated from field: int32 cluster = 6;
+   */
+  cluster: number;
+
+  /**
+   * Creation timestamp
+   *
+   * @generated from field: int64 created_ts = 7;
+   */
+  createdTs: bigint;
+};
+
+/**
+ * Describes the message memos.api.v1.GraphNode.
+ * Use `create(GraphNodeSchema)` to create a new message.
+ */
+export const GraphNodeSchema: GenMessage<GraphNode> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 43);
+
+/**
+ * GraphEdge represents an edge in the knowledge graph.
+ *
+ * @generated from message memos.api.v1.GraphEdge
+ */
+export type GraphEdge = Message<"memos.api.v1.GraphEdge"> & {
+  /**
+   * Source node ID
+   *
+   * @generated from field: string source = 1;
+   */
+  source: string;
+
+  /**
+   * Target node ID
+   *
+   * @generated from field: string target = 2;
+   */
+  target: string;
+
+  /**
+   * Edge type ("link", "tag_co", "semantic")
+   *
+   * @generated from field: string type = 3;
+   */
+  type: string;
+
+  /**
+   * Edge weight (0-1)
+   *
+   * @generated from field: double weight = 4;
+   */
+  weight: number;
+};
+
+/**
+ * Describes the message memos.api.v1.GraphEdge.
+ * Use `create(GraphEdgeSchema)` to create a new message.
+ */
+export const GraphEdgeSchema: GenMessage<GraphEdge> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 44);
+
+/**
+ * GraphStats contains graph statistics.
+ *
+ * @generated from message memos.api.v1.GraphStats
+ */
+export type GraphStats = Message<"memos.api.v1.GraphStats"> & {
+  /**
+   * Total node count
+   *
+   * @generated from field: int32 node_count = 1;
+   */
+  nodeCount: number;
+
+  /**
+   * Total edge count
+   *
+   * @generated from field: int32 edge_count = 2;
+   */
+  edgeCount: number;
+
+  /**
+   * Number of communities
+   *
+   * @generated from field: int32 cluster_count = 3;
+   */
+  clusterCount: number;
+
+  /**
+   * Explicit link edge count
+   *
+   * @generated from field: int32 link_edges = 4;
+   */
+  linkEdges: number;
+
+  /**
+   * Tag co-occurrence edge count
+   *
+   * @generated from field: int32 tag_edges = 5;
+   */
+  tagEdges: number;
+
+  /**
+   * Semantic similarity edge count
+   *
+   * @generated from field: int32 semantic_edges = 6;
+   */
+  semanticEdges: number;
+};
+
+/**
+ * Describes the message memos.api.v1.GraphStats.
+ * Use `create(GraphStatsSchema)` to create a new message.
+ */
+export const GraphStatsSchema: GenMessage<GraphStats> = /*@__PURE__*/
+  messageDesc(file_api_v1_ai_service, 45);
+
+/**
  * ScheduleQueryMode specifies the query mode for schedule filtering.
  *
  * @generated from enum memos.api.v1.ScheduleQueryMode
@@ -1253,6 +1785,46 @@ export const AIService: GenService<{
     methodKind: "unary";
     input: typeof ListParrotsRequestSchema;
     output: typeof ListParrotsResponseSchema;
+  },
+  /**
+   * DetectDuplicates checks for duplicate or related memos.
+   *
+   * @generated from rpc memos.api.v1.AIService.DetectDuplicates
+   */
+  detectDuplicates: {
+    methodKind: "unary";
+    input: typeof DetectDuplicatesRequestSchema;
+    output: typeof DetectDuplicatesResponseSchema;
+  },
+  /**
+   * MergeMemos merges source memo into target memo.
+   *
+   * @generated from rpc memos.api.v1.AIService.MergeMemos
+   */
+  mergeMemos: {
+    methodKind: "unary";
+    input: typeof MergeMemosRequestSchema;
+    output: typeof MergeMemosResponseSchema;
+  },
+  /**
+   * LinkMemos creates a bidirectional relation between two memos.
+   *
+   * @generated from rpc memos.api.v1.AIService.LinkMemos
+   */
+  linkMemos: {
+    methodKind: "unary";
+    input: typeof LinkMemosRequestSchema;
+    output: typeof LinkMemosResponseSchema;
+  },
+  /**
+   * GetKnowledgeGraph returns the knowledge graph for the current user.
+   *
+   * @generated from rpc memos.api.v1.AIService.GetKnowledgeGraph
+   */
+  getKnowledgeGraph: {
+    methodKind: "unary";
+    input: typeof GetKnowledgeGraphRequestSchema;
+    output: typeof GetKnowledgeGraphResponseSchema;
   },
   /**
    * ListAIConversations returns a list of AI conversations.

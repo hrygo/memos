@@ -281,7 +281,8 @@
       "edges": "Edges",
       "clusters-count": "Clusters",
       "build-time": "Build time",
-      "no-data": "No graph data available"
+      "no-data": "No graph data available",
+      "load-error": "Failed to load knowledge graph"
     },
     "prediction": {
       "suggested": "Suggested",
@@ -503,17 +504,31 @@
     "ai": {
       "alternatives": "Alternative time slots",
       "checking-schedule": "Checking existing schedules...",
-      "confirm-slot": "确认",
+      "confirm-slot": "Confirm",
       "creating-schedule": "Creating schedule...",
       "error": "An error occurred",
       "finding-free-time": "Finding available time slots...",
       "processing": "Processing...",
-      "select-time": "选择时间",
+      "select-time": "Select time",
       "status-history": "Status history",
       "thinking": "Thinking...",
       "tool-completed": "Done",
       "updating-schedule": "Updating schedule...",
       "using-tool": "Using tool"
+    },
+    "batch": {
+      "confirm-create": "Confirm Create",
+      "creating": "Creating...",
+      "items": "items",
+      "preview": "Preview",
+      "recurrence": {
+        "daily": "Daily",
+        "monthly": "Monthly",
+        "weekly": "Weekly"
+      },
+      "show-less": "Show less",
+      "show-more": "Show more",
+      "total-count": "Total"
     },
     "calendar": "Calendar",
     "calendar-view": "Calendar View",

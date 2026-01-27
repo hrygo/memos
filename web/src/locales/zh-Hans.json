@@ -281,7 +281,8 @@
       "edges": "边",
       "clusters-count": "社区数",
       "build-time": "构建耗时",
-      "no-data": "暂无图谱数据"
+      "no-data": "暂无图谱数据",
+      "load-error": "知识图谱加载失败"
     },
     "prediction": {
       "suggested": "猜你想要",
@@ -514,6 +515,20 @@
       "tool-completed": "完成",
       "updating-schedule": "正在更新日程...",
       "using-tool": "使用工具"
+    },
+    "batch": {
+      "confirm-create": "确认创建",
+      "creating": "创建中...",
+      "items": "个",
+      "preview": "预览",
+      "recurrence": {
+        "daily": "每天",
+        "monthly": "每月",
+        "weekly": "每周"
+      },
+      "show-less": "收起",
+      "show-more": "显示更多",
+      "total-count": "共"
     },
     "calendar": "日历",
     "calendar-view": "日历视图",

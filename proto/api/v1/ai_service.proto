@@ -56,6 +56,37 @@ service AIService {
     };
   }
 
+  // DetectDuplicates checks for duplicate or related memos.
+  rpc DetectDuplicates(DetectDuplicatesRequest) returns (DetectDuplicatesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/detect-duplicates"
+      body: "*"
+    };
+  }
+
+  // MergeMemos merges source memo into target memo.
+  rpc MergeMemos(MergeMemosRequest) returns (MergeMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/merge-memos"
+      body: "*"
+    };
+  }
+
+  // LinkMemos creates a bidirectional relation between two memos.
+  rpc LinkMemos(LinkMemosRequest) returns (LinkMemosResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/ai/link-memos"
+      body: "*"
+    };
+  }
+
+  // GetKnowledgeGraph returns the knowledge graph for the current user.
+  rpc GetKnowledgeGraph(GetKnowledgeGraphRequest) returns (GetKnowledgeGraphResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/ai/knowledge-graph"
+    };
+  }
+
   // ListAIConversations returns a list of AI conversations.
   rpc ListAIConversations(ListAIConversationsRequest) returns (ListAIConversationsResponse) {
     option (google.api.http) = {
@@ -379,4 +410,106 @@ message ParrotInfo {
   AgentType agent_type = 1;            // Agent type enum
   string name = 2;                     // Parrot name
   ParrotSelfCognition self_cognition = 3;  // Full metacognitive information
+}
+
+// DetectDuplicatesRequest is the request for DetectDuplicates.
+message DetectDuplicatesRequest {
+  string title = 1;                      // Memo title (optional)
+  string content = 2 [(google.api.field_behavior) = REQUIRED];  // Memo content
+  repeated string tags = 3;              // Memo tags (optional)
+  int32 top_k = 4;                       // Max results to return (default: 5)
+}
+
+// DetectDuplicatesResponse is the response for DetectDuplicates.
+message DetectDuplicatesResponse {
+  bool has_duplicate = 1;                // Whether duplicates were found (>90% similarity)
+  bool has_related = 2;                  // Whether related memos were found (70-90% similarity)
+  repeated SimilarMemo duplicates = 3;   // Duplicate memos
+  repeated SimilarMemo related = 4;      // Related memos
+  int64 latency_ms = 5;                  // Detection latency in milliseconds
+}
+
+// SimilarMemo represents a memo similar to the input.
+message SimilarMemo {
+  string id = 1;                         // Memo ID
+  string name = 2;                       // Memo resource name (memos/{uid})
+  string title = 3;                      // Memo title
+  string snippet = 4;                    // Content snippet
+  double similarity = 5;                 // Similarity score (0-1)
+  repeated string shared_tags = 6;       // Tags shared with input
+  string level = 7;                      // "duplicate" or "related"
+  SimilarityBreakdown breakdown = 8;     // Similarity breakdown
+}
+
+// SimilarityBreakdown shows how similarity was calculated.
+message SimilarityBreakdown {
+  double vector = 1;                     // Vector similarity score
+  double tag_co_occur = 2;               // Tag co-occurrence score
+  double time_prox = 3;                  // Time proximity score
+}
+
+// MergeMemosRequest is the request for MergeMemos.
+message MergeMemosRequest {
+  string source_name = 1 [(google.api.field_behavior) = REQUIRED];  // Source memo name (memos/{uid})
+  string target_name = 2 [(google.api.field_behavior) = REQUIRED];  // Target memo name (memos/{uid})
+}
+
+// MergeMemosResponse is the response for MergeMemos.
+message MergeMemosResponse {
+  string merged_name = 1;                // Merged memo name
+}
+
+// LinkMemosRequest is the request for LinkMemos.
+message LinkMemosRequest {
+  string memo_name_1 = 1 [(google.api.field_behavior) = REQUIRED];  // First memo name (memos/{uid})
+  string memo_name_2 = 2 [(google.api.field_behavior) = REQUIRED];  // Second memo name (memos/{uid})
+}
+
+// LinkMemosResponse is the response for LinkMemos.
+message LinkMemosResponse {
+  bool success = 1;                      // Whether linking was successful
+}
+
+// GetKnowledgeGraphRequest is the request for GetKnowledgeGraph.
+message GetKnowledgeGraphRequest {
+  repeated string tags = 1;              // Filter by tags (optional)
+  double min_importance = 2;             // Minimum importance score (optional, 0-1)
+  repeated int32 clusters = 3;           // Filter by cluster IDs (optional)
+}
+
+// GetKnowledgeGraphResponse is the response for GetKnowledgeGraph.
+message GetKnowledgeGraphResponse {
+  repeated GraphNode nodes = 1;          // Graph nodes
+  repeated GraphEdge edges = 2;          // Graph edges
+  GraphStats stats = 3;                  // Graph statistics
+  int64 build_ms = 4;                    // Build latency in milliseconds
+}
+
+// GraphNode represents a node in the knowledge graph.
+message GraphNode {
+  string id = 1;                         // Node ID (memo UID)
+  string label = 2;                      // Node label (memo title)
+  string type = 3;                       // Node type ("memo" or "tag")
+  repeated string tags = 4;              // Node tags
+  double importance = 5;                 // Importance score (0-1, PageRank)
+  int32 cluster = 6;                     // Community cluster ID
+  int64 created_ts = 7;                  // Creation timestamp
+}
+
+// GraphEdge represents an edge in the knowledge graph.
+message GraphEdge {
+  string source = 1;                     // Source node ID
+  string target = 2;                     // Target node ID
+  string type = 3;                       // Edge type ("link", "tag_co", "semantic")
+  double weight = 4;                     // Edge weight (0-1)
+}
+
+// GraphStats contains graph statistics.
+message GraphStats {
+  int32 node_count = 1;                  // Total node count
+  int32 edge_count = 2;                  // Total edge count
+  int32 cluster_count = 3;               // Number of communities
+  int32 link_edges = 4;                  // Explicit link edge count
+  int32 tag_edges = 5;                   // Tag co-occurrence edge count
+  int32 semantic_edges = 6;              // Semantic similarity edge count
 }

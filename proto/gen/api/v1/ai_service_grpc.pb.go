@@ -26,6 +26,10 @@ const (
 	AIService_GetRelatedMemos_FullMethodName           = "/memos.api.v1.AIService/GetRelatedMemos"
 	AIService_GetParrotSelfCognition_FullMethodName    = "/memos.api.v1.AIService/GetParrotSelfCognition"
 	AIService_ListParrots_FullMethodName               = "/memos.api.v1.AIService/ListParrots"
+	AIService_DetectDuplicates_FullMethodName          = "/memos.api.v1.AIService/DetectDuplicates"
+	AIService_MergeMemos_FullMethodName                = "/memos.api.v1.AIService/MergeMemos"
+	AIService_LinkMemos_FullMethodName                 = "/memos.api.v1.AIService/LinkMemos"
+	AIService_GetKnowledgeGraph_FullMethodName         = "/memos.api.v1.AIService/GetKnowledgeGraph"
 	AIService_ListAIConversations_FullMethodName       = "/memos.api.v1.AIService/ListAIConversations"
 	AIService_GetAIConversation_FullMethodName         = "/memos.api.v1.AIService/GetAIConversation"
 	AIService_CreateAIConversation_FullMethodName      = "/memos.api.v1.AIService/CreateAIConversation"
@@ -54,6 +58,14 @@ type AIServiceClient interface {
 	GetParrotSelfCognition(ctx context.Context, in *GetParrotSelfCognitionRequest, opts ...grpc.CallOption) (*GetParrotSelfCognitionResponse, error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(ctx context.Context, in *ListParrotsRequest, opts ...grpc.CallOption) (*ListParrotsResponse, error)
+	// DetectDuplicates checks for duplicate or related memos.
+	DetectDuplicates(ctx context.Context, in *DetectDuplicatesRequest, opts ...grpc.CallOption) (*DetectDuplicatesResponse, error)
+	// MergeMemos merges source memo into target memo.
+	MergeMemos(ctx context.Context, in *MergeMemosRequest, opts ...grpc.CallOption) (*MergeMemosResponse, error)
+	// LinkMemos creates a bidirectional relation between two memos.
+	LinkMemos(ctx context.Context, in *LinkMemosRequest, opts ...grpc.CallOption) (*LinkMemosResponse, error)
+	// GetKnowledgeGraph returns the knowledge graph for the current user.
+	GetKnowledgeGraph(ctx context.Context, in *GetKnowledgeGraphRequest, opts ...grpc.CallOption) (*GetKnowledgeGraphResponse, error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(ctx context.Context, in *ListAIConversationsRequest, opts ...grpc.CallOption) (*ListAIConversationsResponse, error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -143,6 +155,46 @@ func (c *aIServiceClient) ListParrots(ctx context.Context, in *ListParrotsReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListParrotsResponse)
 	err := c.cc.Invoke(ctx, AIService_ListParrots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) DetectDuplicates(ctx context.Context, in *DetectDuplicatesRequest, opts ...grpc.CallOption) (*DetectDuplicatesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DetectDuplicatesResponse)
+	err := c.cc.Invoke(ctx, AIService_DetectDuplicates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) MergeMemos(ctx context.Context, in *MergeMemosRequest, opts ...grpc.CallOption) (*MergeMemosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MergeMemosResponse)
+	err := c.cc.Invoke(ctx, AIService_MergeMemos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) LinkMemos(ctx context.Context, in *LinkMemosRequest, opts ...grpc.CallOption) (*LinkMemosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LinkMemosResponse)
+	err := c.cc.Invoke(ctx, AIService_LinkMemos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIServiceClient) GetKnowledgeGraph(ctx context.Context, in *GetKnowledgeGraphRequest, opts ...grpc.CallOption) (*GetKnowledgeGraphResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetKnowledgeGraphResponse)
+	err := c.cc.Invoke(ctx, AIService_GetKnowledgeGraph_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +299,14 @@ type AIServiceServer interface {
 	GetParrotSelfCognition(context.Context, *GetParrotSelfCognitionRequest) (*GetParrotSelfCognitionResponse, error)
 	// ListParrots returns all available parrot agents with their metacognitive information.
 	ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error)
+	// DetectDuplicates checks for duplicate or related memos.
+	DetectDuplicates(context.Context, *DetectDuplicatesRequest) (*DetectDuplicatesResponse, error)
+	// MergeMemos merges source memo into target memo.
+	MergeMemos(context.Context, *MergeMemosRequest) (*MergeMemosResponse, error)
+	// LinkMemos creates a bidirectional relation between two memos.
+	LinkMemos(context.Context, *LinkMemosRequest) (*LinkMemosResponse, error)
+	// GetKnowledgeGraph returns the knowledge graph for the current user.
+	GetKnowledgeGraph(context.Context, *GetKnowledgeGraphRequest) (*GetKnowledgeGraphResponse, error)
 	// ListAIConversations returns a list of AI conversations.
 	ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error)
 	// GetAIConversation returns a specific AI conversation with its messages.
@@ -290,6 +350,18 @@ func (UnimplementedAIServiceServer) GetParrotSelfCognition(context.Context, *Get
 }
 func (UnimplementedAIServiceServer) ListParrots(context.Context, *ListParrotsRequest) (*ListParrotsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListParrots not implemented")
+}
+func (UnimplementedAIServiceServer) DetectDuplicates(context.Context, *DetectDuplicatesRequest) (*DetectDuplicatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DetectDuplicates not implemented")
+}
+func (UnimplementedAIServiceServer) MergeMemos(context.Context, *MergeMemosRequest) (*MergeMemosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MergeMemos not implemented")
+}
+func (UnimplementedAIServiceServer) LinkMemos(context.Context, *LinkMemosRequest) (*LinkMemosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LinkMemos not implemented")
+}
+func (UnimplementedAIServiceServer) GetKnowledgeGraph(context.Context, *GetKnowledgeGraphRequest) (*GetKnowledgeGraphResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetKnowledgeGraph not implemented")
 }
 func (UnimplementedAIServiceServer) ListAIConversations(context.Context, *ListAIConversationsRequest) (*ListAIConversationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAIConversations not implemented")
@@ -433,6 +505,78 @@ func _AIService_ListParrots_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AIServiceServer).ListParrots(ctx, req.(*ListParrotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_DetectDuplicates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DetectDuplicatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).DetectDuplicates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_DetectDuplicates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).DetectDuplicates(ctx, req.(*DetectDuplicatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_MergeMemos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MergeMemosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).MergeMemos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_MergeMemos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).MergeMemos(ctx, req.(*MergeMemosRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_LinkMemos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkMemosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).LinkMemos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_LinkMemos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).LinkMemos(ctx, req.(*LinkMemosRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIService_GetKnowledgeGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetKnowledgeGraphRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetKnowledgeGraph(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetKnowledgeGraph_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetKnowledgeGraph(ctx, req.(*GetKnowledgeGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -607,6 +751,22 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListParrots",
 			Handler:    _AIService_ListParrots_Handler,
+		},
+		{
+			MethodName: "DetectDuplicates",
+			Handler:    _AIService_DetectDuplicates_Handler,
+		},
+		{
+			MethodName: "MergeMemos",
+			Handler:    _AIService_MergeMemos_Handler,
+		},
+		{
+			MethodName: "LinkMemos",
+			Handler:    _AIService_LinkMemos_Handler,
+		},
+		{
+			MethodName: "GetKnowledgeGraph",
+			Handler:    _AIService_GetKnowledgeGraph_Handler,
 		},
 		{
 			MethodName: "ListAIConversations",

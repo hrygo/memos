@@ -4,7 +4,11 @@ import { aiServiceClient } from "@/connect";
 import { ParrotAgentType, parrotToProtoAgentType } from "@/types/parrot";
 import {
   ChatRequestSchema,
+  DetectDuplicatesRequestSchema,
+  GetKnowledgeGraphRequestSchema,
   GetRelatedMemosRequestSchema,
+  LinkMemosRequestSchema,
+  MergeMemosRequestSchema,
   SemanticSearchRequestSchema,
   SuggestTagsRequestSchema,
 } from "@/types/proto/api/v1/ai_service_pb";
@@ -18,6 +22,8 @@ export const aiKeys = {
   search: () => [...aiKeys.all, "search"] as const,
   searchQuery: (query: string) => [...aiKeys.search(), query] as const,
   related: (name: string) => [...aiKeys.all, "related", name] as const,
+  knowledgeGraph: (filter: { tags: string[]; minImportance: number; clusters: number[] }) =>
+    [...aiKeys.all, "knowledgeGraph", filter] as const,
 };
 
 /**
@@ -328,3 +334,86 @@ export function useChat() {
 export type SemanticSearchResult = Awaited<ReturnType<typeof aiServiceClient.semanticSearch>>;
 export type SuggestTagsResult = string[];
 export type RelatedMemosResult = Awaited<ReturnType<typeof aiServiceClient.getRelatedMemos>>;
+export type DetectDuplicatesResult = Awaited<ReturnType<typeof aiServiceClient.detectDuplicates>>;
+
+/**
+ * useDetectDuplicates checks for duplicate or related memos.
+ */
+export function useDetectDuplicates() {
+  return useMutation({
+    mutationFn: async (params: { title?: string; content: string; tags?: string[]; topK?: number }) => {
+      const request = create(DetectDuplicatesRequestSchema, {
+        title: params.title ?? "",
+        content: params.content,
+        tags: params.tags ?? [],
+        topK: params.topK ?? 5,
+      });
+      return await aiServiceClient.detectDuplicates(request);
+    },
+  });
+}
+
+/**
+ * useMergeMemos merges source memo into target memo.
+ */
+export function useMergeMemos() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { sourceName: string; targetName: string }) => {
+      const request = create(MergeMemosRequestSchema, {
+        sourceName: params.sourceName,
+        targetName: params.targetName,
+      });
+      return await aiServiceClient.mergeMemos(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memos"] });
+    },
+  });
+}
+
+/**
+ * useLinkMemos creates a bidirectional relation between two memos.
+ */
+export function useLinkMemos() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { memoName1: string; memoName2: string }) => {
+      const request = create(LinkMemosRequestSchema, {
+        memoName1: params.memoName1,
+        memoName2: params.memoName2,
+      });
+      return await aiServiceClient.linkMemos(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memos"] });
+    },
+  });
+}
+
+/**
+ * useKnowledgeGraph fetches the knowledge graph for visualization.
+ * @param filter - Graph filter options
+ * @param options.enabled - Whether the query is enabled
+ */
+export function useKnowledgeGraph(
+  filter: { tags: string[]; minImportance: number; clusters: number[] },
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery({
+    queryKey: aiKeys.knowledgeGraph(filter),
+    queryFn: async () => {
+      const request = create(GetKnowledgeGraphRequestSchema, {
+        tags: filter.tags,
+        minImportance: filter.minImportance,
+        clusters: filter.clusters,
+      });
+      return await aiServiceClient.getKnowledgeGraph(request);
+    },
+    enabled: options.enabled ?? true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// Knowledge graph types
+export type KnowledgeGraphResult = Awaited<ReturnType<typeof aiServiceClient.getKnowledgeGraph>>;

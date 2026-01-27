@@ -283,6 +283,22 @@ func (s *ConnectServiceHandler) PrecheckSchedule(ctx context.Context, req *conne
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) BatchParseSchedule(ctx context.Context, req *connect.Request[v1pb.BatchParseScheduleRequest]) (*connect.Response[v1pb.BatchParseScheduleResponse], error) {
+	resp, err := s.ScheduleService.BatchParseSchedule(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) BatchCreateSchedules(ctx context.Context, req *connect.Request[v1pb.BatchCreateSchedulesRequest]) (*connect.Response[v1pb.BatchCreateSchedulesResponse], error) {
+	resp, err := s.ScheduleService.BatchCreateSchedules(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // ScheduleAgentServiceConnectHandler implements ScheduleAgentServiceHandler interface
 // by delegating to the underlying ScheduleAgentService.
 type ScheduleAgentServiceConnectHandler struct {
@@ -591,6 +607,17 @@ func (s *ConnectServiceHandler) LinkMemos(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 	resp, err := s.AIService.LinkMemos(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetKnowledgeGraph(ctx context.Context, req *connect.Request[v1pb.GetKnowledgeGraphRequest]) (*connect.Response[v1pb.GetKnowledgeGraphResponse], error) {
+	if s.AIService == nil || !s.AIService.IsEnabled() {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.GetKnowledgeGraph(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}
