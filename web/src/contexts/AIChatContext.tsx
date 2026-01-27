@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { aiServiceClient } from "@/connect";
 import {
@@ -112,6 +112,16 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
     ...DEFAULT_STATE,
     ...initialState,
   }));
+
+  // Track mount state to prevent setState after unmount
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Helper to localize conversation title from backend key to display title
   const localizeTitle = useCallback(
@@ -679,6 +689,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         const limit = 100; // Always request 100 messages
 
         // Fire-and-forget async operation (we can't await in setState updater)
+        // Check mounted state before setState to prevent updates after unmount
         aiServiceClient
           .listMessages({
             conversationId: numericId,
@@ -686,6 +697,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
             limit,
           })
           .then((response) => {
+            if (!isMountedRef.current) return; // Skip update if unmounted
+
             if (response.syncRequired) {
               // Backend requires full refresh, clear cache and retry
               setState((innerPrev) => ({
@@ -703,6 +716,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
                   limit,
                 })
                 .then((retryResponse) => {
+                  if (!isMountedRef.current) return; // Skip update if unmounted
                   setState((innerPrev) => mergeMessagesIntoState(innerPrev, conversationId, retryResponse, convertMessageFromPb));
                 });
             } else {
@@ -736,6 +750,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
         const oldestUid = "uid" in oldestMessage ? oldestMessage.uid : oldestMessage.id;
 
         // Fire-and-forget async operation
+        // Check mounted state before setState to prevent updates after unmount
         aiServiceClient
           .listMessages({
             conversationId: numericId,
@@ -743,6 +758,8 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
             limit: 100,
           })
           .then((response) => {
+            if (!isMountedRef.current) return; // Skip update if unmounted
+
             // Prepend messages (older messages come first)
             const olderMessages = response.messages.map((m) => convertMessageFromPb(m));
             setState((innerPrev) => ({
