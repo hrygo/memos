@@ -40,8 +40,8 @@ type AIService struct {
 	IntentClassifierConfig *pluginai.IntentClassifierConfig
 
 	// Router service for three-layer intent classification (lazily initialized)
-	routerServiceOnce sync.Once
-	routerService      *router.Service
+	routerServiceMu sync.RWMutex
+	routerService   *router.Service
 
 	// Chat event bus and conversation service (lazily initialized)
 	chatEventBusMu      sync.RWMutex
@@ -69,26 +69,44 @@ func (s *AIService) IsLLMEnabled() bool {
 
 // getRouterService returns the router service, initializing it on first use.
 // Returns nil if Store is not available, which is safe as callers check for nil.
+// Thread-safe: uses RWMutex for lazy initialization with support for re-initialization
+// when Store becomes available after initial nil check.
 func (s *AIService) getRouterService() *router.Service {
-	s.routerServiceOnce.Do(func() {
-		if s.Store == nil {
-			// Store not available, routerService remains nil
-			return
-		}
+	// Fast path: read lock
+	s.routerServiceMu.RLock()
+	if s.routerService != nil {
+		s.routerServiceMu.RUnlock()
+		return s.routerService
+	}
+	s.routerServiceMu.RUnlock()
 
-		// Create memory service for router
-		memService := memory.NewService(s.Store, DefaultHistoryRetention)
+	// Slow path: write lock for initialization
+	s.routerServiceMu.Lock()
+	defer s.routerServiceMu.Unlock()
 
-		// Create LLM client wrapper for router
-		var llmClient router.LLMClient
-		if s.LLMService != nil {
-			llmClient = &routerLLMClient{llm: s.LLMService}
-		}
+	// Double-check after acquiring write lock
+	if s.routerService != nil {
+		return s.routerService
+	}
 
-		s.routerService = router.NewService(router.Config{
-			MemoryService: memService,
-			LLMClient:     llmClient,
-		})
+	if s.Store == nil {
+		// Store not available, routerService remains nil
+		// Next call will retry when Store becomes available
+		return nil
+	}
+
+	// Create memory service for router
+	memService := memory.NewService(s.Store, DefaultHistoryRetention)
+
+	// Create LLM client wrapper for router
+	var llmClient router.LLMClient
+	if s.LLMService != nil {
+		llmClient = &routerLLMClient{llm: s.LLMService}
+	}
+
+	s.routerService = router.NewService(router.Config{
+		MemoryService: memService,
+		LLMClient:     llmClient,
 	})
 
 	return s.routerService
