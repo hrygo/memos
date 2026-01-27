@@ -248,8 +248,30 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
   const refreshConversations = useCallback(async () => {
     try {
       const response = await aiServiceClient.listAIConversations({});
-      const conversations = response.conversations.map((c) => convertConversationFromPb(c));
-      setState((prev) => ({ ...prev, conversations }));
+      setState((prev) => {
+        const newConversations = response.conversations.map((c) => convertConversationFromPb(c));
+
+        // Preserve local temporary conversations (not yet synced to backend)
+        const localConversations = prev.conversations.filter((c) => c.id.startsWith("chat_"));
+
+        // Merge strategies:
+        // 1. Preserve existing messages if new conversation (summary) has none
+        // 2. Be careful not to overwrite richer local state with summary state
+        const mergedConversations = newConversations.map((newConv) => {
+          const existing = prev.conversations.find((c) => c.id === newConv.id);
+          if (existing && existing.messages.length > 0 && newConv.messages.length === 0) {
+            return {
+              ...newConv,
+              messages: existing.messages,
+              messageCount: Math.max(newConv.messageCount ?? 0, existing.messageCount ?? 0),
+              messageCache: existing.messageCache,
+            };
+          }
+          return newConv;
+        });
+
+        return { ...prev, conversations: [...localConversations, ...mergedConversations] };
+      });
     } catch (e) {
       console.error("Failed to fetch conversations:", e);
     }
@@ -284,7 +306,7 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
   // Conversation actions
   const createConversation = useCallback(
-    (parrotId: ParrotAgentType, title?: string): string => {
+    (parrotId: ParrotAgentType, title?: string): { id: string; completed: Promise<string> } => {
       const tempId = generateId(); // Temporary ID for UI
       const now = Date.now();
       const defaultTitle = title || getDefaultTitle(parrotId);
@@ -312,60 +334,60 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
       // Asynchronously create on backend
       const agentType = convertParrotIdToAgentType(parrotId);
 
-      aiServiceClient
-        .createAIConversation({
-          title: defaultTitle,
-          parrotId: agentType,
-        })
-        .then((pb) => {
-          // Replace temp conversation with real one from backend
-          const newConv = convertConversationFromPb(pb);
+      const completionPromise = new Promise<string>((resolve, reject) => {
+        aiServiceClient
+          .createAIConversation({
+            title: defaultTitle,
+            parrotId: agentType,
+          })
+          .then((pb) => {
+            // Replace temp conversation with real one from backend
+            const newConv = convertConversationFromPb(pb);
 
-          setState((prev) => {
-            // Find the temp conversation and preserve its messages
-            const tempConv = prev.conversations.find((c) => c.id === tempId);
-            const preservedMessages = tempConv?.messages || [];
+            setState((prev) => {
+              // Find the temp conversation and preserve its messages
+              const tempConv = prev.conversations.find((c) => c.id === tempId);
+              const preservedMessages = tempConv?.messages || [];
 
-            // Remove temp conversation and add real one with preserved messages
-            const filteredConversations = prev.conversations.filter((c) => c.id !== tempId);
-            const realConversation: Conversation = {
-              ...newConv,
-              messages: preservedMessages,
-              messageCount: preservedMessages.filter((m) => !isContextSeparator(m)).length,
-            };
+              // Remove temp conversation and add real one with preserved messages
+              // Also remove any existing conversation with the same ID (prevent duplicates)
+              const filteredConversations = prev.conversations.filter((c) => c.id !== tempId && c.id !== newConv.id);
+              const realConversation: Conversation = {
+                ...newConv,
+                messages: preservedMessages,
+                messageCount: preservedMessages.filter((m) => !isContextSeparator(m)).length,
+                // Initialize messageCache to prevent syncMessages from overwriting local messages
+                messageCache: {
+                  lastMessageUid: "",
+                  totalCount: preservedMessages.filter((m) => !isContextSeparator(m)).length,
+                  hasMore: false,
+                },
+              };
 
-            return {
-              ...prev,
-              conversations: [realConversation, ...filteredConversations],
-              currentConversationId: newConv.id,
-            };
+              return {
+                ...prev,
+                conversations: [realConversation, ...filteredConversations],
+                currentConversationId: newConv.id,
+              };
+            });
+
+            // Refresh in background to ensure sync
+            refreshConversations();
+            resolve(newConv.id);
+          })
+          .catch((err) => {
+            console.error("Failed to create conversation:", err);
+            // Don't delete the conversation on error. Keep it in local state.
+            // This prevents the UI from flashing back to the greeting page if the backend fails.
+            // The conversation will remain as a "local-only" or "failed" state conceptually.
+            // In the future, we can add a visual indicator for sync failure.
+
+            // We still reject the promise so the caller knows it failed
+            reject(err);
           });
+      });
 
-          // Refresh in background to ensure sync
-          refreshConversations();
-        })
-        .catch((err) => {
-          console.error("Failed to create conversation:", err);
-          // Remove temp conversation on error, BUT only if no messages were added
-          // This prevents UI jumping back to empty state if user already sent a message
-          setState((prev) => {
-            const tempConv = prev.conversations.find((c) => c.id === tempId);
-            // If conversation has messages (user sent something), don't delete it
-            if (tempConv && tempConv.messages.length > 0) {
-              return prev;
-            }
-
-            return {
-              ...prev,
-              conversations: prev.conversations.filter((c) => c.id !== tempId),
-              currentConversationId:
-                prev.currentConversationId === tempId ? null : prev.currentConversationId,
-              viewMode: prev.currentConversationId === tempId ? "hub" : prev.viewMode,
-            };
-          });
-        });
-
-      return tempId;
+      return { id: tempId, completed: completionPromise };
     },
     [convertConversationFromPb, convertParrotIdToAgentType, refreshConversations],
   );
@@ -589,19 +611,44 @@ export function AIChatProvider({ children, initialState }: AIChatProviderProps) 
 
         // For incremental sync, merge with existing messages
         const existingMessages = c.messages || [];
+        // Create a copy for mutation
         const mergedMessages = [...existingMessages];
-
-        // Append new messages (avoid duplicates by UID)
-        const existingUids = new Set(existingMessages.filter((m) => !isContextSeparator(m)).map((m) => ("uid" in m ? m.uid : m.id)));
+        const existingUids = new Set(
+          existingMessages.filter((m) => !isContextSeparator(m)).map((m) => ("uid" in m ? m.uid : m.id)),
+        );
 
         for (const msg of newMessages) {
-          if (!isContextSeparator(msg)) {
-            const uid = "uid" in msg ? msg.uid : msg.id;
-            if (!existingUids.has(uid)) {
-              mergedMessages.push(msg);
-            }
-          } else {
+          if (isContextSeparator(msg)) {
             mergedMessages.push(msg);
+            continue;
+          }
+
+          const uid = "uid" in msg ? msg.uid : msg.id;
+
+          // Case 1: Message already synced (UID match)
+          if (existingUids.has(uid)) {
+            continue;
+          }
+
+          // Case 2: Check for Optimistic Update (Local temporary message)
+          // Look for a local message (with "chat_" prefix ID) that matches role and content
+          const matchIndex = mergedMessages.findIndex(
+            (localMsg) =>
+              !isContextSeparator(localMsg) &&
+              localMsg.id.startsWith("chat_") && // Is temporary
+              localMsg.role === msg.role &&
+              localMsg.content === msg.content,
+          );
+
+          if (matchIndex !== -1) {
+            // Found a match! Replace local message with synced real message
+            mergedMessages[matchIndex] = msg;
+            // Add new UID to set to prevent duplicate additions
+            existingUids.add(uid);
+          } else {
+            // Case 3: Totally new message, append it
+            mergedMessages.push(msg);
+            existingUids.add(uid);
           }
         }
 

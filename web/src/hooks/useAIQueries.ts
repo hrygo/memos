@@ -100,7 +100,7 @@ export function useChat() {
      * @returns A promise that resolves when streaming completes
      */
     stream: async (
-      params: { message: string; history?: string[]; agentType?: ParrotAgentType; userTimezone?: string },
+      params: { message: string; history?: string[]; agentType?: ParrotAgentType; userTimezone?: string; conversationId?: number },
       callbacks?: {
         onContent?: (content: string) => void;
         onSources?: (sources: string[]) => void;
@@ -131,6 +131,14 @@ export function useChat() {
           query: string;
           count: number;
         }) => void;
+        onUIMemoPreview?: (data: {
+          title: string;
+          content: string;
+          tags?: string[];
+          confidence: number;
+          reason?: string;
+          session_id?: string;
+        }) => void;
       },
     ) => {
       const request = create(ChatRequestSchema, {
@@ -138,6 +146,7 @@ export function useChat() {
         history: params.history ?? [],
         agentType: params.agentType !== undefined ? parrotToProtoAgentType(params.agentType) : undefined,
         userTimezone: params.userTimezone,
+        conversationId: params.conversationId,
       });
 
       console.debug("[AI Chat] Starting stream", {
@@ -267,6 +276,14 @@ export function useChat() {
                   callbacks?.onScheduleQueryResult?.(transformedResult);
                 } catch (e) {
                   console.error("Failed to parse schedule_query_result:", e);
+                }
+                break;
+              case "ui_memo_preview":
+                try {
+                  const data = JSON.parse(response.eventData);
+                  callbacks?.onUIMemoPreview?.(data);
+                } catch (e) {
+                  console.error("Failed to parse ui_memo_preview:", e);
                 }
                 break;
             }

@@ -1,6 +1,15 @@
 import { useCallback, useRef, useState } from "react";
 import type { UIAction, UIToolEvent } from "@/components/ScheduleAI/types";
-import type { ParsedEvent, UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotPickerData } from "@/hooks/useScheduleAgent";
+import type {
+  ParsedEvent,
+  UIConflictResolutionData,
+  UIScheduleSuggestionData,
+  UITimeSlotPickerData,
+  UIQuickActionsData,
+  UIMemoPreviewData,
+  UIProgressTrackerData,
+  UIScheduleListData,
+} from "@/hooks/useScheduleAgent";
 
 /**
  * Hook to manage UI tool events from the AI agent
@@ -14,7 +23,11 @@ export function useAITools() {
    * Process an event from the AI stream and add UI tools if present
    */
   const processEvent = useCallback((event: ParsedEvent) => {
-    if (!event.uiType || !event.uiData) return;
+    console.log("[useAITools] processEvent called:", event);
+    if (!event.uiType || !event.uiData) {
+      console.log("[useAITools] Skipping - no uiType or uiData");
+      return;
+    }
 
     const toolId = `uitool-${++toolIdCounter.current}`;
 
@@ -37,7 +50,30 @@ export function useAITools() {
         toolData = event.uiData as UIConflictResolutionData;
         break;
       }
+      case "ui_quick_actions": {
+        toolType = "quick_actions";
+        toolData = event.uiData as UIQuickActionsData;
+        break;
+      }
+      case "ui_memo_preview": {
+        toolType = "memo_preview";
+        toolData = event.uiData as UIMemoPreviewData;
+        console.log("[useAITools] Processing memo_preview:", toolData);
+        break;
+      }
+      case "ui_progress_tracker": {
+        toolType = "progress_tracker";
+        toolData = event.uiData as UIProgressTrackerData;
+        break;
+      }
+      case "ui_schedule_list": {
+        toolType = "schedule_list";
+        toolData = event.uiData as UIScheduleListData;
+        console.log("[useAITools] Processing schedule_list:", toolData);
+        break;
+      }
       default:
+        console.log("[useAITools] Unknown uiType:", event.uiType);
         return;
     }
 
@@ -48,6 +84,7 @@ export function useAITools() {
       timestamp: Date.now(),
     };
 
+    console.log("[useAITools] Adding tool:", newTool);
     setTools((prev) => [...prev, newTool]);
   }, []);
 

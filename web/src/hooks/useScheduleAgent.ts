@@ -69,7 +69,7 @@ export interface UIAutoResolvedSlot {
   start_ts: number;
   end_ts: number;
   reason: string;
-  score: number;
+  score?: number;  // Optional - backend may not always provide
 }
 
 export interface UIConflictResolutionData {
@@ -96,12 +96,57 @@ export interface UIQuickActionsData {
   session_id?: string;
 }
 
+export interface UIMemoPreviewData {
+  uid?: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  confidence: number;
+  reason?: string;
+  session_id?: string;
+}
+
+export interface UIScheduleItem {
+  uid: string;
+  title: string;
+  start_ts: number;
+  end_ts: number;
+  all_day: boolean;
+  location?: string;
+  status?: string;
+}
+
+export interface UIScheduleListData {
+  title: string;
+  query: string;
+  count: number;
+  schedules: UIScheduleItem[];
+  time_range?: string;
+  reason?: string;
+  session_id?: string;
+}
+
+export interface ProgressStep {
+  id: string;
+  label: string;
+  status: "pending" | "in_progress" | "completed" | "failed";
+  error?: string;
+}
+
+export interface UIProgressTrackerData {
+  title: string;
+  steps: ProgressStep[];
+  current_step: number;
+  can_cancel: boolean;
+  session_id?: string;
+}
+
 /**
  * UI Tool Event wrapper
  */
 export interface UIToolEvent {
-  type: "schedule_suggestion" | "time_slot_picker" | "conflict_resolution" | "quick_actions";
-  data: UIScheduleSuggestionData | UITimeSlotPickerData | UIConflictResolutionData | UIQuickActionsData;
+  type: "schedule_suggestion" | "time_slot_picker" | "conflict_resolution" | "quick_actions" | "memo_preview" | "progress_tracker";
+  data: UIScheduleSuggestionData | UITimeSlotPickerData | UIConflictResolutionData | UIQuickActionsData | UIMemoPreviewData | UIProgressTrackerData;
 }
 
 /**
@@ -197,6 +242,10 @@ export function getUIToolType(event: ParsedEvent): UIToolEvent["type"] | null {
       return "conflict_resolution";
     case "ui_quick_actions":
       return "quick_actions";
+    case "ui_memo_preview":
+      return "memo_preview";
+    case "ui_progress_tracker":
+      return "progress_tracker";
     default:
       return null;
   }
