@@ -519,6 +519,7 @@
     "batch": {
       "confirm-create": "Confirm Create",
       "creating": "Creating...",
+      "day-suffix": "",
       "items": "items",
       "preview": "Preview",
       "recurrence": {
@@ -528,7 +529,16 @@
       },
       "show-less": "Show less",
       "show-more": "Show more",
-      "total-count": "Total"
+      "total-count": "Total",
+      "weekday": {
+        "fri": "Fri",
+        "mon": "Mon",
+        "sat": "Sat",
+        "sun": "Sun",
+        "thu": "Thu",
+        "tue": "Tue",
+        "wed": "Wed"
+      }
     },
     "calendar": "Calendar",
     "calendar-view": "Calendar View",

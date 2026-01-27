@@ -1180,6 +1180,364 @@ func (x *AlternativeSlot) GetLabel() string {
 	return ""
 }
 
+// BatchParseScheduleRequest is the request for BatchParseSchedule.
+type BatchParseScheduleRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Natural language text to parse (e.g., "每周一下午2点例会")
+	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	// Maximum number of preview instances
+	PreviewCount  int32 `protobuf:"varint,2,opt,name=preview_count,json=previewCount,proto3" json:"preview_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchParseScheduleRequest) Reset() {
+	*x = BatchParseScheduleRequest{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchParseScheduleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchParseScheduleRequest) ProtoMessage() {}
+
+func (x *BatchParseScheduleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchParseScheduleRequest.ProtoReflect.Descriptor instead.
+func (*BatchParseScheduleRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *BatchParseScheduleRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *BatchParseScheduleRequest) GetPreviewCount() int32 {
+	if x != nil {
+		return x.PreviewCount
+	}
+	return 0
+}
+
+// BatchParseScheduleResponse is the response for BatchParseSchedule.
+type BatchParseScheduleResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the input can be parsed for batch creation
+	CanBatchCreate bool `protobuf:"varint,1,opt,name=can_batch_create,json=canBatchCreate,proto3" json:"can_batch_create,omitempty"`
+	// Parsed batch schedule info
+	Info *BatchScheduleInfo `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
+	// Preview of schedules to be created
+	Preview []*Schedule `protobuf:"bytes,3,rep,name=preview,proto3" json:"preview,omitempty"`
+	// Total count of schedules that would be created
+	TotalCount int32 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	// Missing required fields
+	MissingFields []string `protobuf:"bytes,5,rep,name=missing_fields,json=missingFields,proto3" json:"missing_fields,omitempty"`
+	// Parsing confidence (0.0 - 1.0)
+	Confidence    float64 `protobuf:"fixed64,6,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchParseScheduleResponse) Reset() {
+	*x = BatchParseScheduleResponse{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchParseScheduleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchParseScheduleResponse) ProtoMessage() {}
+
+func (x *BatchParseScheduleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchParseScheduleResponse.ProtoReflect.Descriptor instead.
+func (*BatchParseScheduleResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *BatchParseScheduleResponse) GetCanBatchCreate() bool {
+	if x != nil {
+		return x.CanBatchCreate
+	}
+	return false
+}
+
+func (x *BatchParseScheduleResponse) GetInfo() *BatchScheduleInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+func (x *BatchParseScheduleResponse) GetPreview() []*Schedule {
+	if x != nil {
+		return x.Preview
+	}
+	return nil
+}
+
+func (x *BatchParseScheduleResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *BatchParseScheduleResponse) GetMissingFields() []string {
+	if x != nil {
+		return x.MissingFields
+	}
+	return nil
+}
+
+func (x *BatchParseScheduleResponse) GetConfidence() float64 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+// BatchScheduleInfo contains parsed batch schedule information.
+type BatchScheduleInfo struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Title          string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	StartTs        int64                  `protobuf:"varint,2,opt,name=start_ts,json=startTs,proto3" json:"start_ts,omitempty"`
+	Duration       int32                  `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"` // Duration in minutes
+	Location       string                 `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
+	RecurrenceRule string                 `protobuf:"bytes,5,opt,name=recurrence_rule,json=recurrenceRule,proto3" json:"recurrence_rule,omitempty"` // JSON string of recurrence rule
+	EndDateTs      int64                  `protobuf:"varint,6,opt,name=end_date_ts,json=endDateTs,proto3" json:"end_date_ts,omitempty"`             // When to stop generating
+	Count          int32                  `protobuf:"varint,7,opt,name=count,proto3" json:"count,omitempty"`                                        // Max number of instances
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *BatchScheduleInfo) Reset() {
+	*x = BatchScheduleInfo{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchScheduleInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchScheduleInfo) ProtoMessage() {}
+
+func (x *BatchScheduleInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchScheduleInfo.ProtoReflect.Descriptor instead.
+func (*BatchScheduleInfo) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *BatchScheduleInfo) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *BatchScheduleInfo) GetStartTs() int64 {
+	if x != nil {
+		return x.StartTs
+	}
+	return 0
+}
+
+func (x *BatchScheduleInfo) GetDuration() int32 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
+func (x *BatchScheduleInfo) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *BatchScheduleInfo) GetRecurrenceRule() string {
+	if x != nil {
+		return x.RecurrenceRule
+	}
+	return ""
+}
+
+func (x *BatchScheduleInfo) GetEndDateTs() int64 {
+	if x != nil {
+		return x.EndDateTs
+	}
+	return 0
+}
+
+func (x *BatchScheduleInfo) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+// BatchCreateSchedulesRequest is the request for BatchCreateSchedules.
+type BatchCreateSchedulesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Batch schedule info from parsing
+	Info *BatchScheduleInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	// Whether to skip conflict checking
+	SkipConflictCheck bool `protobuf:"varint,2,opt,name=skip_conflict_check,json=skipConflictCheck,proto3" json:"skip_conflict_check,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *BatchCreateSchedulesRequest) Reset() {
+	*x = BatchCreateSchedulesRequest{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchCreateSchedulesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchCreateSchedulesRequest) ProtoMessage() {}
+
+func (x *BatchCreateSchedulesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchCreateSchedulesRequest.ProtoReflect.Descriptor instead.
+func (*BatchCreateSchedulesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *BatchCreateSchedulesRequest) GetInfo() *BatchScheduleInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+func (x *BatchCreateSchedulesRequest) GetSkipConflictCheck() bool {
+	if x != nil {
+		return x.SkipConflictCheck
+	}
+	return false
+}
+
+// BatchCreateSchedulesResponse is the response for BatchCreateSchedules.
+type BatchCreateSchedulesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Created schedules
+	Schedules []*Schedule `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
+	// Number of schedules created
+	CreatedCount int32 `protobuf:"varint,2,opt,name=created_count,json=createdCount,proto3" json:"created_count,omitempty"`
+	// Schedules that had conflicts (skipped)
+	Conflicts     []*Schedule `protobuf:"bytes,3,rep,name=conflicts,proto3" json:"conflicts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchCreateSchedulesResponse) Reset() {
+	*x = BatchCreateSchedulesResponse{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchCreateSchedulesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchCreateSchedulesResponse) ProtoMessage() {}
+
+func (x *BatchCreateSchedulesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchCreateSchedulesResponse.ProtoReflect.Descriptor instead.
+func (*BatchCreateSchedulesResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *BatchCreateSchedulesResponse) GetSchedules() []*Schedule {
+	if x != nil {
+		return x.Schedules
+	}
+	return nil
+}
+
+func (x *BatchCreateSchedulesResponse) GetCreatedCount() int32 {
+	if x != nil {
+		return x.CreatedCount
+	}
+	return 0
+}
+
+func (x *BatchCreateSchedulesResponse) GetConflicts() []*Schedule {
+	if x != nil {
+		return x.Conflicts
+	}
+	return nil
+}
+
 var File_api_v1_schedule_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_schedule_service_proto_rawDesc = "" +
@@ -1267,7 +1625,36 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x0fAlternativeSlot\x12\x19\n" +
 	"\bstart_ts\x18\x01 \x01(\x03R\astartTs\x12\x15\n" +
 	"\x06end_ts\x18\x02 \x01(\x03R\x05endTs\x12\x14\n" +
-	"\x05label\x18\x03 \x01(\tR\x05label2\x87\b\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label\"Y\n" +
+	"\x19BatchParseScheduleRequest\x12\x17\n" +
+	"\x04text\x18\x01 \x01(\tB\x03\xe0A\x02R\x04text\x12#\n" +
+	"\rpreview_count\x18\x02 \x01(\x05R\fpreviewCount\"\x95\x02\n" +
+	"\x1aBatchParseScheduleResponse\x12(\n" +
+	"\x10can_batch_create\x18\x01 \x01(\bR\x0ecanBatchCreate\x123\n" +
+	"\x04info\x18\x02 \x01(\v2\x1f.memos.api.v1.BatchScheduleInfoR\x04info\x120\n" +
+	"\apreview\x18\x03 \x03(\v2\x16.memos.api.v1.ScheduleR\apreview\x12\x1f\n" +
+	"\vtotal_count\x18\x04 \x01(\x05R\n" +
+	"totalCount\x12%\n" +
+	"\x0emissing_fields\x18\x05 \x03(\tR\rmissingFields\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x06 \x01(\x01R\n" +
+	"confidence\"\xdb\x01\n" +
+	"\x11BatchScheduleInfo\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x19\n" +
+	"\bstart_ts\x18\x02 \x01(\x03R\astartTs\x12\x1a\n" +
+	"\bduration\x18\x03 \x01(\x05R\bduration\x12\x1a\n" +
+	"\blocation\x18\x04 \x01(\tR\blocation\x12'\n" +
+	"\x0frecurrence_rule\x18\x05 \x01(\tR\x0erecurrenceRule\x12\x1e\n" +
+	"\vend_date_ts\x18\x06 \x01(\x03R\tendDateTs\x12\x14\n" +
+	"\x05count\x18\a \x01(\x05R\x05count\"\x87\x01\n" +
+	"\x1bBatchCreateSchedulesRequest\x128\n" +
+	"\x04info\x18\x01 \x01(\v2\x1f.memos.api.v1.BatchScheduleInfoB\x03\xe0A\x02R\x04info\x12.\n" +
+	"\x13skip_conflict_check\x18\x02 \x01(\bR\x11skipConflictCheck\"\xaf\x01\n" +
+	"\x1cBatchCreateSchedulesResponse\x124\n" +
+	"\tschedules\x18\x01 \x03(\v2\x16.memos.api.v1.ScheduleR\tschedules\x12#\n" +
+	"\rcreated_count\x18\x02 \x01(\x05R\fcreatedCount\x124\n" +
+	"\tconflicts\x18\x03 \x03(\v2\x16.memos.api.v1.ScheduleR\tconflicts2\xb4\n" +
+	"\n" +
 	"\x0fScheduleService\x12k\n" +
 	"\x0eCreateSchedule\x12#.memos.api.v1.CreateScheduleRequest\x1a\x16.memos.api.v1.Schedule\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/schedules\x12s\n" +
 	"\rListSchedules\x12\".memos.api.v1.ListSchedulesRequest\x1a#.memos.api.v1.ListSchedulesResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/schedules\x12k\n" +
@@ -1276,7 +1663,9 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x0eDeleteSchedule\x12#.memos.api.v1.DeleteScheduleRequest\x1a\x16.google.protobuf.Empty\"\"\x82\xd3\xe4\x93\x02\x1c*\x1a/api/v1/{name=schedules/*}\x12\x84\x01\n" +
 	"\rCheckConflict\x12\".memos.api.v1.CheckConflictRequest\x1a#.memos.api.v1.CheckConflictResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/api/v1/schedules:checkConflict\x12\xa0\x01\n" +
 	"\x16ParseAndCreateSchedule\x12+.memos.api.v1.ParseAndCreateScheduleRequest\x1a,.memos.api.v1.ParseAndCreateScheduleResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/v1/schedules:parseAndCreate\x12\x88\x01\n" +
-	"\x10PrecheckSchedule\x12%.memos.api.v1.PrecheckScheduleRequest\x1a&.memos.api.v1.PrecheckScheduleResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/schedules:precheckB\xac\x01\n" +
+	"\x10PrecheckSchedule\x12%.memos.api.v1.PrecheckScheduleRequest\x1a&.memos.api.v1.PrecheckScheduleResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/schedules:precheck\x12\x90\x01\n" +
+	"\x12BatchParseSchedule\x12'.memos.api.v1.BatchParseScheduleRequest\x1a(.memos.api.v1.BatchParseScheduleResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/api/v1/schedules:batchParse\x12\x97\x01\n" +
+	"\x14BatchCreateSchedules\x12).memos.api.v1.BatchCreateSchedulesRequest\x1a*.memos.api.v1.BatchCreateSchedulesResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/v1/schedules:batchCreateB\xac\x01\n" +
 	"\x10com.memos.api.v1B\x14ScheduleServiceProtoP\x01Z0github.com/usememos/memos/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
@@ -1291,7 +1680,7 @@ func file_api_v1_schedule_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_schedule_service_proto_rawDescData
 }
 
-var file_api_v1_schedule_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_api_v1_schedule_service_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_api_v1_schedule_service_proto_goTypes = []any{
 	(*Schedule)(nil),                       // 0: memos.api.v1.Schedule
 	(*Reminder)(nil),                       // 1: memos.api.v1.Reminder
@@ -1311,15 +1700,20 @@ var file_api_v1_schedule_service_proto_goTypes = []any{
 	(*PrecheckWarning)(nil),                // 15: memos.api.v1.PrecheckWarning
 	(*PrecheckSuggestion)(nil),             // 16: memos.api.v1.PrecheckSuggestion
 	(*AlternativeSlot)(nil),                // 17: memos.api.v1.AlternativeSlot
-	(*fieldmaskpb.FieldMask)(nil),          // 18: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                  // 19: google.protobuf.Empty
+	(*BatchParseScheduleRequest)(nil),      // 18: memos.api.v1.BatchParseScheduleRequest
+	(*BatchParseScheduleResponse)(nil),     // 19: memos.api.v1.BatchParseScheduleResponse
+	(*BatchScheduleInfo)(nil),              // 20: memos.api.v1.BatchScheduleInfo
+	(*BatchCreateSchedulesRequest)(nil),    // 21: memos.api.v1.BatchCreateSchedulesRequest
+	(*BatchCreateSchedulesResponse)(nil),   // 22: memos.api.v1.BatchCreateSchedulesResponse
+	(*fieldmaskpb.FieldMask)(nil),          // 23: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                  // 24: google.protobuf.Empty
 }
 var file_api_v1_schedule_service_proto_depIdxs = []int32{
 	1,  // 0: memos.api.v1.Schedule.reminders:type_name -> memos.api.v1.Reminder
 	0,  // 1: memos.api.v1.CreateScheduleRequest.schedule:type_name -> memos.api.v1.Schedule
 	0,  // 2: memos.api.v1.ListSchedulesResponse.schedules:type_name -> memos.api.v1.Schedule
 	0,  // 3: memos.api.v1.UpdateScheduleRequest.schedule:type_name -> memos.api.v1.Schedule
-	18, // 4: memos.api.v1.UpdateScheduleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	23, // 4: memos.api.v1.UpdateScheduleRequest.update_mask:type_name -> google.protobuf.FieldMask
 	0,  // 5: memos.api.v1.CheckConflictResponse.conflicts:type_name -> memos.api.v1.Schedule
 	0,  // 6: memos.api.v1.ParseAndCreateScheduleResponse.parsed_schedule:type_name -> memos.api.v1.Schedule
 	0,  // 7: memos.api.v1.ParseAndCreateScheduleResponse.created_schedule:type_name -> memos.api.v1.Schedule
@@ -1328,27 +1722,36 @@ var file_api_v1_schedule_service_proto_depIdxs = []int32{
 	15, // 10: memos.api.v1.PrecheckScheduleResponse.warnings:type_name -> memos.api.v1.PrecheckWarning
 	16, // 11: memos.api.v1.PrecheckScheduleResponse.suggestions:type_name -> memos.api.v1.PrecheckSuggestion
 	17, // 12: memos.api.v1.PrecheckSuggestion.slot:type_name -> memos.api.v1.AlternativeSlot
-	2,  // 13: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
-	3,  // 14: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
-	5,  // 15: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
-	6,  // 16: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
-	7,  // 17: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
-	8,  // 18: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
-	10, // 19: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
-	12, // 20: memos.api.v1.ScheduleService.PrecheckSchedule:input_type -> memos.api.v1.PrecheckScheduleRequest
-	0,  // 21: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
-	4,  // 22: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
-	0,  // 23: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
-	0,  // 24: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
-	19, // 25: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
-	9,  // 26: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
-	11, // 27: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
-	13, // 28: memos.api.v1.ScheduleService.PrecheckSchedule:output_type -> memos.api.v1.PrecheckScheduleResponse
-	21, // [21:29] is the sub-list for method output_type
-	13, // [13:21] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	20, // 13: memos.api.v1.BatchParseScheduleResponse.info:type_name -> memos.api.v1.BatchScheduleInfo
+	0,  // 14: memos.api.v1.BatchParseScheduleResponse.preview:type_name -> memos.api.v1.Schedule
+	20, // 15: memos.api.v1.BatchCreateSchedulesRequest.info:type_name -> memos.api.v1.BatchScheduleInfo
+	0,  // 16: memos.api.v1.BatchCreateSchedulesResponse.schedules:type_name -> memos.api.v1.Schedule
+	0,  // 17: memos.api.v1.BatchCreateSchedulesResponse.conflicts:type_name -> memos.api.v1.Schedule
+	2,  // 18: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
+	3,  // 19: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
+	5,  // 20: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
+	6,  // 21: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
+	7,  // 22: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
+	8,  // 23: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
+	10, // 24: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
+	12, // 25: memos.api.v1.ScheduleService.PrecheckSchedule:input_type -> memos.api.v1.PrecheckScheduleRequest
+	18, // 26: memos.api.v1.ScheduleService.BatchParseSchedule:input_type -> memos.api.v1.BatchParseScheduleRequest
+	21, // 27: memos.api.v1.ScheduleService.BatchCreateSchedules:input_type -> memos.api.v1.BatchCreateSchedulesRequest
+	0,  // 28: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
+	4,  // 29: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
+	0,  // 30: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
+	0,  // 31: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
+	24, // 32: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
+	9,  // 33: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
+	11, // 34: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
+	13, // 35: memos.api.v1.ScheduleService.PrecheckSchedule:output_type -> memos.api.v1.PrecheckScheduleResponse
+	19, // 36: memos.api.v1.ScheduleService.BatchParseSchedule:output_type -> memos.api.v1.BatchParseScheduleResponse
+	22, // 37: memos.api.v1.ScheduleService.BatchCreateSchedules:output_type -> memos.api.v1.BatchCreateSchedulesResponse
+	28, // [28:38] is the sub-list for method output_type
+	18, // [18:28] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_schedule_service_proto_init() }
@@ -1362,7 +1765,7 @@ func file_api_v1_schedule_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_schedule_service_proto_rawDesc), len(file_api_v1_schedule_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

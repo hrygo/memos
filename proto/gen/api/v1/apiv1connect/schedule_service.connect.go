@@ -58,6 +58,12 @@ const (
 	// ScheduleServicePrecheckScheduleProcedure is the fully-qualified name of the ScheduleService's
 	// PrecheckSchedule RPC.
 	ScheduleServicePrecheckScheduleProcedure = "/memos.api.v1.ScheduleService/PrecheckSchedule"
+	// ScheduleServiceBatchParseScheduleProcedure is the fully-qualified name of the ScheduleService's
+	// BatchParseSchedule RPC.
+	ScheduleServiceBatchParseScheduleProcedure = "/memos.api.v1.ScheduleService/BatchParseSchedule"
+	// ScheduleServiceBatchCreateSchedulesProcedure is the fully-qualified name of the ScheduleService's
+	// BatchCreateSchedules RPC.
+	ScheduleServiceBatchCreateSchedulesProcedure = "/memos.api.v1.ScheduleService/BatchCreateSchedules"
 )
 
 // ScheduleServiceClient is a client for the memos.api.v1.ScheduleService service.
@@ -78,6 +84,10 @@ type ScheduleServiceClient interface {
 	ParseAndCreateSchedule(context.Context, *connect.Request[v1.ParseAndCreateScheduleRequest]) (*connect.Response[v1.ParseAndCreateScheduleResponse], error)
 	// PrecheckSchedule validates a schedule before creation.
 	PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error)
+	// BatchParseSchedule parses natural language for batch schedule creation.
+	BatchParseSchedule(context.Context, *connect.Request[v1.BatchParseScheduleRequest]) (*connect.Response[v1.BatchParseScheduleResponse], error)
+	// BatchCreateSchedules creates multiple schedules from a batch request.
+	BatchCreateSchedules(context.Context, *connect.Request[v1.BatchCreateSchedulesRequest]) (*connect.Response[v1.BatchCreateSchedulesResponse], error)
 }
 
 // NewScheduleServiceClient constructs a client for the memos.api.v1.ScheduleService service. By
@@ -139,6 +149,18 @@ func NewScheduleServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(scheduleServiceMethods.ByName("PrecheckSchedule")),
 			connect.WithClientOptions(opts...),
 		),
+		batchParseSchedule: connect.NewClient[v1.BatchParseScheduleRequest, v1.BatchParseScheduleResponse](
+			httpClient,
+			baseURL+ScheduleServiceBatchParseScheduleProcedure,
+			connect.WithSchema(scheduleServiceMethods.ByName("BatchParseSchedule")),
+			connect.WithClientOptions(opts...),
+		),
+		batchCreateSchedules: connect.NewClient[v1.BatchCreateSchedulesRequest, v1.BatchCreateSchedulesResponse](
+			httpClient,
+			baseURL+ScheduleServiceBatchCreateSchedulesProcedure,
+			connect.WithSchema(scheduleServiceMethods.ByName("BatchCreateSchedules")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -152,6 +174,8 @@ type scheduleServiceClient struct {
 	checkConflict          *connect.Client[v1.CheckConflictRequest, v1.CheckConflictResponse]
 	parseAndCreateSchedule *connect.Client[v1.ParseAndCreateScheduleRequest, v1.ParseAndCreateScheduleResponse]
 	precheckSchedule       *connect.Client[v1.PrecheckScheduleRequest, v1.PrecheckScheduleResponse]
+	batchParseSchedule     *connect.Client[v1.BatchParseScheduleRequest, v1.BatchParseScheduleResponse]
+	batchCreateSchedules   *connect.Client[v1.BatchCreateSchedulesRequest, v1.BatchCreateSchedulesResponse]
 }
 
 // CreateSchedule calls memos.api.v1.ScheduleService.CreateSchedule.
@@ -194,6 +218,16 @@ func (c *scheduleServiceClient) PrecheckSchedule(ctx context.Context, req *conne
 	return c.precheckSchedule.CallUnary(ctx, req)
 }
 
+// BatchParseSchedule calls memos.api.v1.ScheduleService.BatchParseSchedule.
+func (c *scheduleServiceClient) BatchParseSchedule(ctx context.Context, req *connect.Request[v1.BatchParseScheduleRequest]) (*connect.Response[v1.BatchParseScheduleResponse], error) {
+	return c.batchParseSchedule.CallUnary(ctx, req)
+}
+
+// BatchCreateSchedules calls memos.api.v1.ScheduleService.BatchCreateSchedules.
+func (c *scheduleServiceClient) BatchCreateSchedules(ctx context.Context, req *connect.Request[v1.BatchCreateSchedulesRequest]) (*connect.Response[v1.BatchCreateSchedulesResponse], error) {
+	return c.batchCreateSchedules.CallUnary(ctx, req)
+}
+
 // ScheduleServiceHandler is an implementation of the memos.api.v1.ScheduleService service.
 type ScheduleServiceHandler interface {
 	// CreateSchedule creates a new schedule.
@@ -212,6 +246,10 @@ type ScheduleServiceHandler interface {
 	ParseAndCreateSchedule(context.Context, *connect.Request[v1.ParseAndCreateScheduleRequest]) (*connect.Response[v1.ParseAndCreateScheduleResponse], error)
 	// PrecheckSchedule validates a schedule before creation.
 	PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error)
+	// BatchParseSchedule parses natural language for batch schedule creation.
+	BatchParseSchedule(context.Context, *connect.Request[v1.BatchParseScheduleRequest]) (*connect.Response[v1.BatchParseScheduleResponse], error)
+	// BatchCreateSchedules creates multiple schedules from a batch request.
+	BatchCreateSchedules(context.Context, *connect.Request[v1.BatchCreateSchedulesRequest]) (*connect.Response[v1.BatchCreateSchedulesResponse], error)
 }
 
 // NewScheduleServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -269,6 +307,18 @@ func NewScheduleServiceHandler(svc ScheduleServiceHandler, opts ...connect.Handl
 		connect.WithSchema(scheduleServiceMethods.ByName("PrecheckSchedule")),
 		connect.WithHandlerOptions(opts...),
 	)
+	scheduleServiceBatchParseScheduleHandler := connect.NewUnaryHandler(
+		ScheduleServiceBatchParseScheduleProcedure,
+		svc.BatchParseSchedule,
+		connect.WithSchema(scheduleServiceMethods.ByName("BatchParseSchedule")),
+		connect.WithHandlerOptions(opts...),
+	)
+	scheduleServiceBatchCreateSchedulesHandler := connect.NewUnaryHandler(
+		ScheduleServiceBatchCreateSchedulesProcedure,
+		svc.BatchCreateSchedules,
+		connect.WithSchema(scheduleServiceMethods.ByName("BatchCreateSchedules")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.ScheduleService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ScheduleServiceCreateScheduleProcedure:
@@ -287,6 +337,10 @@ func NewScheduleServiceHandler(svc ScheduleServiceHandler, opts ...connect.Handl
 			scheduleServiceParseAndCreateScheduleHandler.ServeHTTP(w, r)
 		case ScheduleServicePrecheckScheduleProcedure:
 			scheduleServicePrecheckScheduleHandler.ServeHTTP(w, r)
+		case ScheduleServiceBatchParseScheduleProcedure:
+			scheduleServiceBatchParseScheduleHandler.ServeHTTP(w, r)
+		case ScheduleServiceBatchCreateSchedulesProcedure:
+			scheduleServiceBatchCreateSchedulesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -326,4 +380,12 @@ func (UnimplementedScheduleServiceHandler) ParseAndCreateSchedule(context.Contex
 
 func (UnimplementedScheduleServiceHandler) PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleService.PrecheckSchedule is not implemented"))
+}
+
+func (UnimplementedScheduleServiceHandler) BatchParseSchedule(context.Context, *connect.Request[v1.BatchParseScheduleRequest]) (*connect.Response[v1.BatchParseScheduleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleService.BatchParseSchedule is not implemented"))
+}
+
+func (UnimplementedScheduleServiceHandler) BatchCreateSchedules(context.Context, *connect.Request[v1.BatchCreateSchedulesRequest]) (*connect.Response[v1.BatchCreateSchedulesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleService.BatchCreateSchedules is not implemented"))
 }

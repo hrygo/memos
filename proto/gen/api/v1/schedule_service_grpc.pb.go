@@ -28,6 +28,8 @@ const (
 	ScheduleService_CheckConflict_FullMethodName          = "/memos.api.v1.ScheduleService/CheckConflict"
 	ScheduleService_ParseAndCreateSchedule_FullMethodName = "/memos.api.v1.ScheduleService/ParseAndCreateSchedule"
 	ScheduleService_PrecheckSchedule_FullMethodName       = "/memos.api.v1.ScheduleService/PrecheckSchedule"
+	ScheduleService_BatchParseSchedule_FullMethodName     = "/memos.api.v1.ScheduleService/BatchParseSchedule"
+	ScheduleService_BatchCreateSchedules_FullMethodName   = "/memos.api.v1.ScheduleService/BatchCreateSchedules"
 )
 
 // ScheduleServiceClient is the client API for ScheduleService service.
@@ -52,6 +54,10 @@ type ScheduleServiceClient interface {
 	ParseAndCreateSchedule(ctx context.Context, in *ParseAndCreateScheduleRequest, opts ...grpc.CallOption) (*ParseAndCreateScheduleResponse, error)
 	// PrecheckSchedule validates a schedule before creation.
 	PrecheckSchedule(ctx context.Context, in *PrecheckScheduleRequest, opts ...grpc.CallOption) (*PrecheckScheduleResponse, error)
+	// BatchParseSchedule parses natural language for batch schedule creation.
+	BatchParseSchedule(ctx context.Context, in *BatchParseScheduleRequest, opts ...grpc.CallOption) (*BatchParseScheduleResponse, error)
+	// BatchCreateSchedules creates multiple schedules from a batch request.
+	BatchCreateSchedules(ctx context.Context, in *BatchCreateSchedulesRequest, opts ...grpc.CallOption) (*BatchCreateSchedulesResponse, error)
 }
 
 type scheduleServiceClient struct {
@@ -142,6 +148,26 @@ func (c *scheduleServiceClient) PrecheckSchedule(ctx context.Context, in *Preche
 	return out, nil
 }
 
+func (c *scheduleServiceClient) BatchParseSchedule(ctx context.Context, in *BatchParseScheduleRequest, opts ...grpc.CallOption) (*BatchParseScheduleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchParseScheduleResponse)
+	err := c.cc.Invoke(ctx, ScheduleService_BatchParseSchedule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scheduleServiceClient) BatchCreateSchedules(ctx context.Context, in *BatchCreateSchedulesRequest, opts ...grpc.CallOption) (*BatchCreateSchedulesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchCreateSchedulesResponse)
+	err := c.cc.Invoke(ctx, ScheduleService_BatchCreateSchedules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScheduleServiceServer is the server API for ScheduleService service.
 // All implementations must embed UnimplementedScheduleServiceServer
 // for forward compatibility.
@@ -164,6 +190,10 @@ type ScheduleServiceServer interface {
 	ParseAndCreateSchedule(context.Context, *ParseAndCreateScheduleRequest) (*ParseAndCreateScheduleResponse, error)
 	// PrecheckSchedule validates a schedule before creation.
 	PrecheckSchedule(context.Context, *PrecheckScheduleRequest) (*PrecheckScheduleResponse, error)
+	// BatchParseSchedule parses natural language for batch schedule creation.
+	BatchParseSchedule(context.Context, *BatchParseScheduleRequest) (*BatchParseScheduleResponse, error)
+	// BatchCreateSchedules creates multiple schedules from a batch request.
+	BatchCreateSchedules(context.Context, *BatchCreateSchedulesRequest) (*BatchCreateSchedulesResponse, error)
 	mustEmbedUnimplementedScheduleServiceServer()
 }
 
@@ -197,6 +227,12 @@ func (UnimplementedScheduleServiceServer) ParseAndCreateSchedule(context.Context
 }
 func (UnimplementedScheduleServiceServer) PrecheckSchedule(context.Context, *PrecheckScheduleRequest) (*PrecheckScheduleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PrecheckSchedule not implemented")
+}
+func (UnimplementedScheduleServiceServer) BatchParseSchedule(context.Context, *BatchParseScheduleRequest) (*BatchParseScheduleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchParseSchedule not implemented")
+}
+func (UnimplementedScheduleServiceServer) BatchCreateSchedules(context.Context, *BatchCreateSchedulesRequest) (*BatchCreateSchedulesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchCreateSchedules not implemented")
 }
 func (UnimplementedScheduleServiceServer) mustEmbedUnimplementedScheduleServiceServer() {}
 func (UnimplementedScheduleServiceServer) testEmbeddedByValue()                         {}
@@ -363,6 +399,42 @@ func _ScheduleService_PrecheckSchedule_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ScheduleService_BatchParseSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchParseScheduleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScheduleServiceServer).BatchParseSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ScheduleService_BatchParseSchedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScheduleServiceServer).BatchParseSchedule(ctx, req.(*BatchParseScheduleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ScheduleService_BatchCreateSchedules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCreateSchedulesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScheduleServiceServer).BatchCreateSchedules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ScheduleService_BatchCreateSchedules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScheduleServiceServer).BatchCreateSchedules(ctx, req.(*BatchCreateSchedulesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ScheduleService_ServiceDesc is the grpc.ServiceDesc for ScheduleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -401,6 +473,14 @@ var ScheduleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PrecheckSchedule",
 			Handler:    _ScheduleService_PrecheckSchedule_Handler,
+		},
+		{
+			MethodName: "BatchParseSchedule",
+			Handler:    _ScheduleService_BatchParseSchedule_Handler,
+		},
+		{
+			MethodName: "BatchCreateSchedules",
+			Handler:    _ScheduleService_BatchCreateSchedules_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

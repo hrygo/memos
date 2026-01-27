@@ -4,6 +4,8 @@ import dayjs from "dayjs";
 import { useCallback, useRef, useState } from "react";
 import { scheduleServiceClient } from "@/connect";
 import type {
+  BatchCreateSchedulesRequest,
+  BatchParseScheduleRequest,
   CheckConflictRequest,
   ListSchedulesRequest,
   ListSchedulesResponse,
@@ -11,6 +13,8 @@ import type {
   Schedule,
 } from "@/types/proto/api/v1/schedule_service_pb";
 import {
+  BatchCreateSchedulesRequestSchema,
+  BatchParseScheduleRequestSchema,
   CheckConflictRequestSchema,
   CreateScheduleRequestSchema,
   ListSchedulesRequestSchema,
@@ -607,4 +611,45 @@ export function useCheckAvailability() {
     isSlotAvailable,
     schedules: allSchedules,
   };
+}
+
+/**
+ * Hook to parse natural language for batch schedule creation
+ * Returns preview of schedules to be created
+ */
+export function useBatchParseSchedule() {
+  return useMutation({
+    mutationFn: async (request: Partial<BatchParseScheduleRequest>) => {
+      const response = await scheduleServiceClient.batchParseSchedule(
+        create(BatchParseScheduleRequestSchema, request as Record<string, unknown>),
+      );
+      return response;
+    },
+  });
+}
+
+/**
+ * Hook to create multiple schedules from a batch request
+ */
+export function useBatchCreateSchedules() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: Partial<BatchCreateSchedulesRequest>) => {
+      const response = await scheduleServiceClient.batchCreateSchedules(
+        create(BatchCreateSchedulesRequestSchema, request as Record<string, unknown>),
+      );
+      return response;
+    },
+    onSuccess: (response) => {
+      // Invalidate cache after batch creation
+      if (response.schedules && response.schedules.length > 0) {
+        queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
+        // Add each created schedule to cache
+        for (const schedule of response.schedules) {
+          queryClient.setQueryData(scheduleKeys.detail(schedule.name), schedule);
+        }
+      }
+    },
+  });
 }

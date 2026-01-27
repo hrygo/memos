@@ -71,6 +71,22 @@ service ScheduleService {
       body: "*"
     };
   }
+
+  // BatchParseSchedule parses natural language for batch schedule creation.
+  rpc BatchParseSchedule(BatchParseScheduleRequest) returns (BatchParseScheduleResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules:batchParse"
+      body: "*"
+    };
+  }
+
+  // BatchCreateSchedules creates multiple schedules from a batch request.
+  rpc BatchCreateSchedules(BatchCreateSchedulesRequest) returns (BatchCreateSchedulesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules:batchCreate"
+      body: "*"
+    };
+  }
 }
 
 // Schedule represents a schedule event.
@@ -213,4 +229,57 @@ message AlternativeSlot {
   int64 start_ts = 1;
   int64 end_ts = 2;
   string label = 3;  // "同日稍后", "明天同一时间"
+}
+
+// BatchParseScheduleRequest is the request for BatchParseSchedule.
+message BatchParseScheduleRequest {
+  // Natural language text to parse (e.g., "每周一下午2点例会")
+  string text = 1 [(google.api.field_behavior) = REQUIRED];
+  // Maximum number of preview instances
+  int32 preview_count = 2;
+}
+
+// BatchParseScheduleResponse is the response for BatchParseSchedule.
+message BatchParseScheduleResponse {
+  // Whether the input can be parsed for batch creation
+  bool can_batch_create = 1;
+  // Parsed batch schedule info
+  BatchScheduleInfo info = 2;
+  // Preview of schedules to be created
+  repeated Schedule preview = 3;
+  // Total count of schedules that would be created
+  int32 total_count = 4;
+  // Missing required fields
+  repeated string missing_fields = 5;
+  // Parsing confidence (0.0 - 1.0)
+  double confidence = 6;
+}
+
+// BatchScheduleInfo contains parsed batch schedule information.
+message BatchScheduleInfo {
+  string title = 1;
+  int64 start_ts = 2;
+  int32 duration = 3;  // Duration in minutes
+  string location = 4;
+  string recurrence_rule = 5;  // JSON string of recurrence rule
+  int64 end_date_ts = 6;  // When to stop generating
+  int32 count = 7;  // Max number of instances
+}
+
+// BatchCreateSchedulesRequest is the request for BatchCreateSchedules.
+message BatchCreateSchedulesRequest {
+  // Batch schedule info from parsing
+  BatchScheduleInfo info = 1 [(google.api.field_behavior) = REQUIRED];
+  // Whether to skip conflict checking
+  bool skip_conflict_check = 2;
+}
+
+// BatchCreateSchedulesResponse is the response for BatchCreateSchedules.
+message BatchCreateSchedulesResponse {
+  // Created schedules
+  repeated Schedule schedules = 1;
+  // Number of schedules created
+  int32 created_count = 2;
+  // Schedules that had conflicts (skipped)
+  repeated Schedule conflicts = 3;
 }

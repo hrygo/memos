@@ -322,6 +322,11 @@ func ParseRecurrenceRuleFromJSON(jsonStr string) (*RecurrenceRule, error) {
 	return &rule, nil
 }
 
+// ParseRecurrence is an alias for ParseRecurrenceRuleFromJSON.
+func ParseRecurrence(jsonStr string) (*RecurrenceRule, error) {
+	return ParseRecurrenceRuleFromJSON(jsonStr)
+}
+
 // getLastDayOfMonth returns the last day of the month.
 func getLastDayOfMonth(year int, month time.Month) int {
 	// First day of next month minus 1 day
@@ -341,13 +346,13 @@ func parseInt(s string) int {
 // RecurrenceIterator provides lazy-loading iteration over recurrence instances.
 // This is more memory-efficient than generating all instances upfront.
 type RecurrenceIterator struct {
-	rule        *RecurrenceRule
-	startTs     int64
-	cache       []int64
-	cacheEndTs  int64 // The timestamp covered by the end of the cache
-	mu          sync.Mutex
-	maxCache    int  // Maximum cache size
-	exhausted   bool // True if no more instances can be generated
+	rule       *RecurrenceRule
+	startTs    int64
+	cache      []int64
+	cacheEndTs int64 // The timestamp covered by the end of the cache
+	mu         sync.Mutex
+	maxCache   int  // Maximum cache size
+	exhausted  bool // True if no more instances can be generated
 }
 
 // Iterator creates a new iterator for this recurrence rule.
@@ -553,4 +558,3 @@ func (it *RecurrenceIterator) Reset() {
 	it.cacheEndTs = it.startTs - 1
 	it.exhausted = false
 }
-

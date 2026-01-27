@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/schedule_service.proto.
  */
 export const file_api_v1_schedule_service: GenFile = /*@__PURE__*/
-  fileDesc("Ch1hcGkvdjEvc2NoZWR1bGVfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIskCCghTY2hlZHVsZRIRCgRuYW1lGAEgASgJQgPgQQISEgoFdGl0bGUYAiABKAlCA+BBAhITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghsb2NhdGlvbhgEIAEoCRIVCghzdGFydF90cxgFIAEoA0ID4EECEg4KBmVuZF90cxgGIAEoAxIPCgdhbGxfZGF5GAcgASgIEhAKCHRpbWV6b25lGAggASgJEhcKD3JlY3VycmVuY2VfcnVsZRgJIAEoCRIZChFyZWN1cnJlbmNlX2VuZF90cxgKIAEoAxIpCglyZW1pbmRlcnMYCyADKAsyFi5tZW1vcy5hcGkudjEuUmVtaW5kZXISDwoHY3JlYXRvchgMIAEoCRISCgpjcmVhdGVkX3RzGA0gASgDEhIKCnVwZGF0ZWRfdHMYDiABKAMSDQoFc3RhdGUYDyABKAkiNQoIUmVtaW5kZXISDAoEdHlwZRgBIAEoCRINCgV2YWx1ZRgCIAEoBRIMCgR1bml0GAMgASgJIkYKFUNyZWF0ZVNjaGVkdWxlUmVxdWVzdBItCghzY2hlZHVsZRgBIAEoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZUID4EECIn8KFExpc3RTY2hlZHVsZXNSZXF1ZXN0Eg8KB2NyZWF0b3IYASABKAkSEAoIc3RhcnRfdHMYAiABKAMSDgoGZW5kX3RzGAMgASgDEg0KBXN0YXRlGAQgASgJEhEKCXBhZ2Vfc2l6ZRgFIAEoBRISCgpwYWdlX3Rva2VuGAYgASgJIm4KFUxpc3RTY2hlZHVsZXNSZXNwb25zZRIpCglzY2hlZHVsZXMYASADKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhEKCXRydW5jYXRlZBgDIAEoCCInChJHZXRTY2hlZHVsZVJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIncKFVVwZGF0ZVNjaGVkdWxlUmVxdWVzdBItCghzY2hlZHVsZRgBIAEoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZUID4EECEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayIqChVEZWxldGVTY2hlZHVsZVJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIlQKFENoZWNrQ29uZmxpY3RSZXF1ZXN0EhUKCHN0YXJ0X3RzGAEgASgDQgPgQQISDgoGZW5kX3RzGAIgASgDEhUKDWV4Y2x1ZGVfbmFtZXMYAyADKAkiQgoVQ2hlY2tDb25mbGljdFJlc3BvbnNlEikKCWNvbmZsaWN0cxgBIAMoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZSJICh1QYXJzZUFuZENyZWF0ZVNjaGVkdWxlUmVxdWVzdBIRCgR0ZXh0GAEgASgJQgPgQQISFAoMYXV0b19jb25maXJtGAIgASgIIq4BCh5QYXJzZUFuZENyZWF0ZVNjaGVkdWxlUmVzcG9uc2USLwoPcGFyc2VkX3NjaGVkdWxlGAEgASgLMhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlEjAKEGNyZWF0ZWRfc2NoZWR1bGUYAiABKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSKQoJY29uZmxpY3RzGAMgAygLMhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlMvwGCg9TY2hlZHVsZVNlcnZpY2USawoOQ3JlYXRlU2NoZWR1bGUSIy5tZW1vcy5hcGkudjEuQ3JlYXRlU2NoZWR1bGVSZXF1ZXN0GhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlIhyC0+STAhY6ASoiES9hcGkvdjEvc2NoZWR1bGVzEnMKDUxpc3RTY2hlZHVsZXMSIi5tZW1vcy5hcGkudjEuTGlzdFNjaGVkdWxlc1JlcXVlc3QaIy5tZW1vcy5hcGkudjEuTGlzdFNjaGVkdWxlc1Jlc3BvbnNlIhmC0+STAhMSES9hcGkvdjEvc2NoZWR1bGVzEmsKC0dldFNjaGVkdWxlEiAubWVtb3MuYXBpLnYxLkdldFNjaGVkdWxlUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5TY2hlZHVsZSIigtPkkwIcEhovYXBpL3YxL3tuYW1lPXNjaGVkdWxlcy8qfRJ9Cg5VcGRhdGVTY2hlZHVsZRIjLm1lbW9zLmFwaS52MS5VcGRhdGVTY2hlZHVsZVJlcXVlc3QaFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUiLoLT5JMCKDoBKjIjL2FwaS92MS97c2NoZWR1bGUubmFtZT1zY2hlZHVsZXMvKn0ScQoORGVsZXRlU2NoZWR1bGUSIy5tZW1vcy5hcGkudjEuRGVsZXRlU2NoZWR1bGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IiKC0+STAhwqGi9hcGkvdjEve25hbWU9c2NoZWR1bGVzLyp9EoQBCg1DaGVja0NvbmZsaWN0EiIubWVtb3MuYXBpLnYxLkNoZWNrQ29uZmxpY3RSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkNoZWNrQ29uZmxpY3RSZXNwb25zZSIqgtPkkwIkOgEqIh8vYXBpL3YxL3NjaGVkdWxlczpjaGVja0NvbmZsaWN0EqABChZQYXJzZUFuZENyZWF0ZVNjaGVkdWxlEisubWVtb3MuYXBpLnYxLlBhcnNlQW5kQ3JlYXRlU2NoZWR1bGVSZXF1ZXN0GiwubWVtb3MuYXBpLnYxLlBhcnNlQW5kQ3JlYXRlU2NoZWR1bGVSZXNwb25zZSIrgtPkkwIlOgEqIiAvYXBpL3YxL3NjaGVkdWxlczpwYXJzZUFuZENyZWF0ZUKsAQoQY29tLm1lbW9zLmFwaS52MUIUU2NoZWR1bGVTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_field_behavior, file_google_protobuf_empty, file_google_protobuf_field_mask]);
+  fileDesc("Ch1hcGkvdjEvc2NoZWR1bGVfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIskCCghTY2hlZHVsZRIRCgRuYW1lGAEgASgJQgPgQQISEgoFdGl0bGUYAiABKAlCA+BBAhITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghsb2NhdGlvbhgEIAEoCRIVCghzdGFydF90cxgFIAEoA0ID4EECEg4KBmVuZF90cxgGIAEoAxIPCgdhbGxfZGF5GAcgASgIEhAKCHRpbWV6b25lGAggASgJEhcKD3JlY3VycmVuY2VfcnVsZRgJIAEoCRIZChFyZWN1cnJlbmNlX2VuZF90cxgKIAEoAxIpCglyZW1pbmRlcnMYCyADKAsyFi5tZW1vcy5hcGkudjEuUmVtaW5kZXISDwoHY3JlYXRvchgMIAEoCRISCgpjcmVhdGVkX3RzGA0gASgDEhIKCnVwZGF0ZWRfdHMYDiABKAMSDQoFc3RhdGUYDyABKAkiNQoIUmVtaW5kZXISDAoEdHlwZRgBIAEoCRINCgV2YWx1ZRgCIAEoBRIMCgR1bml0GAMgASgJIkYKFUNyZWF0ZVNjaGVkdWxlUmVxdWVzdBItCghzY2hlZHVsZRgBIAEoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZUID4EECIn8KFExpc3RTY2hlZHVsZXNSZXF1ZXN0Eg8KB2NyZWF0b3IYASABKAkSEAoIc3RhcnRfdHMYAiABKAMSDgoGZW5kX3RzGAMgASgDEg0KBXN0YXRlGAQgASgJEhEKCXBhZ2Vfc2l6ZRgFIAEoBRISCgpwYWdlX3Rva2VuGAYgASgJIm4KFUxpc3RTY2hlZHVsZXNSZXNwb25zZRIpCglzY2hlZHVsZXMYASADKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhEKCXRydW5jYXRlZBgDIAEoCCInChJHZXRTY2hlZHVsZVJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIncKFVVwZGF0ZVNjaGVkdWxlUmVxdWVzdBItCghzY2hlZHVsZRgBIAEoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZUID4EECEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayIqChVEZWxldGVTY2hlZHVsZVJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIlQKFENoZWNrQ29uZmxpY3RSZXF1ZXN0EhUKCHN0YXJ0X3RzGAEgASgDQgPgQQISDgoGZW5kX3RzGAIgASgDEhUKDWV4Y2x1ZGVfbmFtZXMYAyADKAkiQgoVQ2hlY2tDb25mbGljdFJlc3BvbnNlEikKCWNvbmZsaWN0cxgBIAMoCzIWLm1lbW9zLmFwaS52MS5TY2hlZHVsZSJICh1QYXJzZUFuZENyZWF0ZVNjaGVkdWxlUmVxdWVzdBIRCgR0ZXh0GAEgASgJQgPgQQISFAoMYXV0b19jb25maXJtGAIgASgIIq4BCh5QYXJzZUFuZENyZWF0ZVNjaGVkdWxlUmVzcG9uc2USLwoPcGFyc2VkX3NjaGVkdWxlGAEgASgLMhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlEjAKEGNyZWF0ZWRfc2NoZWR1bGUYAiABKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSKQoJY29uZmxpY3RzGAMgAygLMhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlInMKF1ByZWNoZWNrU2NoZWR1bGVSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEhUKCHN0YXJ0X3RzGAIgASgDQgPgQQISDgoGZW5kX3RzGAMgASgDEhAKCGR1cmF0aW9uGAQgASgFEhAKCGxvY2F0aW9uGAUgASgJIr4BChhQcmVjaGVja1NjaGVkdWxlUmVzcG9uc2USDQoFdmFsaWQYASABKAgSKwoGZXJyb3JzGAIgAygLMhsubWVtb3MuYXBpLnYxLlByZWNoZWNrRXJyb3ISLwoId2FybmluZ3MYAyADKAsyHS5tZW1vcy5hcGkudjEuUHJlY2hlY2tXYXJuaW5nEjUKC3N1Z2dlc3Rpb25zGAQgAygLMiAubWVtb3MuYXBpLnYxLlByZWNoZWNrU3VnZ2VzdGlvbiI9Cg1QcmVjaGVja0Vycm9yEgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCRINCgVmaWVsZBgDIAEoCSIwCg9QcmVjaGVja1dhcm5pbmcSDAoEY29kZRgBIAEoCRIPCgdtZXNzYWdlGAIgASgJIk8KElByZWNoZWNrU3VnZ2VzdGlvbhIMCgR0eXBlGAEgASgJEisKBHNsb3QYAiABKAsyHS5tZW1vcy5hcGkudjEuQWx0ZXJuYXRpdmVTbG90IkIKD0FsdGVybmF0aXZlU2xvdBIQCghzdGFydF90cxgBIAEoAxIOCgZlbmRfdHMYAiABKAMSDQoFbGFiZWwYAyABKAkiRQoZQmF0Y2hQYXJzZVNjaGVkdWxlUmVxdWVzdBIRCgR0ZXh0GAEgASgJQgPgQQISFQoNcHJldmlld19jb3VudBgCIAEoBSLPAQoaQmF0Y2hQYXJzZVNjaGVkdWxlUmVzcG9uc2USGAoQY2FuX2JhdGNoX2NyZWF0ZRgBIAEoCBItCgRpbmZvGAIgASgLMh8ubWVtb3MuYXBpLnYxLkJhdGNoU2NoZWR1bGVJbmZvEicKB3ByZXZpZXcYAyADKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSEwoLdG90YWxfY291bnQYBCABKAUSFgoObWlzc2luZ19maWVsZHMYBSADKAkSEgoKY29uZmlkZW5jZRgGIAEoASKVAQoRQmF0Y2hTY2hlZHVsZUluZm8SDQoFdGl0bGUYASABKAkSEAoIc3RhcnRfdHMYAiABKAMSEAoIZHVyYXRpb24YAyABKAUSEAoIbG9jYXRpb24YBCABKAkSFwoPcmVjdXJyZW5jZV9ydWxlGAUgASgJEhMKC2VuZF9kYXRlX3RzGAYgASgDEg0KBWNvdW50GAcgASgFIm4KG0JhdGNoQ3JlYXRlU2NoZWR1bGVzUmVxdWVzdBIyCgRpbmZvGAEgASgLMh8ubWVtb3MuYXBpLnYxLkJhdGNoU2NoZWR1bGVJbmZvQgPgQQISGwoTc2tpcF9jb25mbGljdF9jaGVjaxgCIAEoCCKLAQocQmF0Y2hDcmVhdGVTY2hlZHVsZXNSZXNwb25zZRIpCglzY2hlZHVsZXMYASADKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUSFQoNY3JlYXRlZF9jb3VudBgCIAEoBRIpCgljb25mbGljdHMYAyADKAsyFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUytAoKD1NjaGVkdWxlU2VydmljZRJrCg5DcmVhdGVTY2hlZHVsZRIjLm1lbW9zLmFwaS52MS5DcmVhdGVTY2hlZHVsZVJlcXVlc3QaFi5tZW1vcy5hcGkudjEuU2NoZWR1bGUiHILT5JMCFjoBKiIRL2FwaS92MS9zY2hlZHVsZXMScwoNTGlzdFNjaGVkdWxlcxIiLm1lbW9zLmFwaS52MS5MaXN0U2NoZWR1bGVzUmVxdWVzdBojLm1lbW9zLmFwaS52MS5MaXN0U2NoZWR1bGVzUmVzcG9uc2UiGYLT5JMCExIRL2FwaS92MS9zY2hlZHVsZXMSawoLR2V0U2NoZWR1bGUSIC5tZW1vcy5hcGkudjEuR2V0U2NoZWR1bGVSZXF1ZXN0GhYubWVtb3MuYXBpLnYxLlNjaGVkdWxlIiKC0+STAhwSGi9hcGkvdjEve25hbWU9c2NoZWR1bGVzLyp9En0KDlVwZGF0ZVNjaGVkdWxlEiMubWVtb3MuYXBpLnYxLlVwZGF0ZVNjaGVkdWxlUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5TY2hlZHVsZSIugtPkkwIoOgEqMiMvYXBpL3YxL3tzY2hlZHVsZS5uYW1lPXNjaGVkdWxlcy8qfRJxCg5EZWxldGVTY2hlZHVsZRIjLm1lbW9zLmFwaS52MS5EZWxldGVTY2hlZHVsZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiIoLT5JMCHCoaL2FwaS92MS97bmFtZT1zY2hlZHVsZXMvKn0ShAEKDUNoZWNrQ29uZmxpY3QSIi5tZW1vcy5hcGkudjEuQ2hlY2tDb25mbGljdFJlcXVlc3QaIy5tZW1vcy5hcGkudjEuQ2hlY2tDb25mbGljdFJlc3BvbnNlIiqC0+STAiQ6ASoiHy9hcGkvdjEvc2NoZWR1bGVzOmNoZWNrQ29uZmxpY3QSoAEKFlBhcnNlQW5kQ3JlYXRlU2NoZWR1bGUSKy5tZW1vcy5hcGkudjEuUGFyc2VBbmRDcmVhdGVTY2hlZHVsZVJlcXVlc3QaLC5tZW1vcy5hcGkudjEuUGFyc2VBbmRDcmVhdGVTY2hlZHVsZVJlc3BvbnNlIiuC0+STAiU6ASoiIC9hcGkvdjEvc2NoZWR1bGVzOnBhcnNlQW5kQ3JlYXRlEogBChBQcmVjaGVja1NjaGVkdWxlEiUubWVtb3MuYXBpLnYxLlByZWNoZWNrU2NoZWR1bGVSZXF1ZXN0GiYubWVtb3MuYXBpLnYxLlByZWNoZWNrU2NoZWR1bGVSZXNwb25zZSIlgtPkkwIfOgEqIhovYXBpL3YxL3NjaGVkdWxlczpwcmVjaGVjaxKQAQoSQmF0Y2hQYXJzZVNjaGVkdWxlEicubWVtb3MuYXBpLnYxLkJhdGNoUGFyc2VTY2hlZHVsZVJlcXVlc3QaKC5tZW1vcy5hcGkudjEuQmF0Y2hQYXJzZVNjaGVkdWxlUmVzcG9uc2UiJ4LT5JMCIToBKiIcL2FwaS92MS9zY2hlZHVsZXM6YmF0Y2hQYXJzZRKXAQoUQmF0Y2hDcmVhdGVTY2hlZHVsZXMSKS5tZW1vcy5hcGkudjEuQmF0Y2hDcmVhdGVTY2hlZHVsZXNSZXF1ZXN0GioubWVtb3MuYXBpLnYxLkJhdGNoQ3JlYXRlU2NoZWR1bGVzUmVzcG9uc2UiKILT5JMCIjoBKiIdL2FwaS92MS9zY2hlZHVsZXM6YmF0Y2hDcmVhdGVCrAEKEGNvbS5tZW1vcy5hcGkudjFCFFNjaGVkdWxlU2VydmljZVByb3RvUAFaMGdpdGh1Yi5jb20vdXNlbWVtb3MvbWVtb3MvcHJvdG8vZ2VuL2FwaS92MTthcGl2MaICA01BWKoCDE1lbW9zLkFwaS5WMcoCDE1lbW9zXEFwaVxWMeICGE1lbW9zXEFwaVxWMVxHUEJNZXRhZGF0YeoCDk1lbW9zOjpBcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_api_field_behavior, file_google_protobuf_empty, file_google_protobuf_field_mask]);
 
 /**
  * Schedule represents a schedule event.
@@ -424,6 +424,407 @@ export const ParseAndCreateScheduleResponseSchema: GenMessage<ParseAndCreateSche
   messageDesc(file_api_v1_schedule_service, 11);
 
 /**
+ * PrecheckScheduleRequest is the request for PrecheckSchedule.
+ *
+ * @generated from message memos.api.v1.PrecheckScheduleRequest
+ */
+export type PrecheckScheduleRequest = Message<"memos.api.v1.PrecheckScheduleRequest"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: int64 start_ts = 2;
+   */
+  startTs: bigint;
+
+  /**
+   * @generated from field: int64 end_ts = 3;
+   */
+  endTs: bigint;
+
+  /**
+   * Duration in minutes
+   *
+   * @generated from field: int32 duration = 4;
+   */
+  duration: number;
+
+  /**
+   * @generated from field: string location = 5;
+   */
+  location: string;
+};
+
+/**
+ * Describes the message memos.api.v1.PrecheckScheduleRequest.
+ * Use `create(PrecheckScheduleRequestSchema)` to create a new message.
+ */
+export const PrecheckScheduleRequestSchema: GenMessage<PrecheckScheduleRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 12);
+
+/**
+ * PrecheckScheduleResponse is the response for PrecheckSchedule.
+ *
+ * @generated from message memos.api.v1.PrecheckScheduleResponse
+ */
+export type PrecheckScheduleResponse = Message<"memos.api.v1.PrecheckScheduleResponse"> & {
+  /**
+   * @generated from field: bool valid = 1;
+   */
+  valid: boolean;
+
+  /**
+   * @generated from field: repeated memos.api.v1.PrecheckError errors = 2;
+   */
+  errors: PrecheckError[];
+
+  /**
+   * @generated from field: repeated memos.api.v1.PrecheckWarning warnings = 3;
+   */
+  warnings: PrecheckWarning[];
+
+  /**
+   * @generated from field: repeated memos.api.v1.PrecheckSuggestion suggestions = 4;
+   */
+  suggestions: PrecheckSuggestion[];
+};
+
+/**
+ * Describes the message memos.api.v1.PrecheckScheduleResponse.
+ * Use `create(PrecheckScheduleResponseSchema)` to create a new message.
+ */
+export const PrecheckScheduleResponseSchema: GenMessage<PrecheckScheduleResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 13);
+
+/**
+ * PrecheckError represents a validation error.
+ *
+ * @generated from message memos.api.v1.PrecheckError
+ */
+export type PrecheckError = Message<"memos.api.v1.PrecheckError"> & {
+  /**
+   * Error code like "TIME_CONFLICT"
+   *
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * Human-readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * Field that caused the error
+   *
+   * @generated from field: string field = 3;
+   */
+  field: string;
+};
+
+/**
+ * Describes the message memos.api.v1.PrecheckError.
+ * Use `create(PrecheckErrorSchema)` to create a new message.
+ */
+export const PrecheckErrorSchema: GenMessage<PrecheckError> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 14);
+
+/**
+ * PrecheckWarning represents a validation warning.
+ *
+ * @generated from message memos.api.v1.PrecheckWarning
+ */
+export type PrecheckWarning = Message<"memos.api.v1.PrecheckWarning"> & {
+  /**
+   * Warning code like "OUTSIDE_WORK_HOURS"
+   *
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * Human-readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message memos.api.v1.PrecheckWarning.
+ * Use `create(PrecheckWarningSchema)` to create a new message.
+ */
+export const PrecheckWarningSchema: GenMessage<PrecheckWarning> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 15);
+
+/**
+ * PrecheckSuggestion represents a suggestion for schedule correction.
+ *
+ * @generated from message memos.api.v1.PrecheckSuggestion
+ */
+export type PrecheckSuggestion = Message<"memos.api.v1.PrecheckSuggestion"> & {
+  /**
+   * "alternative_time"
+   *
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * Alternative time slot
+   *
+   * @generated from field: memos.api.v1.AlternativeSlot slot = 2;
+   */
+  slot?: AlternativeSlot;
+};
+
+/**
+ * Describes the message memos.api.v1.PrecheckSuggestion.
+ * Use `create(PrecheckSuggestionSchema)` to create a new message.
+ */
+export const PrecheckSuggestionSchema: GenMessage<PrecheckSuggestion> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 16);
+
+/**
+ * AlternativeSlot represents an available time slot.
+ *
+ * @generated from message memos.api.v1.AlternativeSlot
+ */
+export type AlternativeSlot = Message<"memos.api.v1.AlternativeSlot"> & {
+  /**
+   * @generated from field: int64 start_ts = 1;
+   */
+  startTs: bigint;
+
+  /**
+   * @generated from field: int64 end_ts = 2;
+   */
+  endTs: bigint;
+
+  /**
+   * "同日稍后", "明天同一时间"
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+};
+
+/**
+ * Describes the message memos.api.v1.AlternativeSlot.
+ * Use `create(AlternativeSlotSchema)` to create a new message.
+ */
+export const AlternativeSlotSchema: GenMessage<AlternativeSlot> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 17);
+
+/**
+ * BatchParseScheduleRequest is the request for BatchParseSchedule.
+ *
+ * @generated from message memos.api.v1.BatchParseScheduleRequest
+ */
+export type BatchParseScheduleRequest = Message<"memos.api.v1.BatchParseScheduleRequest"> & {
+  /**
+   * Natural language text to parse (e.g., "每周一下午2点例会")
+   *
+   * @generated from field: string text = 1;
+   */
+  text: string;
+
+  /**
+   * Maximum number of preview instances
+   *
+   * @generated from field: int32 preview_count = 2;
+   */
+  previewCount: number;
+};
+
+/**
+ * Describes the message memos.api.v1.BatchParseScheduleRequest.
+ * Use `create(BatchParseScheduleRequestSchema)` to create a new message.
+ */
+export const BatchParseScheduleRequestSchema: GenMessage<BatchParseScheduleRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 18);
+
+/**
+ * BatchParseScheduleResponse is the response for BatchParseSchedule.
+ *
+ * @generated from message memos.api.v1.BatchParseScheduleResponse
+ */
+export type BatchParseScheduleResponse = Message<"memos.api.v1.BatchParseScheduleResponse"> & {
+  /**
+   * Whether the input can be parsed for batch creation
+   *
+   * @generated from field: bool can_batch_create = 1;
+   */
+  canBatchCreate: boolean;
+
+  /**
+   * Parsed batch schedule info
+   *
+   * @generated from field: memos.api.v1.BatchScheduleInfo info = 2;
+   */
+  info?: BatchScheduleInfo;
+
+  /**
+   * Preview of schedules to be created
+   *
+   * @generated from field: repeated memos.api.v1.Schedule preview = 3;
+   */
+  preview: Schedule[];
+
+  /**
+   * Total count of schedules that would be created
+   *
+   * @generated from field: int32 total_count = 4;
+   */
+  totalCount: number;
+
+  /**
+   * Missing required fields
+   *
+   * @generated from field: repeated string missing_fields = 5;
+   */
+  missingFields: string[];
+
+  /**
+   * Parsing confidence (0.0 - 1.0)
+   *
+   * @generated from field: double confidence = 6;
+   */
+  confidence: number;
+};
+
+/**
+ * Describes the message memos.api.v1.BatchParseScheduleResponse.
+ * Use `create(BatchParseScheduleResponseSchema)` to create a new message.
+ */
+export const BatchParseScheduleResponseSchema: GenMessage<BatchParseScheduleResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 19);
+
+/**
+ * BatchScheduleInfo contains parsed batch schedule information.
+ *
+ * @generated from message memos.api.v1.BatchScheduleInfo
+ */
+export type BatchScheduleInfo = Message<"memos.api.v1.BatchScheduleInfo"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: int64 start_ts = 2;
+   */
+  startTs: bigint;
+
+  /**
+   * Duration in minutes
+   *
+   * @generated from field: int32 duration = 3;
+   */
+  duration: number;
+
+  /**
+   * @generated from field: string location = 4;
+   */
+  location: string;
+
+  /**
+   * JSON string of recurrence rule
+   *
+   * @generated from field: string recurrence_rule = 5;
+   */
+  recurrenceRule: string;
+
+  /**
+   * When to stop generating
+   *
+   * @generated from field: int64 end_date_ts = 6;
+   */
+  endDateTs: bigint;
+
+  /**
+   * Max number of instances
+   *
+   * @generated from field: int32 count = 7;
+   */
+  count: number;
+};
+
+/**
+ * Describes the message memos.api.v1.BatchScheduleInfo.
+ * Use `create(BatchScheduleInfoSchema)` to create a new message.
+ */
+export const BatchScheduleInfoSchema: GenMessage<BatchScheduleInfo> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 20);
+
+/**
+ * BatchCreateSchedulesRequest is the request for BatchCreateSchedules.
+ *
+ * @generated from message memos.api.v1.BatchCreateSchedulesRequest
+ */
+export type BatchCreateSchedulesRequest = Message<"memos.api.v1.BatchCreateSchedulesRequest"> & {
+  /**
+   * Batch schedule info from parsing
+   *
+   * @generated from field: memos.api.v1.BatchScheduleInfo info = 1;
+   */
+  info?: BatchScheduleInfo;
+
+  /**
+   * Whether to skip conflict checking
+   *
+   * @generated from field: bool skip_conflict_check = 2;
+   */
+  skipConflictCheck: boolean;
+};
+
+/**
+ * Describes the message memos.api.v1.BatchCreateSchedulesRequest.
+ * Use `create(BatchCreateSchedulesRequestSchema)` to create a new message.
+ */
+export const BatchCreateSchedulesRequestSchema: GenMessage<BatchCreateSchedulesRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 21);
+
+/**
+ * BatchCreateSchedulesResponse is the response for BatchCreateSchedules.
+ *
+ * @generated from message memos.api.v1.BatchCreateSchedulesResponse
+ */
+export type BatchCreateSchedulesResponse = Message<"memos.api.v1.BatchCreateSchedulesResponse"> & {
+  /**
+   * Created schedules
+   *
+   * @generated from field: repeated memos.api.v1.Schedule schedules = 1;
+   */
+  schedules: Schedule[];
+
+  /**
+   * Number of schedules created
+   *
+   * @generated from field: int32 created_count = 2;
+   */
+  createdCount: number;
+
+  /**
+   * Schedules that had conflicts (skipped)
+   *
+   * @generated from field: repeated memos.api.v1.Schedule conflicts = 3;
+   */
+  conflicts: Schedule[];
+};
+
+/**
+ * Describes the message memos.api.v1.BatchCreateSchedulesResponse.
+ * Use `create(BatchCreateSchedulesResponseSchema)` to create a new message.
+ */
+export const BatchCreateSchedulesResponseSchema: GenMessage<BatchCreateSchedulesResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_schedule_service, 22);
+
+/**
  * ScheduleService provides schedule management APIs.
  *
  * @generated from service memos.api.v1.ScheduleService
@@ -498,6 +899,36 @@ export const ScheduleService: GenService<{
     methodKind: "unary";
     input: typeof ParseAndCreateScheduleRequestSchema;
     output: typeof ParseAndCreateScheduleResponseSchema;
+  },
+  /**
+   * PrecheckSchedule validates a schedule before creation.
+   *
+   * @generated from rpc memos.api.v1.ScheduleService.PrecheckSchedule
+   */
+  precheckSchedule: {
+    methodKind: "unary";
+    input: typeof PrecheckScheduleRequestSchema;
+    output: typeof PrecheckScheduleResponseSchema;
+  },
+  /**
+   * BatchParseSchedule parses natural language for batch schedule creation.
+   *
+   * @generated from rpc memos.api.v1.ScheduleService.BatchParseSchedule
+   */
+  batchParseSchedule: {
+    methodKind: "unary";
+    input: typeof BatchParseScheduleRequestSchema;
+    output: typeof BatchParseScheduleResponseSchema;
+  },
+  /**
+   * BatchCreateSchedules creates multiple schedules from a batch request.
+   *
+   * @generated from rpc memos.api.v1.ScheduleService.BatchCreateSchedules
+   */
+  batchCreateSchedules: {
+    methodKind: "unary";
+    input: typeof BatchCreateSchedulesRequestSchema;
+    output: typeof BatchCreateSchedulesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_schedule_service, 0);

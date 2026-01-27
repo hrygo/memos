@@ -519,6 +519,7 @@
     "batch": {
       "confirm-create": "确认创建",
       "creating": "创建中...",
+      "day-suffix": "号",
       "items": "个",
       "preview": "预览",
       "recurrence": {
@@ -528,7 +529,16 @@
       },
       "show-less": "收起",
       "show-more": "显示更多",
-      "total-count": "共"
+      "total-count": "共",
+      "weekday": {
+        "fri": "周五",
+        "mon": "周一",
+        "sat": "周六",
+        "sun": "周日",
+        "thu": "周四",
+        "tue": "周二",
+        "wed": "周三"
+      }
     },
     "calendar": "日历",
     "calendar-view": "日历视图",

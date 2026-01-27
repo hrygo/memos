@@ -895,3 +895,193 @@ func (s *ScheduleService) PrecheckSchedule(ctx context.Context, req *v1pb.Preche
 
 	return response, nil
 }
+
+// BatchParseSchedule parses natural language for batch schedule creation.
+func (s *ScheduleService) BatchParseSchedule(ctx context.Context, req *v1pb.BatchParseScheduleRequest) (*v1pb.BatchParseScheduleResponse, error) {
+	userID := auth.GetUserID(ctx)
+	if userID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// Validate input
+	text := strings.TrimSpace(req.Text)
+	if text == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "text is required")
+	}
+
+	// Create batch schedule service
+	batchService := aischedule.NewBatchScheduleService(nil)
+
+	// Parse the input
+	result, err := batchService.ParseAndPreview(ctx, text)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse batch schedule: %v", err)
+	}
+
+	// Build response
+	response := &v1pb.BatchParseScheduleResponse{
+		CanBatchCreate: result.CanBatchCreate,
+		TotalCount:     int32(result.TotalCount),
+		MissingFields:  result.MissingFields,
+		Confidence:     result.Confidence,
+	}
+
+	// Convert batch info
+	if result.Request != nil {
+		recurrenceJSON := ""
+		if result.Request.Recurrence != nil {
+			recurrenceJSON, _ = result.Request.Recurrence.ToJSON()
+		}
+
+		response.Info = &v1pb.BatchScheduleInfo{
+			Title:          result.Request.Title,
+			StartTs:        result.Request.StartTime.Unix(),
+			Duration:       int32(result.Request.Duration),
+			Location:       result.Request.Location,
+			RecurrenceRule: recurrenceJSON,
+			Count:          int32(result.Request.Count),
+		}
+		if result.Request.EndDate != nil {
+			response.Info.EndDateTs = result.Request.EndDate.Unix()
+		}
+	}
+
+	// Convert preview schedules
+	previewCount := req.PreviewCount
+	if previewCount <= 0 {
+		previewCount = 5 // Default preview count
+	}
+
+	for i, sched := range result.Preview {
+		if int32(i) >= previewCount {
+			break
+		}
+
+		endTs := int64(0)
+		if !sched.EndTime.IsZero() {
+			endTs = sched.EndTime.Unix()
+		}
+
+		response.Preview = append(response.Preview, &v1pb.Schedule{
+			Name:    fmt.Sprintf("schedules/preview-%d", i),
+			Title:   sched.Title,
+			StartTs: sched.StartTime.Unix(),
+			EndTs:   endTs,
+		})
+	}
+
+	return response, nil
+}
+
+// BatchCreateSchedules creates multiple schedules from a batch request.
+func (s *ScheduleService) BatchCreateSchedules(ctx context.Context, req *v1pb.BatchCreateSchedulesRequest) (*v1pb.BatchCreateSchedulesResponse, error) {
+	userID := auth.GetUserID(ctx)
+	if userID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// Validate request
+	if req.Info == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "info is required")
+	}
+	if req.Info.Title == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "title is required")
+	}
+	if req.Info.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts is required")
+	}
+	if req.Info.RecurrenceRule == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "recurrence_rule is required")
+	}
+
+	// Parse recurrence rule
+	recurrence, err := aischedule.ParseRecurrence(req.Info.RecurrenceRule)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid recurrence_rule: %v", err)
+	}
+
+	// Build batch request
+	batchReq := &aischedule.BatchCreateRequest{
+		Title:      req.Info.Title,
+		StartTime:  time.Unix(req.Info.StartTs, 0),
+		Duration:   int(req.Info.Duration),
+		Location:   req.Info.Location,
+		Recurrence: recurrence,
+		Count:      int(req.Info.Count),
+	}
+	if batchReq.Duration == 0 {
+		batchReq.Duration = 60 // Default 1 hour
+	}
+	if batchReq.Count == 0 {
+		batchReq.Count = 12 // Default 12 instances
+	}
+	if req.Info.EndDateTs > 0 {
+		endDate := time.Unix(req.Info.EndDateTs, 0)
+		batchReq.EndDate = &endDate
+	}
+
+	// Generate schedules
+	batchService := aischedule.NewBatchScheduleService(nil)
+	schedules, err := batchService.GenerateSchedules(batchReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate schedules: %v", err)
+	}
+
+	response := &v1pb.BatchCreateSchedulesResponse{}
+
+	// Create each schedule
+	for _, sched := range schedules {
+		// Build store schedule
+		endTs := sched.EndTime.Unix()
+		storeSchedule := &store.Schedule{
+			UID:       util.GenUUID(),
+			CreatorID: userID,
+			Title:     sched.Title,
+			StartTs:   sched.StartTime.Unix(),
+			EndTs:     &endTs,
+			Location:  sched.Location,
+			Timezone:  "Asia/Shanghai",
+		}
+
+		// Set default reminders and payload
+		remindersStr := "[]"
+		storeSchedule.Reminders = &remindersStr
+		payloadStr := "{}"
+		storeSchedule.Payload = &payloadStr
+
+		// Check conflicts unless skipped
+		if !req.SkipConflictCheck {
+			conflicts, err := s.checkScheduleConflicts(ctx, userID, storeSchedule.StartTs, storeSchedule.EndTs, nil)
+			if err != nil {
+				slog.Warn("failed to check conflicts for batch schedule",
+					"title", sched.Title,
+					"error", err)
+			}
+			if len(conflicts) > 0 {
+				// Add to conflicts list and skip creation
+				response.Conflicts = append(response.Conflicts, &v1pb.Schedule{
+					Name:    fmt.Sprintf("schedules/%s", storeSchedule.UID),
+					Title:   storeSchedule.Title,
+					StartTs: storeSchedule.StartTs,
+					EndTs:   *storeSchedule.EndTs,
+				})
+				continue
+			}
+		}
+
+		// Create the schedule
+		created, err := s.Store.CreateSchedule(ctx, storeSchedule)
+		if err != nil {
+			slog.Warn("failed to create batch schedule",
+				"title", sched.Title,
+				"error", err)
+			continue
+		}
+
+		response.Schedules = append(response.Schedules, scheduleFromStore(created))
+	}
+
+	response.CreatedCount = int32(len(response.Schedules))
+
+	return response, nil
+}
