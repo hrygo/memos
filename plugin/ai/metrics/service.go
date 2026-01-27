@@ -83,12 +83,22 @@ func (s *Service) GetStats(ctx context.Context, timeRange TimeRange) (*AgentMetr
 		totalRequests int64
 		totalSuccess  int64
 		latencySum    int64
+		p50Weighted   int64 // Weighted sum for P50 calculation
+		p95Weighted   int64 // Weighted sum for P95 calculation
 	}
 	dbAggs := make(map[string]*dbAgg)
+
+	// Also track global P50/P95 from DB
+	var totalP50Weighted, totalP95Weighted, totalDBRequests int64
 
 	for _, m := range agentMetrics {
 		stats.RequestCount += m.RequestCount
 		stats.SuccessCount += m.SuccessCount
+
+		// Accumulate weighted P50/P95 for global calculation
+		totalP50Weighted += int64(m.LatencyP50Ms) * m.RequestCount
+		totalP95Weighted += int64(m.LatencyP95Ms) * m.RequestCount
+		totalDBRequests += m.RequestCount
 
 		agg, exists := dbAggs[m.AgentType]
 		if !exists {
@@ -98,6 +108,25 @@ func (s *Service) GetStats(ctx context.Context, timeRange TimeRange) (*AgentMetr
 		agg.totalRequests += m.RequestCount
 		agg.totalSuccess += m.SuccessCount
 		agg.latencySum += m.LatencySumMs
+		agg.p50Weighted += int64(m.LatencyP50Ms) * m.RequestCount
+		agg.p95Weighted += int64(m.LatencyP95Ms) * m.RequestCount
+	}
+
+	// Merge DB P50/P95 into global stats using weighted average
+	if totalDBRequests > 0 {
+		// Combine memory and DB stats for global P50/P95
+		memRequests := stats.RequestCount - totalDBRequests
+		if memRequests > 0 && stats.LatencyP50 > 0 {
+			// Weighted average of memory and DB P50/P95
+			memP50Weighted := int64(stats.LatencyP50.Milliseconds()) * memRequests
+			memP95Weighted := int64(stats.LatencyP95.Milliseconds()) * memRequests
+			stats.LatencyP50 = time.Duration((memP50Weighted+totalP50Weighted)/stats.RequestCount) * time.Millisecond
+			stats.LatencyP95 = time.Duration((memP95Weighted+totalP95Weighted)/stats.RequestCount) * time.Millisecond
+		} else {
+			// Only DB data available
+			stats.LatencyP50 = time.Duration(totalP50Weighted/totalDBRequests) * time.Millisecond
+			stats.LatencyP95 = time.Duration(totalP95Weighted/totalDBRequests) * time.Millisecond
+		}
 	}
 
 	// Merge DB aggregations into stats

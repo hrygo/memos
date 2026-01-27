@@ -240,6 +240,7 @@ func (e *SnippetExtractor) adjustMatchPositions(
 }
 
 // ExtractMultipleSnippets extracts snippets centered on different matches.
+// Only generates snippets for matches that are sufficiently far apart to avoid overlap.
 // Useful for showing multiple relevant excerpts from the same content.
 func (e *SnippetExtractor) ExtractMultipleSnippets(
 	content string,
@@ -265,18 +266,24 @@ func (e *SnippetExtractor) ExtractMultipleSnippets(
 	if maxSnippets <= 0 {
 		maxSnippets = 1
 	}
-	if maxSnippets > len(matches) {
-		maxSnippets = len(matches)
+
+	// Filter matches to avoid overlapping snippets
+	// Minimum distance between match centers to be considered distinct
+	minDistance := opts.ContextChars * 2
+	if minDistance <= 0 {
+		minDistance = e.defaultContextChars * 2
 	}
+
+	distinctMatches := e.selectDistinctMatches(matches, minDistance, maxSnippets)
 
 	results := make([]struct {
 		Snippet    string
 		Highlights []Highlight
-	}, 0, maxSnippets)
+	}, 0, len(distinctMatches))
 
-	// Extract snippets centered on different matches
-	for i := 0; i < maxSnippets; i++ {
-		singleMatch := []Highlight{matches[i]}
+	// Extract snippets centered on distinct matches
+	for _, match := range distinctMatches {
+		singleMatch := []Highlight{match}
 		snippet, highlights := e.ExtractSnippet(content, singleMatch, opts)
 		results = append(results, struct {
 			Snippet    string
@@ -285,4 +292,35 @@ func (e *SnippetExtractor) ExtractMultipleSnippets(
 	}
 
 	return results
+}
+
+// selectDistinctMatches selects up to maxCount matches that are at least minDistance apart.
+// This ensures multiple snippets show genuinely different context rather than overlapping content.
+func (e *SnippetExtractor) selectDistinctMatches(matches []Highlight, minDistance, maxCount int) []Highlight {
+	if len(matches) == 0 {
+		return nil
+	}
+
+	selected := make([]Highlight, 0, maxCount)
+	selected = append(selected, matches[0]) // Always include first match
+
+	for i := 1; i < len(matches) && len(selected) < maxCount; i++ {
+		// Check if this match is far enough from all selected matches
+		isFarEnough := true
+		for _, sel := range selected {
+			distance := matches[i].Start - sel.Start
+			if distance < 0 {
+				distance = -distance
+			}
+			if distance < minDistance {
+				isFarEnough = false
+				break
+			}
+		}
+		if isFarEnough {
+			selected = append(selected, matches[i])
+		}
+	}
+
+	return selected
 }

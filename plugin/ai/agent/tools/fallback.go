@@ -4,8 +4,27 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 )
+
+// userIDKey is the context key for user identification.
+type userIDKey struct{}
+
+// WithUserID adds user ID to context for cache isolation.
+func WithUserID(ctx context.Context, userID int32) context.Context {
+	return context.WithValue(ctx, userIDKey{}, userID)
+}
+
+// getUserID extracts user ID from context. Returns 0 if not present.
+func getUserID(ctx context.Context) int32 {
+	if v := ctx.Value(userIDKey{}); v != nil {
+		if id, ok := v.(int32); ok {
+			return id
+		}
+	}
+	return 0
+}
 
 // FallbackFunc defines the signature for fallback handlers.
 // It receives the context, the failed tool, the original input, and the error.
@@ -30,8 +49,17 @@ func fallbackMemoSearch(_ context.Context, _ Tool, _ string, _ error) (*Result, 
 
 // fallbackScheduleQuery handles schedule query failures.
 func fallbackScheduleQuery(ctx context.Context, _ Tool, input string, _ error) (*Result, error) {
-	// Try to use cached data
-	if cached := getCachedSchedules(ctx, input); cached != "" {
+	// Try to use cached data with user isolation
+	userID := getUserID(ctx)
+	if userID == 0 {
+		// No user context - skip cache to prevent data leakage
+		return &Result{
+			Output:  "日程查询暂时不可用，请稍后重试",
+			Success: false,
+		}, nil
+	}
+
+	if cached := getCachedSchedules(userID, input); cached != "" {
 		return &Result{
 			Output:  cached + "\n(来自缓存，可能不是最新)",
 			Success: true,
@@ -60,6 +88,7 @@ func fallbackMemoCreate(_ context.Context, _ Tool, _ string, _ error) (*Result, 
 }
 
 // scheduleCache provides simple in-memory caching for schedule queries.
+// Cache keys include userID for isolation between users.
 var scheduleCache = &simpleCache{
 	data: make(map[string]string),
 }
@@ -69,19 +98,27 @@ type simpleCache struct {
 	data map[string]string
 }
 
-// getCachedSchedules retrieves cached schedule data for the given query.
-func getCachedSchedules(_ context.Context, query string) string {
-	scheduleCache.mu.RLock()
-	defer scheduleCache.mu.RUnlock()
-	return scheduleCache.data[query]
+// makeCacheKey creates a user-isolated cache key.
+func makeCacheKey(userID int32, query string) string {
+	return fmt.Sprintf("%d:%s", userID, query)
 }
 
-// SetCachedSchedules stores schedule data in the cache.
+// getCachedSchedules retrieves cached schedule data for the given user and query.
+func getCachedSchedules(userID int32, query string) string {
+	scheduleCache.mu.RLock()
+	defer scheduleCache.mu.RUnlock()
+	return scheduleCache.data[makeCacheKey(userID, query)]
+}
+
+// SetCachedSchedules stores schedule data in the cache with user isolation.
 // This should be called after successful schedule queries.
-func SetCachedSchedules(query string, data string) {
+func SetCachedSchedules(userID int32, query string, data string) {
+	if userID == 0 {
+		return // Don't cache without user context
+	}
 	scheduleCache.mu.Lock()
 	defer scheduleCache.mu.Unlock()
-	scheduleCache.data[query] = data
+	scheduleCache.data[makeCacheKey(userID, query)] = data
 }
 
 // ClearScheduleCache clears all cached schedule data.
@@ -145,15 +182,23 @@ func GenericFallback(message string) FallbackFunc {
 	}
 }
 
-// ErrorAwareFallback creates a fallback that includes error context in the message.
+// ErrorAwareFallback creates a fallback that logs error details but returns a safe message.
+// Error details are logged for debugging but not exposed to users.
 func ErrorAwareFallback(baseMessage string) FallbackFunc {
-	return func(_ context.Context, _ Tool, _ string, err error) (*Result, error) {
-		message := baseMessage
+	return func(_ context.Context, tool Tool, _ string, err error) (*Result, error) {
 		if err != nil {
-			message = fmt.Sprintf("%s (错误: %v)", baseMessage, err)
+			// Log error details for debugging, don't expose to user
+			toolName := "unknown"
+			if tool != nil {
+				toolName = tool.Name()
+			}
+			slog.Warn("tool fallback triggered",
+				slog.String("tool", toolName),
+				slog.String("error", err.Error()),
+			)
 		}
 		return &Result{
-			Output:  message,
+			Output:  baseMessage,
 			Success: false,
 		}, nil
 	}

@@ -287,6 +287,8 @@ func TestFallbackRegistry(t *testing.T) {
 
 func TestDefaultFallbacks(t *testing.T) {
 	ctx := context.Background()
+	// Add userID to context for cache isolation tests
+	ctxWithUser := WithUserID(ctx, 1)
 
 	t.Run("MemoSearch", func(t *testing.T) {
 		result, err := fallbackMemoSearch(ctx, nil, "", nil)
@@ -303,7 +305,7 @@ func TestDefaultFallbacks(t *testing.T) {
 
 	t.Run("ScheduleQuery_NoCache", func(t *testing.T) {
 		ClearScheduleCache()
-		result, err := fallbackScheduleQuery(ctx, nil, "test query", nil)
+		result, err := fallbackScheduleQuery(ctxWithUser, nil, "test query", nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -313,8 +315,8 @@ func TestDefaultFallbacks(t *testing.T) {
 	})
 
 	t.Run("ScheduleQuery_WithCache", func(t *testing.T) {
-		SetCachedSchedules("cached query", "今天有3个日程")
-		result, err := fallbackScheduleQuery(ctx, nil, "cached query", nil)
+		SetCachedSchedules(1, "cached query", "今天有3个日程")
+		result, err := fallbackScheduleQuery(ctxWithUser, nil, "cached query", nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -356,9 +358,11 @@ func TestErrorAwareFallback(t *testing.T) {
 	handler := ErrorAwareFallback("operation failed")
 
 	t.Run("WithError", func(t *testing.T) {
+		// ErrorAwareFallback should NOT include error details in user message (security fix)
+		// Error is logged internally but not exposed to users
 		result, _ := handler(context.Background(), nil, "", errors.New("network timeout"))
-		if result.Output == "operation failed" {
-			t.Error("should include error in message")
+		if result.Output != "operation failed" {
+			t.Errorf("should return base message without error details, got '%s'", result.Output)
 		}
 	})
 

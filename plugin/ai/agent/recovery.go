@@ -66,10 +66,12 @@ type ExecutorFunc func(ctx context.Context, input string) (string, error)
 
 // ExecuteWithRecovery executes the given function with automatic error recovery.
 // If the execution fails with a recoverable error, it attempts to fix the input and retry once.
-// If recovery fails, it returns a user-friendly error message with nil error.
 //
-// Note: This method always returns nil error. Use ExecuteWithRecoveryDetailed if you need
-// to distinguish between successful results and error messages programmatically.
+// Returns:
+//   - On success: (result, nil)
+//   - On failure: (user-friendly message, original error)
+//
+// Use ExecuteWithRecoveryDetailed if you need more detailed execution information.
 func (r *ErrorRecovery) ExecuteWithRecovery(
 	ctx context.Context,
 	executor ExecutorFunc,
