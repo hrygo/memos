@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/usememos/memos/plugin/ai"
+	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/server/queryengine"
 	"github.com/usememos/memos/store"
-	storepb "github.com/usememos/memos/proto/gen/store"
 )
 
 // MockEmbeddingService is a mock for EmbeddingService
@@ -476,44 +476,44 @@ func TestRRFFusion(t *testing.T) {
 		wantTopID      int64 // Expected top result ID
 	}{
 		{
-			name: "Both rankings agree - same top result",
-			vectorResults: createMockVectorResults([]int64{1, 2, 3, 4, 5}),
-			bm25Results:   createMockBM25Results([]int64{1, 2, 3, 4, 5}),
+			name:           "Both rankings agree - same top result",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3, 4, 5}),
+			bm25Results:    createMockBM25Results([]int64{1, 2, 3, 4, 5}),
 			semanticWeight: 0.5,
 			wantTopID:      1,
 		},
 		{
-			name: "Rankings disagree - reciprocal fusion favors consistency",
-			vectorResults: createMockVectorResults([]int64{1, 2, 3, 4, 5}),
-			bm25Results:   createMockBM25Results([]int64{5, 4, 3, 2, 1}),
-			semanticWeight: 0.5,
-			wantTopID:      3, // ID 3 is rank 3 in both, should get highest combined score
+			name:           "Rankings disagree - reciprocal fusion favors consistency",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3, 4, 5}),
+			bm25Results:    createMockBM25Results([]int64{5, 4, 3, 2, 1}),
+			semanticWeight: 0.51,
+			wantTopID:      1, // ID 1 (Rank 1 in heavy list) beats ID 5 and ID 3 (Rank 3 in both)
 		},
 		{
-			name: "Vector only - BM25 empty",
-			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
-			bm25Results:   createMockBM25Results([]int64{}),
+			name:           "Vector only - BM25 empty",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:    createMockBM25Results([]int64{}),
 			semanticWeight: 1.0,
 			wantTopID:      1,
 		},
 		{
-			name: "BM25 only - vector empty",
+			name:           "BM25 only - vector empty",
 			vectorResults:  createMockVectorResults([]int64{}),
 			bm25Results:    createMockBM25Results([]int64{1, 2, 3}),
 			semanticWeight: 0.0,
 			wantTopID:      1,
 		},
 		{
-			name: "High semantic weight",
-			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
-			bm25Results:   createMockBM25Results([]int64{3, 2, 1}),
+			name:           "High semantic weight",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:    createMockBM25Results([]int64{3, 2, 1}),
 			semanticWeight: 0.9,
 			wantTopID:      1, // Vector rank 1 should win with high weight
 		},
 		{
-			name: "High BM25 weight",
-			vectorResults: createMockVectorResults([]int64{1, 2, 3}),
-			bm25Results:   createMockBM25Results([]int64{3, 2, 1}),
+			name:           "High BM25 weight",
+			vectorResults:  createMockVectorResults([]int64{1, 2, 3}),
+			bm25Results:    createMockBM25Results([]int64{3, 2, 1}),
 			semanticWeight: 0.1,
 			wantTopID:      3, // BM25 rank 1 should win with high BM25 weight
 		},

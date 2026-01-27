@@ -75,7 +75,7 @@ type ScoringConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		TimeRange: TimeRangeConfig{
-			MaxFutureDays: 30,
+			MaxFutureDays: 365,
 			MaxRangeDays: 90,
 			Timezone:     "UTC",
 		},
