@@ -69,11 +69,30 @@ func (t *UserPreferenceTool) Name() string {
 // Description returns the tool description.
 func (t *UserPreferenceTool) Description() string {
 	return `Analyze user's schedule history to learn preferences.
-Returns:
-- Average durations for different activity types
-- Preferred time slots (which hours user usually schedules)
-- Frequently used locations
-- Activity patterns (common activities with typical duration/time)`
+
+INPUT FORMAT:
+{"query_type": "all", "activity_type": "meeting"}
+- query_type (required): "duration" | "time_slot" | "location" | "all"
+- activity_type (optional): filter by specific activity
+
+OUTPUT FORMAT (JSON):
+{
+  "average_durations": {"meeting": 60, "exercise": 30},
+  "preferred_time_slots": [
+    {"hour": 9, "frequency": 15},
+    {"hour": 14, "frequency": 12}
+  ],
+  "frequent_locations": ["Office", "Home"],
+  "activity_patterns": [
+    {
+      "title": "Team Standup",
+      "typical_duration_minutes": 30,
+      "typical_hour": 9,
+      "typical_location": "Conference Room A",
+      "frequency": 45
+    }
+  ]
+}`
 }
 
 // InputType returns the JSON Schema for the input.

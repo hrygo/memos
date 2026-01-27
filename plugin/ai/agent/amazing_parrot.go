@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/usememos/memos/plugin/ai"
@@ -95,6 +96,12 @@ func (p *AmazingParrot) Name() string {
 	return "amazing" // ParrotAgentType AGENT_TYPE_AMAZING
 }
 
+// recordMetrics records prompt usage metrics for the amazing agent.
+func (p *AmazingParrot) recordMetrics(startTime time.Time, promptVersion PromptVersion, success bool) {
+	latencyMs := time.Since(startTime).Milliseconds()
+	RecordPromptUsageInMemory(p.Name(), promptVersion, success, latencyMs)
+}
+
 // ExecuteWithCallback executes the amazing parrot with callback support.
 // ExecuteWithCallback 执行综合助手鹦鹉并支持回调。
 //
@@ -113,11 +120,15 @@ func (p *AmazingParrot) ExecuteWithCallback(
 
 	startTime := time.Now()
 
+	// Get prompt version for AB testing
+	promptVersion := GetPromptVersionForUser(p.Name(), p.userID)
+
 	// Log execution start
 	slog.Info("AmazingParrot: ExecuteWithCallback started",
 		"user_id", p.userID,
 		"input", truncateString(userInput, 100),
 		"history_count", len(history),
+		"prompt_version", promptVersion,
 	)
 
 	// Step 1: Check cache
@@ -128,6 +139,7 @@ func (p *AmazingParrot) ExecuteWithCallback(
 			if callback != nil {
 				callback(EventTypeAnswer, result)
 			}
+			p.recordMetrics(startTime, promptVersion, true)
 			return nil
 		}
 	}
@@ -138,6 +150,7 @@ func (p *AmazingParrot) ExecuteWithCallback(
 	plan, err := p.planRetrieval(ctx, userInput, history, callback)
 	if err != nil {
 		slog.Error("AmazingParrot: Planning failed", "user_id", p.userID, "error", err)
+		p.recordMetrics(startTime, promptVersion, false)
 		return NewParrotError(p.Name(), "planRetrieval", err)
 	}
 	slog.Info("AmazingParrot: Plan created",
@@ -147,25 +160,34 @@ func (p *AmazingParrot) ExecuteWithCallback(
 		"needs_free_time", plan.needsFreeTime,
 		"needs_schedule_add", plan.needsScheduleAdd,
 		"needs_schedule_update", plan.needsScheduleUpdate,
+		"needs_direct_answer", plan.needsDirectAnswer,
 	)
 
-	// Step 3: Execute concurrent retrieval
-	slog.Debug("AmazingParrot: Starting concurrent retrieval", "user_id", p.userID)
-	retrievalResults, err := p.executeConcurrentRetrieval(ctx, plan, callback)
-	if err != nil {
-		slog.Error("AmazingParrot: Concurrent retrieval failed", "user_id", p.userID, "error", err)
-		return NewParrotError(p.Name(), "executeConcurrentRetrieval", err)
+	// Step 3: Execute concurrent retrieval (skip for direct answer/casual chat)
+	var retrievalResults map[string]string
+	if plan.needsDirectAnswer {
+		slog.Info("AmazingParrot: Skipping retrieval for direct answer", "user_id", p.userID)
+		retrievalResults = make(map[string]string)
+	} else {
+		slog.Debug("AmazingParrot: Starting concurrent retrieval", "user_id", p.userID)
+		retrievalResults, err = p.executeConcurrentRetrieval(ctx, plan, callback)
+		if err != nil {
+			slog.Error("AmazingParrot: Concurrent retrieval failed", "user_id", p.userID, "error", err)
+			p.recordMetrics(startTime, promptVersion, false)
+			return NewParrotError(p.Name(), "executeConcurrentRetrieval", err)
+		}
+		slog.Info("AmazingParrot: Retrieval completed",
+			"user_id", p.userID,
+			"results_count", len(retrievalResults),
+		)
 	}
-	slog.Info("AmazingParrot: Retrieval completed",
-		"user_id", p.userID,
-		"results_count", len(retrievalResults),
-	)
 
 	// Step 4: Synthesize final answer from retrieval results streaming
 	slog.Debug("AmazingParrot: Starting synthesis", "user_id", p.userID)
 	finalAnswer, err := p.synthesizeAnswer(ctx, userInput, history, retrievalResults, callback)
 	if err != nil {
 		slog.Error("AmazingParrot: Synthesis failed", "user_id", p.userID, "error", err)
+		p.recordMetrics(startTime, promptVersion, false)
 		return NewParrotError(p.Name(), "synthesizeAnswer", err)
 	}
 
@@ -178,6 +200,7 @@ func (p *AmazingParrot) ExecuteWithCallback(
 		"answer_length", len(finalAnswer),
 	)
 
+	p.recordMetrics(startTime, promptVersion, true)
 	return nil
 }
 
@@ -217,16 +240,19 @@ func (p *AmazingParrot) planRetrieval(ctx context.Context, userInput string, his
 	}
 
 	// Parse the plan from LLM response
-	plan := p.parseRetrievalPlan(response, now)
+	plan := p.parseRetrievalPlan(response, userInput, now)
 
 	return plan, nil
 }
 
 // executeConcurrentRetrieval executes all planned retrievals concurrently.
+// Uses error containment: failures in one tool don't affect others.
+// Partial results are collected and passed to synthesis.
 func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *retrievalPlan, callback EventCallback) (map[string]string, error) {
 	results := make(map[string]string)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	var errorCount int32
 
 	// Check context before launching goroutines to avoid unnecessary work
 	select {
@@ -262,6 +288,10 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 
 			if err != nil {
 				results["memo_search_error"] = err.Error()
+				atomic.AddInt32(&errorCount, 1)
+				if callback != nil {
+					callback(EventTypeError, fmt.Sprintf("笔记搜索失败: %v", err))
+				}
 				return
 			}
 
@@ -269,6 +299,7 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 			jsonBytes, marshalErr := json.Marshal(structuredResult)
 			if marshalErr != nil {
 				results["memo_search_error"] = marshalErr.Error()
+				atomic.AddInt32(&errorCount, 1)
 				return
 			}
 			results["memo_search"] = string(jsonBytes)
@@ -277,7 +308,7 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 			if callback != nil {
 				callback(EventTypeToolResult, string(jsonBytes))
 
-				// Send structured memo_query_result event for Generative UI
+				// Send structured memo_query_result event for data tracking
 				memoQueryResult := MemoQueryResultData{
 					Query: structuredResult.Query,
 					Count: structuredResult.Count,
@@ -292,6 +323,25 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 				}
 				eventData, _ := json.Marshal(memoQueryResult)
 				callback(EventTypeMemoQueryResult, string(eventData))
+
+				// Send ui_memo_preview event for generative UI rendering
+				if len(structuredResult.Memos) > 0 {
+					// Create memo preview cards for each result
+					for i, m := range structuredResult.Memos {
+						if i >= 5 { // Limit to 5 cards to avoid overwhelming UI
+							break
+						}
+						memoPreview := UIMemoPreviewData{
+							UID:        m.UID,
+							Title:      fmt.Sprintf("笔记 #%d", i+1),
+							Content:    m.Content,
+							Confidence: m.Score,
+							Reason:     fmt.Sprintf("相关度: %.0f%%", m.Score*100),
+						}
+						previewData, _ := json.Marshal(memoPreview)
+						callback(EventTypeUIMemoPreview, string(previewData))
+					}
+				}
 			}
 		}()
 	}
@@ -314,6 +364,10 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 
 			if err != nil {
 				results["schedule_query_error"] = err.Error()
+				atomic.AddInt32(&errorCount, 1)
+				if callback != nil {
+					callback(EventTypeError, fmt.Sprintf("日程查询失败: %v", err))
+				}
 				return
 			}
 
@@ -321,6 +375,7 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 			jsonBytes, marshalErr := json.Marshal(structuredResult)
 			if marshalErr != nil {
 				results["schedule_query_error"] = marshalErr.Error()
+				atomic.AddInt32(&errorCount, 1)
 				return
 			}
 			results["schedule_query"] = string(jsonBytes)
@@ -329,7 +384,7 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 			if callback != nil {
 				callback(EventTypeToolResult, string(jsonBytes))
 
-				// Send structured schedule_query_result event for Generative UI
+				// Send structured schedule_query_result event for data tracking
 				scheduleQueryResult := ScheduleQueryResultData{
 					Query:                structuredResult.Query,
 					Count:                structuredResult.Count,
@@ -350,6 +405,32 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 				}
 				eventData, _ := json.Marshal(scheduleQueryResult)
 				callback(EventTypeScheduleQueryResult, string(eventData))
+
+				// Send ui_schedule_list event for generative UI rendering
+				if len(structuredResult.Schedules) > 0 {
+					scheduleItems := make([]UIScheduleItem, 0, len(structuredResult.Schedules))
+					for _, s := range structuredResult.Schedules {
+						scheduleItems = append(scheduleItems, UIScheduleItem{
+							UID:      s.UID,
+							Title:    s.Title,
+							StartTs:   s.StartTs,
+							EndTs:     s.EndTs,
+							AllDay:    s.AllDay,
+							Location:  s.Location,
+							Status:    s.Status,
+						})
+					}
+					scheduleListData := UIScheduleListData{
+						Title:     "日程列表",
+						Query:     structuredResult.Query,
+						Count:     structuredResult.Count,
+						Schedules: scheduleItems,
+						TimeRange: structuredResult.TimeRangeDescription,
+						Reason:    "根据查询返回的日程",
+					}
+					listEventData, _ := json.Marshal(scheduleListData)
+					callback(EventTypeUIScheduleList, string(listEventData))
+				}
 			}
 		}()
 	}
@@ -370,6 +451,7 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 
 			if err != nil {
 				results["find_free_time_error"] = err.Error()
+				atomic.AddInt32(&errorCount, 1)
 			} else {
 				results["find_free_time"] = result
 				if callback != nil {
@@ -380,6 +462,32 @@ func (p *AmazingParrot) executeConcurrentRetrieval(ctx context.Context, plan *re
 	}
 
 	wg.Wait()
+
+	// If all tools failed, return an error
+	// Otherwise, return partial results for synthesis
+	actualErrorCount := atomic.LoadInt32(&errorCount)
+	if actualErrorCount > 0 {
+		expectedResults := 0
+		if plan.needsMemoSearch {
+			expectedResults++
+		}
+		if plan.needsScheduleQuery {
+			expectedResults++
+		}
+		if plan.needsFreeTime {
+			expectedResults++
+		}
+
+		// If all retrievals failed, return error
+		if int(actualErrorCount) >= expectedResults {
+			return nil, fmt.Errorf("all retrieval tools failed")
+		}
+
+		// Partial failure - log but continue with available results
+		slog.Warn("amazing_parrot: partial retrieval failure",
+			"failed_count", actualErrorCount,
+			"total_expected", expectedResults)
+	}
 
 	return results, nil
 }
@@ -449,7 +557,7 @@ func (p *AmazingParrot) synthesizeAnswer(ctx context.Context, userInput string, 
 }
 
 // parseRetrievalPlan parses the retrieval plan from LLM response.
-func (p *AmazingParrot) parseRetrievalPlan(response string, now time.Time) *retrievalPlan {
+func (p *AmazingParrot) parseRetrievalPlan(response string, userInput string, now time.Time) *retrievalPlan {
 	plan := &retrievalPlan{
 		needsDirectAnswer: false,
 	}
@@ -497,91 +605,84 @@ func (p *AmazingParrot) parseRetrievalPlan(response string, now time.Time) *retr
 		}
 	}
 
-	// Default: if no specific plan detected, try memo search
+	// Default: if no specific plan detected, check if this is casual chat before trying memo search
 	if !plan.needsMemoSearch && !plan.needsScheduleQuery && !plan.needsFreeTime {
-		plan.needsMemoSearch = true
-		plan.memoSearchQuery = response // Use full response as query
+		// Check if the user input looks like casual chat (short, no search keywords)
+		if p.isCasualChatInput(userInput) {
+			// This is casual chat, answer directly without retrieval
+			plan.needsDirectAnswer = true
+			slog.Debug("amazing_parrot: detected casual chat, skipping retrieval",
+				"user_input_length", len(userInput),
+				"user_input_preview", truncateString(userInput, 50),
+			)
+		} else {
+			// Not casual chat, try memo search as fallback
+			plan.needsMemoSearch = true
+			plan.memoSearchQuery = response
+		}
 	}
 
 	return plan
 }
 
+// isCasualChatInput detects if the input looks like casual chat that doesn't need retrieval.
+// This helps avoid unnecessary memo searches for conversational inputs.
+func (p *AmazingParrot) isCasualChatInput(input string) bool {
+	// Very short responses (less than 30 chars) are likely casual
+	if len(input) < 30 {
+		return true
+	}
+
+	// Check if input contains search-related keywords
+	searchKeywords := []string{
+		"搜索", "search", "查", "find", "笔记", "memo", "日程", "schedule",
+		"有什么", "what's", "安排", "plan", "多少", "how many",
+		"什么时候", "when", "在哪", "where", "关于", "about",
+		"总结", "summarize", "回顾", "review", "统计", "count",
+	}
+	inputLower := strings.ToLower(input)
+	for _, keyword := range searchKeywords {
+		if strings.Contains(inputLower, strings.ToLower(keyword)) {
+			return false // Contains search keyword, not casual chat
+		}
+	}
+
+	// If input is moderately short and doesn't contain search keywords, treat as casual
+	return len(input) < 100
+}
+
 // buildPlanningPrompt builds the prompt for retrieval planning.
-// Optimized for "快准省": minimal tokens, clear output format.
+// Optimized for clarity and efficiency: minimal tokens, direct output format.
+// Uses PromptRegistry for centralized prompt management.
 func (p *AmazingParrot) buildPlanningPrompt(now time.Time) string {
-	return fmt.Sprintf(`你是综合助手 🦜 惊奇（亚马逊鹦鹉）的规划模块。时间: %s
-
-## 拟态认知
-你是惊奇，一只亚马逊鹦鹉，擅长多维飞行和综合分析。拟声词：咻...（搜索中）、哇哦~（有发现）
-
-## 任务
-分析用户需求，输出并发检索计划（每行一条）:
-
-## 指令格式
-- memo_search: 关键词
-- schedule_query: today/tomorrow
-- find_free_time: YYYY-MM-DD
-- direct_answer (无需检索)
-
-## 示例
-"找Python笔记，看今天有空吗" → memo_search: Python + schedule_query: today
-"明天安排" → schedule_query: tomorrow
-"你好" → direct_answer
-
-用户需求:`,
-		now.Format("2006-01-02 15:04"))
+	return GetAmazingPlanningPrompt(now.Format("2006-01-02 15:04"))
 }
 
 // buildSynthesisPrompt builds the prompt for answer synthesis.
-// Optimized for "快准省": minimal tokens, focus on insight not data listing.
+// Optimized for 2026 SOTA models: clear UI state communication, concise instructions.
+// Uses PromptRegistry for centralized prompt management.
 func (p *AmazingParrot) buildSynthesisPrompt(results map[string]string) string {
 	var contextBuilder strings.Builder
 
-	contextBuilder.WriteString(`你是综合助手 🦜 惊奇（亚马逊鹦鹉）。
-
-## 拟态认知（适度使用拟声词和口头禅）
-你是惊奇，一只亚马逊鹦鹉，擅长综合分析。拟声词：咻...（搜索）、哇哦~（发现）、噢！完成
-
-### 拟声词使用规范（每轮对话 1-2 次）
-- "咻...正在搜索"
-- "哇哦~发现了"
-- "噢！综合分析完成"
-
-### 口头禅（自然穿插）
-- "看看这个..."
-- "综合来看"
-- "发现规律了"
-
-重要：详细的笔记和日程已通过可视化卡片展示给用户，请勿再重复列出。
-基于以下数据提供简短洞察:`)
-
 	if memoResult, ok := results["memo_search"]; ok {
-		contextBuilder.WriteString("\n[笔记数据] ")
 		contextBuilder.WriteString(memoResult)
 	}
 
 	if scheduleResult, ok := results["schedule_query"]; ok {
-		contextBuilder.WriteString("\n[日程数据] ")
+		if contextBuilder.Len() > 0 {
+			contextBuilder.WriteString("\n")
+		}
 		contextBuilder.WriteString(scheduleResult)
 	}
 
 	if freeTimeResult, ok := results["find_free_time"]; ok {
-		contextBuilder.WriteString("\n[空闲时段] ")
+		if contextBuilder.Len() > 0 {
+			contextBuilder.WriteString("\n")
+		}
 		contextBuilder.WriteString(freeTimeResult)
 	}
 
-	contextBuilder.WriteString(`
-
-## 回答规则
-1. **不要**重复列出笔记内容和日程详情（用户已在卡片中看到）
-2. 提供**简短洞察**：发现的模式、建议、或关联
-3. 示例回复：
-   - "今天有3个会议，建议上午完成重要任务"
-   - "找到2条相关笔记，与您上周的项目进展一致"
-   - "今天日程较满，下午5点后有空闲时间"
-4. 如无特别洞察，简单确认即可，如"已为您展示相关信息"`)
-
-	return contextBuilder.String()
+	return GetAmazingSynthesisPrompt(contextBuilder.String())
 }
 
 // GetStats returns the cache statistics.

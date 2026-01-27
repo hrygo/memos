@@ -385,7 +385,13 @@ func (c *ConversationContext) ToHistoryPrompt() string {
 		sb.WriteString(fmt.Sprintf("Assistant: %s\n", turn.AgentOutput))
 	}
 
-	return sb.String()
+	result := sb.String()
+	slog.Debug("ToHistoryPrompt generated",
+		"session_id", c.SessionID,
+		"turn_count", len(c.Turns),
+		"length", len(result))
+
+	return result
 }
 
 // ContextSummary provides a quick overview of the context state.

@@ -110,7 +110,9 @@ func (ic *LLMIntentClassifier) ClassifyWithDetails(ctx context.Context, input st
 	latency := time.Since(start)
 
 	if err != nil {
-		slog.Error("LLM intent classification request failed",
+		slog.Error("llm_intent_classification_failed",
+			"prompt_version", "v1",
+			"model", ic.model,
 			"error", err,
 			"latency_ms", latency.Milliseconds())
 		return nil, fmt.Errorf("LLM request failed: %w", err)
@@ -123,18 +125,24 @@ func (ic *LLMIntentClassifier) ClassifyWithDetails(ctx context.Context, input st
 	content := resp.Choices[0].Message.Content
 	result, err := ic.parseResponse(content)
 	if err != nil {
-		slog.Warn("Failed to parse LLM response",
+		slog.Warn("llm_intent_parse_failed",
+			"prompt_version", "v1",
+			"model", ic.model,
 			"content", content,
 			"error", err)
 		return nil, fmt.Errorf("parse response failed: %w", err)
 	}
 
-	slog.Debug("LLM intent classification completed",
+	slog.Debug("llm_intent_classification_success",
+		"prompt_version", "v1",
+		"model", ic.model,
 		"input", truncateForLog(input, 30),
 		"intent", result.Intent,
 		"confidence", result.Confidence,
 		"latency_ms", latency.Milliseconds(),
-		"tokens", resp.Usage.TotalTokens)
+		"tokens_total", resp.Usage.TotalTokens,
+		"tokens_prompt", resp.Usage.PromptTokens,
+		"tokens_completion", resp.Usage.CompletionTokens)
 
 	return result, nil
 }
@@ -183,20 +191,27 @@ func (ic *LLMIntentClassifier) mapIntent(s string) TaskIntent {
 	s = strings.ToLower(strings.TrimSpace(s))
 
 	switch s {
-	case "simple_create", "create", "add":
+	// Schedule intents
+	case "schedule_create", "simple_create", "create", "add":
 		return IntentSimpleCreate
-	case "simple_query", "query", "list", "search":
+	case "schedule_query", "simple_query", "query", "list":
 		return IntentSimpleQuery
-	case "simple_update", "update", "modify", "change":
+	case "schedule_update", "simple_update", "update", "modify", "change":
 		return IntentSimpleUpdate
-	case "batch_create", "batch", "recurring":
+	case "schedule_batch", "batch_create", "batch", "recurring":
 		return IntentBatchCreate
-	case "conflict_resolve", "conflict":
+	case "schedule_conflict", "conflict_resolve", "conflict":
 		return IntentConflictResolve
-	case "multi_query", "multi":
-		return IntentMultiQuery
+	// Memo intents
+	case "memo_search", "search":
+		return IntentMemoSearch
+	case "memo_create":
+		return IntentMemoCreate
+	// Amazing intent
+	case "amazing", "multi_query", "multi":
+		return IntentAmazing
 	default:
-		slog.Warn("Unknown intent from LLM, defaulting to simple_create",
+		slog.Warn("Unknown intent from LLM, defaulting to schedule_create",
 			"raw_intent", s)
 		return IntentSimpleCreate
 	}
@@ -205,7 +220,7 @@ func (ic *LLMIntentClassifier) mapIntent(s string) TaskIntent {
 // ShouldUsePlanExecute returns true if the intent should use Plan-Execute mode.
 func (ic *LLMIntentClassifier) ShouldUsePlanExecute(intent TaskIntent) bool {
 	switch intent {
-	case IntentBatchCreate, IntentMultiQuery:
+	case IntentBatchCreate, IntentAmazing:
 		return true
 	default:
 		return false
@@ -232,16 +247,27 @@ func truncateForLog(s string, maxLen int) string {
 
 // intentSystemPromptStrict is a minimal prompt for strict JSON schema mode.
 // The schema enforces the output format, so we only need classification rules.
-const intentSystemPromptStrict = `日程意图分类器。根据用户输入判断意图：
+const intentSystemPromptStrict = `AI 助手意图分类器。判断用户意图并路由到对应 Agent：
 
-simple_create: 创建单个日程 (有时间+事件)
-simple_query: 查询日程/空闲 (问句)
-simple_update: 修改/删除日程
-batch_create: 重复日程 (每天/每周/工作日)
-conflict_resolve: 处理冲突
-multi_query: 综合分析
+## 日程 Agent (schedule)
+- schedule_create: 创建单个日程 (有时间+事件)
+- schedule_query: 查询日程/空闲 (问句)
+- schedule_update: 修改/删除日程
+- schedule_batch: 重复日程 (每天/每周/工作日)
+- schedule_conflict: 处理冲突
 
-默认: simple_create`
+## 笔记 Agent (memo)
+- memo_search: 搜索笔记 (关键词)
+- memo_create: 创建笔记 (记录内容)
+
+## 综合 Agent (amazing)
+- amazing: 综合分析、总结、跨域查询
+
+## 分类规则
+1. 含"笔记/记录/搜索" → memo_search
+2. 含"今天/明天/会议" → schedule_create 或 schedule_query
+3. 综合性问题 (多领域) → amazing
+4. 默认: schedule_create`
 
 // intentJSONSchema defines the strict output schema for intent classification.
 // Using enum to constrain intent values and prevent hallucination.
@@ -251,12 +277,14 @@ var intentJSONSchema = &jsonSchema{
 		"intent": {
 			Type: "string",
 			Enum: []string{
-				"simple_create",
-				"simple_query",
-				"simple_update",
-				"batch_create",
-				"conflict_resolve",
-				"multi_query",
+				"schedule_create",
+				"schedule_query",
+				"schedule_update",
+				"schedule_batch",
+				"schedule_conflict",
+				"memo_search",
+				"memo_create",
+				"amazing",
 			},
 			Description: "The classified intent type",
 		},

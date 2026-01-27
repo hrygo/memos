@@ -25,23 +25,36 @@ const (
 	// Audit log field length limits (for sensitive data sanitization)
 	maxTitleLengthForLog       = 50
 	maxDescriptionLengthForLog = 100
+
+	// Schedule time constants
+	// Business hours for scheduling: 6 AM to 10 PM (22:00)
+	businessHourStart = 6   // 6 AM - first schedulable hour
+	businessHourEnd   = 22  // 10 PM - end of schedulable hours
+	lastScheduleSlot   = 21  // 9 PM - last slot that can start (21:00-22:00)
+
+	// Duration constants
+	defaultSlotDurationSeconds = 3600 // 1 hour in seconds
+	minimumSlotDurationSeconds = 900   // 15 minutes in seconds
 )
 
 // timezoneCache caches parsed timezone locations for performance.
-// Uses a simple size-limited cache that resets when full (LRU-lite).
+// Uses a simple LRU-style cache with bounded size.
 var timezoneCache struct {
 	sync.RWMutex
 	locations map[string]*time.Location
-	hits      int64 // Cache hit counter for metrics
-	misses    int64 // Cache miss counter for metrics
+	accessList []string // Track access order for LRU eviction
+	hits       int64    // Cache hit counter for metrics
+	misses     int64    // Cache miss counter for metrics
 }
 
 // init initializes the timezone cache.
 func init() {
 	timezoneCache.locations = make(map[string]*time.Location)
+	timezoneCache.accessList = make([]string, 0, maxTimezoneCacheEntries)
 	// Pre-load common timezone
 	if loc, err := time.LoadLocation(DefaultTimezone); err == nil {
 		timezoneCache.locations[DefaultTimezone] = loc
+		timezoneCache.accessList = append(timezoneCache.accessList, DefaultTimezone)
 	}
 }
 
@@ -66,16 +79,14 @@ func getTimezoneLocation(timezone string) *time.Location {
 		return loc
 	}
 
-	// Enforce cache size limit: if full, reset and keep common timezone
+	// Enforce cache size limit: if full, evict LRU entry
 	if len(timezoneCache.locations) >= maxTimezoneCacheEntries {
-		slog.Debug("timezone cache full, resetting",
-			"current_size", len(timezoneCache.locations),
-			"max_size", maxTimezoneCacheEntries,
-		)
-		// Reset cache, keeping only the default timezone
-		timezoneCache.locations = make(map[string]*time.Location)
-		if loc, err := time.LoadLocation(DefaultTimezone); err == nil {
-			timezoneCache.locations[DefaultTimezone] = loc
+		// Evict the least recently used entry (first in access list)
+		if len(timezoneCache.accessList) > 0 {
+			evictKey := timezoneCache.accessList[0]
+			delete(timezoneCache.locations, evictKey)
+			// Remove from front of access list
+			timezoneCache.accessList = timezoneCache.accessList[1:]
 		}
 	}
 
@@ -90,6 +101,8 @@ func getTimezoneLocation(timezone string) *time.Location {
 	}
 
 	timezoneCache.locations[timezone] = loc
+	// Add to end of access list (most recently used)
+	timezoneCache.accessList = append(timezoneCache.accessList, timezone)
 	return loc
 }
 
@@ -409,17 +422,23 @@ func (t *ScheduleAddTool) Name() string {
 
 // Description returns the tool description for the LLM.
 func (t *ScheduleAddTool) Description() string {
-	return `Create a NEW schedule AFTER checking for conflicts with schedule_query.
+	return `Create a schedule event.
 
-REQUIRED WORKFLOW:
-1. First: Call schedule_query to check availability
-2. Only if no conflict: Call schedule_add
-3. If conflict exists: Call find_free_time instead
+AUTO-HANDLED BY THIS TOOL (you don't need to handle these manually):
+- Past times: Automatically adjusted to tomorrow same time
+- Night hours (22:00-06:00): Automatically adjusted to 9:00 AM next day
+- Time duration preserved: When start_time adjusts, end_time moves with it
+- Conflicts: Automatically finds the next available time slot
+
+USAGE:
+- User specifies time: Call schedule_add directly with the time
+- User doesn't specify time: Call find_free_time first, then schedule_add with the returned time
+- Pre-checking with schedule_query is optional but helps avoid confusion
 
 Input: {"title": "event name", "start_time": "ISO8601", "end_time": "ISO8601"}
 Example: {"title": "Team Meeting", "start_time": "2026-01-25T15:00:00+08:00", "end_time": "2026-01-25T16:00:00+08:00"}
 
-Note: end_time can be omitted for 1-hour default duration. Auto-adjusts conflicts if enabled.`
+Note: end_time can be omitted for 1-hour default duration.`
 }
 
 // InputType returns the expected input type schema.
@@ -458,6 +477,11 @@ func (t *ScheduleAddTool) InputType() map[string]interface{} {
 
 // Run executes the tool.
 func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, error) {
+	// Validate input first
+	if err := t.Validate(ctx, inputJSON); err != nil {
+		return "", err
+	}
+
 	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
 	normalizedJSON := normalizeJSONFields(inputJSON)
 
@@ -475,12 +499,16 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		return "", fmt.Errorf("invalid JSON input: %w", err)
 	}
 
-	// Validate required fields
+	// Trim whitespace from required fields
+	input.Title = strings.TrimSpace(input.Title)
+	input.StartTime = strings.TrimSpace(input.StartTime)
+
+	// Re-validate required fields after trim
 	if input.Title == "" {
-		return "", fmt.Errorf("title is required")
+		return "", fmt.Errorf("title cannot be empty")
 	}
 	if input.StartTime == "" {
-		return "", fmt.Errorf("start_time is required")
+		return "", fmt.Errorf("start_time cannot be empty")
 	}
 
 	// Parse start time
@@ -489,20 +517,71 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		return "", fmt.Errorf("invalid start_time format: %w. Please use ISO8601 format", err)
 	}
 
-	// Parse end time if provided, otherwise default to 1 hour
-	var endTime *int64
+	// Store original start time for adjustment detection
+	originalStartTime := startTime
+
+	// Parse end time BEFORE adjusting start_time to preserve duration
+	// Calculate original duration if end_time provided
+	var originalDuration int64 = 3600 // Default 1 hour
 	if input.EndTime != "" {
-		end, err := time.Parse(time.RFC3339, input.EndTime)
+		originalEndTime, err := time.Parse(time.RFC3339, input.EndTime)
 		if err != nil {
 			return "", fmt.Errorf("invalid end_time format: %w. Please use ISO8601 format", err)
 		}
-		endTs := end.Unix()
-		endTime = &endTs
-	} else {
-		// Default duration: 1 hour (3600 seconds)
-		defaultEndTs := startTime.Unix() + 3600
-		endTime = &defaultEndTs
+		originalDuration = originalEndTime.Unix() - startTime.Unix()
+		// Ensure minimum duration
+		if originalDuration < minimumSlotDurationSeconds {
+			originalDuration = minimumSlotDurationSeconds
+		}
 	}
+
+	// Track adjustment reasons for response
+	adjustedReason := ""
+
+	// PRINCIPLE 1: Never create schedules in the past
+	// If the requested time is in the past, auto-adjust to tomorrow same time
+	now := time.Now()
+	if startTime.Before(now) {
+		// Calculate tomorrow same time
+		tomorrow := startTime.AddDate(0, 0, 1)
+		// Check if tomorrow is also in the past (edge case), add another day
+		for tomorrow.Before(now) {
+			tomorrow = tomorrow.AddDate(0, 0, 1)
+		}
+		slog.Info("schedule_add: past time detected, auto-adjusting to tomorrow",
+			"original_start", startTime.Format(time.RFC3339),
+			"adjusted_start", tomorrow.Format(time.RFC3339),
+		)
+		startTime = tomorrow
+		adjustedReason = "past_time"
+	}
+
+	// PRINCIPLE 3: Avoid 22:00-06:00 for non-explicit requests
+	// If auto-adjusted time falls in night hours (22:00-06:00), move to next day 9:00
+	loc := getTimezoneLocation(DefaultTimezone)
+	localTime := startTime.In(loc)
+	hour := localTime.Hour()
+
+	// Night hours: 22:00-06:00 (10 PM to 6 AM next day)
+	if hour >= 22 || hour < 6 {
+		// Move to 9:00 AM next day
+		nextDay := localTime.AddDate(0, 0, 1)
+		adjustedTime := time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 9, 0, 0, 0, loc)
+		slog.Info("schedule_add: night hour detected, adjusting to 9 AM next day",
+			"original_time", localTime.Format("15:04"),
+			"adjusted_time", adjustedTime.Format(time.RFC3339),
+		)
+		startTime = adjustedTime
+		if adjustedReason == "" {
+			adjustedReason = "night_hour"
+		}
+	}
+
+	// Calculate end time using the original duration
+	// This ensures when start_time is adjusted, end_time moves with it
+	var endTime *int64
+	adjustedEndTs := startTime.Unix() + originalDuration
+	endTime = &adjustedEndTs
 
 	// Get user ID from context
 	userID := t.userIDGetter(ctx)
@@ -590,8 +669,8 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 		endTimeFormatted = formatTime(*created.EndTs, created.Timezone)
 	}
 
-	// Check if time was auto-adjusted (original start time != actual start time)
-	wasAdjusted := created.StartTs != startTime.Unix()
+	// Check if time was auto-adjusted (compare with original input)
+	wasAdjusted := created.StartTs != originalStartTime.Unix()
 
 	result := fmt.Sprintf("✓ 已创建: %s (%s", created.Title, startTimeFormatted)
 	if endTimeFormatted != "" {
@@ -599,7 +678,13 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 	}
 	result += ")"
 
-	if wasAdjusted {
+	// Add adjustment notice based on reason
+	if adjustedReason == "past_time" {
+		result += " [原时间已过，已调整为明天]"
+	} else if adjustedReason == "night_hour" {
+		result += " [原时间在夜间，已调整为次日9:00]"
+	} else if wasAdjusted {
+		// This catches conflict auto-resolution
 		result += " [时间冲突已自动调整]"
 	}
 
@@ -646,20 +731,32 @@ func (t *ScheduleAddTool) formatConflictError(resolution *schedule.ConflictResol
 
 // Validate runs before execution to check input validity.
 func (t *ScheduleAddTool) Validate(ctx context.Context, inputJSON string) error {
+	// Normalize JSON field names (camelCase -> snake_case) for LLM compatibility
+	normalizedJSON := normalizeJSONFields(inputJSON)
+
 	var input struct {
 		Title     string `json:"title"`
 		StartTime string `json:"start_time"`
 	}
 
-	if err := json.Unmarshal([]byte(inputJSON), &input); err != nil {
+	if err := json.Unmarshal([]byte(normalizedJSON), &input); err != nil {
 		return err
 	}
 
+	// Trim whitespace before validation
+	input.Title = strings.TrimSpace(input.Title)
+	input.StartTime = strings.TrimSpace(input.StartTime)
+
 	if input.Title == "" {
-		return fmt.Errorf("title is required")
+		return fmt.Errorf("title is required and cannot be empty")
 	}
 	if input.StartTime == "" {
-		return fmt.Errorf("start_time is required")
+		return fmt.Errorf("start_time is required and cannot be empty")
+	}
+
+	// Validate that start_time is a valid ISO8601 format
+	if _, err := time.Parse(time.RFC3339, input.StartTime); err != nil {
+		return fmt.Errorf("start_time must be in ISO8601 format (e.g., 2026-01-27T15:00:00+08:00): %w", err)
 	}
 
 	return nil
@@ -716,19 +813,20 @@ func (t *FindFreeTimeTool) SetTimezone(timezone string) {
 
 // Description returns the tool description for the LLM.
 func (t *FindFreeTimeTool) Description() string {
-	return `Find available 1-hour time slots when schedule_query detects conflicts.
+	return `Find available 1-hour time slots.
 
 WHEN TO USE:
-- After schedule_query returns conflicting schedules
-- User asks "when am I free" or similar
+- User asks "when am I free"
+- User doesn't specify a time (e.g., "schedule a meeting")
+- After schedule_query finds conflicts
 
-Input: {"date": "YYYY-MM-DD"}
-Example: {"date": "2026-01-25"}
+INPUT: {"date": "YYYY-MM-DD"}
+OUTPUT: ISO8601 start time of first available slot
 
-Returns: ISO8601 start time of available slot (you must add 1 hour for end time)
-Error: Returns error message if no slots available (all 8AM-10PM occupied)
-
-IMPORTANT: The returned time is the START only. End time = start + 1 hour.`
+IMPORTANT:
+- Search range: 06:00-22:00 (excludes night hours 22:00-06:00)
+- When user doesn't specify time, use the FIRST returned slot directly - NO confirmation needed
+- The returned time is the START only. End time = start + 1 hour.`
 }
 
 // InputType returns the expected input type schema.
@@ -781,14 +879,13 @@ func (t *FindFreeTimeTool) Run(ctx context.Context, inputJSON string) (string, e
 		return "", fmt.Errorf("failed to query schedules: %w", err)
 	}
 
-	// Define default duration: 1 hour (3600 seconds)
-	const defaultDuration = int64(3600)
+	// Define default duration: 1 hour
+	const defaultDuration = defaultSlotDurationSeconds
 
-	// Find free slots (checking each hour from 8:00 to 22:00 inclusive)
-	// hourStart=8 (8 AM), hourEnd=22 (10 PM)
-	// We check hour <= hourEnd to include the 22:00-23:00 slot
-	const hourStart = 8 // 8 AM
-	const hourEnd = 22  // 10 PM (last slot starts at 22:00)
+	// PRINCIPLE 3: Find free slots from 6:00 AM to 22:00 PM (excludes night hours 22:00-06:00)
+	// Uses businessHourStart and lastScheduleSlot constants
+	hourStart := businessHourStart  // 6 AM
+	hourEnd := lastScheduleSlot     // 9 PM (last slot starts at 21:00, ends at 22:00)
 
 	// Check each hour slot
 	for hour := hourStart; hour <= hourEnd; hour++ {
@@ -829,7 +926,8 @@ func (t *FindFreeTimeTool) Run(ctx context.Context, inputJSON string) (string, e
 		}
 	}
 
-	return "", fmt.Errorf("no available time slots on %s (all slots from 8 AM to 10 PM are occupied)", input.Date)
+	return "", fmt.Errorf("no available time slots on %s (all slots from %d AM to %d PM are occupied)",
+		input.Date, businessHourStart, businessHourEnd-12) // Convert 24h to 12h format for PM
 }
 
 // ScheduleUpdateTool updates an existing schedule event.

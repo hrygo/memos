@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sashabaranov/go-openai"
+	"github.com/usememos/memos/plugin/ai/router"
 )
 
 // ChatRouteType represents the type of chat routing.
@@ -41,13 +42,17 @@ type ChatRouterConfig struct {
 
 // ChatRouter routes user input to the appropriate Parrot agent.
 // It uses a hybrid approach: fast rule matching first, then LLM for uncertain cases.
+// Optionally uses the three-layer router.Service for enhanced history matching.
 type ChatRouter struct {
-	client *openai.Client
-	model  string
+	routerService *router.Service // Optional: three-layer router service
+	client        *openai.Client // Reserved for LLM classification
+	model         string
 }
 
 // NewChatRouter creates a new chat router with hybrid rule+LLM classification.
-func NewChatRouter(cfg ChatRouterConfig) *ChatRouter {
+// If routerSvc is provided, uses the three-layer router (rule + history + LLM).
+// Otherwise, falls back to two-layer routing (rule + LLM only).
+func NewChatRouter(cfg ChatRouterConfig, routerSvc *router.Service) *ChatRouter {
 	baseURL := cfg.BaseURL
 	if baseURL == "" {
 		baseURL = "https://api.siliconflow.cn/v1"
@@ -62,15 +67,36 @@ func NewChatRouter(cfg ChatRouterConfig) *ChatRouter {
 	clientConfig.BaseURL = baseURL
 
 	return &ChatRouter{
-		client: openai.NewClientWithConfig(clientConfig),
-		model:  model,
+		routerService: routerSvc,
+		client:        openai.NewClientWithConfig(clientConfig),
+		model:         model,
 	}
 }
 
 // Route determines the appropriate Parrot agent for the user input.
-// Uses hybrid approach: rule matching (0ms) → LLM classification (~400ms) if uncertain.
+// Uses hybrid approach: rule matching (0ms) → history matching (~10ms) → LLM classification (~400ms) if uncertain.
 func (r *ChatRouter) Route(ctx context.Context, input string) (*ChatRouteResult, error) {
-	// Step 1: Try rule-based matching (fast path)
+	// Step 1: Try router.Service (three-layer routing) if available
+	if r.routerService != nil {
+		intent, confidence, err := r.routerService.ClassifyIntent(ctx, input)
+		if err != nil {
+			slog.Warn("router service failed, defaulting to amazing",
+				"error", err,
+				"input", truncateForLog(input, 30))
+			return &ChatRouteResult{
+				Route:      RouteTypeAmazing,
+				Confidence: 0.5,
+				Method:     "fallback",
+			}, nil
+		}
+		return &ChatRouteResult{
+			Route:      mapIntentToRouteType(intent),
+			Confidence: float64(confidence),
+			Method:     "router",
+		}, nil
+	}
+
+	// Step 2: Try rule-based matching (fast path, for backward compatibility)
 	if result := r.routeByRules(input); result != nil {
 		slog.Debug("chat routed by rules",
 			"input", truncateForLog(input, 30),
@@ -79,7 +105,7 @@ func (r *ChatRouter) Route(ctx context.Context, input string) (*ChatRouteResult,
 		return result, nil
 	}
 
-	// Step 2: Use LLM for uncertain cases
+	// Step 3: Use LLM for uncertain cases
 	result, err := r.routeByLLM(ctx, input)
 	if err != nil {
 		slog.Warn("LLM routing failed, defaulting to amazing",
@@ -287,4 +313,19 @@ var chatRouterJSONSchema = &jsonSchema{
 	},
 	Required:             []string{"route", "confidence"},
 	AdditionalProperties: false,
+}
+
+// mapIntentToRouteType converts router.Intent to ChatRouteType.
+// Uses the canonical IntentToAgentType mapping from router package.
+func mapIntentToRouteType(intent router.Intent) ChatRouteType {
+	switch router.IntentToAgentType(intent) {
+	case router.AgentTypeMemo:
+		return RouteTypeMemo
+	case router.AgentTypeSchedule:
+		return RouteTypeSchedule
+	case router.AgentTypeAmazing:
+		return RouteTypeAmazing
+	default:
+		return RouteTypeAmazing
+	}
 }

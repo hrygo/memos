@@ -156,10 +156,18 @@ func (s *llmService) ChatWithTools(ctx context.Context, messages []Message, tool
 		}
 	}
 
+	// Use lower temperature for tool calls to ensure consistent, deterministic behavior
+	// High temperature (0.7) causes the model to be creative and inconsistent with tool formats
+	// Low temperature (0.1) ensures the model follows the tool calling format correctly
+	toolCallTemperature := float32(0.1)
+	if s.temperature < 0.1 {
+		toolCallTemperature = s.temperature // Respect even lower temperature if configured
+	}
+
 	req := openai.ChatCompletionRequest{
 		Model:       s.model,
 		MaxTokens:   s.maxTokens,
-		Temperature: s.temperature,
+		Temperature: toolCallTemperature,
 		Messages:    convertMessages(messages),
 		Tools:       openaiTools,
 	}

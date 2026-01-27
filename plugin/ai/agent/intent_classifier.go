@@ -5,27 +5,31 @@ import (
 	"strings"
 )
 
-// TaskIntent represents the type of schedule task.
+// TaskIntent represents the type of task across all agents.
+// This unified intent system covers memo, schedule, and amazing agents.
 type TaskIntent string
 
 const (
-	// IntentSimpleCreate is for simple single schedule creation.
-	IntentSimpleCreate TaskIntent = "simple_create"
+	// Schedule-related intents
+	IntentSimpleCreate TaskIntent = "schedule_create" // 创建单个日程
+	IntentSimpleQuery  TaskIntent = "schedule_query" // 查询日程/空闲
+	IntentSimpleUpdate TaskIntent = "schedule_update" // 修改/删除日程
+	IntentBatchCreate  TaskIntent = "schedule_batch"  // 重复日程
+	IntentConflictResolve TaskIntent = "schedule_conflict" // 处理冲突
 
-	// IntentSimpleQuery is for simple schedule queries.
-	IntentSimpleQuery TaskIntent = "simple_query"
+	// Memo-related intents
+	IntentMemoSearch TaskIntent = "memo_search" // 搜索笔记
+	IntentMemoCreate TaskIntent = "memo_create" // 创建笔记
 
-	// IntentSimpleUpdate is for simple schedule modifications.
-	IntentSimpleUpdate TaskIntent = "simple_update"
+	// Amazing agent intent
+	IntentAmazing TaskIntent = "amazing" // 综合分析
 
-	// IntentBatchCreate is for batch schedule creation (e.g., "每天", "每周").
-	IntentBatchCreate TaskIntent = "batch_create"
-
-	// IntentConflictResolve is for handling schedule conflicts.
-	IntentConflictResolve TaskIntent = "conflict_resolve"
-
-	// IntentMultiQuery is for queries that span multiple domains.
-	IntentMultiQuery TaskIntent = "multi_query"
+	// Legacy aliases for backward compatibility
+	IntentScheduleQuery  TaskIntent = "schedule_query"
+	IntentScheduleCreate TaskIntent = "schedule_create"
+	IntentScheduleUpdate TaskIntent = "schedule_update"
+	IntentBatchSchedule  TaskIntent = "schedule_batch"
+	IntentMultiQuery     TaskIntent = "amazing" // Alias to amazing
 )
 
 // IntentClassifier classifies user input into task intents.
@@ -102,10 +106,23 @@ func NewIntentClassifier() *IntentClassifier {
 }
 
 // Classify determines the intent of the user input.
+// Handles negation patterns (e.g., "不要创建", "不是今天").
 func (ic *IntentClassifier) Classify(input string) TaskIntent {
 	lowerInput := strings.ToLower(input)
 
-	// Check for batch patterns first (highest priority)
+	// Check for explicit negation first - usually means query or clarification
+	if ic.hasNegation(input, lowerInput) {
+		// "不要/别/不用" + action → likely a query or clarification request
+		// e.g., "不要创建会议" → user might be asking what they have instead
+		return IntentSimpleQuery
+	}
+
+	// Check for memo-related intents first
+	if ic.isMemoSearchIntent(input, lowerInput) {
+		return IntentMemoSearch
+	}
+
+	// Check for batch patterns (highest priority for schedule)
 	if ic.isBatchIntent(input, lowerInput) {
 		return IntentBatchCreate
 	}
@@ -192,10 +209,59 @@ func (ic *IntentClassifier) hasTimeAndAction(input string) bool {
 	return false
 }
 
+// hasNegation checks if the input contains negation words.
+// Negation usually indicates a query or clarification rather than an action.
+// Examples: "不要创建", "别安排", "不是今天", "不用开会"
+func (ic *IntentClassifier) hasNegation(input, lowerInput string) bool {
+	negationWords := []string{
+		// Chinese
+		"不要", "别", "不用", "没有", "无", "非", "不是",
+		"取消", "删除", "移除",
+		// English
+		"don't", "dont", "no", "not", "never", "cancel", "delete", "remove",
+	}
+
+	for _, word := range negationWords {
+		if strings.Contains(lowerInput, strings.ToLower(word)) {
+			return true
+		}
+	}
+
+	// Check for "不是" pattern specifically - often means clarification
+	if strings.Contains(input, "不是") || strings.Contains(lowerInput, "is not") || strings.Contains(lowerInput, "isnt") {
+		return true
+	}
+
+	return false
+}
+
+// isMemoSearchIntent checks if the input suggests a memo search operation.
+func (ic *IntentClassifier) isMemoSearchIntent(input, lowerInput string) bool {
+	memoSearchKeywords := []string{
+		// Chinese
+		"笔记", "memo", "note", "记录", "搜索", "search", "查找", "find",
+		"写过", "记过", "提到", "关于",
+		// English
+		"memo", "note", "find", "search", "look for",
+	}
+
+	for _, keyword := range memoSearchKeywords {
+		if strings.Contains(lowerInput, strings.ToLower(keyword)) {
+			// Make sure it's not also a schedule create request
+			// e.g., "明天3点开会" is schedule, not memo
+			if !ic.hasTimeAndAction(input) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // ShouldUsePlanExecute returns true if the intent should use Plan-Execute mode.
 func (ic *IntentClassifier) ShouldUsePlanExecute(intent TaskIntent) bool {
 	switch intent {
-	case IntentBatchCreate, IntentMultiQuery:
+	case IntentBatchCreate, IntentAmazing:
 		return true
 	default:
 		return false

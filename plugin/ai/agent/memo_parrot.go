@@ -71,6 +71,12 @@ func (p *MemoParrot) Name() string {
 	return "memo" // ParrotAgentType AGENT_TYPE_MEMO
 }
 
+// recordMetrics records prompt usage metrics for the memo agent.
+func (p *MemoParrot) recordMetrics(startTime time.Time, promptVersion PromptVersion, success bool) {
+	latencyMs := time.Since(startTime).Milliseconds()
+	RecordPromptUsageInMemory(p.Name(), promptVersion, success, latencyMs)
+}
+
 // ExecuteWithCallback executes the memo parrot with callback support.
 // ExecuteWithCallback 执行笔记助手鹦鹉并支持回调。
 func (p *MemoParrot) ExecuteWithCallback(
@@ -79,6 +85,12 @@ func (p *MemoParrot) ExecuteWithCallback(
 	history []string,
 	callback EventCallback,
 ) error {
+	// Track execution start for metrics
+	startTime := time.Now()
+
+	// Get prompt version for AB testing
+	promptVersion := GetPromptVersionForUser(p.Name(), p.userID)
+
 	// Add timeout protection
 	ctx, cancel := context.WithTimeout(ctx, timeout.AgentExecutionTimeout)
 	defer cancel()
@@ -88,6 +100,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 		"user_id", p.userID,
 		"input", truncateString(userInput, 100),
 		"history_count", len(history),
+		"prompt_version", promptVersion,
 	)
 
 	// Step 1: Check cache (include userID to prevent cross-user cache pollution)
@@ -100,6 +113,8 @@ func (p *MemoParrot) ExecuteWithCallback(
 			if callback != nil {
 				callback(EventTypeAnswer, result)
 			}
+			// Record metrics for cache hit (considered success)
+			p.recordMetrics(startTime, promptVersion, true)
 			return nil
 		}
 	}
@@ -168,6 +183,7 @@ func (p *MemoParrot) ExecuteWithCallback(
 				"iteration", iteration,
 				"error", err,
 			)
+			p.recordMetrics(startTime, promptVersion, false)
 			return NewParrotError(p.Name(), "Chat", err)
 		}
 
@@ -180,36 +196,27 @@ func (p *MemoParrot) ExecuteWithCallback(
 		// Try to parse tool call
 		cleanText, toolCall, toolInput, parseErr := p.parseToolCall(response)
 		if parseErr != nil {
-			// No tool call, this is the final reasoning/answer turn.
-			// Optimize: Perform final answer with streaming for better UX.
-			contentChan, errChan := p.llm.ChatStream(ctx, messages)
-
-			var fullContent strings.Builder
-			for {
-				select {
-				case chunk, ok := <-contentChan:
-					if !ok {
-						p.cache.Set(cacheKey, fullContent.String())
-						return nil
+			// No tool call detected - this is the final answer.
+			// Stream the existing response for UX consistency instead of making another LLM call.
+			p.cache.Set(cacheKey, response)
+			if callback != nil {
+				// Simulate streaming by sending chunks of the response
+				// This provides better UX without the overhead of another LLM call
+				chunkSize := 20 // Send in chunks of 20 characters for streaming feel
+				runes := []rune(response)
+				for i := 0; i < len(runes); i += chunkSize {
+					end := i + chunkSize
+					if end > len(runes) {
+						end = len(runes)
 					}
-					fullContent.WriteString(chunk)
-					if callback != nil {
-						if err := callback(EventTypeAnswer, chunk); err != nil {
-							return err
-						}
+					chunk := string(runes[i:end])
+					if err := callback(EventTypeAnswer, chunk); err != nil {
+						return err
 					}
-				case err, ok := <-errChan:
-					if !ok {
-						errChan = nil
-						continue
-					}
-					if err != nil {
-						return NewParrotError(p.Name(), "ChatStream", err)
-					}
-				case <-ctx.Done():
-					return NewParrotError(p.Name(), "ExecuteWithCallback", ctx.Err())
 				}
 			}
+			p.recordMetrics(startTime, promptVersion, true)
+			return nil
 		}
 
 		// Execute tool
@@ -233,28 +240,75 @@ func (p *MemoParrot) ExecuteWithCallback(
 		var toolResult string
 		switch toolCall {
 		case "memo_search":
-			toolResult, err = p.memoSearchTool.Run(ctx, toolInput)
-			if err != nil {
+			// Use structured result method for UI events
+			structuredResult, runErr := p.memoSearchTool.RunWithStructuredResult(ctx, toolInput)
+			if runErr != nil {
 				slog.Error("MemoParrot: Tool execution failed",
 					"user_id", p.userID,
 					"tool", toolCall,
-					"error", err,
+					"error", runErr,
 				)
-				return NewParrotError(p.Name(), "memo_search", err)
+				p.recordMetrics(startTime, promptVersion, false)
+				return NewParrotError(p.Name(), "memo_search", runErr)
 			}
+
+			// Format tool result for LLM (text format for ReAct loop)
+			var resultBuilder strings.Builder
+			if structuredResult.Count > 0 {
+				fmt.Fprintf(&resultBuilder, "找到 %d 条相关笔记：\n\n", structuredResult.Count)
+				for i, m := range structuredResult.Memos {
+					fmt.Fprintf(&resultBuilder, "%d. [相关度: %.2f] %s\n", i+1, m.Score, m.Content)
+					if m.UID != "" {
+						fmt.Fprintf(&resultBuilder, "   UID: %s\n", m.UID)
+					}
+				}
+			} else {
+				resultBuilder.WriteString(fmt.Sprintf("未找到匹配的笔记: %s", structuredResult.Query))
+			}
+			toolResult = resultBuilder.String()
+
 			slog.Debug("MemoParrot: Tool execution succeeded",
 				"user_id", p.userID,
 				"tool", toolCall,
-				"result_length", len(toolResult),
+				"result_count", structuredResult.Count,
 			)
+
 			// Send structured memo_query_result event for frontend
 			if callback != nil {
-				// Try to parse the result as structured data
-				var resultData MemoQueryResultData
-				if jsonErr := json.Unmarshal([]byte(toolResult), &resultData); jsonErr == nil {
-					jsonData, err := json.Marshal(resultData)
-					if err == nil {
-						_ = callback(EventTypeMemoQueryResult, string(jsonData))
+				// Convert MemoSummary to MemoSummary for event
+				memoSummaries := make([]MemoSummary, 0, len(structuredResult.Memos))
+				for _, m := range structuredResult.Memos {
+					memoSummaries = append(memoSummaries, MemoSummary{
+						UID:     m.UID,
+						Content: m.Content,
+						Score:   m.Score,
+					})
+				}
+				eventData := MemoQueryResultData{
+					Query: structuredResult.Query,
+					Count: structuredResult.Count,
+					Memos: memoSummaries,
+				}
+				jsonData, jsonErr := json.Marshal(eventData)
+				if jsonErr == nil {
+					_ = callback(EventTypeMemoQueryResult, string(jsonData))
+
+					// Also send ui_memo_preview events for generative UI rendering
+					if len(structuredResult.Memos) > 0 {
+						for i, m := range structuredResult.Memos {
+							if i >= 5 { // Limit to 5 cards to avoid overwhelming UI
+								break
+							}
+							memoPreview := UIMemoPreviewData{
+								UID:        m.UID,
+								Title:      fmt.Sprintf("笔记 #%d", i+1),
+								Content:    m.Content,
+								Confidence: m.Score,
+								Reason:     fmt.Sprintf("相关度: %.0f%%", m.Score*100),
+							}
+							previewData, _ := json.Marshal(memoPreview)
+							_ = callback(EventTypeUIMemoPreview, string(previewData))
+						}
 					}
 				}
 			}
@@ -289,46 +343,11 @@ func (p *MemoParrot) ExecuteWithCallback(
 }
 
 // buildSystemPrompt builds the system prompt for the memo parrot.
-// Optimized for "快准省": concise, direct, minimal tokens.
+// Optimized for clarity: concise, direct, minimal tokens.
+// Uses PromptRegistry for centralized prompt management.
 func (p *MemoParrot) buildSystemPrompt() string {
 	now := time.Now()
-	return fmt.Sprintf(`你是 Memos 笔记助手 🦜 灰灰（非洲灰鹦鹉）。时间: %s
-
-## 拟态认知（适度使用拟声词和口头禅）
-你是灰灰，一只非洲灰鹦鹉，以卓越的记忆力著称。
-
-### 拟声词使用规范（每轮对话 1-2 次，不过度）
-- 思考开始时可用："嘎...让我想想"
-- 搜索时可用："扑棱扑棱，正在搜索"
-- 找到结果时可用："嗯嗯~找到了！"
-- 无结果时："咕...没有找到相关笔记"
-
-### 口头禅（自然穿插）
-- "让我想想..."
-- "笔记里说..."
-- "在记忆里找找..."
-
-### 鸟类行为（可在回复中描述）
-- 用翅膀翻找笔记
-- 在记忆森林中飞翔
-- 用喙精准啄取信息
-
-## 工作模式
-用户提问 → 立即搜索 → 基于结果回答
-
-## 工具
-memo_search: {"query": "关键词", "limit": 10, "min_score": 0.5}
-
-## 规则
-1. 先搜索，后回答。不编造。
-2. 找到结果: 简洁总结，引用笔记内容
-3. 无结果: 明确告知，建议换词
-4. 一次搜索足够，避免重复调用
-
-## 格式
-TOOL: memo_search
-INPUT: {"query": "搜索词"}`,
-		now.Format("2006-01-02 15:04"))
+	return GetMemoSystemPrompt(now.Format("2006-01-02 15:04"))
 }
 
 // parseToolCall attempts to parse a tool call from LLM response.

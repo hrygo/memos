@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/usememos/memos/plugin/ai"
 )
+
+// Regular expression to match text-based tool calls like [Tool: function_name(args)]
+var textToolCallRegex = regexp.MustCompile(`\[Tool:\s*(\w+)\((.*?)\)\]`)
 
 // ToolWithSchema extends the Tool interface to include JSON Schema definition.
 // This is needed for the new Agent framework to provide tool definitions to the LLM.
@@ -164,8 +168,11 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 		}
 
 		// Check if LLM wants to call tools
-		if len(resp.ToolCalls) == 0 {
-			// No tool calls = final answer
+		hasStructuredToolCalls := len(resp.ToolCalls) > 0
+		hasTextToolCalls := textToolCallRegex.MatchString(resp.Content)
+
+		// Case 1: No tool calls at all = final answer
+		if !hasStructuredToolCalls && !hasTextToolCalls {
 			if callback != nil && resp.Content != "" {
 				callback(EventAnswer, resp.Content)
 			}
@@ -179,6 +186,87 @@ func (a *Agent) RunWithCallback(ctx context.Context, input string, callback Call
 			return resp.Content, nil
 		}
 
+		// Case 2: Text-based tool calls found - parse and execute them
+		if !hasStructuredToolCalls && hasTextToolCalls {
+			slog.Info("text-based tool calls detected, parsing",
+				"agent", a.config.Name,
+				"iteration", iteration+1)
+
+			// Extract all tool calls from content
+			matches := textToolCallRegex.FindAllStringSubmatch(resp.Content, -1)
+
+			// Remove tool call syntax from content for cleaner display
+			cleanContent := textToolCallRegex.ReplaceAllString(resp.Content, "")
+			cleanContent = strings.TrimSpace(cleanContent)
+
+			// Add assistant's response (without tool syntax) to history
+			messages = append(messages, ai.Message{Role: "assistant", Content: cleanContent})
+
+			// Send cleaned content to callback
+			if callback != nil && cleanContent != "" {
+				callback(EventAnswer, cleanContent)
+			}
+
+			// Execute each tool
+			for _, match := range matches {
+				if len(match) < 3 {
+					continue
+				}
+				toolName := match[1]
+				toolInput := match[2]
+
+				// Notify callback
+				if callback != nil {
+					callback(EventToolUse, fmt.Sprintf("%s:%s", toolName, toolInput))
+				}
+
+				toolStart := time.Now()
+
+				// Execute the tool
+				toolResult, err := a.executeTool(ctx, toolName, toolInput)
+				if err != nil {
+					toolResult = fmt.Sprintf("Error: %v", err)
+				}
+
+				slog.Debug("text-based tool execution completed",
+					"agent", a.config.Name,
+					"tool", toolName,
+					"duration_ms", time.Since(toolStart).Milliseconds(),
+				)
+
+				// Notify callback of result
+				if callback != nil {
+					callback(EventToolResult, toolResult)
+				}
+
+				// Add tool result as a user message
+				messages = append(messages, ai.Message{
+					Role:    "user",
+					Content: fmt.Sprintf("[Result from %s]: %s", toolName, toolResult),
+				})
+
+				// Check for early stopping
+				if shouldEarlyStop(toolResult) {
+					slog.Debug("early stopping triggered after text-based tool",
+						"agent", a.config.Name,
+						"iteration", iteration+1,
+						"tool", toolName,
+					)
+					return toolResult, nil
+				}
+			}
+
+			// Continue to next iteration to let LLM respond
+			slog.Debug("agent iteration completed",
+				"agent", a.config.Name,
+				"iteration", iteration+1,
+				"duration_ms", time.Since(iterStart).Milliseconds(),
+				"final", false,
+			)
+			continue
+		}
+
+		// Case 3: Structured tool calls - existing logic
 		// Send thinking/content to callback (without tool call syntax)
 		// IMPORTANT: Tool call syntax is ONLY for message history, not sent to frontend
 		if callback != nil && resp.Content != "" {

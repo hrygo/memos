@@ -87,14 +87,22 @@ func (t *MemoSearchTool) Name() string {
 func (t *MemoSearchTool) Description() string {
 	return `Searches for memos using semantic and keyword search.
 
-Input format: JSON with 'query' field (required), 'limit' (optional, default 10), 'min_score' (optional, default 0.5).
+INPUT FORMAT:
+{"query": "搜索词", "limit": 10, "min_score": 0.5}
+- query (required): search keywords
+- limit (optional): max results, default 10
+- min_score (optional): min relevance 0-1, default 0.5
 
-Examples:
-- {"query": "Python programming"}
-- {"query": "meeting notes", "limit": 5}
-- {"query": "important", "limit": 10, "min_score": 0.7}
+OUTPUT FORMAT (text):
+Found N memo(s) matching query: xxx
 
-The tool returns relevant memos with their content and relevance scores.`
+1. [Score: 0.85] memo content...
+   UID: xxxxx
+
+2. [Score: 0.72] another memo...
+   UID: yyyyy
+
+NO RESULTS: "No memos found matching query: xxx"`
 }
 
 // MemoSearchInput represents the input for memo search.

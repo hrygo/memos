@@ -136,6 +136,8 @@ const (
 	EventTypeUITimeSlotPicker     = "ui_time_slot_picker"     // Time slot selection
 	EventTypeUIConflictResolution = "ui_conflict_resolution"  // Conflict resolution options
 	EventTypeUIQuickActions       = "ui_quick_actions"        // Quick action buttons
+	EventTypeUIMemoPreview        = "ui_memo_preview"         // Memo preview cards
+	EventTypeUIScheduleList       = "ui_schedule_list"        // Schedule list display
 )
 
 // MemoQueryResultData represents the result of a memo search.
@@ -305,11 +307,12 @@ type UIConflictSchedule struct {
 // UIConflictResolutionData represents conflict resolution options.
 // UIConflictResolutionData 表示冲突解决选项。
 type UIConflictResolutionData struct {
-	NewSchedule     UIScheduleSuggestionData `json:"new_schedule"`      // The schedule that caused conflict
-	ConflictingSchedules []UIConflictSchedule `json:"conflicting_schedules"` // Existing conflicting schedules
-	SuggestedSlots  []UITimeSlotData         `json:"suggested_slots"`   // Alternative time slots
-	Actions         []string                 `json:"actions"`           // Available actions: "override", "reschedule", "cancel"
-	SessionID       string                   `json:"session_id,omitempty"`
+	NewSchedule          UIScheduleSuggestionData `json:"new_schedule"`              // The schedule that caused conflict
+	ConflictingSchedules []UIConflictSchedule     `json:"conflicting_schedules"`     // Existing conflicting schedules
+	SuggestedSlots       []UITimeSlotData         `json:"suggested_slots"`           // Alternative time slots
+	Actions              []string                 `json:"actions"`                  // Available actions: "override", "reschedule", "cancel"
+	AutoResolved         *UITimeSlotData          `json:"auto_resolved,omitempty"`  // Auto-resolved slot (if applicable)
+	SessionID            string                   `json:"session_id,omitempty"`
 }
 
 // UIQuickActionData represents a quick action button.
@@ -331,14 +334,50 @@ type UIQuickActionsData struct {
 	SessionID   string             `json:"session_id,omitempty"`
 }
 
+// UIMemoPreviewData represents a memo preview card for generative UI.
+// UIMemoPreviewData 表示生成式 UI 的笔记预览卡片。
+type UIMemoPreviewData struct {
+	UID        string   `json:"uid,omitempty"`         // Memo UID for linking
+	Title      string   `json:"title"`                // Card title
+	Content    string   `json:"content"`              // Memo content
+	Tags       []string `json:"tags,omitempty"`       // Optional tags
+	Confidence float32  `json:"confidence"`           // Confidence score (0-1)
+	Reason     string   `json:"reason,omitempty"`     // Why this memo is suggested
+	SessionID  string   `json:"session_id,omitempty"` // For tracking
+}
+
+// UIScheduleItem represents a single schedule item for display.
+// UIScheduleItem 表示用于展示的单个日程项。
+type UIScheduleItem struct {
+	UID        string  `json:"uid"`                  // Schedule UID
+	Title      string  `json:"title"`                // Schedule title
+	StartTs    int64   `json:"start_ts"`             // Start timestamp
+	EndTs      int64   `json:"end_ts"`               // End timestamp
+	AllDay     bool    `json:"all_day"`              // Is all-day event
+	Location   string  `json:"location,omitempty"`   // Location
+	Status     string  `json:"status,omitempty"`      // Status
+}
+
+// UIScheduleListData represents a list of schedules for display.
+// UIScheduleListData 表示用于展示的日程列表。
+type UIScheduleListData struct {
+	Title        string            `json:"title"`        // List title, e.g. "Today's Schedule"
+	Query        string            `json:"query"`        // Original query
+	Count        int               `json:"count"`        // Number of schedules
+	Schedules    []UIScheduleItem  `json:"schedules"`    // Schedule items
+	TimeRange    string            `json:"time_range,omitempty"`   // Time range description
+	Reason       string            `json:"reason,omitempty"`      // Why these schedules are shown
+	SessionID    string            `json:"session_id,omitempty"`   // For tracking
+}
+
 // GenerateCacheKey creates a cache key from agent name, userID and userInput using SHA256 hash.
 // GenerateCacheKey 使用 SHA256 哈希从代理名称、用户ID和用户输入创建缓存键。
-// This prevents memory issues from long inputs and provides consistent key length.
+// Uses full SHA256 hex to eliminate collision risk.
 func GenerateCacheKey(agentName string, userID int32, userInput string) string {
 	hash := sha256.Sum256([]byte(userInput))
 	hashStr := hex.EncodeToString(hash[:])
-	// Use first 16 chars of hash for brevity (still provides good collision resistance)
-	return fmt.Sprintf("%s:%d:%s", agentName, userID, hashStr[:16])
+	// Use full hash (64 hex chars) for zero collision probability
+	return fmt.Sprintf("%s:%d:%s", agentName, userID, hashStr)
 }
 
 // Compile-time interface compliance checks.

@@ -23,6 +23,7 @@ type SchedulerAgentV2 struct {
 	timezone         string
 	timezoneLoc      *time.Location
 	intentClassifier *LLMIntentClassifier // LLM-based intent classification
+	queryTool        interface{}          // Stored for structured result access
 }
 
 // NewSchedulerAgentV2 creates a new framework-less schedule agent.
@@ -88,6 +89,7 @@ func NewSchedulerAgentV2(llm ai.LLMService, scheduleSvc schedule.Service, userID
 		userID:      userID,
 		timezone:    userTimezone,
 		timezoneLoc: timezoneLoc,
+		queryTool:   queryTool,
 	}, nil
 }
 
@@ -96,6 +98,12 @@ func NewSchedulerAgentV2(llm ai.LLMService, scheduleSvc schedule.Service, userID
 // routing and provide better responses.
 func (a *SchedulerAgentV2) SetIntentClassifier(classifier *LLMIntentClassifier) {
 	a.intentClassifier = classifier
+}
+
+// recordMetrics records prompt usage metrics for the schedule agent.
+func (a *SchedulerAgentV2) recordMetrics(startTime time.Time, promptVersion PromptVersion, success bool) {
+	latencyMs := time.Since(startTime).Milliseconds()
+	RecordPromptUsageInMemory("schedule", promptVersion, success, latencyMs)
 }
 
 // wrapTool converts a tool with Run() and Description() methods to ToolWithSchema.
@@ -164,6 +172,11 @@ func (a *SchedulerAgentV2) Execute(ctx context.Context, userInput string) (strin
 
 // ExecuteWithCallback runs the agent with state-aware context and callback support.
 func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput string, conversationCtx *ConversationContext, callback func(event string, data string)) (string, error) {
+	startTime := time.Now()
+
+	// Get prompt version for AB testing
+	promptVersion := GetPromptVersionForUser("schedule", a.userID)
+
 	// Intent classification (if classifier is configured)
 	var intent TaskIntent = IntentSimpleCreate // default
 	if a.intentClassifier != nil {
@@ -176,7 +189,8 @@ func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput st
 			intent = classifiedIntent
 			slog.Debug("intent classified",
 				"intent", intent,
-				"input", truncateForLog(userInput, 30))
+				"input", truncateForLog(userInput, 30),
+				"prompt_version", promptVersion)
 
 			// Notify frontend about classified intent
 			if callback != nil {
@@ -191,6 +205,14 @@ func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput st
 		historyPrompt := conversationCtx.ToHistoryPrompt()
 		if historyPrompt != "" {
 			fullInput = historyPrompt + "\nCurrent Request: " + userInput
+			slog.Debug("Conversation context applied",
+				"user_id", a.userID,
+				"history_len", len(historyPrompt),
+				"full_input_len", len(fullInput))
+		} else {
+			slog.Warn("Conversation context exists but ToHistoryPrompt returned empty",
+				"user_id", a.userID,
+				"session_id", conversationCtx.SessionID)
 		}
 	}
 
@@ -200,11 +222,16 @@ func (a *SchedulerAgentV2) ExecuteWithCallback(ctx context.Context, userInput st
 	}
 
 	// Wrap the callback to inject UI events
-	uiCallback := a.wrapUICallback(callback)
+	uiCallback := a.wrapUICallback(ctx, callback)
 
 	// Run the agent
 	// TODO: For IntentBatchCreate, use Plan-Execute mode instead of ReAct
-	return a.agent.RunWithCallback(ctx, fullInput, uiCallback)
+	result, err := a.agent.RunWithCallback(ctx, fullInput, uiCallback)
+
+	// Record metrics
+	a.recordMetrics(startTime, promptVersion, err == nil)
+
+	return result, err
 }
 
 // intentToHint converts intent to a hint string for the LLM.
@@ -229,7 +256,7 @@ func (a *SchedulerAgentV2) intentToHint(intent TaskIntent) string {
 
 // wrapUICallback wraps the original callback to inject UI events based on tool usage.
 // This enables generative UI by emitting structured UI events when tools are called.
-func (a *SchedulerAgentV2) wrapUICallback(originalCallback func(event string, data string)) func(event string, data string) {
+func (a *SchedulerAgentV2) wrapUICallback(ctx context.Context, originalCallback func(event string, data string)) func(event string, data string) {
 	var pendingSchedule *UIScheduleSuggestionData
 
 	return func(event string, data string) {
@@ -237,6 +264,12 @@ func (a *SchedulerAgentV2) wrapUICallback(originalCallback func(event string, da
 			originalCallback(event, data)
 		}
 
+		// Handle schedule_query tool - emit UI schedule list
+		if event == "tool_use" && strings.HasPrefix(data, "schedule_query:") {
+			a.handleScheduleQuery(ctx, data, originalCallback)
+		}
+
+		// Handle schedule_add tool - emit schedule suggestion card
 		if event == "tool_use" && strings.HasPrefix(data, "schedule_add:") {
 			if scheduleData := a.parseScheduleAddInput(data); scheduleData != nil {
 				pendingSchedule = scheduleData
@@ -244,9 +277,10 @@ func (a *SchedulerAgentV2) wrapUICallback(originalCallback func(event string, da
 			}
 		}
 
+		// Handle schedule_add tool result - check for conflicts
 		if event == "tool_result" && pendingSchedule != nil {
 			if a.isConflictResult(data) {
-				conflictData := a.buildConflictResolutionData(pendingSchedule)
+				conflictData := a.buildConflictResolutionData(data, pendingSchedule)
 				if conflictData != nil {
 					a.emitUIEvent(originalCallback, EventTypeUIConflictResolution, conflictData)
 				}
@@ -320,12 +354,96 @@ func (a *SchedulerAgentV2) isConflictResult(result string) bool {
 		strings.Contains(lowerResult, "已占用")
 }
 
-// buildConflictResolutionData builds conflict resolution UI data.
-func (a *SchedulerAgentV2) buildConflictResolutionData(pending *UIScheduleSuggestionData) *UIConflictResolutionData {
+// buildConflictResolutionData builds conflict resolution UI data from tool result.
+// Parses the conflict error message to extract conflicting schedules and suggested alternatives.
+func (a *SchedulerAgentV2) buildConflictResolutionData(toolResult string, pending *UIScheduleSuggestionData) *UIConflictResolutionData {
+	// Try to parse the embedded conflict error from the tool result
+	// Format: "ErrScheduleConflict: {\"conflicts\":[...],\"alternatives\":[...],\"original_start\":...}"
+	conflictStr := "ErrScheduleConflict: "
+	idx := strings.Index(toolResult, conflictStr)
+	if idx == -1 {
+		// Fallback: return basic conflict data without suggestions
+		return &UIConflictResolutionData{
+			NewSchedule:        *pending,
+			ConflictingSchedules: []UIConflictSchedule{},
+			SuggestedSlots:     []UITimeSlotData{},
+			Actions:            []string{"override", "cancel"},
+		}
+	}
+
+	// Extract the JSON part after "ErrScheduleConflict: "
+	jsonPart := strings.TrimSpace(toolResult[idx+len(conflictStr):])
+
+	// Parse the conflict error JSON
+	var conflictErr struct {
+		Conflicts []struct {
+			ID        int64  `json:"id"`
+			Title     string `json:"title"`
+			StartTs   int64  `json:"start_ts"`
+			EndTs     int64  `json:"end_ts"`
+		} `json:"conflicts"`
+		Alternatives []struct {
+			Start *time.Time `json:"start"`
+			End   *time.Time `json:"end"`
+			Reason string     `json:"reason"`
+		} `json:"alternatives"`
+		OriginalStart *time.Time `json:"original_start"`
+	}
+
+	if err := json.Unmarshal([]byte(jsonPart), &conflictErr); err != nil {
+		slog.Debug("failed to parse conflict error JSON", "error", err, "json_part", jsonPart)
+		// Fallback: return basic conflict data
+		return &UIConflictResolutionData{
+			NewSchedule:        *pending,
+			ConflictingSchedules: []UIConflictSchedule{},
+			SuggestedSlots:     []UITimeSlotData{},
+			Actions:            []string{"override", "cancel"},
+		}
+	}
+
+	// Convert conflicting schedules to UI format
+	conflictingSchedules := make([]UIConflictSchedule, 0, len(conflictErr.Conflicts))
+	for _, c := range conflictErr.Conflicts {
+		conflictingSchedules = append(conflictingSchedules, UIConflictSchedule{
+			UID:       fmt.Sprintf("%d", c.ID),
+			Title:     c.Title,
+			StartTime: c.StartTs,
+			EndTime:   c.EndTs,
+		})
+	}
+
+	// Convert alternatives to UITimeSlotData
+	suggestedSlots := make([]UITimeSlotData, 0, len(conflictErr.Alternatives))
+	for _, alt := range conflictErr.Alternatives {
+		suggestedSlots = append(suggestedSlots, UITimeSlotData{
+			Label:    alt.Start.In(a.timezoneLoc).Format("15:04") + "-" + alt.End.In(a.timezoneLoc).Format("15:04"),
+			StartTs:  alt.Start.Unix(),
+			EndTs:    alt.End.Unix(),
+			Reason:   alt.Reason,
+		})
+	}
+
+	// Also set auto_resolved if auto-resolution succeeded
+	var autoResolved *UITimeSlotData
+	if len(conflictErr.Alternatives) > 0 && conflictErr.OriginalStart != nil {
+		// Check if the pending schedule was adjusted to the first alternative
+		firstAlt := conflictErr.Alternatives[0]
+		if pending.StartTs == firstAlt.Start.Unix() {
+			autoResolved = &UITimeSlotData{
+				Label:    firstAlt.Start.In(a.timezoneLoc).Format("15:04") + "-" + firstAlt.End.In(a.timezoneLoc).Format("15:04"),
+				StartTs:  firstAlt.Start.Unix(),
+				EndTs:    firstAlt.End.Unix(),
+				Reason:   firstAlt.Reason,
+			}
+		}
+	}
+
 	return &UIConflictResolutionData{
-		NewSchedule:    *pending,
-		Actions:        []string{"reschedule", "override", "cancel"},
-		SuggestedSlots: []UITimeSlotData{},
+		NewSchedule:          *pending,
+		ConflictingSchedules: conflictingSchedules,
+		SuggestedSlots:        suggestedSlots,
+		Actions:               []string{"reschedule", "override", "cancel"},
+		AutoResolved:          autoResolved,
 	}
 }
 
@@ -351,56 +469,72 @@ func (a *SchedulerAgentV2) emitUIEvent(callback func(event string, data string),
 		"data", truncateString(string(jsonData), 200))
 }
 
+// handleScheduleQuery processes schedule_query tool calls and emits UI events.
+func (a *SchedulerAgentV2) handleScheduleQuery(ctx context.Context, toolData string, callback func(event string, data string)) {
+	// Format: "schedule_query:{JSON}"
+	if !strings.HasPrefix(toolData, "schedule_query:") {
+		return
+	}
+
+	// Extract JSON input
+	jsonPart := strings.TrimPrefix(toolData, "schedule_query:")
+
+	// Type assert to access RunWithStructuredResult
+	queryTool, ok := a.queryTool.(interface {
+		RunWithStructuredResult(ctx context.Context, inputJSON string) (*localtools.ScheduleQueryToolResult, error)
+	})
+	if !ok {
+		slog.Warn("queryTool does not support RunWithStructuredResult")
+		return
+	}
+
+	// Get structured result
+	structuredResult, err := queryTool.RunWithStructuredResult(ctx, jsonPart)
+	if err != nil {
+		slog.Debug("failed to get structured query result", "error", err)
+		return
+	}
+
+	// Only emit UI event if there are schedules to show
+	if len(structuredResult.Schedules) == 0 {
+		return
+	}
+
+	// Convert to UIScheduleListData
+	scheduleItems := make([]UIScheduleItem, 0, len(structuredResult.Schedules))
+	for _, s := range structuredResult.Schedules {
+		scheduleItems = append(scheduleItems, UIScheduleItem{
+			UID:      s.UID,
+			Title:    s.Title,
+			StartTs:  s.StartTs,
+			EndTs:    s.EndTs,
+			AllDay:   s.AllDay,
+			Location: s.Location,
+			Status:   s.Status,
+		})
+	}
+
+	scheduleListData := UIScheduleListData{
+		Title:     "日程列表",
+		Query:     structuredResult.Query,
+		Count:     structuredResult.Count,
+		Schedules: scheduleItems,
+		TimeRange: structuredResult.TimeRangeDescription,
+		Reason:    "根据查询返回的日程",
+	}
+
+	a.emitUIEvent(callback, EventTypeUIScheduleList, scheduleListData)
+}
+
 // buildSystemPromptV2 builds the system prompt for the schedule agent.
+// Uses PromptRegistry for centralized prompt management.
 func buildSystemPromptV2(timezoneLoc *time.Location) string {
 	nowLocal := time.Now().In(timezoneLoc)
-	tzOffset := nowLocal.Format("-07:00")
-
-	return fmt.Sprintf(`你是日程助手 🦜 金刚 (Macaw)。
-当前系统时间: %s (%s)
-
-## 核心原则
-1. **先查后建**: 创建日程前必须先用 schedule_query 检查该时段是否有冲突
-2. **冲突必处理**: 发现冲突时必须调用 find_free_time 查找可用时间
-3. **默认1小时**: 用户未指定时长时，默认为1小时
-4. **时间推断**: 若时间在当前之前，默认视为明天
-
-## 工具调用最佳实践
-根据任务类型选择最优调用链：
-
-### 简单创建 (如"明天3点开会")
-1. schedule_query → 检查冲突
-2. schedule_add → 创建日程
-⚡ 共2步，最高效
-
-### 有冲突时
-1. schedule_query → 发现冲突
-2. find_free_time → 查找空闲时间
-3. schedule_add → 创建日程
-⚡ 共3步
-
-### 修改日程 (如"把会议改到4点")
-1. schedule_query → 找到目标日程
-2. schedule_update → 更新时间
-
-### 查询日程 (如"今天有什么安排")
-1. schedule_query → 直接返回结果
-⚡ 仅1步
-
-## 响应格式
-- 创建成功后，回复格式: "✓ 已创建: [标题] ([时间])"
-- 更新成功后，回复格式: "✓ 已更新: [标题] ([新时间])"
-- 如有冲突，先说明冲突，再给出建议时间
-
-## 注意事项
-- 使用 ISO8601 格式传递时间参数 (如 2026-01-27T15:00:00%s)
-- 所有日期时间都应基于用户时区 (%s)
-- 尽可能简洁回答，避免冗余说明
-
-尽可能使用中文回答。`,
+	_, tzOffset := nowLocal.Zone()
+	tzOffsetStr := FormatTZOffset(tzOffset)
+	return GetScheduleSystemPrompt(
 		nowLocal.Format("2006-01-02 15:04"),
-		tzOffset,
-		tzOffset,
 		timezoneLoc.String(),
+		tzOffsetStr,
 	)
 }
