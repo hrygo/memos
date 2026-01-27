@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -157,6 +157,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({
   const { t } = useTranslation();
   const timeConfig = useMemo(() => getTimeConfig(), []);
   const [isSending, setIsSending] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const greetingText = t(timeConfig.greetingKey);
   const timeHint = t(timeConfig.hintKey);
@@ -188,12 +189,22 @@ export const PartnerGreeting = memo(function PartnerGreeting({
     if (isSending) return;
     setIsSending(true);
     onSendMessage?.(prompt.prompt);
-    if (onSendComplete) {
-      setTimeout(() => setIsSending(false), 3000);
-    } else {
-      setTimeout(() => setIsSending(false), 500);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
+    const delay = onSendComplete ? 3000 : 500;
+    timeoutRef.current = setTimeout(() => setIsSending(false), delay);
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={cn("flex flex-col items-center justify-center h-full w-full px-6 py-8", className)}>
