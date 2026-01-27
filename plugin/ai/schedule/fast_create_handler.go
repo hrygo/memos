@@ -46,10 +46,8 @@ func (h *FastCreateHandler) Handle(ctx context.Context, userID int32, input stri
 	// Try fast parsing
 	result, err := h.parser.Parse(ctx, userID, input)
 	if err != nil {
-		return &AgentResponse{
-			Type:    ResponseTypeError,
-			Message: "解析失败，请重试",
-		}, err
+		// Return nil response on error to ensure caller checks error first
+		return nil, err
 	}
 
 	if !result.CanFastCreate {

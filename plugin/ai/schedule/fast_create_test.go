@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -264,14 +265,10 @@ func TestGeneratePreview(t *testing.T) {
 
 	checks := []string{"会议", "01月28日", "15:00", "16:00", "60 分钟", "会议室A", "15 分钟"}
 	for _, check := range checks {
-		if !containsStr(preview, check) {
+		if !strings.Contains(preview, check) {
 			t.Errorf("Preview should contain %q, got: %s", check, preview)
 		}
 	}
-}
-
-func containsStr(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || containsStr(s[1:], substr)))
 }
 
 func TestApplyDefaults(t *testing.T) {

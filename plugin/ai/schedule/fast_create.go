@@ -3,6 +3,7 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strings"
 	"time"
@@ -10,6 +11,9 @@ import (
 	"github.com/usememos/memos/plugin/ai/aitime"
 	"github.com/usememos/memos/plugin/ai/habit"
 )
+
+// ErrTimeServiceNotConfigured is returned when time service is not available.
+var ErrTimeServiceNotConfigured = errors.New("time service not configured")
 
 // ScheduleRequest represents a schedule creation request.
 type ScheduleRequest struct {
@@ -92,7 +96,7 @@ func (p *FastCreateParser) Parse(ctx context.Context, userID int32, input string
 // extractTime extracts time from user input using TimeService.
 func (p *FastCreateParser) extractTime(ctx context.Context, input string) (time.Time, error) {
 	if p.timeService == nil {
-		return time.Time{}, nil
+		return time.Time{}, ErrTimeServiceNotConfigured
 	}
 
 	// Use ParseNaturalTime to get a time range
@@ -155,10 +159,10 @@ var timeRemovalPatterns = []*regexp.Regexp{
 }
 
 // Action word mappings for title generation.
+// Keys are lowercase for case-insensitive matching.
 var actionMappings = map[string]string{
 	"开会":         "会议",
 	"meeting":    "Meeting",
-	"Meeting":    "Meeting",
 	"约":          "约会",
 	"面试":         "面试",
 	"汇报":         "工作汇报",
