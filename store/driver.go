@@ -99,4 +99,13 @@ type Driver interface {
 	CreateAIMessage(ctx context.Context, create *AIMessage) (*AIMessage, error)
 	ListAIMessages(ctx context.Context, find *FindAIMessage) ([]*AIMessage, error)
 	DeleteAIMessage(ctx context.Context, delete *DeleteAIMessage) error
+
+	// EpisodicMemory model related methods.
+	CreateEpisodicMemory(ctx context.Context, create *EpisodicMemory) (*EpisodicMemory, error)
+	ListEpisodicMemories(ctx context.Context, find *FindEpisodicMemory) ([]*EpisodicMemory, error)
+	DeleteEpisodicMemory(ctx context.Context, delete *DeleteEpisodicMemory) error
+
+	// UserPreferences model related methods.
+	UpsertUserPreferences(ctx context.Context, upsert *UpsertUserPreferences) (*UserPreferences, error)
+	GetUserPreferences(ctx context.Context, find *FindUserPreferences) (*UserPreferences, error)
 }

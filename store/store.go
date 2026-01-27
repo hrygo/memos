@@ -84,3 +84,23 @@ func (s *Store) ListAIMessages(ctx context.Context, find *FindAIMessage) ([]*AIM
 func (s *Store) DeleteAIMessage(ctx context.Context, delete *DeleteAIMessage) error {
 	return s.driver.DeleteAIMessage(ctx, delete)
 }
+
+func (s *Store) CreateEpisodicMemory(ctx context.Context, create *EpisodicMemory) (*EpisodicMemory, error) {
+	return s.driver.CreateEpisodicMemory(ctx, create)
+}
+
+func (s *Store) ListEpisodicMemories(ctx context.Context, find *FindEpisodicMemory) ([]*EpisodicMemory, error) {
+	return s.driver.ListEpisodicMemories(ctx, find)
+}
+
+func (s *Store) DeleteEpisodicMemory(ctx context.Context, delete *DeleteEpisodicMemory) error {
+	return s.driver.DeleteEpisodicMemory(ctx, delete)
+}
+
+func (s *Store) UpsertUserPreferences(ctx context.Context, upsert *UpsertUserPreferences) (*UserPreferences, error) {
+	return s.driver.UpsertUserPreferences(ctx, upsert)
+}
+
+func (s *Store) GetUserPreferences(ctx context.Context, find *FindUserPreferences) (*UserPreferences, error) {
+	return s.driver.GetUserPreferences(ctx, find)
+}
