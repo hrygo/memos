@@ -23,9 +23,13 @@ export function useAITools() {
    * Process an event from the AI stream and add UI tools if present
    */
   const processEvent = useCallback((event: ParsedEvent) => {
-    console.log("[useAITools] processEvent called:", event);
+    if (import.meta.env.DEV) {
+      console.log("[useAITools] processEvent called:", event);
+    }
     if (!event.uiType || !event.uiData) {
-      console.log("[useAITools] Skipping - no uiType or uiData");
+      if (import.meta.env.DEV) {
+        console.log("[useAITools] Skipping - no uiType or uiData");
+      }
       return;
     }
 
@@ -58,7 +62,9 @@ export function useAITools() {
       case "ui_memo_preview": {
         toolType = "memo_preview";
         toolData = event.uiData as UIMemoPreviewData;
-        console.log("[useAITools] Processing memo_preview:", toolData);
+        if (import.meta.env.DEV) {
+          console.log("[useAITools] Processing memo_preview:", toolData);
+        }
         break;
       }
       case "ui_progress_tracker": {
@@ -69,11 +75,15 @@ export function useAITools() {
       case "ui_schedule_list": {
         toolType = "schedule_list";
         toolData = event.uiData as UIScheduleListData;
-        console.log("[useAITools] Processing schedule_list:", toolData);
+        if (import.meta.env.DEV) {
+          console.log("[useAITools] Processing schedule_list:", toolData);
+        }
         break;
       }
       default:
-        console.log("[useAITools] Unknown uiType:", event.uiType);
+        if (import.meta.env.DEV) {
+          console.log("[useAITools] Unknown uiType:", event.uiType);
+        }
         return;
     }
 
@@ -84,7 +94,9 @@ export function useAITools() {
       timestamp: Date.now(),
     };
 
-    console.log("[useAITools] Adding tool:", newTool);
+    if (import.meta.env.DEV) {
+      console.log("[useAITools] Adding tool:", newTool);
+    }
     setTools((prev) => [...prev, newTool]);
   }, []);
 
@@ -92,7 +104,9 @@ export function useAITools() {
    * Handle user action from a UI tool
    */
   const handleAction = useCallback((action: UIAction) => {
-    console.log("[useAITools] User action:", action);
+    if (import.meta.env.DEV) {
+      console.log("[useAITools] User action:", action);
+    }
 
     // Remove the tool after action
     setTools((prev) => prev.filter((t) => t.id !== action.toolId));

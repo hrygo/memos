@@ -277,7 +277,9 @@ export function useSchedules(request: Partial<ListSchedulesRequestWithStringTs> 
         );
         return response;
       } catch (error) {
-        console.error("[useSchedules] API Error:", error);
+        if (import.meta.env.DEV) {
+          console.error("[useSchedules] API Error:", error);
+        }
         throw error;
       }
     },

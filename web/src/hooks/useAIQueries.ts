@@ -149,17 +149,21 @@ export function useChat() {
         conversationId: params.conversationId,
       });
 
-      console.debug("[AI Chat] Starting stream", {
-        messageLength: params.message.length,
-        agentType: params.agentType,
-        historyCount: params.history?.length ?? 0,
-      });
+      if (import.meta.env.DEV) {
+        console.debug("[AI Chat] Starting stream", {
+          messageLength: params.message.length,
+          agentType: params.agentType,
+          historyCount: params.history?.length ?? 0,
+        });
+      }
 
       // Set up timeout for the entire stream operation
       const timeoutController = new AbortController();
       const timeoutId = setTimeout(() => {
         timeoutController.abort();
-        console.warn("[AI Chat] Stream timeout exceeded", { timeoutMs: STREAM_TIMEOUT_MS });
+        if (import.meta.env.DEV) {
+          console.warn("[AI Chat] Stream timeout exceeded", { timeoutMs: STREAM_TIMEOUT_MS });
+        }
       }, STREAM_TIMEOUT_MS);
 
       const startTime = Date.now();
@@ -216,11 +220,13 @@ export function useChat() {
 
           // Handle parrot-specific events
           if (response.eventType && response.eventData) {
-            console.debug("[AI Chat] Parrot event", {
-              eventType: response.eventType,
-              eventDataLength: response.eventData.length,
-              eventDataPreview: response.eventData.slice(0, 100),
-            });
+            if (import.meta.env.DEV) {
+              console.debug("[AI Chat] Parrot event", {
+                eventType: response.eventType,
+                eventDataLength: response.eventData.length,
+                eventDataPreview: response.eventData.slice(0, 100),
+              });
+            }
             switch (response.eventType) {
               case "thinking":
                 callbacks?.onThinking?.(response.eventData);
@@ -238,28 +244,38 @@ export function useChat() {
                 break;
               case "memo_query_result":
                 try {
-                  const result = JSON.parse(response.eventData);
+                  const result = JSON.parse(response.eventData) as {
+                    memos: Array<{ uid: string; content: string; score: number }>;
+                    query: string;
+                    count: number;
+                  };
                   callbacks?.onMemoQueryResult?.(result);
                 } catch (e) {
-                  console.error("Failed to parse memo_query_result:", e);
+                  if (import.meta.env.DEV) {
+                    console.error("[useAIQueries] Failed to parse memo_query_result:", e);
+                  }
                 }
                 break;
               case "schedule_query_result":
                 try {
-                  const result = JSON.parse(response.eventData);
+                  const result = JSON.parse(response.eventData) as {
+                    schedules: Array<{
+                      uid: string;
+                      title: string;
+                      start_ts: number;
+                      end_ts: number;
+                      all_day: boolean;
+                      location?: string;
+                      status: string;
+                    }>;
+                    time_range_description?: string;
+                    query_type?: string;
+                  };
                   // Transform to the expected format with bigint conversion
                   const transformedResult = {
                     detected: true,
                     schedules: (result.schedules || []).map(
-                      (s: {
-                        uid: string;
-                        title: string;
-                        start_ts: number;
-                        end_ts: number;
-                        all_day: boolean;
-                        location?: string;
-                        status: string;
-                      }) => ({
+                      (s) => ({
                         uid: s.uid || "",
                         title: s.title || "",
                         startTs: BigInt(s.start_ts || 0),
@@ -275,7 +291,9 @@ export function useChat() {
                   };
                   callbacks?.onScheduleQueryResult?.(transformedResult);
                 } catch (e) {
-                  console.error("Failed to parse schedule_query_result:", e);
+                  if (import.meta.env.DEV) {
+                    console.error("[useAIQueries] Failed to parse schedule_query_result:", e);
+                  }
                 }
                 break;
               case "ui_memo_preview":
@@ -283,7 +301,9 @@ export function useChat() {
                   const data = JSON.parse(response.eventData);
                   callbacks?.onUIMemoPreview?.(data);
                 } catch (e) {
-                  console.error("Failed to parse ui_memo_preview:", e);
+                  if (import.meta.env.DEV) {
+                    console.error("[useAIQueries] Failed to parse ui_memo_preview:", e);
+                  }
                 }
                 break;
             }
@@ -306,11 +326,13 @@ export function useChat() {
         clearTimeout(timeoutId);
 
         const duration = Date.now() - startTime;
-        console.debug("[AI Chat] Stream completed successfully", {
-          durationMs: duration,
-          contentLength: fullContent.length,
-          sourcesCount: sources.length,
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[AI Chat] Stream completed successfully", {
+            durationMs: duration,
+            contentLength: fullContent.length,
+            sourcesCount: sources.length,
+          });
+        }
 
         return { content: fullContent, sources };
       } catch (error) {
@@ -321,17 +343,21 @@ export function useChat() {
 
         // Check if it's an abort error (timeout)
         if (error instanceof Error && error.name === "AbortError") {
-          console.error("[AI Chat] Stream timeout", { durationMs: duration, timeoutMs: STREAM_TIMEOUT_MS });
+          if (import.meta.env.DEV) {
+            console.error("[AI Chat] Stream timeout", { durationMs: duration, timeoutMs: STREAM_TIMEOUT_MS });
+          }
           const timeoutErr = new Error(`AI chat timeout after ${STREAM_TIMEOUT_MS}ms`);
           callbacks?.onError?.(timeoutErr);
           throw timeoutErr;
         }
 
-        console.error("[AI Chat] Stream error", {
-          error,
-          durationMs: duration,
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
+        if (import.meta.env.DEV) {
+          console.error("[AI Chat] Stream error", {
+            error,
+            durationMs: duration,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
 
         const err = error instanceof Error ? error : new Error(String(error));
         callbacks?.onError?.(err);
