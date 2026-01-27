@@ -125,7 +125,9 @@ func (p *AgentPrompts) GetSynthesisPrompt(args ...any) string {
 }
 
 // PromptRegistry manages prompts for all agent types.
+// Thread-safe: uses mu for concurrent access to prompts.
 var PromptRegistry = struct {
+	mu sync.RWMutex
 	Memo     *AgentPrompts
 	Schedule *AgentPrompts
 	Amazing  *AgentPrompts
@@ -365,6 +367,9 @@ func FormatTZOffset(offset int) string {
 // SetPromptVersion sets the active prompt version for an agent type.
 // Returns error if the version is not registered.
 func SetPromptVersion(agentType string, version PromptVersion) error {
+	PromptRegistry.mu.Lock()
+	defer PromptRegistry.mu.Unlock()
+
 	switch agentType {
 	case "memo":
 		return PromptRegistry.Memo.System.SetVersion(version)
@@ -382,7 +387,11 @@ func SetPromptVersion(agentType string, version PromptVersion) error {
 }
 
 // GetPromptVersion returns the current active prompt version for an agent type.
+// Thread-safe: uses read lock for concurrent access.
 func GetPromptVersion(agentType string) PromptVersion {
+	PromptRegistry.mu.RLock()
+	defer PromptRegistry.mu.RUnlock()
+
 	switch agentType {
 	case "memo":
 		return PromptRegistry.Memo.System.Version
@@ -527,34 +536,48 @@ var (
 	amazingMetricsV2  = &promptMetricsSnapshot{}
 )
 
-// metricsRegistry provides a lookup table for prompt version metrics.
-// This eliminates repetitive switch-case statements.
-var metricsRegistry = map[string]map[PromptVersion]*promptMetricsSnapshot{
-	"memo": {
-		PromptV1: memoMetricsV1,
-		PromptV2: memoMetricsV2,
-	},
-	"schedule": {
-		PromptV1: scheduleMetricsV1,
-		PromptV2: scheduleMetricsV2,
-	},
-	"amazing": {
-		PromptV1: amazingMetricsV1,
-		PromptV2: amazingMetricsV2,
-	},
-}
+var (
+	// metricsRegistry provides a lookup table for prompt version metrics.
+	// This eliminates repetitive switch-case statements.
+	// Protected by metricsRegistryMu for concurrent access.
+	metricsRegistry = map[string]map[PromptVersion]*promptMetricsSnapshot{
+		"memo": {
+			PromptV1: memoMetricsV1,
+			PromptV2: memoMetricsV2,
+		},
+		"schedule": {
+			PromptV1: scheduleMetricsV1,
+			PromptV2: scheduleMetricsV2,
+		},
+		"amazing": {
+			PromptV1: amazingMetricsV1,
+			PromptV2: amazingMetricsV2,
+		},
+	}
+	metricsRegistryMu sync.RWMutex
+)
 
 // RecordPromptUsageInMemory records prompt usage to in-memory counters.
 // This is a lightweight alternative for real-time monitoring.
+// Concurrent-safe: uses RWMutex for map access, atomic operations for counters.
 func RecordPromptUsageInMemory(agentType string, version PromptVersion, success bool, latencyMs int64) {
+	metricsRegistryMu.RLock()
 	versions, ok := metricsRegistry[agentType]
+	metricsRegistryMu.RUnlock()
+
 	if !ok {
 		return
 	}
+
+	metricsRegistryMu.RLock()
 	snapshot, ok := versions[version]
+	metricsRegistryMu.RUnlock()
+
 	if !ok {
 		// Fall back to V1 if version not found
+		metricsRegistryMu.RLock()
 		snapshot = versions[PromptV1]
+		metricsRegistryMu.RUnlock()
 	}
 
 	snapshot.requests.Add(1)
@@ -565,14 +588,24 @@ func RecordPromptUsageInMemory(agentType string, version PromptVersion, success 
 }
 
 // GetPromptMetricsSnapshot returns the current in-memory metrics for a prompt version.
+// Concurrent-safe: uses RWMutex for map access.
 func GetPromptMetricsSnapshot(agentType string, version PromptVersion) (requests, successes int64, avgLatencyMs int64) {
+	metricsRegistryMu.RLock()
 	versions, ok := metricsRegistry[agentType]
+	metricsRegistryMu.RUnlock()
+
 	if !ok {
 		return 0, 0, 0
 	}
+
+	metricsRegistryMu.RLock()
 	snapshot, ok := versions[version]
+	metricsRegistryMu.RUnlock()
+
 	if !ok {
+		metricsRegistryMu.RLock()
 		snapshot = versions[PromptV1]
+		metricsRegistryMu.RUnlock()
 	}
 
 	requests = snapshot.requests.Load()
