@@ -17,6 +17,46 @@ type RouterService interface {
 	SelectModel(ctx context.Context, task TaskType) (ModelConfig, error)
 }
 
+// AgentType represents the agent type for routing.
+type AgentType string
+
+const (
+	AgentTypeMemo     AgentType = "memo"
+	AgentTypeSchedule AgentType = "schedule"
+	AgentTypeAmazing  AgentType = "amazing"
+	AgentTypeUnknown  AgentType = "unknown"
+)
+
+// IntentToAgentType converts Intent to AgentType.
+// This is the canonical mapping used across the routing system.
+func IntentToAgentType(intent Intent) AgentType {
+	switch intent {
+	case IntentMemoSearch, IntentMemoCreate:
+		return AgentTypeMemo
+	case IntentScheduleQuery, IntentScheduleCreate, IntentScheduleUpdate, IntentBatchSchedule:
+		return AgentTypeSchedule
+	case IntentAmazing:
+		return AgentTypeAmazing
+	default:
+		return AgentTypeUnknown
+	}
+}
+
+// AgentTypeToIntent converts AgentType to default Intent.
+// Used when a specific intent subtype cannot be determined.
+func AgentTypeToIntent(agentType AgentType) Intent {
+	switch agentType {
+	case AgentTypeMemo:
+		return IntentMemoCreate
+	case AgentTypeSchedule:
+		return IntentScheduleCreate
+	case AgentTypeAmazing:
+		return IntentAmazing
+	default:
+		return IntentUnknown
+	}
+}
+
 // Intent represents the type of user intent.
 type Intent string
 

@@ -267,7 +267,7 @@ func TestHistoryMatcher_Similarity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			similarity := matcher.calculateSimilarity(tt.a, tt.b)
+			similarity := matcher.calculateLexicalSimilarity(tt.a, tt.b)
 			assert.GreaterOrEqual(t, similarity, tt.minSimilar)
 			assert.LessOrEqual(t, similarity, tt.maxSimilar)
 		})
@@ -357,6 +357,6 @@ func BenchmarkHistoryMatcher_Similarity(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		matcher.calculateSimilarity(a, c)
+		matcher.calculateLexicalSimilarity(a, c)
 	}
 }

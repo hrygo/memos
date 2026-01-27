@@ -58,7 +58,9 @@ func (s *Service) ClassifyIntent(ctx context.Context, input string) (Intent, flo
 	if userID > 0 && s.historyMatcher != nil {
 		result, err := s.historyMatcher.Match(ctx, userID, input)
 		if err != nil {
-			slog.Warn("history matcher error", "error", err)
+			// History matching errors are expected when no prior history exists
+			// Use Debug level instead of Warn since this is normal operation
+			slog.Debug("history matcher error", "error", err)
 		} else if result.Matched {
 			slog.Debug("intent classified by history matcher",
 				"input", truncate(input, 50),
