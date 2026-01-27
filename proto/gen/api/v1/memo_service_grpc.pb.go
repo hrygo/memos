@@ -35,6 +35,7 @@ const (
 	MemoService_UpsertMemoReaction_FullMethodName  = "/memos.api.v1.MemoService/UpsertMemoReaction"
 	MemoService_DeleteMemoReaction_FullMethodName  = "/memos.api.v1.MemoService/DeleteMemoReaction"
 	MemoService_SearchWithHighlight_FullMethodName = "/memos.api.v1.MemoService/SearchWithHighlight"
+	MemoService_GetRelatedMemos_FullMethodName     = "/memos.api.v1.MemoService/GetRelatedMemos"
 )
 
 // MemoServiceClient is the client API for MemoService service.
@@ -71,6 +72,8 @@ type MemoServiceClient interface {
 	DeleteMemoReaction(ctx context.Context, in *DeleteMemoReactionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// SearchWithHighlight searches memos and returns results with keyword highlighting.
 	SearchWithHighlight(ctx context.Context, in *SearchWithHighlightRequest, opts ...grpc.CallOption) (*SearchWithHighlightResponse, error)
+	// GetRelatedMemos returns related memos for a given memo.
+	GetRelatedMemos(ctx context.Context, in *GetRelatedMemosRequest, opts ...grpc.CallOption) (*GetRelatedMemosResponse, error)
 }
 
 type memoServiceClient struct {
@@ -231,6 +234,16 @@ func (c *memoServiceClient) SearchWithHighlight(ctx context.Context, in *SearchW
 	return out, nil
 }
 
+func (c *memoServiceClient) GetRelatedMemos(ctx context.Context, in *GetRelatedMemosRequest, opts ...grpc.CallOption) (*GetRelatedMemosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRelatedMemosResponse)
+	err := c.cc.Invoke(ctx, MemoService_GetRelatedMemos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MemoServiceServer is the server API for MemoService service.
 // All implementations must embed UnimplementedMemoServiceServer
 // for forward compatibility.
@@ -265,6 +278,8 @@ type MemoServiceServer interface {
 	DeleteMemoReaction(context.Context, *DeleteMemoReactionRequest) (*emptypb.Empty, error)
 	// SearchWithHighlight searches memos and returns results with keyword highlighting.
 	SearchWithHighlight(context.Context, *SearchWithHighlightRequest) (*SearchWithHighlightResponse, error)
+	// GetRelatedMemos returns related memos for a given memo.
+	GetRelatedMemos(context.Context, *GetRelatedMemosRequest) (*GetRelatedMemosResponse, error)
 	mustEmbedUnimplementedMemoServiceServer()
 }
 
@@ -319,6 +334,9 @@ func (UnimplementedMemoServiceServer) DeleteMemoReaction(context.Context, *Delet
 }
 func (UnimplementedMemoServiceServer) SearchWithHighlight(context.Context, *SearchWithHighlightRequest) (*SearchWithHighlightResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchWithHighlight not implemented")
+}
+func (UnimplementedMemoServiceServer) GetRelatedMemos(context.Context, *GetRelatedMemosRequest) (*GetRelatedMemosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRelatedMemos not implemented")
 }
 func (UnimplementedMemoServiceServer) mustEmbedUnimplementedMemoServiceServer() {}
 func (UnimplementedMemoServiceServer) testEmbeddedByValue()                     {}
@@ -611,6 +629,24 @@ func _MemoService_SearchWithHighlight_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MemoService_GetRelatedMemos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRelatedMemosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemoServiceServer).GetRelatedMemos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MemoService_GetRelatedMemos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemoServiceServer).GetRelatedMemos(ctx, req.(*GetRelatedMemosRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MemoService_ServiceDesc is the grpc.ServiceDesc for MemoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -677,6 +713,10 @@ var MemoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchWithHighlight",
 			Handler:    _MemoService_SearchWithHighlight_Handler,
+		},
+		{
+			MethodName: "GetRelatedMemos",
+			Handler:    _MemoService_GetRelatedMemos_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

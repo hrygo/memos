@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package memos.api.v1;
 
+import "api/v1/ai_service.proto";
 import "api/v1/attachment_service.proto";
 import "api/v1/common.proto";
 import "google/api/annotations.proto";
@@ -107,6 +108,11 @@ service MemoService {
   rpc SearchWithHighlight(SearchWithHighlightRequest) returns (SearchWithHighlightResponse) {
     option (google.api.http) = {get: "/api/v1/memos:searchWithHighlight"};
     option (google.api.method_signature) = "query";
+  }
+  // GetRelatedMemos returns related memos for a given memo.
+  rpc GetRelatedMemos(GetRelatedMemosRequest) returns (GetRelatedMemosResponse) {
+    option (google.api.http) = {get: "/api/v1/{name=memos/*}:related"};
+    option (google.api.method_signature) = "name";
   }
 }
 

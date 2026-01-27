@@ -74,6 +74,9 @@ const (
 	// MemoServiceSearchWithHighlightProcedure is the fully-qualified name of the MemoService's
 	// SearchWithHighlight RPC.
 	MemoServiceSearchWithHighlightProcedure = "/memos.api.v1.MemoService/SearchWithHighlight"
+	// MemoServiceGetRelatedMemosProcedure is the fully-qualified name of the MemoService's
+	// GetRelatedMemos RPC.
+	MemoServiceGetRelatedMemosProcedure = "/memos.api.v1.MemoService/GetRelatedMemos"
 )
 
 // MemoServiceClient is a client for the memos.api.v1.MemoService service.
@@ -108,6 +111,8 @@ type MemoServiceClient interface {
 	DeleteMemoReaction(context.Context, *connect.Request[v1.DeleteMemoReactionRequest]) (*connect.Response[emptypb.Empty], error)
 	// SearchWithHighlight searches memos and returns results with keyword highlighting.
 	SearchWithHighlight(context.Context, *connect.Request[v1.SearchWithHighlightRequest]) (*connect.Response[v1.SearchWithHighlightResponse], error)
+	// GetRelatedMemos returns related memos for a given memo.
+	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
 }
 
 // NewMemoServiceClient constructs a client for the memos.api.v1.MemoService service. By default, it
@@ -211,6 +216,12 @@ func NewMemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(memoServiceMethods.ByName("SearchWithHighlight")),
 			connect.WithClientOptions(opts...),
 		),
+		getRelatedMemos: connect.NewClient[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse](
+			httpClient,
+			baseURL+MemoServiceGetRelatedMemosProcedure,
+			connect.WithSchema(memoServiceMethods.ByName("GetRelatedMemos")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -231,6 +242,7 @@ type memoServiceClient struct {
 	upsertMemoReaction  *connect.Client[v1.UpsertMemoReactionRequest, v1.Reaction]
 	deleteMemoReaction  *connect.Client[v1.DeleteMemoReactionRequest, emptypb.Empty]
 	searchWithHighlight *connect.Client[v1.SearchWithHighlightRequest, v1.SearchWithHighlightResponse]
+	getRelatedMemos     *connect.Client[v1.GetRelatedMemosRequest, v1.GetRelatedMemosResponse]
 }
 
 // CreateMemo calls memos.api.v1.MemoService.CreateMemo.
@@ -308,6 +320,11 @@ func (c *memoServiceClient) SearchWithHighlight(ctx context.Context, req *connec
 	return c.searchWithHighlight.CallUnary(ctx, req)
 }
 
+// GetRelatedMemos calls memos.api.v1.MemoService.GetRelatedMemos.
+func (c *memoServiceClient) GetRelatedMemos(ctx context.Context, req *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {
+	return c.getRelatedMemos.CallUnary(ctx, req)
+}
+
 // MemoServiceHandler is an implementation of the memos.api.v1.MemoService service.
 type MemoServiceHandler interface {
 	// CreateMemo creates a memo.
@@ -340,6 +357,8 @@ type MemoServiceHandler interface {
 	DeleteMemoReaction(context.Context, *connect.Request[v1.DeleteMemoReactionRequest]) (*connect.Response[emptypb.Empty], error)
 	// SearchWithHighlight searches memos and returns results with keyword highlighting.
 	SearchWithHighlight(context.Context, *connect.Request[v1.SearchWithHighlightRequest]) (*connect.Response[v1.SearchWithHighlightResponse], error)
+	// GetRelatedMemos returns related memos for a given memo.
+	GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error)
 }
 
 // NewMemoServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -439,6 +458,12 @@ func NewMemoServiceHandler(svc MemoServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(memoServiceMethods.ByName("SearchWithHighlight")),
 		connect.WithHandlerOptions(opts...),
 	)
+	memoServiceGetRelatedMemosHandler := connect.NewUnaryHandler(
+		MemoServiceGetRelatedMemosProcedure,
+		svc.GetRelatedMemos,
+		connect.WithSchema(memoServiceMethods.ByName("GetRelatedMemos")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.MemoService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case MemoServiceCreateMemoProcedure:
@@ -471,6 +496,8 @@ func NewMemoServiceHandler(svc MemoServiceHandler, opts ...connect.HandlerOption
 			memoServiceDeleteMemoReactionHandler.ServeHTTP(w, r)
 		case MemoServiceSearchWithHighlightProcedure:
 			memoServiceSearchWithHighlightHandler.ServeHTTP(w, r)
+		case MemoServiceGetRelatedMemosProcedure:
+			memoServiceGetRelatedMemosHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -538,4 +565,8 @@ func (UnimplementedMemoServiceHandler) DeleteMemoReaction(context.Context, *conn
 
 func (UnimplementedMemoServiceHandler) SearchWithHighlight(context.Context, *connect.Request[v1.SearchWithHighlightRequest]) (*connect.Response[v1.SearchWithHighlightResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.MemoService.SearchWithHighlight is not implemented"))
+}
+
+func (UnimplementedMemoServiceHandler) GetRelatedMemos(context.Context, *connect.Request[v1.GetRelatedMemosRequest]) (*connect.Response[v1.GetRelatedMemosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.MemoService.GetRelatedMemos is not implemented"))
 }

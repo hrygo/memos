@@ -123,10 +123,16 @@ func (s *ConnectServiceHandler) SemanticSearch(ctx context.Context, req *connect
 }
 
 func (s *ConnectServiceHandler) GetRelatedMemos(ctx context.Context, req *connect.Request[v1pb.GetRelatedMemosRequest]) (*connect.Response[v1pb.GetRelatedMemosResponse], error) {
-	if s.AIService == nil || !s.AIService.IsEnabled() {
-		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	// Use AI-powered implementation when available, otherwise fallback to keyword-based
+	if s.AIService != nil && s.AIService.IsEnabled() {
+		resp, err := s.AIService.GetRelatedMemos(ctx, req.Msg)
+		if err != nil {
+			return nil, convertGRPCError(err)
+		}
+		return connect.NewResponse(resp), nil
 	}
-	resp, err := s.AIService.GetRelatedMemos(ctx, req.Msg)
+	// Fallback to MemoService implementation (keyword/tag-based)
+	resp, err := s.APIV1Service.GetRelatedMemos(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}

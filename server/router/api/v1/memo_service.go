@@ -923,3 +923,60 @@ func (s *APIV1Service) SearchWithHighlight(ctx context.Context, request *v1pb.Se
 
 	return response, nil
 }
+
+// GetRelatedMemos returns related memos for a given memo.
+// P1-C003: Related memo recommendations based on semantic similarity and tag co-occurrence.
+func (s *APIV1Service) GetRelatedMemos(ctx context.Context, request *v1pb.GetRelatedMemosRequest) (*v1pb.GetRelatedMemosResponse, error) {
+	// Validate request
+	if request.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+
+	// Extract memo UID from resource name (format: memos/{uid})
+	memoUID, err := ExtractMemoUIDFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid memo name format")
+	}
+
+	// Get current user
+	user, err := s.fetchCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user")
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
+	// Initialize RelatedService (without cache for now)
+	relatedService := memo.NewRelatedService(s.Store, nil)
+
+	// Get related memos
+	results, err := relatedService.GetRelatedMemos(ctx, &memo.GetRelatedMemosOptions{
+		MemoUID: memoUID,
+		UserID:  user.ID,
+		Limit:   int(request.Limit),
+	})
+	if err != nil {
+		slog.ErrorContext(ctx, "get related memos failed",
+			"error", err,
+			"memo", memoUID,
+			"user_id", user.ID,
+		)
+		return nil, status.Errorf(codes.Internal, "failed to get related memos")
+	}
+
+	// Convert to proto response
+	response := &v1pb.GetRelatedMemosResponse{
+		Memos: make([]*v1pb.SearchResult, 0, len(results)),
+	}
+
+	for _, result := range results {
+		response.Memos = append(response.Memos, &v1pb.SearchResult{
+			Name:    fmt.Sprintf("%s%s", MemoNamePrefix, result.Name),
+			Snippet: result.Title,
+			Score:   result.Similarity,
+		})
+	}
+
+	return response, nil
+}
