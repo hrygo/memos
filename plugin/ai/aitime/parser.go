@@ -334,10 +334,22 @@ func (p *Parser) parseTimePart(input string) (hour, minute int, found bool) {
 		hasAMModifier := strings.Contains(input, "上午") || strings.Contains(input, "早上") ||
 			strings.Contains(input, "凌晨") || strings.Contains(input, "中午")
 
-		// If PM modifier or no modifier (default to PM for ambiguous times 1-11)
-		if hasPMModifier || (!hasAMModifier && hour >= 1 && hour < 12) {
+		// Determine AM/PM based on modifiers or reasonable defaults
+		// - With explicit PM modifier: always PM
+		// - With explicit AM modifier: always AM
+		// - No modifier + hour 1-6: default to PM (13:00-18:00) - afternoon meeting times
+		// - No modifier + hour 7-11: keep as AM (07:00-11:00) - morning meeting times
+		// - hour 12: noon, keep as 12:00
+		if hasPMModifier {
+			if hour < 12 {
+				hour += 12
+			}
+		} else if !hasAMModifier && hour >= 1 && hour <= 6 {
+			// Ambiguous 1-6点 defaults to PM (more common for reminders)
 			hour += 12
 		}
+		// hour 7-11 without modifier stays as AM (common work hours)
+		// hour 12 stays as 12 (noon)
 	}
 
 	// Parse minutes

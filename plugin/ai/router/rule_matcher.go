@@ -45,10 +45,10 @@ func NewRuleMatcher() *RuleMatcher {
 		},
 		// Time patterns for schedule detection
 		timePatterns: []*regexp.Regexp{
-			regexp.MustCompile(`\d{1,2}[:\s时点]\d{0,2}`),                // 10:30, 10点, 10时30
+			regexp.MustCompile(`\d{1,2}[:\s时点]\d{0,2}`),       // 10:30, 10点, 10时30
 			regexp.MustCompile(`(上午|下午|晚上|早上|中午)\d{1,2}[点时]`), // 下午3点
-			regexp.MustCompile(`(明天|后天|今天|下周|本周)`),              // Relative dates
-			regexp.MustCompile(`\d{1,2}月\d{1,2}[日号]`),                 // 1月15日
+			regexp.MustCompile(`(明天|后天|今天|下周|本周)`),            // Relative dates
+			regexp.MustCompile(`\d{1,2}月\d{1,2}[日号]`),         // 1月15日
 		},
 	}
 }
@@ -63,34 +63,54 @@ func (m *RuleMatcher) Match(input string) (Intent, float32, bool) {
 	memoScore := m.calculateScore(lower, m.memoKeywords)
 	amazingScore := m.calculateScore(lower, m.amazingKeywords)
 
-	// Time pattern adds score to schedule
-	if m.hasTimePattern(input) {
+	// Time pattern adds score to schedule only if it has core schedule keywords
+	hasTimePattern := m.hasTimePattern(input)
+	hasCoreScheduleKeyword := m.hasCoreKeyword(lower, "schedule")
+	if hasTimePattern && hasCoreScheduleKeyword {
 		scheduleScore += 2
 	}
 
-	// Determine intent based on scores
-	// Check for schedule create vs query
-	if scheduleScore >= 3 {
-		intent := m.determineScheduleIntent(lower, scheduleScore)
-		confidence := m.normalizeConfidence(scheduleScore, 6)
-		return intent, confidence, true
-	}
-
-	// Check for memo search vs create
-	if memoScore >= 2 && scheduleScore < 2 {
+	// Memo takes priority if it has explicit memo keywords
+	if memoScore >= 3 || (memoScore >= 2 && m.hasCoreKeyword(lower, "memo")) {
 		intent := m.determineMemoIntent(lower)
 		confidence := m.normalizeConfidence(memoScore, 5)
 		return intent, confidence, true
 	}
 
-	// Check for amazing (general assistant)
-	if amazingScore >= 2 && scheduleScore < 2 && memoScore < 2 {
+	// Schedule needs both high score AND core schedule keyword
+	if scheduleScore >= 3 && hasCoreScheduleKeyword {
+		intent := m.determineScheduleIntent(lower, scheduleScore)
+		confidence := m.normalizeConfidence(scheduleScore, 6)
+		return intent, confidence, true
+	}
+
+	// Amazing needs high score AND core amazing keyword (not just "帮我")
+	if amazingScore >= 3 && m.hasCoreKeyword(lower, "amazing") {
 		confidence := m.normalizeConfidence(amazingScore, 5)
 		return IntentAmazing, confidence, true
 	}
 
 	// No match - needs higher layer processing
 	return IntentUnknown, 0, false
+}
+
+// hasCoreKeyword checks if input contains a core keyword for the given category.
+func (m *RuleMatcher) hasCoreKeyword(input, category string) bool {
+	coreKeywords := map[string][]string{
+		"schedule": {"日程", "安排", "会议", "提醒", "预约", "开会"},
+		"memo":     {"笔记", "搜索", "查找", "记录", "memo"},
+		"amazing":  {"综合", "总结", "分析", "周报"},
+	}
+	keywords, ok := coreKeywords[category]
+	if !ok {
+		return false
+	}
+	for _, kw := range keywords {
+		if strings.Contains(input, kw) {
+			return true
+		}
+	}
+	return false
 }
 
 // calculateScore calculates the weighted score for a keyword set.

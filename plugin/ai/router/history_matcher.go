@@ -12,7 +12,7 @@ import (
 // HistoryMatcher implements Layer 2 history-based intent matching.
 // Target: ~10ms latency, handle 20%+ of requests that pass Layer 1.
 type HistoryMatcher struct {
-	memoryService  memory.MemoryService
+	memoryService       memory.MemoryService
 	similarityThreshold float32
 	maxHistoryLookup    int
 }
@@ -30,7 +30,7 @@ func NewHistoryMatcher(ms memory.MemoryService) *HistoryMatcher {
 type HistoryMatchResult struct {
 	Intent     Intent
 	Confidence float32
-	SourceID   int64  // ID of the matched episode
+	SourceID   int64 // ID of the matched episode
 	Matched    bool
 }
 
@@ -58,7 +58,7 @@ func (m *HistoryMatcher) Match(ctx context.Context, userID int32, input string) 
 	for i := range episodes {
 		ep := &episodes[i]
 		similarity := m.calculateSimilarity(input, ep.UserInput)
-		
+
 		// Only consider successful outcomes
 		if ep.Outcome == "success" && similarity > bestSimilarity {
 			bestSimilarity = similarity
@@ -73,7 +73,7 @@ func (m *HistoryMatcher) Match(ctx context.Context, userID int32, input string) 
 
 	// Map agent type to intent
 	intent := m.agentTypeToIntent(bestMatch.AgentType, input)
-	
+
 	return &HistoryMatchResult{
 		Intent:     intent,
 		Confidence: bestSimilarity,
@@ -82,38 +82,28 @@ func (m *HistoryMatcher) Match(ctx context.Context, userID int32, input string) 
 	}, nil
 }
 
-// calculateSimilarity calculates a simple similarity score between two strings.
-// Uses Jaccard similarity on word sets.
+// calculateSimilarity calculates similarity score between two strings.
+// Uses character-level bigrams for Chinese text, which works better than word-based
+// tokenization without a proper segmentation library.
+// Reference: Character n-gram is effective for short text similarity in CJK languages.
 func (m *HistoryMatcher) calculateSimilarity(a, b string) float32 {
-	wordsA := m.tokenize(a)
-	wordsB := m.tokenize(b)
+	bigramsA := m.extractBigrams(a)
+	bigramsB := m.extractBigrams(b)
 
-	if len(wordsA) == 0 || len(wordsB) == 0 {
+	if len(bigramsA) == 0 || len(bigramsB) == 0 {
 		return 0
 	}
 
-	// Calculate intersection
+	// Calculate Jaccard similarity on bigram sets
 	intersection := 0
-	setB := make(map[string]bool)
-	for _, w := range wordsB {
-		setB[w] = true
-	}
-	for _, w := range wordsA {
-		if setB[w] {
+	for bg := range bigramsA {
+		if bigramsB[bg] {
 			intersection++
 		}
 	}
 
-	// Calculate union
-	setUnion := make(map[string]bool)
-	for _, w := range wordsA {
-		setUnion[w] = true
-	}
-	for _, w := range wordsB {
-		setUnion[w] = true
-	}
-	union := len(setUnion)
-
+	// Union = |A| + |B| - |A ∩ B|
+	union := len(bigramsA) + len(bigramsB) - intersection
 	if union == 0 {
 		return 0
 	}
@@ -121,20 +111,42 @@ func (m *HistoryMatcher) calculateSimilarity(a, b string) float32 {
 	return float32(intersection) / float32(union)
 }
 
-// tokenize splits input into tokens for similarity calculation.
-func (m *HistoryMatcher) tokenize(input string) []string {
-	// Split by common delimiters and filter
-	words := strings.FieldsFunc(input, func(r rune) bool {
-		return r == ' ' || r == ',' || r == '。' || r == '，' || r == '?' || r == '？'
-	})
-	
-	// Filter out very short tokens
-	var result []string
-	for _, w := range words {
-		w = strings.TrimSpace(w)
-		if len(w) >= 2 { // At least 2 bytes (1 Chinese char)
-			result = append(result, strings.ToLower(w))
+// extractBigrams extracts character-level bigrams from input.
+// This approach works well for Chinese text without requiring a segmentation library.
+func (m *HistoryMatcher) extractBigrams(input string) map[string]bool {
+	input = strings.TrimSpace(input)
+	input = strings.ToLower(input)
+
+	// Remove common punctuation
+	for _, r := range []string{" ", ",", "。", "，", "？", "?", "！", "!", "、"} {
+		input = strings.ReplaceAll(input, r, "")
+	}
+
+	runes := []rune(input)
+	bigrams := make(map[string]bool)
+
+	// Generate character bigrams
+	for i := 0; i < len(runes)-1; i++ {
+		bigram := string(runes[i : i+2])
+		bigrams[bigram] = true
+	}
+
+	// Also add individual characters for short inputs
+	if len(runes) <= 4 {
+		for _, r := range runes {
+			bigrams[string(r)] = true
 		}
+	}
+
+	return bigrams
+}
+
+// tokenize is kept for backward compatibility but now uses bigram-based approach.
+func (m *HistoryMatcher) tokenize(input string) []string {
+	bigrams := m.extractBigrams(input)
+	result := make([]string, 0, len(bigrams))
+	for bg := range bigrams {
+		result = append(result, bg)
 	}
 	return result
 }

@@ -133,16 +133,13 @@ func TestSchedulerAgentV2_Execute(t *testing.T) {
 		Return(&store.Schedule{ID: 1, Title: "Meeting", StartTs: 1769421600}, nil).
 		Once()
 
-	// Step 5: LLM provides final answer
-	mockLLM.On("ChatWithTools", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockFinalAnswer("I have scheduled the meeting for you."), nil).
-		Once()
+	// Note: No Step 5 needed - agent now returns formatted Chinese message directly after schedule creation
 
 	// Execute
 	resp, err := agentSvc.Execute(context.TODO(), "Create a meeting tomorrow at 10am")
 
 	assert.NoError(t, err)
-	assert.Contains(t, resp, "scheduled the meeting")
+	assert.Contains(t, resp, "已创建") // Chinese response format: "✓ 已创建: Meeting..."
 
 	mockLLM.AssertExpectations(t)
 	mockSvc.AssertExpectations(t)

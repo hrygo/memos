@@ -168,15 +168,20 @@ func (c *LRUCache) CleanupExpired() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	count := 0
+	// Collect expired entries first to avoid modifying map during iteration
+	var toDelete []*entry
 	now := time.Now()
 
 	for _, e := range c.cache {
 		if now.After(e.expiresAt) {
-			c.removeEntry(e)
-			count++
+			toDelete = append(toDelete, e)
 		}
 	}
 
-	return count
+	// Remove collected entries
+	for _, e := range toDelete {
+		c.removeEntry(e)
+	}
+
+	return len(toDelete)
 }

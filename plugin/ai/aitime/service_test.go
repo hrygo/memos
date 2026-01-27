@@ -69,14 +69,16 @@ func TestParser_ChineseTime(t *testing.T) {
 		input    string
 		wantTime string // Expected time in format "15:04"
 	}{
-		{"3点", "3点", "15:00"}, // Ambiguous, defaults to PM
+		{"3点", "3点", "15:00"}, // 1-6点 defaults to PM
 		{"下午3点", "下午3点", "15:00"},
 		{"上午9点", "上午9点", "09:00"},
 		{"晚上8点", "晚上8点", "20:00"},
-		{"3点半", "3点半", "15:30"},
+		{"3点半", "3点半", "15:30"}, // 1-6点 defaults to PM
 		{"15点30分", "15点30分", "15:30"},
-		{"三点", "三点", "15:00"},
+		{"三点", "三点", "15:00"}, // 1-6点 defaults to PM
 		{"十二点", "十二点", "12:00"},
+		{"9点", "9点", "09:00"},   // 7-11点 stays as AM (common work hours)
+		{"10点", "10点", "10:00"}, // 7-11点 stays as AM
 	}
 
 	for _, tt := range tests {
