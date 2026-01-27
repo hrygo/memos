@@ -42,7 +42,11 @@ func (s *Service) ParseNaturalTime(_ context.Context, input string, reference ti
 	}
 
 	// Then try to parse as a specific time
-	parser := NewParser(reference.Location())
+	// Create parser with reference time as "now" for relative date parsing
+	parser := &Parser{
+		timezone: reference.Location(),
+		now:      func() time.Time { return reference },
+	}
 	t, err := parser.Parse(input)
 	if err != nil {
 		return TimeRange{}, err

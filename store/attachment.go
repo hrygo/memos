@@ -91,6 +91,11 @@ func (s *Store) CreateAttachment(ctx context.Context, create *Attachment) (*Atta
 }
 
 func (s *Store) ListAttachments(ctx context.Context, find *FindAttachment) ([]*Attachment, error) {
+	// Defensive check for nil driver (e.g., in tests)
+	if s.driver == nil {
+		return nil, nil
+	}
+
 	// Set default limits to prevent loading too many attachments at once
 	if find.Limit == nil && find.GetBlob {
 		// When fetching blobs, we should be especially careful with limits

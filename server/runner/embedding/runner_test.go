@@ -91,7 +91,7 @@ func (m *mockEmbeddingService) Dimensions() int {
 // TestNewRunner tests the runner constructor.
 func TestNewRunner(t *testing.T) {
 	mockService := newMockEmbeddingService(1024)
-	s := &store.Store{}
+	s := &store.Store{} // store.ListAttachments now handles nil driver gracefully
 
 	runner := NewRunner(s, mockService)
 

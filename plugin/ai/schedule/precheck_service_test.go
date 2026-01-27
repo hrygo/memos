@@ -284,13 +284,15 @@ func TestPrecheckService_WeekendWarning(t *testing.T) {
 	mockStore := &mockScheduleStore{}
 	service := NewPrecheckService(mockStore)
 
-	// Find next Saturday
-	now := time.Now()
+	// Use a fixed date (Wednesday 2026-01-28 10:00) to avoid timezone boundary issues
+	now := time.Date(2026, 1, 28, 10, 0, 0, 0, time.Local)
+
+	// Calculate days until Saturday (Wed->Thu->Fri->Sat = 3 days)
 	daysUntilSaturday := (6 - int(now.Weekday()) + 7) % 7
 	if daysUntilSaturday == 0 {
 		daysUntilSaturday = 7
 	}
-	nextSaturday := now.AddDate(0, 0, daysUntilSaturday).Truncate(24 * time.Hour).Add(10 * time.Hour)
+	nextSaturday := now.AddDate(0, 0, daysUntilSaturday).Add(10 * time.Hour)
 
 	req := &PrecheckRequest{
 		Title:     "Weekend Meeting",

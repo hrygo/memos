@@ -190,7 +190,7 @@ func TestScheduleAddTool_Run(t *testing.T) {
 
 		_, err := tool.Run(ctx, input)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid start_time format")
+		assert.Contains(t, err.Error(), "start_time must be in ISO8601 format")
 	})
 
 	t.Run("invalid end time format", func(t *testing.T) {
