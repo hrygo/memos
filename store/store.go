@@ -104,3 +104,27 @@ func (s *Store) UpsertUserPreferences(ctx context.Context, upsert *UpsertUserPre
 func (s *Store) GetUserPreferences(ctx context.Context, find *FindUserPreferences) (*UserPreferences, error) {
 	return s.driver.GetUserPreferences(ctx, find)
 }
+
+func (s *Store) UpsertAgentMetrics(ctx context.Context, upsert *UpsertAgentMetrics) (*AgentMetrics, error) {
+	return s.driver.UpsertAgentMetrics(ctx, upsert)
+}
+
+func (s *Store) ListAgentMetrics(ctx context.Context, find *FindAgentMetrics) ([]*AgentMetrics, error) {
+	return s.driver.ListAgentMetrics(ctx, find)
+}
+
+func (s *Store) DeleteAgentMetrics(ctx context.Context, delete *DeleteAgentMetrics) error {
+	return s.driver.DeleteAgentMetrics(ctx, delete)
+}
+
+func (s *Store) UpsertToolMetrics(ctx context.Context, upsert *UpsertToolMetrics) (*ToolMetrics, error) {
+	return s.driver.UpsertToolMetrics(ctx, upsert)
+}
+
+func (s *Store) ListToolMetrics(ctx context.Context, find *FindToolMetrics) ([]*ToolMetrics, error) {
+	return s.driver.ListToolMetrics(ctx, find)
+}
+
+func (s *Store) DeleteToolMetrics(ctx context.Context, delete *DeleteToolMetrics) error {
+	return s.driver.DeleteToolMetrics(ctx, delete)
+}

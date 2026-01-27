@@ -108,4 +108,14 @@ type Driver interface {
 	// UserPreferences model related methods.
 	UpsertUserPreferences(ctx context.Context, upsert *UpsertUserPreferences) (*UserPreferences, error)
 	GetUserPreferences(ctx context.Context, find *FindUserPreferences) (*UserPreferences, error)
+
+	// AgentMetrics model related methods.
+	UpsertAgentMetrics(ctx context.Context, upsert *UpsertAgentMetrics) (*AgentMetrics, error)
+	ListAgentMetrics(ctx context.Context, find *FindAgentMetrics) ([]*AgentMetrics, error)
+	DeleteAgentMetrics(ctx context.Context, delete *DeleteAgentMetrics) error
+
+	// ToolMetrics model related methods.
+	UpsertToolMetrics(ctx context.Context, upsert *UpsertToolMetrics) (*ToolMetrics, error)
+	ListToolMetrics(ctx context.Context, find *FindToolMetrics) ([]*ToolMetrics, error)
+	DeleteToolMetrics(ctx context.Context, delete *DeleteToolMetrics) error
 }

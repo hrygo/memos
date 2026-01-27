@@ -132,9 +132,7 @@ func TestHighlightService_findMatches(t *testing.T) {
 }
 
 func TestHighlightService_extractSnippet(t *testing.T) {
-	service := &HighlightService{
-		tokenizer: NewTokenizer(),
-	}
+	extractor := NewSnippetExtractor()
 
 	tests := []struct {
 		name         string
@@ -154,7 +152,7 @@ func TestHighlightService_extractSnippet(t *testing.T) {
 		},
 		{
 			name:    "Match at beginning",
-			content: "Hello World and more content here",
+			content: "Hello World and more content here with additional text to make it longer",
 			matches: []Highlight{
 				{Start: 0, End: 5, MatchedText: "Hello"},
 			},
@@ -176,7 +174,8 @@ func TestHighlightService_extractSnippet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			snippet, _ := service.extractSnippet(tt.content, tt.matches, tt.contextChars)
+			opts := &ExtractOptions{ContextChars: tt.contextChars, AddEllipsis: true}
+			snippet, _ := extractor.ExtractSnippet(tt.content, tt.matches, opts)
 
 			hasPrefix := len(snippet) >= 3 && snippet[:3] == "..."
 			hasSuffix := len(snippet) >= 3 && snippet[len(snippet)-3:] == "..."

@@ -26,15 +26,17 @@ type HighlightedMemo struct {
 
 // HighlightService provides search highlighting functionality.
 type HighlightService struct {
-	retriever *retrieval.AdaptiveRetriever
-	tokenizer *Tokenizer
+	retriever        *retrieval.AdaptiveRetriever
+	tokenizer        *Tokenizer
+	snippetExtractor *SnippetExtractor
 }
 
 // NewHighlightService creates a new HighlightService instance.
 func NewHighlightService(retriever *retrieval.AdaptiveRetriever) *HighlightService {
 	return &HighlightService{
-		retriever: retriever,
-		tokenizer: NewTokenizer(),
+		retriever:        retriever,
+		tokenizer:        NewTokenizer(),
+		snippetExtractor: NewSnippetExtractor(),
 	}
 }
 
@@ -89,8 +91,12 @@ func (s *HighlightService) SearchWithHighlight(
 		// Find match positions
 		matches := s.findMatches(result.Content, tokens)
 
-		// Extract snippet with context
-		h.Snippet, h.Highlights = s.extractSnippet(result.Content, matches, opts.ContextChars)
+		// Extract snippet with context using SnippetExtractor
+		h.Snippet, h.Highlights = s.snippetExtractor.ExtractSnippet(
+			result.Content,
+			matches,
+			&ExtractOptions{ContextChars: opts.ContextChars, AddEllipsis: true},
+		)
 
 		highlighted = append(highlighted, h)
 	}
@@ -160,113 +166,4 @@ func (s *HighlightService) removeOverlaps(matches []Highlight) []Highlight {
 	}
 
 	return result
-}
-
-// extractSnippet extracts a snippet around the first match with context.
-func (s *HighlightService) extractSnippet(content string, matches []Highlight, contextChars int) (string, []Highlight) {
-	contentRunes := []rune(content)
-	contentLen := len(contentRunes)
-
-	// No matches: return beginning of content
-	if len(matches) == 0 {
-		end := contextChars * 2
-		if end > contentLen {
-			end = contentLen
-		}
-		snippet := string(contentRunes[:end])
-		if end < contentLen {
-			snippet += "..."
-		}
-		return snippet, nil
-	}
-
-	// Calculate window around first match
-	center := matches[0].Start
-	start := center - contextChars
-	end := center + contextChars
-
-	if start < 0 {
-		start = 0
-	}
-	if end > contentLen {
-		end = contentLen
-	}
-
-	// Adjust to word boundaries
-	start = s.adjustToWordBoundary(contentRunes, start, false)
-	end = s.adjustToWordBoundary(contentRunes, end, true)
-
-	// Build snippet
-	var snippet strings.Builder
-	prefix := ""
-	suffix := ""
-
-	if start > 0 {
-		prefix = "..."
-		snippet.WriteString(prefix)
-	}
-	snippet.WriteString(string(contentRunes[start:end]))
-	if end < contentLen {
-		suffix = "..."
-		snippet.WriteString(suffix)
-	}
-
-	// Adjust highlight positions for the snippet
-	adjustedMatches := s.adjustHighlightPositions(matches, start, len(prefix), end)
-
-	return snippet.String(), adjustedMatches
-}
-
-// adjustToWordBoundary adjusts position to nearest word boundary.
-func (s *HighlightService) adjustToWordBoundary(runes []rune, pos int, isEnd bool) int {
-	if pos <= 0 || pos >= len(runes) {
-		return pos
-	}
-
-	separators := []rune{' ', '\n', '\t', '。', '，', '、', '；', '：', '！', '？', '.', ',', '!', '?'}
-	isSeparator := func(r rune) bool {
-		for _, sep := range separators {
-			if r == sep {
-				return true
-			}
-		}
-		return false
-	}
-
-	maxAdjust := 10
-	if isEnd {
-		// Look forward for separator
-		for i := pos; i < len(runes) && i < pos+maxAdjust; i++ {
-			if isSeparator(runes[i]) {
-				return i
-			}
-		}
-	} else {
-		// Look backward for separator (start from pos-1 to check characters already in snippet)
-		for i := pos - 1; i >= 0 && i >= pos-maxAdjust; i-- {
-			if isSeparator(runes[i]) {
-				return i + 1
-			}
-		}
-	}
-
-	return pos
-}
-
-// adjustHighlightPositions adjusts highlight positions for the extracted snippet.
-func (s *HighlightService) adjustHighlightPositions(matches []Highlight, windowStart, prefixLen, windowEnd int) []Highlight {
-	adjusted := make([]Highlight, 0, len(matches))
-
-	for _, m := range matches {
-		// Only include matches within the window
-		if m.Start >= windowStart && m.End <= windowEnd {
-			adjusted = append(adjusted, Highlight{
-				Start:       m.Start - windowStart + prefixLen,
-				End:         m.End - windowStart + prefixLen,
-				MatchedText: m.MatchedText,
-			})
-		}
-	}
-
-	return adjusted
 }
