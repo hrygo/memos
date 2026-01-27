@@ -194,9 +194,9 @@ func TestTimeHardener_InferDate(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"15点", "今天15点"},    // 15:00 > 14:00, today
-		{"13点", "明天13点"},    // 13:00 < 14:00, tomorrow
-		{"下午3点", "今天下午3点"}, // 15:00 > 14:00, today
+		{"15点", "今天15点"},     // 15:00 > 14:00, today
+		{"13点", "明天13点"},     // 13:00 < 14:00, tomorrow
+		{"下午3点", "今天下午3点"},   // 15:00 > 14:00, today
 		{"上午10点", "明天上午10点"}, // 10:00 < 14:00, tomorrow
 	}
 
@@ -359,7 +359,7 @@ func TestTimeHardener_ValidateTimeRange(t *testing.T) {
 		{
 			name:      "duration too long",
 			start:     fixedNow.Add(time.Hour),
-			end:       fixedNow.Add(25 * time.Hour),
+			end:       fixedNow.Add(26 * time.Hour), // 25 hours duration > 24 hours
 			wantError: true,
 		},
 		{

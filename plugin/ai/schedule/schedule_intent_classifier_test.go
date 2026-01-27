@@ -257,13 +257,13 @@ func TestScheduleIntentClassifier_HighConfidenceForPatternMatch(t *testing.T) {
 
 	// Pattern matches should have high confidence
 	tests := []struct {
-		input          string
-		minConfidence  float32
+		input         string
+		minConfidence float32
 	}{
-		{"每周一9点站会", 0.9},      // Batch
-		{"把会议改到3点", 0.85},     // Update
-		{"今天有什么安排", 0.8},     // Query - keyword fallback
-		{"明天下午3点开会", 0.85},   // Create
+		{"每周一9点站会", 0.9},   // Batch
+		{"把会议改到3点", 0.85},  // Update
+		{"今天有什么安排", 0.8},   // Query - keyword fallback
+		{"明天下午3点开会", 0.85}, // Create
 	}
 
 	for _, tt := range tests {
@@ -330,9 +330,9 @@ func TestScheduleIntentClassifier_KeywordFallback(t *testing.T) {
 		expected ScheduleIntent
 	}{
 		// Keyword-based detection
-		{"下午约一下", IntentSimpleCreate},  // 下午(time) + 约(create)
-		{"查一下今天", IntentSimpleQuery},   // 查(query)
-		{"改一下时间", IntentSimpleUpdate},  // 改(update)
+		{"下午约一下", IntentSimpleCreate}, // 下午(time) + 约(create)
+		{"查一下今天", IntentSimpleQuery},  // 查(query)
+		{"改一下时间", IntentSimpleUpdate}, // 改(update)
 	}
 
 	for _, tt := range tests {

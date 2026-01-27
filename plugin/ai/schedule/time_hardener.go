@@ -16,7 +16,6 @@ import (
 var (
 	// Time patterns
 	hourMinutePattern = regexp.MustCompile(`(\d{1,2})[点时:](\d{0,2})`)
-	timeOnlyPattern   = regexp.MustCompile(`^(\d{1,2})[点时:]\d{0,2}分?$`)
 	periodPattern     = regexp.MustCompile(`(上午|下午|早上|晚上|中午|傍晚)`)
 	iso8601Pattern    = regexp.MustCompile(`\d{4}-\d{1,2}-\d{1,2}`)
 
@@ -25,6 +24,14 @@ var (
 
 	// Date reference patterns
 	dateRefPattern = regexp.MustCompile(`(今天|明天|后天|大后天|昨天|前天|这周|下周|本周|上周)`)
+
+	// Chinese digit map (shared across functions)
+	chineseDigitMap = map[rune]int{
+		'零': 0, '〇': 0,
+		'一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+		'六': 6, '七': 7, '八': 8, '九': 9,
+		'两': 2,
+	}
 )
 
 // TimeHardener provides time parsing hardening for LLM outputs.
@@ -116,26 +123,14 @@ func (h *TimeHardener) convertChineseNumbers(input string) string {
 	// Handle compound numbers first (十一, 十二, etc.)
 	result := input
 
-	// Map of Chinese numbers
-	chineseMap := map[string]string{
-		"零": "0", "〇": "0",
-		"一": "1", "二": "2", "三": "3", "四": "4", "五": "5",
-		"六": "6", "七": "7", "八": "8", "九": "9",
-		"两": "2", // Common alternative for 二
-	}
-
-	// Handle special compound patterns
-	// 十 alone = 10
-	// 十一 = 11, 十二 = 12, etc.
-	// 二十 = 20, 三十 = 30, etc.
-	// 二十一 = 21, etc.
+	// Handle special compound patterns using regex replacement
 	result = chineseNumPattern.ReplaceAllStringFunc(result, func(match string) string {
 		return h.parseChineseNumber(match)
 	})
 
-	// Handle remaining single digits
-	for ch, ar := range chineseMap {
-		result = strings.ReplaceAll(result, ch, ar)
+	// Handle remaining single digits using shared map
+	for ch, digit := range chineseDigitMap {
+		result = strings.ReplaceAll(result, string(ch), strconv.Itoa(digit))
 	}
 
 	return result
@@ -143,13 +138,6 @@ func (h *TimeHardener) convertChineseNumbers(input string) string {
 
 // parseChineseNumber parses a Chinese number string to Arabic.
 func (h *TimeHardener) parseChineseNumber(s string) string {
-	digitMap := map[rune]int{
-		'零': 0, '〇': 0,
-		'一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-		'六': 6, '七': 7, '八': 8, '九': 9,
-		'两': 2,
-	}
-
 	runes := []rune(s)
 	if len(runes) == 0 {
 		return s
@@ -160,7 +148,7 @@ func (h *TimeHardener) parseChineseNumber(s string) string {
 		if runes[0] == '十' {
 			return "10"
 		}
-		if v, ok := digitMap[runes[0]]; ok {
+		if v, ok := chineseDigitMap[runes[0]]; ok {
 			return strconv.Itoa(v)
 		}
 		return s
@@ -171,14 +159,14 @@ func (h *TimeHardener) parseChineseNumber(s string) string {
 		if len(runes) == 1 {
 			return "10"
 		}
-		if v, ok := digitMap[runes[1]]; ok {
+		if v, ok := chineseDigitMap[runes[1]]; ok {
 			return strconv.Itoa(10 + v)
 		}
 	}
 
 	// Handle X十 pattern (20, 30, etc.)
 	if len(runes) >= 2 && runes[1] == '十' {
-		tens, ok := digitMap[runes[0]]
+		tens, ok := chineseDigitMap[runes[0]]
 		if !ok {
 			return s
 		}
@@ -187,7 +175,7 @@ func (h *TimeHardener) parseChineseNumber(s string) string {
 		}
 		// X十Y pattern (21, 32, etc.)
 		if len(runes) >= 3 {
-			ones, ok := digitMap[runes[2]]
+			ones, ok := chineseDigitMap[runes[2]]
 			if ok {
 				return strconv.Itoa(tens*10 + ones)
 			}
@@ -299,7 +287,7 @@ func (h *TimeHardener) extractMinute(input string) int {
 // extractPeriod extracts the time period (上午/下午/etc.) from a time string.
 func (h *TimeHardener) extractPeriod(input string) string {
 	matches := periodPattern.FindStringSubmatch(input)
-	if len(matches) >= 1 {
+	if len(matches) >= 2 {
 		return matches[1]
 	}
 	return ""

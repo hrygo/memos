@@ -83,8 +83,13 @@ var (
 		regexp.MustCompile(`(从|自).*(到|至).*每`),
 	}
 
+	// Pre-compiled patterns for hasTimeAndAction
+	viewPattern         = regexp.MustCompile(`(查|看|显示|列出).*(安排|日程)`)
+	arrangeVerbPattern  = regexp.MustCompile(`安排.*(会议|面试|约会|活动|事情|一下)`)
+	specificTimePattern = regexp.MustCompile(`\d{1,2}[点时:]`)
+
 	// Keywords for fallback detection
-	timeKeywords  = []string{"今天", "明天", "后天", "下周", "本周", "这周", "上午", "下午", "晚上", "早上", "中午", "点", "时"}
+	timeKeywords   = []string{"今天", "明天", "后天", "下周", "本周", "这周", "上午", "下午", "晚上", "早上", "中午", "点", "时"}
 	createKeywords = []string{"开会", "会议", "面试", "约", "安排", "预约", "创建", "添加", "新建"}
 	queryKeywords  = []string{"有什么", "什么安排", "忙吗", "有空", "查", "看", "显示", "列出", "有没有"}
 	updateKeywords = []string{"改", "换", "调", "推迟", "提前", "取消", "删除", "延后", "调整", "移"}
@@ -175,8 +180,7 @@ func (c *ScheduleIntentClassifier) hasTimeAndAction(input, normalizedInput strin
 	}
 
 	// Check for display/view patterns - "显示...安排" is query, not create
-	viewPatterns := regexp.MustCompile(`(查|看|显示|列出).*(安排|日程)`)
-	if viewPatterns.MatchString(input) {
+	if viewPattern.MatchString(input) {
 		return false
 	}
 
@@ -202,17 +206,14 @@ func (c *ScheduleIntentClassifier) hasTimeAndAction(input, normalizedInput strin
 
 	// Check if "安排" is used as a verb (followed by object)
 	if !hasAction && strings.Contains(input, "安排") {
-		// "安排会议/面试/..." is create
-		arrangeAsVerb := regexp.MustCompile(`安排.*(会议|面试|约会|活动|事情|一下)`)
-		if arrangeAsVerb.MatchString(input) {
+		if arrangeVerbPattern.MatchString(input) {
 			hasAction = true
 		}
 	}
 
 	// Also check for specific time patterns (hour:minute)
 	if !hasTime {
-		timePattern := regexp.MustCompile(`\d{1,2}[点时:]`)
-		hasTime = timePattern.MatchString(input)
+		hasTime = specificTimePattern.MatchString(input)
 	}
 
 	return hasTime && hasAction
