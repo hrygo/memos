@@ -345,7 +345,7 @@ const AIChat = () => {
         console.error("[Parrot Chat Error]", error);
       }
     },
-    [chatHook, updateMessage, addReferencedMemos, setCapabilityStatus, t],
+    [chatHook, updateMessage, addReferencedMemos, setCapabilityStatus, t, uiTools],
   );
 
   const handleSend = useCallback(
