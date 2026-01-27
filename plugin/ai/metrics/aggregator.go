@@ -22,8 +22,10 @@ type agentBucket struct {
 	agentType    string
 	requestCount int64
 	successCount int64
-	latencies    []int64 // in milliseconds
+	latencies    []int64 // in milliseconds, capped at maxLatencySamples
 }
+
+const maxLatencySamples = 10000 // Cap latency samples to prevent memory bloat
 
 type toolBucket struct {
 	hourBucket   time.Time
@@ -63,7 +65,10 @@ func (a *Aggregator) RecordAgentRequest(agentType string, latency time.Duration,
 	if success {
 		bucket.successCount++
 	}
-	bucket.latencies = append(bucket.latencies, latency.Milliseconds())
+	// Reservoir sampling: keep maxLatencySamples samples for percentile calculation
+	if len(bucket.latencies) < maxLatencySamples {
+		bucket.latencies = append(bucket.latencies, latency.Milliseconds())
+	}
 }
 
 // RecordToolCall records a single tool call.
@@ -181,6 +186,14 @@ func (a *Aggregator) GetCurrentStats() *AgentMetrics {
 		ErrorsByType: make(map[string]int64),
 	}
 
+	// Temporary aggregation for each agent type
+	type agentAgg struct {
+		totalRequests int64
+		totalSuccess  int64
+		latencySum    int64
+	}
+	agentAggs := make(map[string]*agentAgg)
+
 	// Aggregate all agent metrics
 	allLatencies := make([]int64, 0)
 	for _, bucket := range a.agentMetrics {
@@ -188,16 +201,24 @@ func (a *Aggregator) GetCurrentStats() *AgentMetrics {
 		stats.SuccessCount += bucket.successCount
 		allLatencies = append(allLatencies, bucket.latencies...)
 
-		if _, exists := stats.AgentStats[bucket.agentType]; !exists {
-			stats.AgentStats[bucket.agentType] = &AgentStat{}
+		agg, exists := agentAggs[bucket.agentType]
+		if !exists {
+			agg = &agentAgg{}
+			agentAggs[bucket.agentType] = agg
 		}
-		agentStat := stats.AgentStats[bucket.agentType]
-		agentStat.Count += bucket.requestCount
-		if bucket.requestCount > 0 {
-			agentStat.SuccessRate = float32(bucket.successCount) / float32(bucket.requestCount)
-			avgMs := sumLatencies(bucket.latencies) / bucket.requestCount
-			agentStat.AvgLatency = time.Duration(avgMs) * time.Millisecond
+		agg.totalRequests += bucket.requestCount
+		agg.totalSuccess += bucket.successCount
+		agg.latencySum += sumLatencies(bucket.latencies)
+	}
+
+	// Build AgentStats from aggregations
+	for agentType, agg := range agentAggs {
+		stat := &AgentStat{Count: agg.totalRequests}
+		if agg.totalRequests > 0 {
+			stat.SuccessRate = float32(agg.totalSuccess) / float32(agg.totalRequests)
+			stat.AvgLatency = time.Duration(agg.latencySum/agg.totalRequests) * time.Millisecond
 		}
+		stats.AgentStats[agentType] = stat
 	}
 
 	stats.LatencyP50 = time.Duration(percentile(allLatencies, 50)) * time.Millisecond

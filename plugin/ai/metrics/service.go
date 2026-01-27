@@ -78,29 +78,45 @@ func (s *Service) GetStats(ctx context.Context, timeRange TimeRange) (*AgentMetr
 		return stats, nil
 	}
 
-	// Merge persisted metrics into stats
+	// Aggregate persisted metrics by agent type
+	type dbAgg struct {
+		totalRequests int64
+		totalSuccess  int64
+		latencySum    int64
+	}
+	dbAggs := make(map[string]*dbAgg)
+
 	for _, m := range agentMetrics {
 		stats.RequestCount += m.RequestCount
 		stats.SuccessCount += m.SuccessCount
 
-		if _, exists := stats.AgentStats[m.AgentType]; !exists {
-			stats.AgentStats[m.AgentType] = &AgentStat{}
+		agg, exists := dbAggs[m.AgentType]
+		if !exists {
+			agg = &dbAgg{}
+			dbAggs[m.AgentType] = agg
 		}
-		agentStat := stats.AgentStats[m.AgentType]
-		agentStat.Count += m.RequestCount
-		if m.RequestCount > 0 {
-			agentStat.SuccessRate = float32(m.SuccessCount) / float32(m.RequestCount)
-			if m.LatencySumMs > 0 {
-				agentStat.AvgLatency = time.Duration(m.LatencySumMs/m.RequestCount) * time.Millisecond
-			}
-		}
+		agg.totalRequests += m.RequestCount
+		agg.totalSuccess += m.SuccessCount
+		agg.latencySum += m.LatencySumMs
+	}
 
-		// Use persisted percentiles if available
-		if m.LatencyP50Ms > 0 {
-			stats.LatencyP50 = time.Duration(m.LatencyP50Ms) * time.Millisecond
+	// Merge DB aggregations into stats
+	for agentType, agg := range dbAggs {
+		agentStat, exists := stats.AgentStats[agentType]
+		if !exists {
+			agentStat = &AgentStat{}
+			stats.AgentStats[agentType] = agentStat
 		}
-		if m.LatencyP95Ms > 0 {
-			stats.LatencyP95 = time.Duration(m.LatencyP95Ms) * time.Millisecond
+		agentStat.Count += agg.totalRequests
+		totalReqs := agentStat.Count
+		if totalReqs > 0 {
+			// Recalculate success rate based on combined totals
+			memSuccess := int64(agentStat.SuccessRate * float32(agentStat.Count-agg.totalRequests))
+			agentStat.SuccessRate = float32(memSuccess+agg.totalSuccess) / float32(totalReqs)
+			// Average latency from DB only (memory stats have their own calculation)
+			if agg.latencySum > 0 && agg.totalRequests > 0 {
+				agentStat.AvgLatency = time.Duration(agg.latencySum/agg.totalRequests) * time.Millisecond
+			}
 		}
 	}
 
