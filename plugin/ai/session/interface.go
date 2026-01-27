@@ -15,6 +15,13 @@ type SessionService interface {
 
 	// ListSessions lists user sessions.
 	ListSessions(ctx context.Context, userID int32, limit int) ([]SessionSummary, error)
+
+	// DeleteSession deletes a session (user privacy control).
+	DeleteSession(ctx context.Context, sessionID string) error
+
+	// CleanupExpired removes sessions older than retentionDays.
+	// Returns the number of deleted sessions.
+	CleanupExpired(ctx context.Context, retentionDays int) (int64, error)
 }
 
 // ConversationContext represents the conversation context.

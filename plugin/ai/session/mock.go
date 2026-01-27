@@ -174,11 +174,51 @@ func (m *MockSessionService) ListSessions(ctx context.Context, userID int32, lim
 	return summaries, nil
 }
 
+// DeleteSession deletes a session.
+func (m *MockSessionService) DeleteSession(ctx context.Context, sessionID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.sessions[sessionID]; !ok {
+		return nil // Not an error if not found
+	}
+
+	delete(m.sessions, sessionID)
+	return nil
+}
+
+// CleanupExpired removes sessions older than retentionDays.
+func (m *MockSessionService) CleanupExpired(ctx context.Context, retentionDays int) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	cutoff := time.Now().AddDate(0, 0, -retentionDays).Unix()
+	var deleted int64
+
+	for sessionID, session := range m.sessions {
+		if session.UpdatedAt < cutoff {
+			delete(m.sessions, sessionID)
+			deleted++
+		}
+	}
+
+	return deleted, nil
+}
+
 // Clear removes all sessions (for testing).
 func (m *MockSessionService) Clear() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.sessions = make(map[string]*ConversationContext)
+}
+
+// SetSessionDirectly sets a session directly without updating timestamps (for testing).
+func (m *MockSessionService) SetSessionDirectly(sessionID string, context *ConversationContext) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	context.SessionID = sessionID
+	m.sessions[sessionID] = context
 }
 
 // Ensure MockSessionService implements SessionService

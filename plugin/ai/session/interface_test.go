@@ -212,4 +212,63 @@ func TestSessionServiceContract(t *testing.T) {
 			t.Error("LoadContext should return independent copies")
 		}
 	})
+
+	t.Run("DeleteSession_RemovesSession", func(t *testing.T) {
+		sessionID := "test-delete-session"
+		context := &ConversationContext{
+			UserID:    1,
+			AgentType: "memo",
+			Messages:  []Message{{Role: "user", Content: "Test"}},
+		}
+
+		// Create session
+		svc.SaveContext(ctx, sessionID, context)
+
+		// Verify it exists
+		loaded, _ := svc.LoadContext(ctx, sessionID)
+		if loaded == nil {
+			t.Fatal("session should exist before delete")
+		}
+
+		// Delete session
+		err := svc.DeleteSession(ctx, sessionID)
+		if err != nil {
+			t.Fatalf("DeleteSession failed: %v", err)
+		}
+
+		// Verify it's gone
+		loaded, _ = svc.LoadContext(ctx, sessionID)
+		if loaded != nil {
+			t.Error("session should not exist after delete")
+		}
+	})
+
+	t.Run("CleanupExpired_RemovesOldSessions", func(t *testing.T) {
+		// Use SetSessionDirectly to avoid timestamp override
+		oldSession := &ConversationContext{
+			SessionID: "old-session",
+			UserID:    999,
+			AgentType: "memo",
+			Messages:  []Message{},
+			CreatedAt: 1000000,
+			UpdatedAt: 1000000, // Very old timestamp
+		}
+		svc.SetSessionDirectly("old-session", oldSession)
+
+		// Cleanup with 0 retention (all sessions are "expired")
+		deleted, err := svc.CleanupExpired(ctx, 0)
+		if err != nil {
+			t.Fatalf("CleanupExpired failed: %v", err)
+		}
+
+		if deleted == 0 {
+			t.Error("expected at least one session to be deleted")
+		}
+
+		// Verify old session is gone
+		loaded, _ := svc.LoadContext(ctx, "old-session")
+		if loaded != nil {
+			t.Error("old session should be deleted")
+		}
+	})
 }
