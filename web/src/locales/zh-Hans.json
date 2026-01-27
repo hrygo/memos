@@ -218,19 +218,39 @@
       "mention-hint": "选择一个助手...",
       "partner": {
         "default-hint": "我可以帮你搜索笔记、管理日程，或者一起头脑风暴",
+        "greeting-early-morning": "早安",
+        "greeting-late-night": "夜深了",
+        "greeting-morning": "早上好",
+        "greeting-noon": "中午好",
         "greeting-afternoon": "下午好",
         "greeting-evening": "晚上好",
-        "greeting-morning": "早上好",
-        "greeting-night": "夜深了",
-        "hint-afternoon": "下午茶时间，来聊聊？",
-        "hint-evening": "辛苦了一天，放松一下",
-        "hint-morning": "新的一天，有什么计划？",
-        "hint-night": "夜深了，注意休息",
+        "greeting-night": "晚上好",
+        "hint-early-morning": "新的一天开始了，先看看今天的安排",
+        "hint-late-night": "这么晚了，注意休息",
+        "hint-morning": "准备好迎接新的一天了吗？",
+        "hint-noon": "午休时间，要不要回顾一下上午的进展？",
+        "hint-afternoon": "下午茶时间，来梳理一下接下来的任务",
+        "hint-evening": "辛苦了一天，放松一下，回顾今天的收获",
+        "hint-night": "夜深了，早点休息",
         "input-hint": "直接输入消息，我会自动理解你的意图",
-        "prompt-creative": "写一段关于...",
-        "prompt-memo": "最近记了什么笔记？",
-        "prompt-schedule": "今天还有什么安排？",
-        "prompt-summary": "帮我回顾一下这周",
+        "memo-count": "{{count}} 条笔记",
+        "schedule-count": "{{count}} 个日程",
+        "prompt-afternoon-free": "下午还有空闲时间吗",
+        "prompt-connect-info": "我记过关于项目A的内容吗",
+        "prompt-create-meeting": "明天下午3点开个会",
+        "prompt-create-reminder": "提醒我下周交报告",
+        "prompt-create-tomorrow": "明天下午有个会议",
+        "prompt-day-summary": "今天做了什么，学到了什么",
+        "prompt-find-idea": "我之前记下的灵感有哪些",
+        "prompt-quick-search": "搜索最近的工作笔记",
+        "prompt-recent-memos": "最近记了什么笔记",
+        "prompt-search-memo": "搜索关于工作的笔记",
+        "prompt-today-learned": "今天学到了什么新东西",
+        "prompt-today-overview": "今天有哪些安排和待办",
+        "prompt-today-schedule": "今天有什么安排",
+        "prompt-tomorrow-check": "明天有什么事情要做",
+        "prompt-tomorrow-plan": "明天需要准备什么",
+        "prompt-week-summary": "这周做了什么，下周计划",
         "quick-chat": "随便聊聊",
         "quick-chat-desc": "自由对话",
         "quick-memo": "查看笔记",
@@ -387,6 +407,7 @@
     "tree-mode": "树模式",
     "type": "类型",
     "unpin": "取消置顶",
+    "undo": "撤销",
     "update": "更新",
     "upload": "上传",
     "user": "用户",
@@ -448,6 +469,20 @@
     "list": "列表模式",
     "load-more": "加载更多",
     "masonry": "瀑布流模式",
+    "preview": {
+      "cancel": "取消",
+      "confidence": "置信度",
+      "confirm": "创建备忘录",
+      "content": "内容",
+      "tags": "标签",
+      "title": "备忘录预览"
+    },
+    "search": {
+      "content": "笔记内容",
+      "confidence": "相关度",
+      "tags": "标签",
+      "view-memo": "查看笔记"
+    },
     "remove-completed-task-list-items": "移除已办",
     "remove-completed-task-list-items-confirm": "您确定要移除所有完成的待办吗？（此操作不可逆）",
     "search-placeholder": "搜索备忘录",
@@ -521,6 +556,24 @@
   },
   "router": {
     "back-to-top": "回到顶部"
+  },
+  "quick": {
+    "actions": {
+      "title": "建议操作",
+      "execute": "执行"
+    }
+  },
+  "progress": {
+    "tracker": {
+      "title": "处理中",
+      "cancel": "取消",
+      "steps": {
+        "pending": "等待中",
+        "in_progress": "处理中",
+        "completed": "已完成",
+        "failed": "失败"
+      }
+    }
   },
   "schedule": {
     "ai-sidebar": {
@@ -645,6 +698,10 @@
         "suggestion-message": "选中日期: {{date}}\n创建: {{title}} {{startTime}}-{{endTime}}"
       }
     },
+    "list": {
+      "summary": "共找到 {{count}} 个日程",
+      "empty": "该时间段没有找到日程"
+    },
     "repeat": "重复",
     "schedule-count": "{{count}} 个日程",
     "schedule-created": "日程创建成功",
@@ -659,6 +716,9 @@
       "hint": "告诉我你想安排什么，支持自然语言输入",
       "placeholder": "告诉我你想安排什么，例如：「明天下午3点开会」",
       "thinking": "正在思考..."
+    },
+    "suggestion": {
+      "click-to-create": "点击创建日程"
     },
     "tap-to-view": "点击日期查看日程详情",
     "timeline": "时间轴",
@@ -724,6 +784,17 @@
     },
     "member": "成员",
     "member-list": "成员列表",
+    "memo-related": "备忘录",
+    "metrics": "系统指标",
+    "metrics-section": {
+      "errors": "错误",
+      "latency": "延迟 (P50)",
+      "overview": "概览",
+      "p95": "延迟 (P95)",
+      "requests": "总请求数",
+      "success-rate": "成功率",
+      "time-range": "时间范围"
+    },
     "member-section": {
       "admin": "管理员",
       "archive-member": "归档成员",
@@ -738,7 +809,6 @@
       "restore-success": "{{username}} 恢复成功",
       "user": "普通用户"
     },
-    "memo-related": "备忘录",
     "memo-related-settings": {
       "content-length-limit": "内容长度限制（字节）",
       "enable-blur-nsfw-content": "启用 NSFW 内容模糊处理（在下方添加 NSFW 标签）",

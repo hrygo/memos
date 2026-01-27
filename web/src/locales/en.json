@@ -218,19 +218,39 @@
       "mention-hint": "Select an agent...",
       "partner": {
         "default-hint": "I can help you search memos, manage schedules, or brainstorm together",
+        "greeting-early-morning": "Good morning",
+        "greeting-late-night": "It's getting late",
+        "greeting-morning": "Good morning",
+        "greeting-noon": "Good noon",
         "greeting-afternoon": "Good afternoon",
         "greeting-evening": "Good evening",
-        "greeting-morning": "Good morning",
-        "greeting-night": "It's getting late",
-        "hint-afternoon": "Tea time, let's chat?",
-        "hint-evening": "After a long day, time to relax",
-        "hint-morning": "A new day, any plans?",
-        "hint-night": "It's late, get some rest",
+        "greeting-night": "Good evening",
+        "hint-early-morning": "A new day begins, let's check your schedule",
+        "hint-late-night": "It's late, get some rest",
+        "hint-morning": "Ready for a new day?",
+        "hint-noon": "Lunch time, want to review your morning progress?",
+        "hint-afternoon": "Afternoon tea time, let's organize your tasks",
+        "hint-evening": "Long day, relax and review what you've accomplished",
+        "hint-night": "It's late, time to rest",
         "input-hint": "Just type a message, I'll automatically understand your intent",
-        "prompt-creative": "Write something about...",
-        "prompt-memo": "What memos did I take recently?",
-        "prompt-schedule": "What's on my schedule today?",
-        "prompt-summary": "Help me review this week",
+        "memo-count": "{{count}} memos",
+        "schedule-count": "{{count}} schedules",
+        "prompt-afternoon-free": "Am I free this afternoon",
+        "prompt-connect-info": "What did I note about project A",
+        "prompt-create-meeting": "Schedule a meeting for tomorrow 3pm",
+        "prompt-create-reminder": "Remind me to submit the report next week",
+        "prompt-create-tomorrow": "I have a meeting tomorrow afternoon",
+        "prompt-day-summary": "What did I do and learn today",
+        "prompt-find-idea": "What ideas did I note down",
+        "prompt-quick-search": "Search recent work notes",
+        "prompt-recent-memos": "What memos did I take recently",
+        "prompt-search-memo": "Search for work-related notes",
+        "prompt-today-learned": "What new things did I learn today",
+        "prompt-today-overview": "What's on my schedule and todo list today",
+        "prompt-today-schedule": "What's on my schedule today",
+        "prompt-tomorrow-check": "What do I need to do tomorrow",
+        "prompt-tomorrow-plan": "What should I prepare for tomorrow",
+        "prompt-week-summary": "What did I do this week and what's next",
         "quick-chat": "Free Chat",
         "quick-chat-desc": "Open conversation",
         "quick-memo": "View Memos",
@@ -387,6 +407,7 @@
     "tree-mode": "Tree mode",
     "type": "Type",
     "unpin": "Unpin",
+    "undo": "Undo",
     "update": "Update",
     "upload": "Upload",
     "user": "User",
@@ -448,9 +469,23 @@
     "list": "List",
     "load-more": "Load more",
     "masonry": "Masonry",
+    "preview": {
+      "cancel": "Cancel",
+      "confidence": "Confidence",
+      "confirm": "Create Memo",
+      "content": "Content",
+      "tags": "Tags",
+      "title": "Memo Preview"
+    },
     "remove-completed-task-list-items": "Remove done",
     "remove-completed-task-list-items-confirm": "Are you sure you want to remove all completed to-dos? THIS ACTION IS IRREVERSIBLE",
     "search-placeholder": "Search memos...",
+    "search": {
+      "content": "Memo content",
+      "confidence": "Relevance",
+      "tags": "Tags",
+      "view-memo": "View memo"
+    },
     "show-less": "Show less",
     "show-more": "Show more",
     "to-do": "To-do",
@@ -521,6 +556,24 @@
   },
   "router": {
     "back-to-top": "Back to Top"
+  },
+  "quick": {
+    "actions": {
+      "title": "Suggested Actions",
+      "execute": "Execute"
+    }
+  },
+  "progress": {
+    "tracker": {
+      "title": "Processing",
+      "cancel": "Cancel",
+      "steps": {
+        "pending": "Pending",
+        "in_progress": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
+    }
   },
   "schedule": {
     "ai-sidebar": {
@@ -645,6 +698,10 @@
         "suggestion-message": "Selected date: {{date}}\nCreate: {{title}} {{startTime}}-{{endTime}}"
       }
     },
+    "list": {
+      "summary": "Found {{count}} schedule(s)",
+      "empty": "No schedules found for this period"
+    },
     "repeat": "Repeat",
     "schedule-count": "{{count}} schedule",
     "schedule-created": "Schedule created successfully",
@@ -659,6 +716,9 @@
       "hint": "Tell me what you want to schedule, natural language input supported",
       "placeholder": "Tell me what you want to schedule, e.g., \"Meeting tomorrow at 3pm\"",
       "thinking": "Thinking..."
+    },
+    "suggestion": {
+      "click-to-create": "Click to create"
     },
     "tap-to-view": "Tap a date to view schedule details",
     "timeline": "Timeline",
@@ -724,6 +784,17 @@
     },
     "member": "Member",
     "member-list": "Member list",
+    "memo-related": "Memo",
+    "metrics": "Metrics",
+    "metrics-section": {
+      "errors": "Errors",
+      "latency": "Latency (P50)",
+      "overview": "Overview",
+      "p95": "Latency (P95)",
+      "requests": "Total Requests",
+      "success-rate": "Success Rate",
+      "time-range": "Time Range"
+    },
     "member-section": {
       "admin": "Admin",
       "archive-member": "Archive member",
@@ -738,10 +809,8 @@
       "restore-success": "{{username}} restored successfully",
       "user": "User"
     },
-    "memo-related": "Memo",
     "memo-related-settings": {
       "content-length-limit": "Content length limit (Byte)",
-      "content-length-limit": "Massima lunghezza contenuto (byte)",
       "enable-blur-nsfw-content": "Enable sensitive content (NSFW) blurring",
       "enable-memo-comments": "Enable memo comments",
       "enable-memo-location": "Enable memo location",
