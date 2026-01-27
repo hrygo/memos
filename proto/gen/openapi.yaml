@@ -302,6 +302,81 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/ai/detect-duplicates:
+        post:
+            tags:
+                - AIService
+            description: DetectDuplicates checks for duplicate or related memos.
+            operationId: AIService_DetectDuplicates
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DetectDuplicatesRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DetectDuplicatesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/link-memos:
+        post:
+            tags:
+                - AIService
+            description: LinkMemos creates a bidirectional relation between two memos.
+            operationId: AIService_LinkMemos
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LinkMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LinkMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/ai/merge-memos:
+        post:
+            tags:
+                - AIService
+            description: MergeMemos merges source memo into target memo.
+            operationId: AIService_MergeMemos
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/MergeMemosRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MergeMemosResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/ai/parrots:
         get:
             tags:
@@ -1736,6 +1811,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/schedules:precheck:
+        post:
+            tags:
+                - ScheduleService
+            description: PrecheckSchedule validates a schedule before creation.
+            operationId: ScheduleService_PrecheckSchedule
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PrecheckScheduleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PrecheckScheduleResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users:
         get:
             tags:
@@ -2743,6 +2843,16 @@ components:
                 AddContextSeparatorRequest adds a separator marker to a conversation.
                  This marks the point where the conversation context is cleared.
                  Subsequent chat requests will only include messages after this separator.
+        AlternativeSlot:
+            type: object
+            properties:
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                label:
+                    type: string
+            description: AlternativeSlot represents an available time slot.
         Attachment:
             required:
                 - filename
@@ -2911,6 +3021,41 @@ components:
                 schedule:
                     $ref: '#/components/schemas/Schedule'
             description: CreateScheduleRequest is the request for CreateSchedule.
+        DetectDuplicatesRequest:
+            required:
+                - content
+            type: object
+            properties:
+                title:
+                    type: string
+                content:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                topK:
+                    type: integer
+                    format: int32
+            description: DetectDuplicatesRequest is the request for DetectDuplicates.
+        DetectDuplicatesResponse:
+            type: object
+            properties:
+                hasDuplicate:
+                    type: boolean
+                hasRelated:
+                    type: boolean
+                duplicates:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SimilarMemo'
+                related:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SimilarMemo'
+                latencyMs:
+                    type: string
+            description: DetectDuplicatesResponse is the response for DetectDuplicates.
         FieldMapping:
             type: object
             properties:
@@ -3145,6 +3290,23 @@ components:
                         - $ref: '#/components/schemas/StorageSetting_S3Config'
                     description: The S3 config.
             description: Storage configuration settings for instance attachments.
+        LinkMemosRequest:
+            required:
+                - memoName1
+                - memoName2
+            type: object
+            properties:
+                memoName1:
+                    type: string
+                memoName2:
+                    type: string
+            description: LinkMemosRequest is the request for LinkMemos.
+        LinkMemosResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+            description: LinkMemosResponse is the response for LinkMemos.
         ListAIConversationsResponse:
             type: object
             properties:
@@ -3538,6 +3700,23 @@ components:
                 hasIncompleteTasks:
                     type: boolean
             description: Computed properties of a memo.
+        MergeMemosRequest:
+            required:
+                - sourceName
+                - targetName
+            type: object
+            properties:
+                sourceName:
+                    type: string
+                targetName:
+                    type: string
+            description: MergeMemosRequest is the request for MergeMemos.
+        MergeMemosResponse:
+            type: object
+            properties:
+                mergedName:
+                    type: string
+            description: MergeMemosResponse is the response for MergeMemos.
         OAuth2Config:
             type: object
             properties:
@@ -3663,6 +3842,67 @@ components:
             description: |-
                 PersonalAccessToken represents a long-lived token for API/script access.
                  PATs are distinct from short-lived JWT access tokens used for session authentication.
+        PrecheckError:
+            type: object
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+                field:
+                    type: string
+            description: PrecheckError represents a validation error.
+        PrecheckScheduleRequest:
+            required:
+                - startTs
+            type: object
+            properties:
+                title:
+                    type: string
+                startTs:
+                    type: string
+                endTs:
+                    type: string
+                duration:
+                    type: integer
+                    format: int32
+                location:
+                    type: string
+            description: PrecheckScheduleRequest is the request for PrecheckSchedule.
+        PrecheckScheduleResponse:
+            type: object
+            properties:
+                valid:
+                    type: boolean
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PrecheckError'
+                warnings:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PrecheckWarning'
+                suggestions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PrecheckSuggestion'
+            description: PrecheckScheduleResponse is the response for PrecheckSchedule.
+        PrecheckSuggestion:
+            type: object
+            properties:
+                type:
+                    type: string
+                slot:
+                    $ref: '#/components/schemas/AlternativeSlot'
+            description: PrecheckSuggestion represents a suggestion for schedule correction.
+        PrecheckWarning:
+            type: object
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+            description: PrecheckWarning represents a validation warning.
         Reaction:
             required:
                 - contentId
@@ -3984,6 +4224,42 @@ components:
                         When the access token expires.
                          Client should call RefreshToken before this time.
                     format: date-time
+        SimilarMemo:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                title:
+                    type: string
+                snippet:
+                    type: string
+                similarity:
+                    type: number
+                    format: double
+                sharedTags:
+                    type: array
+                    items:
+                        type: string
+                level:
+                    type: string
+                breakdown:
+                    $ref: '#/components/schemas/SimilarityBreakdown'
+            description: SimilarMemo represents a memo similar to the input.
+        SimilarityBreakdown:
+            type: object
+            properties:
+                vector:
+                    type: number
+                    format: double
+                tagCoOccur:
+                    type: number
+                    format: double
+                timeProx:
+                    type: number
+                    format: double
+            description: SimilarityBreakdown shows how similarity was calculated.
         Status:
             type: object
             properties:

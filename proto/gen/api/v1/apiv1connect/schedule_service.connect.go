@@ -55,6 +55,9 @@ const (
 	// ScheduleServiceParseAndCreateScheduleProcedure is the fully-qualified name of the
 	// ScheduleService's ParseAndCreateSchedule RPC.
 	ScheduleServiceParseAndCreateScheduleProcedure = "/memos.api.v1.ScheduleService/ParseAndCreateSchedule"
+	// ScheduleServicePrecheckScheduleProcedure is the fully-qualified name of the ScheduleService's
+	// PrecheckSchedule RPC.
+	ScheduleServicePrecheckScheduleProcedure = "/memos.api.v1.ScheduleService/PrecheckSchedule"
 )
 
 // ScheduleServiceClient is a client for the memos.api.v1.ScheduleService service.
@@ -73,6 +76,8 @@ type ScheduleServiceClient interface {
 	CheckConflict(context.Context, *connect.Request[v1.CheckConflictRequest]) (*connect.Response[v1.CheckConflictResponse], error)
 	// ParseAndCreateSchedule parses natural language and creates a schedule.
 	ParseAndCreateSchedule(context.Context, *connect.Request[v1.ParseAndCreateScheduleRequest]) (*connect.Response[v1.ParseAndCreateScheduleResponse], error)
+	// PrecheckSchedule validates a schedule before creation.
+	PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error)
 }
 
 // NewScheduleServiceClient constructs a client for the memos.api.v1.ScheduleService service. By
@@ -128,6 +133,12 @@ func NewScheduleServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(scheduleServiceMethods.ByName("ParseAndCreateSchedule")),
 			connect.WithClientOptions(opts...),
 		),
+		precheckSchedule: connect.NewClient[v1.PrecheckScheduleRequest, v1.PrecheckScheduleResponse](
+			httpClient,
+			baseURL+ScheduleServicePrecheckScheduleProcedure,
+			connect.WithSchema(scheduleServiceMethods.ByName("PrecheckSchedule")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -140,6 +151,7 @@ type scheduleServiceClient struct {
 	deleteSchedule         *connect.Client[v1.DeleteScheduleRequest, emptypb.Empty]
 	checkConflict          *connect.Client[v1.CheckConflictRequest, v1.CheckConflictResponse]
 	parseAndCreateSchedule *connect.Client[v1.ParseAndCreateScheduleRequest, v1.ParseAndCreateScheduleResponse]
+	precheckSchedule       *connect.Client[v1.PrecheckScheduleRequest, v1.PrecheckScheduleResponse]
 }
 
 // CreateSchedule calls memos.api.v1.ScheduleService.CreateSchedule.
@@ -177,6 +189,11 @@ func (c *scheduleServiceClient) ParseAndCreateSchedule(ctx context.Context, req 
 	return c.parseAndCreateSchedule.CallUnary(ctx, req)
 }
 
+// PrecheckSchedule calls memos.api.v1.ScheduleService.PrecheckSchedule.
+func (c *scheduleServiceClient) PrecheckSchedule(ctx context.Context, req *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error) {
+	return c.precheckSchedule.CallUnary(ctx, req)
+}
+
 // ScheduleServiceHandler is an implementation of the memos.api.v1.ScheduleService service.
 type ScheduleServiceHandler interface {
 	// CreateSchedule creates a new schedule.
@@ -193,6 +210,8 @@ type ScheduleServiceHandler interface {
 	CheckConflict(context.Context, *connect.Request[v1.CheckConflictRequest]) (*connect.Response[v1.CheckConflictResponse], error)
 	// ParseAndCreateSchedule parses natural language and creates a schedule.
 	ParseAndCreateSchedule(context.Context, *connect.Request[v1.ParseAndCreateScheduleRequest]) (*connect.Response[v1.ParseAndCreateScheduleResponse], error)
+	// PrecheckSchedule validates a schedule before creation.
+	PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error)
 }
 
 // NewScheduleServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -244,6 +263,12 @@ func NewScheduleServiceHandler(svc ScheduleServiceHandler, opts ...connect.Handl
 		connect.WithSchema(scheduleServiceMethods.ByName("ParseAndCreateSchedule")),
 		connect.WithHandlerOptions(opts...),
 	)
+	scheduleServicePrecheckScheduleHandler := connect.NewUnaryHandler(
+		ScheduleServicePrecheckScheduleProcedure,
+		svc.PrecheckSchedule,
+		connect.WithSchema(scheduleServiceMethods.ByName("PrecheckSchedule")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.ScheduleService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ScheduleServiceCreateScheduleProcedure:
@@ -260,6 +285,8 @@ func NewScheduleServiceHandler(svc ScheduleServiceHandler, opts ...connect.Handl
 			scheduleServiceCheckConflictHandler.ServeHTTP(w, r)
 		case ScheduleServiceParseAndCreateScheduleProcedure:
 			scheduleServiceParseAndCreateScheduleHandler.ServeHTTP(w, r)
+		case ScheduleServicePrecheckScheduleProcedure:
+			scheduleServicePrecheckScheduleHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -295,4 +322,8 @@ func (UnimplementedScheduleServiceHandler) CheckConflict(context.Context, *conne
 
 func (UnimplementedScheduleServiceHandler) ParseAndCreateSchedule(context.Context, *connect.Request[v1.ParseAndCreateScheduleRequest]) (*connect.Response[v1.ParseAndCreateScheduleResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleService.ParseAndCreateSchedule is not implemented"))
+}
+
+func (UnimplementedScheduleServiceHandler) PrecheckSchedule(context.Context, *connect.Request[v1.PrecheckScheduleRequest]) (*connect.Response[v1.PrecheckScheduleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ScheduleService.PrecheckSchedule is not implemented"))
 }

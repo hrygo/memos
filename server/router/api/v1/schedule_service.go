@@ -364,8 +364,8 @@ func (s *ScheduleService) ListSchedules(ctx context.Context, req *v1pb.ListSched
 	}
 
 	return &v1pb.ListSchedulesResponse{
-		Schedules:  expandedSchedules,
-		Truncated:  truncated,
+		Schedules: expandedSchedules,
+		Truncated: truncated,
 	}, nil
 }
 
@@ -822,4 +822,76 @@ func formatEndTs(endTs *int64) string {
 		return "no end time"
 	}
 	return fmt.Sprintf("%d", *endTs)
+}
+
+// PrecheckSchedule validates a schedule before creation.
+func (s *ScheduleService) PrecheckSchedule(ctx context.Context, req *v1pb.PrecheckScheduleRequest) (*v1pb.PrecheckScheduleResponse, error) {
+	userID := auth.GetUserID(ctx)
+	if userID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "unauthorized")
+	}
+
+	// Validate required field
+	if req.StartTs <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "start_ts is required")
+	}
+
+	// Create precheck service
+	precheckService := aischedule.NewPrecheckService(s.Store)
+
+	// Convert proto request to internal request
+	startTime := time.Unix(req.StartTs, 0)
+	var endTime time.Time
+	if req.EndTs > 0 {
+		endTime = time.Unix(req.EndTs, 0)
+	}
+
+	precheckReq := &aischedule.PrecheckRequest{
+		Title:     req.Title,
+		StartTime: startTime,
+		EndTime:   endTime,
+		Duration:  int(req.Duration),
+		Location:  req.Location,
+	}
+
+	// Perform precheck
+	result := precheckService.Precheck(ctx, userID, precheckReq)
+
+	// Convert internal result to proto response
+	response := &v1pb.PrecheckScheduleResponse{
+		Valid: result.Valid,
+	}
+
+	// Convert errors
+	for _, e := range result.Errors {
+		response.Errors = append(response.Errors, &v1pb.PrecheckError{
+			Code:    e.Code,
+			Message: e.Message,
+			Field:   e.Field,
+		})
+	}
+
+	// Convert warnings
+	for _, w := range result.Warnings {
+		response.Warnings = append(response.Warnings, &v1pb.PrecheckWarning{
+			Code:    w.Code,
+			Message: w.Message,
+		})
+	}
+
+	// Convert suggestions
+	for _, sug := range result.Suggestions {
+		if slot, ok := sug.Value.(aischedule.AlternativeSlot); ok {
+			response.Suggestions = append(response.Suggestions, &v1pb.PrecheckSuggestion{
+				Type: sug.Type,
+				Slot: &v1pb.AlternativeSlot{
+					StartTs: slot.StartTime.Unix(),
+					EndTs:   slot.EndTime.Unix(),
+					Label:   slot.Label,
+				},
+			})
+		}
+	}
+
+	return response, nil
 }

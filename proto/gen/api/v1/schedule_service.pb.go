@@ -806,6 +806,380 @@ func (x *ParseAndCreateScheduleResponse) GetConflicts() []*Schedule {
 	return nil
 }
 
+// PrecheckScheduleRequest is the request for PrecheckSchedule.
+type PrecheckScheduleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	StartTs       int64                  `protobuf:"varint,2,opt,name=start_ts,json=startTs,proto3" json:"start_ts,omitempty"`
+	EndTs         int64                  `protobuf:"varint,3,opt,name=end_ts,json=endTs,proto3" json:"end_ts,omitempty"`
+	Duration      int32                  `protobuf:"varint,4,opt,name=duration,proto3" json:"duration,omitempty"` // Duration in minutes
+	Location      string                 `protobuf:"bytes,5,opt,name=location,proto3" json:"location,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrecheckScheduleRequest) Reset() {
+	*x = PrecheckScheduleRequest{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrecheckScheduleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrecheckScheduleRequest) ProtoMessage() {}
+
+func (x *PrecheckScheduleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrecheckScheduleRequest.ProtoReflect.Descriptor instead.
+func (*PrecheckScheduleRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PrecheckScheduleRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PrecheckScheduleRequest) GetStartTs() int64 {
+	if x != nil {
+		return x.StartTs
+	}
+	return 0
+}
+
+func (x *PrecheckScheduleRequest) GetEndTs() int64 {
+	if x != nil {
+		return x.EndTs
+	}
+	return 0
+}
+
+func (x *PrecheckScheduleRequest) GetDuration() int32 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
+func (x *PrecheckScheduleRequest) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+// PrecheckScheduleResponse is the response for PrecheckSchedule.
+type PrecheckScheduleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
+	Errors        []*PrecheckError       `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	Warnings      []*PrecheckWarning     `protobuf:"bytes,3,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	Suggestions   []*PrecheckSuggestion  `protobuf:"bytes,4,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrecheckScheduleResponse) Reset() {
+	*x = PrecheckScheduleResponse{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrecheckScheduleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrecheckScheduleResponse) ProtoMessage() {}
+
+func (x *PrecheckScheduleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrecheckScheduleResponse.ProtoReflect.Descriptor instead.
+func (*PrecheckScheduleResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *PrecheckScheduleResponse) GetValid() bool {
+	if x != nil {
+		return x.Valid
+	}
+	return false
+}
+
+func (x *PrecheckScheduleResponse) GetErrors() []*PrecheckError {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
+func (x *PrecheckScheduleResponse) GetWarnings() []*PrecheckWarning {
+	if x != nil {
+		return x.Warnings
+	}
+	return nil
+}
+
+func (x *PrecheckScheduleResponse) GetSuggestions() []*PrecheckSuggestion {
+	if x != nil {
+		return x.Suggestions
+	}
+	return nil
+}
+
+// PrecheckError represents a validation error.
+type PrecheckError struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`       // Error code like "TIME_CONFLICT"
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // Human-readable message
+	Field         string                 `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`     // Field that caused the error
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrecheckError) Reset() {
+	*x = PrecheckError{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrecheckError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrecheckError) ProtoMessage() {}
+
+func (x *PrecheckError) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrecheckError.ProtoReflect.Descriptor instead.
+func (*PrecheckError) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PrecheckError) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *PrecheckError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *PrecheckError) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+// PrecheckWarning represents a validation warning.
+type PrecheckWarning struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`       // Warning code like "OUTSIDE_WORK_HOURS"
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // Human-readable message
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrecheckWarning) Reset() {
+	*x = PrecheckWarning{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrecheckWarning) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrecheckWarning) ProtoMessage() {}
+
+func (x *PrecheckWarning) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrecheckWarning.ProtoReflect.Descriptor instead.
+func (*PrecheckWarning) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PrecheckWarning) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *PrecheckWarning) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// PrecheckSuggestion represents a suggestion for schedule correction.
+type PrecheckSuggestion struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // "alternative_time"
+	Slot          *AlternativeSlot       `protobuf:"bytes,2,opt,name=slot,proto3" json:"slot,omitempty"` // Alternative time slot
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrecheckSuggestion) Reset() {
+	*x = PrecheckSuggestion{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrecheckSuggestion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrecheckSuggestion) ProtoMessage() {}
+
+func (x *PrecheckSuggestion) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrecheckSuggestion.ProtoReflect.Descriptor instead.
+func (*PrecheckSuggestion) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *PrecheckSuggestion) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PrecheckSuggestion) GetSlot() *AlternativeSlot {
+	if x != nil {
+		return x.Slot
+	}
+	return nil
+}
+
+// AlternativeSlot represents an available time slot.
+type AlternativeSlot struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StartTs       int64                  `protobuf:"varint,1,opt,name=start_ts,json=startTs,proto3" json:"start_ts,omitempty"`
+	EndTs         int64                  `protobuf:"varint,2,opt,name=end_ts,json=endTs,proto3" json:"end_ts,omitempty"`
+	Label         string                 `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"` // "同日稍后", "明天同一时间"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AlternativeSlot) Reset() {
+	*x = AlternativeSlot{}
+	mi := &file_api_v1_schedule_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AlternativeSlot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AlternativeSlot) ProtoMessage() {}
+
+func (x *AlternativeSlot) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_schedule_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AlternativeSlot.ProtoReflect.Descriptor instead.
+func (*AlternativeSlot) Descriptor() ([]byte, []int) {
+	return file_api_v1_schedule_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *AlternativeSlot) GetStartTs() int64 {
+	if x != nil {
+		return x.StartTs
+	}
+	return 0
+}
+
+func (x *AlternativeSlot) GetEndTs() int64 {
+	if x != nil {
+		return x.EndTs
+	}
+	return 0
+}
+
+func (x *AlternativeSlot) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
 var File_api_v1_schedule_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_schedule_service_proto_rawDesc = "" +
@@ -868,7 +1242,32 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x1eParseAndCreateScheduleResponse\x12?\n" +
 	"\x0fparsed_schedule\x18\x01 \x01(\v2\x16.memos.api.v1.ScheduleR\x0eparsedSchedule\x12A\n" +
 	"\x10created_schedule\x18\x02 \x01(\v2\x16.memos.api.v1.ScheduleR\x0fcreatedSchedule\x124\n" +
-	"\tconflicts\x18\x03 \x03(\v2\x16.memos.api.v1.ScheduleR\tconflicts2\xfc\x06\n" +
+	"\tconflicts\x18\x03 \x03(\v2\x16.memos.api.v1.ScheduleR\tconflicts\"\x9e\x01\n" +
+	"\x17PrecheckScheduleRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1e\n" +
+	"\bstart_ts\x18\x02 \x01(\x03B\x03\xe0A\x02R\astartTs\x12\x15\n" +
+	"\x06end_ts\x18\x03 \x01(\x03R\x05endTs\x12\x1a\n" +
+	"\bduration\x18\x04 \x01(\x05R\bduration\x12\x1a\n" +
+	"\blocation\x18\x05 \x01(\tR\blocation\"\xe4\x01\n" +
+	"\x18PrecheckScheduleResponse\x12\x14\n" +
+	"\x05valid\x18\x01 \x01(\bR\x05valid\x123\n" +
+	"\x06errors\x18\x02 \x03(\v2\x1b.memos.api.v1.PrecheckErrorR\x06errors\x129\n" +
+	"\bwarnings\x18\x03 \x03(\v2\x1d.memos.api.v1.PrecheckWarningR\bwarnings\x12B\n" +
+	"\vsuggestions\x18\x04 \x03(\v2 .memos.api.v1.PrecheckSuggestionR\vsuggestions\"S\n" +
+	"\rPrecheckError\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
+	"\x05field\x18\x03 \x01(\tR\x05field\"?\n" +
+	"\x0fPrecheckWarning\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"[\n" +
+	"\x12PrecheckSuggestion\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x121\n" +
+	"\x04slot\x18\x02 \x01(\v2\x1d.memos.api.v1.AlternativeSlotR\x04slot\"Y\n" +
+	"\x0fAlternativeSlot\x12\x19\n" +
+	"\bstart_ts\x18\x01 \x01(\x03R\astartTs\x12\x15\n" +
+	"\x06end_ts\x18\x02 \x01(\x03R\x05endTs\x12\x14\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label2\x87\b\n" +
 	"\x0fScheduleService\x12k\n" +
 	"\x0eCreateSchedule\x12#.memos.api.v1.CreateScheduleRequest\x1a\x16.memos.api.v1.Schedule\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/schedules\x12s\n" +
 	"\rListSchedules\x12\".memos.api.v1.ListSchedulesRequest\x1a#.memos.api.v1.ListSchedulesResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/schedules\x12k\n" +
@@ -876,7 +1275,8 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x0eUpdateSchedule\x12#.memos.api.v1.UpdateScheduleRequest\x1a\x16.memos.api.v1.Schedule\".\x82\xd3\xe4\x93\x02(:\x01*2#/api/v1/{schedule.name=schedules/*}\x12q\n" +
 	"\x0eDeleteSchedule\x12#.memos.api.v1.DeleteScheduleRequest\x1a\x16.google.protobuf.Empty\"\"\x82\xd3\xe4\x93\x02\x1c*\x1a/api/v1/{name=schedules/*}\x12\x84\x01\n" +
 	"\rCheckConflict\x12\".memos.api.v1.CheckConflictRequest\x1a#.memos.api.v1.CheckConflictResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/api/v1/schedules:checkConflict\x12\xa0\x01\n" +
-	"\x16ParseAndCreateSchedule\x12+.memos.api.v1.ParseAndCreateScheduleRequest\x1a,.memos.api.v1.ParseAndCreateScheduleResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/v1/schedules:parseAndCreateB\xac\x01\n" +
+	"\x16ParseAndCreateSchedule\x12+.memos.api.v1.ParseAndCreateScheduleRequest\x1a,.memos.api.v1.ParseAndCreateScheduleResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/v1/schedules:parseAndCreate\x12\x88\x01\n" +
+	"\x10PrecheckSchedule\x12%.memos.api.v1.PrecheckScheduleRequest\x1a&.memos.api.v1.PrecheckScheduleResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/schedules:precheckB\xac\x01\n" +
 	"\x10com.memos.api.v1B\x14ScheduleServiceProtoP\x01Z0github.com/usememos/memos/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
@@ -891,7 +1291,7 @@ func file_api_v1_schedule_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_schedule_service_proto_rawDescData
 }
 
-var file_api_v1_schedule_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_api_v1_schedule_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_v1_schedule_service_proto_goTypes = []any{
 	(*Schedule)(nil),                       // 0: memos.api.v1.Schedule
 	(*Reminder)(nil),                       // 1: memos.api.v1.Reminder
@@ -905,38 +1305,50 @@ var file_api_v1_schedule_service_proto_goTypes = []any{
 	(*CheckConflictResponse)(nil),          // 9: memos.api.v1.CheckConflictResponse
 	(*ParseAndCreateScheduleRequest)(nil),  // 10: memos.api.v1.ParseAndCreateScheduleRequest
 	(*ParseAndCreateScheduleResponse)(nil), // 11: memos.api.v1.ParseAndCreateScheduleResponse
-	(*fieldmaskpb.FieldMask)(nil),          // 12: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                  // 13: google.protobuf.Empty
+	(*PrecheckScheduleRequest)(nil),        // 12: memos.api.v1.PrecheckScheduleRequest
+	(*PrecheckScheduleResponse)(nil),       // 13: memos.api.v1.PrecheckScheduleResponse
+	(*PrecheckError)(nil),                  // 14: memos.api.v1.PrecheckError
+	(*PrecheckWarning)(nil),                // 15: memos.api.v1.PrecheckWarning
+	(*PrecheckSuggestion)(nil),             // 16: memos.api.v1.PrecheckSuggestion
+	(*AlternativeSlot)(nil),                // 17: memos.api.v1.AlternativeSlot
+	(*fieldmaskpb.FieldMask)(nil),          // 18: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                  // 19: google.protobuf.Empty
 }
 var file_api_v1_schedule_service_proto_depIdxs = []int32{
 	1,  // 0: memos.api.v1.Schedule.reminders:type_name -> memos.api.v1.Reminder
 	0,  // 1: memos.api.v1.CreateScheduleRequest.schedule:type_name -> memos.api.v1.Schedule
 	0,  // 2: memos.api.v1.ListSchedulesResponse.schedules:type_name -> memos.api.v1.Schedule
 	0,  // 3: memos.api.v1.UpdateScheduleRequest.schedule:type_name -> memos.api.v1.Schedule
-	12, // 4: memos.api.v1.UpdateScheduleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	18, // 4: memos.api.v1.UpdateScheduleRequest.update_mask:type_name -> google.protobuf.FieldMask
 	0,  // 5: memos.api.v1.CheckConflictResponse.conflicts:type_name -> memos.api.v1.Schedule
 	0,  // 6: memos.api.v1.ParseAndCreateScheduleResponse.parsed_schedule:type_name -> memos.api.v1.Schedule
 	0,  // 7: memos.api.v1.ParseAndCreateScheduleResponse.created_schedule:type_name -> memos.api.v1.Schedule
 	0,  // 8: memos.api.v1.ParseAndCreateScheduleResponse.conflicts:type_name -> memos.api.v1.Schedule
-	2,  // 9: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
-	3,  // 10: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
-	5,  // 11: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
-	6,  // 12: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
-	7,  // 13: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
-	8,  // 14: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
-	10, // 15: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
-	0,  // 16: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
-	4,  // 17: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
-	0,  // 18: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
-	0,  // 19: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
-	13, // 20: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
-	9,  // 21: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
-	11, // 22: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
-	16, // [16:23] is the sub-list for method output_type
-	9,  // [9:16] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	14, // 9: memos.api.v1.PrecheckScheduleResponse.errors:type_name -> memos.api.v1.PrecheckError
+	15, // 10: memos.api.v1.PrecheckScheduleResponse.warnings:type_name -> memos.api.v1.PrecheckWarning
+	16, // 11: memos.api.v1.PrecheckScheduleResponse.suggestions:type_name -> memos.api.v1.PrecheckSuggestion
+	17, // 12: memos.api.v1.PrecheckSuggestion.slot:type_name -> memos.api.v1.AlternativeSlot
+	2,  // 13: memos.api.v1.ScheduleService.CreateSchedule:input_type -> memos.api.v1.CreateScheduleRequest
+	3,  // 14: memos.api.v1.ScheduleService.ListSchedules:input_type -> memos.api.v1.ListSchedulesRequest
+	5,  // 15: memos.api.v1.ScheduleService.GetSchedule:input_type -> memos.api.v1.GetScheduleRequest
+	6,  // 16: memos.api.v1.ScheduleService.UpdateSchedule:input_type -> memos.api.v1.UpdateScheduleRequest
+	7,  // 17: memos.api.v1.ScheduleService.DeleteSchedule:input_type -> memos.api.v1.DeleteScheduleRequest
+	8,  // 18: memos.api.v1.ScheduleService.CheckConflict:input_type -> memos.api.v1.CheckConflictRequest
+	10, // 19: memos.api.v1.ScheduleService.ParseAndCreateSchedule:input_type -> memos.api.v1.ParseAndCreateScheduleRequest
+	12, // 20: memos.api.v1.ScheduleService.PrecheckSchedule:input_type -> memos.api.v1.PrecheckScheduleRequest
+	0,  // 21: memos.api.v1.ScheduleService.CreateSchedule:output_type -> memos.api.v1.Schedule
+	4,  // 22: memos.api.v1.ScheduleService.ListSchedules:output_type -> memos.api.v1.ListSchedulesResponse
+	0,  // 23: memos.api.v1.ScheduleService.GetSchedule:output_type -> memos.api.v1.Schedule
+	0,  // 24: memos.api.v1.ScheduleService.UpdateSchedule:output_type -> memos.api.v1.Schedule
+	19, // 25: memos.api.v1.ScheduleService.DeleteSchedule:output_type -> google.protobuf.Empty
+	9,  // 26: memos.api.v1.ScheduleService.CheckConflict:output_type -> memos.api.v1.CheckConflictResponse
+	11, // 27: memos.api.v1.ScheduleService.ParseAndCreateSchedule:output_type -> memos.api.v1.ParseAndCreateScheduleResponse
+	13, // 28: memos.api.v1.ScheduleService.PrecheckSchedule:output_type -> memos.api.v1.PrecheckScheduleResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_schedule_service_proto_init() }
@@ -950,7 +1362,7 @@ func file_api_v1_schedule_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_schedule_service_proto_rawDesc), len(file_api_v1_schedule_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

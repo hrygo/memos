@@ -63,6 +63,14 @@ service ScheduleService {
       body: "*"
     };
   }
+
+  // PrecheckSchedule validates a schedule before creation.
+  rpc PrecheckSchedule(PrecheckScheduleRequest) returns (PrecheckScheduleResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/schedules:precheck"
+      body: "*"
+    };
+  }
 }
 
 // Schedule represents a schedule event.
@@ -162,4 +170,47 @@ message ParseAndCreateScheduleResponse {
   Schedule created_schedule = 2;
   // Conflicting schedules (only returned when auto_confirm is true and conflicts exist)
   repeated Schedule conflicts = 3;
+}
+
+// PrecheckScheduleRequest is the request for PrecheckSchedule.
+message PrecheckScheduleRequest {
+  string title = 1;
+  int64 start_ts = 2 [(google.api.field_behavior) = REQUIRED];
+  int64 end_ts = 3;
+  int32 duration = 4;  // Duration in minutes
+  string location = 5;
+}
+
+// PrecheckScheduleResponse is the response for PrecheckSchedule.
+message PrecheckScheduleResponse {
+  bool valid = 1;
+  repeated PrecheckError errors = 2;
+  repeated PrecheckWarning warnings = 3;
+  repeated PrecheckSuggestion suggestions = 4;
+}
+
+// PrecheckError represents a validation error.
+message PrecheckError {
+  string code = 1;     // Error code like "TIME_CONFLICT"
+  string message = 2;  // Human-readable message
+  string field = 3;    // Field that caused the error
+}
+
+// PrecheckWarning represents a validation warning.
+message PrecheckWarning {
+  string code = 1;     // Warning code like "OUTSIDE_WORK_HOURS"
+  string message = 2;  // Human-readable message
+}
+
+// PrecheckSuggestion represents a suggestion for schedule correction.
+message PrecheckSuggestion {
+  string type = 1;          // "alternative_time"
+  AlternativeSlot slot = 2; // Alternative time slot
+}
+
+// AlternativeSlot represents an available time slot.
+message AlternativeSlot {
+  int64 start_ts = 1;
+  int64 end_ts = 2;
+  string label = 3;  // "同日稍后", "明天同一时间"
 }

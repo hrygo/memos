@@ -275,6 +275,14 @@ func (s *ConnectServiceHandler) ParseAndCreateSchedule(ctx context.Context, req 
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) PrecheckSchedule(ctx context.Context, req *connect.Request[v1pb.PrecheckScheduleRequest]) (*connect.Response[v1pb.PrecheckScheduleResponse], error) {
+	resp, err := s.ScheduleService.PrecheckSchedule(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // ScheduleAgentServiceConnectHandler implements ScheduleAgentServiceHandler interface
 // by delegating to the underlying ScheduleAgentService.
 type ScheduleAgentServiceConnectHandler struct {
@@ -550,6 +558,39 @@ func (s *ConnectServiceHandler) ClearConversationMessages(ctx context.Context, r
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
 	}
 	resp, err := s.AIService.ClearConversationMessages(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DetectDuplicates(ctx context.Context, req *connect.Request[v1pb.DetectDuplicatesRequest]) (*connect.Response[v1pb.DetectDuplicatesResponse], error) {
+	if s.AIService == nil || !s.AIService.IsEnabled() {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.DetectDuplicates(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) MergeMemos(ctx context.Context, req *connect.Request[v1pb.MergeMemosRequest]) (*connect.Response[v1pb.MergeMemosResponse], error) {
+	if s.AIService == nil || !s.AIService.IsEnabled() {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.MergeMemos(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) LinkMemos(ctx context.Context, req *connect.Request[v1pb.LinkMemosRequest]) (*connect.Response[v1pb.LinkMemosResponse], error) {
+	if s.AIService == nil || !s.AIService.IsEnabled() {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("AI features are disabled"))
+	}
+	resp, err := s.AIService.LinkMemos(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}

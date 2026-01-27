@@ -27,6 +27,7 @@ const (
 	ScheduleService_DeleteSchedule_FullMethodName         = "/memos.api.v1.ScheduleService/DeleteSchedule"
 	ScheduleService_CheckConflict_FullMethodName          = "/memos.api.v1.ScheduleService/CheckConflict"
 	ScheduleService_ParseAndCreateSchedule_FullMethodName = "/memos.api.v1.ScheduleService/ParseAndCreateSchedule"
+	ScheduleService_PrecheckSchedule_FullMethodName       = "/memos.api.v1.ScheduleService/PrecheckSchedule"
 )
 
 // ScheduleServiceClient is the client API for ScheduleService service.
@@ -49,6 +50,8 @@ type ScheduleServiceClient interface {
 	CheckConflict(ctx context.Context, in *CheckConflictRequest, opts ...grpc.CallOption) (*CheckConflictResponse, error)
 	// ParseAndCreateSchedule parses natural language and creates a schedule.
 	ParseAndCreateSchedule(ctx context.Context, in *ParseAndCreateScheduleRequest, opts ...grpc.CallOption) (*ParseAndCreateScheduleResponse, error)
+	// PrecheckSchedule validates a schedule before creation.
+	PrecheckSchedule(ctx context.Context, in *PrecheckScheduleRequest, opts ...grpc.CallOption) (*PrecheckScheduleResponse, error)
 }
 
 type scheduleServiceClient struct {
@@ -129,6 +132,16 @@ func (c *scheduleServiceClient) ParseAndCreateSchedule(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *scheduleServiceClient) PrecheckSchedule(ctx context.Context, in *PrecheckScheduleRequest, opts ...grpc.CallOption) (*PrecheckScheduleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PrecheckScheduleResponse)
+	err := c.cc.Invoke(ctx, ScheduleService_PrecheckSchedule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScheduleServiceServer is the server API for ScheduleService service.
 // All implementations must embed UnimplementedScheduleServiceServer
 // for forward compatibility.
@@ -149,6 +162,8 @@ type ScheduleServiceServer interface {
 	CheckConflict(context.Context, *CheckConflictRequest) (*CheckConflictResponse, error)
 	// ParseAndCreateSchedule parses natural language and creates a schedule.
 	ParseAndCreateSchedule(context.Context, *ParseAndCreateScheduleRequest) (*ParseAndCreateScheduleResponse, error)
+	// PrecheckSchedule validates a schedule before creation.
+	PrecheckSchedule(context.Context, *PrecheckScheduleRequest) (*PrecheckScheduleResponse, error)
 	mustEmbedUnimplementedScheduleServiceServer()
 }
 
@@ -179,6 +194,9 @@ func (UnimplementedScheduleServiceServer) CheckConflict(context.Context, *CheckC
 }
 func (UnimplementedScheduleServiceServer) ParseAndCreateSchedule(context.Context, *ParseAndCreateScheduleRequest) (*ParseAndCreateScheduleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ParseAndCreateSchedule not implemented")
+}
+func (UnimplementedScheduleServiceServer) PrecheckSchedule(context.Context, *PrecheckScheduleRequest) (*PrecheckScheduleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PrecheckSchedule not implemented")
 }
 func (UnimplementedScheduleServiceServer) mustEmbedUnimplementedScheduleServiceServer() {}
 func (UnimplementedScheduleServiceServer) testEmbeddedByValue()                         {}
@@ -327,6 +345,24 @@ func _ScheduleService_ParseAndCreateSchedule_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ScheduleService_PrecheckSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrecheckScheduleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScheduleServiceServer).PrecheckSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ScheduleService_PrecheckSchedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScheduleServiceServer).PrecheckSchedule(ctx, req.(*PrecheckScheduleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ScheduleService_ServiceDesc is the grpc.ServiceDesc for ScheduleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -361,6 +397,10 @@ var ScheduleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ParseAndCreateSchedule",
 			Handler:    _ScheduleService_ParseAndCreateSchedule_Handler,
+		},
+		{
+			MethodName: "PrecheckSchedule",
+			Handler:    _ScheduleService_PrecheckSchedule_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
