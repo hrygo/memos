@@ -39,7 +39,7 @@ export function AIChatSidebar({ className, onClose }: AIChatSidebarProps) {
   return (
     <aside className={cn("flex flex-col h-full bg-sidebar", className)}>
       {/* 新建对话按钮 - 置顶 */}
-      <div className="px-4 pt-0 pb-2 shrink-0">
+      <div className="px-4 pt-4 pb-2 shrink-0">
         <button
           onClick={handleStartNewChat}
           className={cn(

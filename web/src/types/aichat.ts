@@ -143,7 +143,7 @@ export interface AIChatContextValue {
   conversationSummaries: ConversationSummary[];
 
   // Conversation actions
-  createConversation: (parrotId: ParrotAgentType, title?: string) => string;
+  createConversation: (parrotId: ParrotAgentType, title?: string) => { id: string; completed: Promise<string> };
   deleteConversation: (id: string) => void;
   selectConversation: (id: string) => void;
   updateConversationTitle: (id: string, title: string) => void;

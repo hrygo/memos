@@ -47,7 +47,7 @@ export function ConflictResolution({ data, onAction, onDismiss, isLoading = fals
             onClick={() => {
               toast.dismiss(toastInstance.id);
               setShowManualSelection(true);
-              autoResolveExecuted.current = false;
+              // Don't reset autoResolveExecuted to prevent re-triggering auto-resolve
             }}
             className="text-xs font-medium text-primary hover:underline"
           >
@@ -59,6 +59,13 @@ export function ConflictResolution({ data, onAction, onDismiss, isLoading = fals
     );
   }, [data.auto_resolved, onAction, t]);
 
+  // Auto-select first slot when showing manual selection
+  useEffect(() => {
+    if (showManualSelection && selectedSlotIdx === null && data.suggested_slots?.length > 0) {
+      setSelectedSlotIdx(0);
+    }
+  }, [showManualSelection, selectedSlotIdx, data.suggested_slots]);
+
   // If auto-resolved and not showing manual, don't render the panel
   if (data.auto_resolved && !showManualSelection && isAutoResolveEnabled()) {
     return null;
@@ -69,7 +76,7 @@ export function ConflictResolution({ data, onAction, onDismiss, isLoading = fals
   };
 
   const handleReschedule = () => {
-    if (selectedSlotIdx !== null && data.suggested_slots[selectedSlotIdx]) {
+    if (selectedSlotIdx !== null && data.suggested_slots?.[selectedSlotIdx]) {
       onAction("reschedule", data.suggested_slots[selectedSlotIdx]);
     }
   };
@@ -78,8 +85,9 @@ export function ConflictResolution({ data, onAction, onDismiss, isLoading = fals
     onAction("cancel");
   };
 
-  const conflictingSchedule = data.conflicting_schedules[0];
-  const conflictCount = data.conflicting_schedules.length;
+  const conflictingSchedule = data.conflicting_schedules?.[0];
+  const conflictCount = data.conflicting_schedules?.length ?? 0;
+  const suggestedSlots = data.suggested_slots ?? [];
 
   return (
     <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -118,11 +126,11 @@ export function ConflictResolution({ data, onAction, onDismiss, isLoading = fals
       )}
 
       {/* Suggested time slots */}
-      {data.suggested_slots.length > 0 && (
+      {suggestedSlots.length > 0 && (
         <div className="mb-3">
           <p className="text-sm font-medium mb-2">{t("schedule.ai.alternatives")}</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {data.suggested_slots.map((slot, idx) => {
+            {suggestedSlots.map((slot, idx) => {
               const isSelected = selectedSlotIdx === idx;
               return (
                 <button

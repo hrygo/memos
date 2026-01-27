@@ -1,13 +1,24 @@
 import dayjs from "dayjs";
 import { Check, ChevronRight, Loader2, Send, Sparkles, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { validateAndLog, validateScheduleSuggestion } from "@/components/ScheduleAI/uiTypeValidators";
 import { GenerativeUIContainer } from "@/components/ScheduleAI";
 import { StreamingFeedback } from "@/components/ScheduleAI/StreamingFeedback";
 import type { UIToolEvent } from "@/components/ScheduleAI/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useScheduleAgentStreamingChat } from "@/hooks/useScheduleQueries";
+import type {
+  getUIToolType,
+  ParsedEvent,
+  UIConflictResolutionData,
+  UIMemoPreviewData,
+  UIProgressTrackerData,
+  UIQuickActionsData,
+  UIScheduleSuggestionData,
+  UITimeSlotPickerData,
+} from "@/hooks/useScheduleAgent";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { type Translations, useTranslate } from "@/utils/i18n";
@@ -23,6 +34,7 @@ interface ScheduleQuickInputProps {
   uiTools?: UIToolEvent[];
   onUIAction?: (action: { type: string; toolId: string; data?: unknown }) => void;
   onUIDismiss?: (toolId: string) => void;
+  onUIEvent?: (event: ParsedEvent) => void; // Callback for UI events from streaming
   className?: string;
 }
 
@@ -34,9 +46,10 @@ export function ScheduleQuickInput({
   onScheduleCreated,
   editingSchedule,
   onClearEditing,
-  uiTools = [],
+  uiTools: externalUITools = [],
   onUIAction,
   onUIDismiss,
+  onUIEvent,
   className,
 }: ScheduleQuickInputProps) {
   const streamingChat = useScheduleAgentStreamingChat();
@@ -47,14 +60,38 @@ export function ScheduleQuickInput({
   const [inputHeight, setInputHeight] = useState(LINE_HEIGHT);
   const [lastInput, setLastInput] = useState(""); // Keep last input for display during processing
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toolIdCounter = useRef(0);
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState<ScheduleSuggestion[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [internalUITools, setInternalUITools] = useState<UIToolEvent[]>([]);
 
   // Use streaming state for processing indicator
   const isProcessing = streamingChat.isStreaming;
+
+  // Merge external and internal UI tools
+  const uiTools = [...externalUITools, ...internalUITools];
+
+  // Handler for UI actions - wraps external handler to also clear internal tools
+  const handleUIAction = useCallback((action: { type: string; toolId: string; data?: unknown }) => {
+    // Check if this is an internal tool
+    const isInternal = internalUITools.some(t => t.id === action.toolId);
+    if (isInternal) {
+      setInternalUITools(prev => prev.filter(t => t.id !== action.toolId));
+    }
+    onUIAction?.(action);
+  }, [internalUITools, onUIAction]);
+
+  // Handler for UI dismiss - wraps external handler to also clear internal tools
+  const handleUIDismiss = useCallback((toolId: string) => {
+    const isInternal = internalUITools.some(t => t.id === toolId);
+    if (isInternal) {
+      setInternalUITools(prev => prev.filter(t => t.id !== toolId));
+    }
+    onUIDismiss?.(toolId);
+  }, [internalUITools, onUIDismiss]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -74,6 +111,79 @@ export function ScheduleQuickInput({
     return () => window.removeEventListener("resize", resize);
   }, [input]);
 
+  // Process UI events from streaming chat
+  useEffect(() => {
+    if (streamingChat.uiEvents.length === 0) {
+      setInternalUITools([]);
+      return;
+    }
+
+    // Convert UI events to UIToolEvent[]
+    const newTools: UIToolEvent[] = [];
+    for (const event of streamingChat.uiEvents) {
+      if (!event.uiType || !event.uiData) continue;
+
+      let toolType: UIToolEvent["type"];
+      let toolData: UIToolEvent["data"];
+
+      switch (event.uiType) {
+        case "ui_schedule_suggestion": {
+          const validated = validateAndLog(event.uiData, validateScheduleSuggestion, "ui_schedule_suggestion");
+          if (!validated) continue; // Skip invalid data
+          toolType = "schedule_suggestion";
+          toolData = validated;
+          break;
+        }
+        case "ui_time_slot_picker": {
+          toolType = "time_slot_picker";
+          toolData = event.uiData as UITimeSlotPickerData;
+          break;
+        }
+        case "ui_conflict_resolution": {
+          toolType = "conflict_resolution";
+          toolData = event.uiData as UIConflictResolutionData;
+          break;
+        }
+        case "ui_quick_actions": {
+          toolType = "quick_actions";
+          toolData = event.uiData as UIQuickActionsData;
+          break;
+        }
+        case "ui_memo_preview": {
+          toolType = "memo_preview";
+          toolData = event.uiData as UIMemoPreviewData;
+          break;
+        }
+        case "ui_progress_tracker": {
+          toolType = "progress_tracker";
+          toolData = event.uiData as UIProgressTrackerData;
+          break;
+        }
+        default:
+          console.log("[ScheduleQuickInput] Unknown uiType:", event.uiType);
+          continue;
+      }
+
+      const toolId = `uitool-${++toolIdCounter.current}`;
+      newTools.push({
+        id: toolId,
+        type: toolType,
+        data: toolData,
+        timestamp: Date.now(),
+      });
+
+      // Also notify parent component via callback
+      onUIEvent?.({
+        type: event.type,
+        data: event.data,
+        uiType: event.uiType,
+        uiData: event.uiData,
+      });
+    }
+
+    setInternalUITools(newTools);
+  }, [streamingChat.uiEvents, onUIEvent]);
+
   // Reset success after delay
   useEffect(() => {
     if (showSuccess) {
@@ -89,6 +199,7 @@ export function ScheduleQuickInput({
     setLastInput("");
     setAiMessage("");
     setAiSuggestions([]);
+    setInternalUITools([]); // Clear internal UI tools on success
     if (textareaRef.current) {
       textareaRef.current.style.height = `${LINE_HEIGHT}px`;
       setInputHeight(LINE_HEIGHT);
@@ -216,33 +327,13 @@ export function ScheduleQuickInput({
     <div className={cn("w-full flex flex-col gap-2", className)}>
       {/* Editing Status Bar */}
 
-
-      {/* Generative UI - AI confirmation cards */}
+      {/* Priority 1: Generative UI - AI confirmation cards (highest priority, hides other states when active) */}
       {uiTools.length > 0 && (
-        <GenerativeUIContainer tools={uiTools} onAction={onUIAction || (() => { })} onDismiss={onUIDismiss || (() => { })} />
+        <GenerativeUIContainer tools={uiTools} onAction={handleUIAction} onDismiss={handleUIDismiss} />
       )}
 
-      {/* Streaming Feedback - Real-time AI thinking process */}
-      {isProcessing && <StreamingFeedback events={streamingChat.events} isStreaming={isProcessing} className="mb-2" />}
-
-      {/* Processing Status Bar - shown when streaming has no events yet */}
-      {isProcessing && streamingChat.events.length === 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-pulse">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">{t("schedule.quick.input.creating") as string}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">"{lastInput}"</p>
-          </div>
-          <div className="flex gap-1">
-            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.3s]" />
-            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.15s]" />
-            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce" />
-          </div>
-        </div>
-      )}
-
-      {/* Success Message - animated slide in */}
-      {showSuccess && (
+      {/* Priority 2: Success Message (only when not processing and no UI tools) */}
+      {showSuccess && !isProcessing && uiTools.length === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl border border-green-500/20 animate-in slide-in-from-top-2">
           <div className="flex-shrink-0 h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
             <Check className="h-5 w-5 text-white" />
@@ -253,8 +344,34 @@ export function ScheduleQuickInput({
         </div>
       )}
 
-      {/* AI Response Message */}
-      {aiMessage && !isProcessing && (
+      {/* Priority 3: Streaming Feedback (only when processing and no UI tools) */}
+      {isProcessing && uiTools.length === 0 && (
+        <>
+          {/* Processing Status Bar - shown when streaming has no events yet */}
+          {streamingChat.events.length === 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 animate-pulse">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{t("schedule.quick.input.creating") as string}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">"{lastInput}"</p>
+              </div>
+              <div className="flex gap-1">
+                <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.3s]" />
+                <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce [animation-delay:-0.15s]" />
+                <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-bounce" />
+              </div>
+            </div>
+          )}
+
+          {/* Streaming Feedback - Real-time AI thinking process (only when there are events) */}
+          {streamingChat.events.length > 0 && (
+            <StreamingFeedback events={streamingChat.events} isStreaming={isProcessing} className="mb-2" />
+          )}
+        </>
+      )}
+
+      {/* Priority 4: AI Response Message (only when not processing and no UI tools) */}
+      {aiMessage && !isProcessing && uiTools.length === 0 && (
         <div className="flex items-start gap-3 px-4 py-3 bg-muted/50 rounded-xl border border-border/50">
           <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -270,7 +387,7 @@ export function ScheduleQuickInput({
       )}
 
       {/* AI Suggestions Cards */}
-      {aiSuggestions.length > 0 && <AISuggestionCards suggestions={aiSuggestions} onConfirmSuggestion={handleAISuggestionSelect} />}
+      {aiSuggestions.length > 0 && uiTools.length === 0 && <AISuggestionCards suggestions={aiSuggestions} onConfirmSuggestion={handleAISuggestionSelect} />}
 
       {/* Input Bar */}
       <div

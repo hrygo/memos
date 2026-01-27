@@ -10,6 +10,8 @@ import { CodeBlock } from "@/components/MemoContent/CodeBlock";
 import { cn } from "@/lib/utils";
 import { ChatItem, ConversationMessage } from "@/types/aichat";
 import { PARROT_ICONS, PARROT_THEMES, ParrotAgentType } from "@/types/parrot";
+import { GenerativeUIContainer } from "@/components/ScheduleAI/GenerativeUIContainer";
+import type { GenerativeUIContainerProps } from "@/components/ScheduleAI/types";
 
 type CodeComponentProps = React.ComponentProps<"code"> & { inline?: boolean };
 
@@ -23,6 +25,10 @@ interface ChatMessagesProps {
   children?: ReactNode;
   className?: string;
   amazingInsightCard?: ReactNode;
+  /** Generative UI tools to render in message flow */
+  uiTools?: GenerativeUIContainerProps["tools"];
+  onUIAction?: GenerativeUIContainerProps["onAction"];
+  onUIDismiss?: GenerativeUIContainerProps["onDismiss"];
 }
 
 const SCROLL_THRESHOLD = 100;
@@ -37,6 +43,9 @@ export function ChatMessages({
   children,
   className,
   amazingInsightCard,
+  uiTools,
+  onUIAction,
+  onUIDismiss,
 }: ChatMessagesProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,6 +137,23 @@ export function ChatMessages({
               <div className="w-9 h-9 md:w-10 md:h-10 shrink-0 invisible" />
               <div className="flex-1 min-w-0">
                 <div className="max-w-[85%] md:max-w-[80%]">{amazingInsightCard}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Generative UI Tools - embedded in message flow like assistant messages */}
+          {uiTools && uiTools.length > 0 && onUIAction && onUIDismiss && (
+            <div className="flex gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Spacer for avatar alignment */}
+              <div className="w-9 h-9 md:w-10 md:h-10 shrink-0 invisible" />
+              <div className="flex-1 min-w-0">
+                <div className="max-w-[85%] md:max-w-[80%]">
+                  <GenerativeUIContainer
+                    tools={uiTools}
+                    onAction={onUIAction}
+                    onDismiss={onUIDismiss}
+                  />
+                </div>
               </div>
             </div>
           )}

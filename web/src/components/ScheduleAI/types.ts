@@ -9,6 +9,9 @@ import type {
   UIScheduleSuggestionData,
   UITimeSlotData,
   UITimeSlotPickerData,
+  UIMemoPreviewData,
+  UIProgressTrackerData,
+  UIScheduleListData,
 } from "@/hooks/useScheduleAgent";
 
 // Re-export types from useScheduleAgent for convenience
@@ -18,6 +21,9 @@ export type {
   UIScheduleSuggestionData,
   UITimeSlotData,
   UITimeSlotPickerData,
+  UIMemoPreviewData,
+  UIProgressTrackerData,
+  UIScheduleListData,
 } from "@/hooks/useScheduleAgent";
 
 /**
@@ -25,8 +31,8 @@ export type {
  */
 export interface UIToolEvent {
   id: string;
-  type: "schedule_suggestion" | "time_slot_picker" | "conflict_resolution" | "quick_actions";
-  data: UIScheduleSuggestionData | UITimeSlotPickerData | UIConflictResolutionData | UIQuickActionsData;
+  type: "schedule_suggestion" | "time_slot_picker" | "conflict_resolution" | "quick_actions" | "memo_preview" | "progress_tracker" | "schedule_list";
+  data: UIScheduleSuggestionData | UITimeSlotPickerData | UIConflictResolutionData | UIQuickActionsData | UIMemoPreviewData | UIProgressTrackerData | UIScheduleListData;
   timestamp: number;
 }
 
@@ -97,4 +103,39 @@ export interface UIQuickActionData {
   description: string;
   icon?: string;
   prompt: string;
+}
+
+/**
+ * Props for MemoPreview
+ */
+export interface MemoPreviewProps {
+  data: UIMemoPreviewData;
+  onConfirm: (data: UIMemoPreviewData) => void;
+  onDismiss?: () => void;
+  isLoading?: boolean;
+}
+
+/**
+ * Props for MemoSearchResultCard
+ */
+export interface MemoSearchResultCardProps {
+  data: UIMemoPreviewData;
+  onDismiss?: () => void;
+}
+
+/**
+ * Props for ScheduleListCard
+ */
+export interface ScheduleListCardProps {
+  data: UIScheduleListData;
+  onDismiss?: () => void;
+}
+
+/**
+ * Props for ProgressTracker
+ */
+export interface ProgressTrackerProps {
+  data: UIProgressTrackerData;
+  onCancel?: () => void;
+  onDismiss?: () => void;
 }

@@ -1,8 +1,6 @@
-
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CapabilityType } from "@/types/capability";
 
 interface PartnerGreetingProps {
   userName?: string;
@@ -10,78 +8,192 @@ interface PartnerGreetingProps {
   upcomingScheduleCount?: number;
   conversationCount?: number;
   onSendMessage?: (message: string) => void;
+  onSendComplete?: () => void;
   className?: string;
 }
 
 /**
- * 获取时间相关的问候语
+ * 时间段类型
  */
-function getTimeBasedGreeting(): { greeting: string; timeOfDay: string; emoji: string } {
+type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
+
+/**
+ * 示例问题分类
+ */
+type PromptCategory = "memo" | "schedule" | "create" | "amazing";
+
+/**
+ * 获取时间段相关配置
+ */
+function getTimeConfig(): {
+  timeOfDay: TimeOfDay;
+  greetingKey: string;
+  hintKey: string;
+} {
   const hour = new Date().getHours();
 
-  if (hour >= 5 && hour < 12) {
+  if (hour >= 5 && hour < 9) {
     return {
-      greeting: "ai.parrot.partner.greeting-morning",
       timeOfDay: "morning",
-      emoji: "🌅",
+      greetingKey: "ai.parrot.partner.greeting-early-morning",
+      hintKey: "ai.parrot.partner.hint-early-morning",
     };
   }
-  if (hour >= 12 && hour < 18) {
+  if (hour >= 9 && hour < 12) {
     return {
-      greeting: "ai.parrot.partner.greeting-afternoon",
+      timeOfDay: "morning",
+      greetingKey: "ai.parrot.partner.greeting-morning",
+      hintKey: "ai.parrot.partner.hint-morning",
+    };
+  }
+  if (hour >= 12 && hour < 14) {
+    return {
       timeOfDay: "afternoon",
-      emoji: "☀️",
+      greetingKey: "ai.parrot.partner.greeting-noon",
+      hintKey: "ai.parrot.partner.hint-noon",
     };
   }
-  if (hour >= 18 && hour < 22) {
+  if (hour >= 14 && hour < 18) {
     return {
-      greeting: "ai.parrot.partner.greeting-evening",
+      timeOfDay: "afternoon",
+      greetingKey: "ai.parrot.partner.greeting-afternoon",
+      hintKey: "ai.parrot.partner.hint-afternoon",
+    };
+  }
+  if (hour >= 18 && hour < 21) {
+    return {
       timeOfDay: "evening",
-      emoji: "🌆",
+      greetingKey: "ai.parrot.partner.greeting-evening",
+      hintKey: "ai.parrot.partner.hint-evening",
     };
   }
   return {
-    greeting: "ai.parrot.partner.greeting-night",
     timeOfDay: "night",
-    emoji: "🌙",
+    greetingKey: "ai.parrot.partner.greeting-night",
+    hintKey: "ai.parrot.partner.hint-night",
   };
+}
+
+/**
+ * 示例问题接口
+ */
+interface SuggestedPrompt {
+  icon: string;
+  category: PromptCategory;
+  promptKey: string;
+  prompt: string;
+}
+
+/**
+ * 获取时间段特定的示例问题
+ */
+function getTimeSpecificPrompts(t: (key: string) => string, timeOfDay: TimeOfDay): SuggestedPrompt[] {
+  // 早上（5-12点）：侧重今日计划
+  if (timeOfDay === "morning") {
+    return [
+      { icon: "📋", category: "schedule", promptKey: "ai.parrot.partner.prompt-today-schedule", prompt: t("ai.parrot.partner.prompt-today-schedule") },
+      { icon: "📝", category: "memo", promptKey: "ai.parrot.partner.prompt-recent-memos", prompt: t("ai.parrot.partner.prompt-recent-memos") },
+      { icon: "➕", category: "create", promptKey: "ai.parrot.partner.prompt-create-meeting", prompt: t("ai.parrot.partner.prompt-create-meeting") },
+      { icon: "📊", category: "amazing", promptKey: "ai.parrot.partner.prompt-today-overview", prompt: t("ai.parrot.partner.prompt-today-overview") },
+    ];
+  }
+
+  // 下午（12-18点）：侧重查询和创建
+  if (timeOfDay === "afternoon") {
+    return [
+      { icon: "🔍", category: "memo", promptKey: "ai.parrot.partner.prompt-search-memo", prompt: t("ai.parrot.partner.prompt-search-memo") },
+      { icon: "⏰", category: "schedule", promptKey: "ai.parrot.partner.prompt-afternoon-free", prompt: t("ai.parrot.partner.prompt-afternoon-free") },
+      { icon: "📅", category: "create", promptKey: "ai.parrot.partner.prompt-create-tomorrow", prompt: t("ai.parrot.partner.prompt-create-tomorrow") },
+      { icon: "🔗", category: "amazing", promptKey: "ai.parrot.partner.prompt-connect-info", prompt: t("ai.parrot.partner.prompt-connect-info") },
+    ];
+  }
+
+  // 晚上（18-21点）：侧重回顾
+  if (timeOfDay === "evening") {
+    return [
+      { icon: "📝", category: "memo", promptKey: "ai.parrot.partner.prompt-today-learned", prompt: t("ai.parrot.partner.prompt-today-learned") },
+      { icon: "📅", category: "schedule", promptKey: "ai.parrot.partner.prompt-tomorrow-plan", prompt: t("ai.parrot.partner.prompt-tomorrow-plan") },
+      { icon: "✅", category: "create", promptKey: "ai.parrot.partner.prompt-create-reminder", prompt: t("ai.parrot.partner.prompt-create-reminder") },
+      { icon: "📊", category: "amazing", promptKey: "ai.parrot.partner.prompt-day-summary", prompt: t("ai.parrot.partner.prompt-day-summary") },
+    ];
+  }
+
+  // 深夜（21-5点）：侧重快速查询
+  return [
+    { icon: "🔍", category: "memo", promptKey: "ai.parrot.partner.prompt-quick-search", prompt: t("ai.parrot.partner.prompt-quick-search") },
+    { icon: "📅", category: "schedule", promptKey: "ai.parrot.partner.prompt-tomorrow-check", prompt: t("ai.parrot.partner.prompt-tomorrow-check") },
+    { icon: "💡", category: "memo", promptKey: "ai.parrot.partner.prompt-find-idea", prompt: t("ai.parrot.partner.prompt-find-idea") },
+    { icon: "🌟", category: "amazing", promptKey: "ai.parrot.partner.prompt-week-summary", prompt: t("ai.parrot.partner.prompt-week-summary") },
+  ];
+}
+
+/**
+ * 获取默认示例问题（当时间特定问题不可用时）
+ */
+function getDefaultPrompts(t: (key: string) => string): SuggestedPrompt[] {
+  return [
+    { icon: "🔍", category: "memo", promptKey: "ai.parrot.partner.prompt-search-memo", prompt: t("ai.parrot.partner.prompt-search-memo") },
+    { icon: "📅", category: "schedule", promptKey: "ai.parrot.partner.prompt-today-schedule", prompt: t("ai.parrot.partner.prompt-today-schedule") },
+    { icon: "➕", category: "create", promptKey: "ai.parrot.partner.prompt-create-meeting", prompt: t("ai.parrot.partner.prompt-create-meeting") },
+    { icon: "📊", category: "amazing", promptKey: "ai.parrot.partner.prompt-day-summary", prompt: t("ai.parrot.partner.prompt-day-summary") },
+  ];
 }
 
 /**
  * Partner Greeting - 统一入口设计
  *
  * UX/UI 设计原则：
- * - 示例提问代替能力选择，降低认知负担
- * - 用户无需理解系统内部能力边界
- * - 点击示例直接发送消息，智能路由自动处理
+ * - 示例提问根据时间段动态调整，更贴近实际使用场景
+ * - 覆盖所有能力类型：笔记查询、日程查询、日程创建、综合分析
+ * - 用户无需理解系统内部能力边界，点击即可直接使用
  */
-export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, className }: PartnerGreetingProps) {
+export const PartnerGreeting = memo(function PartnerGreeting({
+  onSendMessage,
+  onSendComplete,
+  recentMemoCount,
+  upcomingScheduleCount,
+  className,
+}: PartnerGreetingProps) {
   const { t } = useTranslation();
-  const { greeting, timeOfDay } = useMemo(() => getTimeBasedGreeting(), []);
+  const timeConfig = useMemo(() => getTimeConfig(), []);
+  const [isSending, setIsSending] = useState(false);
 
-  const greetingText = t(greeting);
+  const greetingText = t(timeConfig.greetingKey);
+  const timeHint = t(timeConfig.hintKey);
 
-  // 时间相关提示（国际化）
-  const timeHint = useMemo(() => {
-    const hintKeys: Record<string, string> = {
-      morning: "ai.parrot.partner.hint-morning",
-      afternoon: "ai.parrot.partner.hint-afternoon",
-      evening: "ai.parrot.partner.hint-evening",
-      night: "ai.parrot.partner.hint-night",
-    };
-    return t(hintKeys[timeOfDay]);
-  }, [timeOfDay, t]);
+  // 根据时间段获取示例问题
+  const suggestedPrompts = useMemo(() => {
+    const prompts = getTimeSpecificPrompts(t, timeConfig.timeOfDay);
+    // 检查是否所有翻译都存在，如果不存在则使用默认
+    const hasMissingTranslation = prompts.some((p) => p.prompt === p.promptKey);
+    if (hasMissingTranslation) {
+      return getDefaultPrompts(t);
+    }
+    return prompts;
+  }, [t, timeConfig.timeOfDay]);
 
-  // 示例提问 - 用户意图导向，而非能力导向
-  const suggestedPrompts = useMemo(
-    () => [
-      { icon: "📝", promptKey: "ai.parrot.partner.prompt-memo", prompt: t("ai.parrot.partner.prompt-memo") },
-      { icon: "📅", promptKey: "ai.parrot.partner.prompt-schedule", prompt: t("ai.parrot.partner.prompt-schedule") },
-      { icon: "📊", promptKey: "ai.parrot.partner.prompt-summary", prompt: t("ai.parrot.partner.prompt-summary") },
-      { icon: "✨", promptKey: "ai.parrot.partner.prompt-creative", prompt: t("ai.parrot.partner.prompt-creative") },
-    ],
-    [t],
-  );
+  // 获取统计信息文本
+  const statsText = useMemo(() => {
+    const parts: string[] = [];
+    if (recentMemoCount !== undefined && recentMemoCount > 0) {
+      parts.push(t("ai.parrot.partner.memo-count", { count: recentMemoCount }));
+    }
+    if (upcomingScheduleCount !== undefined && upcomingScheduleCount > 0) {
+      parts.push(t("ai.parrot.partner.schedule-count", { count: upcomingScheduleCount }));
+    }
+    return parts.join(" · ");
+  }, [recentMemoCount, upcomingScheduleCount, t]);
+
+  const handlePromptClick = (prompt: SuggestedPrompt) => {
+    if (isSending) return;
+    setIsSending(true);
+    onSendMessage?.(prompt.prompt);
+    if (onSendComplete) {
+      setTimeout(() => setIsSending(false), 3000);
+    } else {
+      setTimeout(() => setIsSending(false), 500);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col items-center justify-center h-full w-full px-6 py-8", className)}>
@@ -96,6 +208,9 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
       <div className="text-center mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-2">{greetingText}</h2>
         <p className="text-sm text-muted-foreground">{timeHint}</p>
+        {statsText && (
+          <p className="text-xs text-muted-foreground mt-2">{statsText}</p>
+        )}
       </div>
 
       {/* 示例提问 - 点击直接发送 */}
@@ -103,7 +218,8 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
         {suggestedPrompts.map((item) => (
           <button
             key={item.promptKey}
-            onClick={() => onSendMessage?.(item.prompt)}
+            disabled={isSending}
+            onClick={() => handlePromptClick(item)}
             className={cn(
               "flex flex-row items-center gap-3 p-3 rounded-xl",
               "bg-card",
@@ -113,6 +229,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
               "transition-all duration-200",
               "active:scale-95",
               "min-h-[56px]",
+              isSending && "opacity-50 cursor-not-allowed active:scale-100",
             )}
             title={item.prompt}
           >
@@ -121,8 +238,6 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
           </button>
         ))}
       </div>
-
-
     </div>
   );
 });
@@ -132,30 +247,27 @@ export const PartnerGreeting = memo(function PartnerGreeting({ onSendMessage, cl
  */
 interface MiniPartnerGreetingProps {
   message?: string;
-  capability?: CapabilityType;
   className?: string;
 }
 
-export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({ message, capability, className }: MiniPartnerGreetingProps) {
+export const MiniPartnerGreeting = memo(function MiniPartnerGreeting({
+  message,
+  className,
+}: MiniPartnerGreetingProps) {
   const { t } = useTranslation();
-  const { greeting } = useMemo(() => getTimeBasedGreeting(), []);
-  const greetingText = t(greeting);
-
-  const capabilityEmojis: Record<CapabilityType, string> = {
-    [CapabilityType.MEMO]: "🦜",
-    [CapabilityType.SCHEDULE]: "⏰",
-    [CapabilityType.AMAZING]: "🌟",
-    [CapabilityType.AUTO]: "🤖",
-  };
+  const timeConfig = useMemo(() => getTimeConfig(), []);
+  const greetingText = t(timeConfig.greetingKey);
 
   return (
     <div className={cn("flex items-start gap-3 p-4", className)}>
       <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary flex items-center justify-center text-lg shrink-0 shadow-sm">
-        {capability ? capabilityEmojis[capability] : "🦜"}
+        <span>🦜</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-foreground mb-1">{greetingText}</p>
-        <p className="text-xs text-muted-foreground line-clamp-2">{message || t("ai.parrot.partner.default-hint")}</p>
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          {message || t("ai.parrot.partner.default-hint")}
+        </p>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAIChat } from "@/contexts/AIChatContext";
 import { useChat } from "@/hooks/useAIQueries";
 import { useCapabilityRouter } from "@/hooks/useCapabilityRouter";
+import { useAITools } from "@/hooks/useAITools";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import type { ChatItem } from "@/types/aichat";
 import { CapabilityStatus, CapabilityType, capabilityToParrotAgent } from "@/types/capability";
@@ -40,6 +41,7 @@ interface UnifiedChatViewProps {
   capabilityStatus: CapabilityStatus;
   recentMemoCount?: number;
   upcomingScheduleCount?: number;
+  uiTools: ReturnType<typeof useAITools>;
 }
 
 function UnifiedChatView({
@@ -60,6 +62,7 @@ function UnifiedChatView({
   capabilityStatus,
   recentMemoCount,
   upcomingScheduleCount,
+  uiTools,
 }: UnifiedChatViewProps) {
   const { t } = useTranslation();
   const md = useMediaQuery("md");
@@ -93,6 +96,9 @@ function UnifiedChatView({
             <AmazingInsightCard memos={memoQueryResults[0]?.memos ?? []} schedules={scheduleQueryResults[0]?.schedules ?? []} />
           ) : undefined
         }
+        uiTools={uiTools.tools}
+        onUIAction={uiTools.handleAction}
+        onUIDismiss={uiTools.dismissTool}
       >
         {/* Welcome message - 统一入口，示例提问直接发送 */}
         {items.length === 0 && (
@@ -171,6 +177,7 @@ const AIChat = () => {
   const chatHook = useChat();
   const aiChat = useAIChat();
   const capabilityRouter = useCapabilityRouter();
+  const uiTools = useAITools();
 
   // Local state
   const [input, setInput] = useState("");
@@ -186,6 +193,7 @@ const AIChat = () => {
   const messageIdRef = useRef(0);
   const lastAssistantMessageIdRef = useRef<string | null>(null);
   const streamingContentRef = useRef<string>("");
+  const isCreatingConversationRef = useRef(false);
 
   // Get current conversation and capability from context
   const {
@@ -246,6 +254,7 @@ const AIChat = () => {
             message: explicitMessage,
             agentType: parrotId,
             userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            conversationId: _conversationIdNum,
           },
           {
             onThinking: (msg) => {
@@ -290,6 +299,16 @@ const AIChat = () => {
                   queryType: result.queryType,
                 };
                 setScheduleQueryResults((prev) => [...prev, transformedResult]);
+              }
+            },
+            onUIMemoPreview: (data) => {
+              if (_messageId === messageIdRef.current) {
+                uiTools.processEvent({
+                  type: "ui_memo_preview",
+                  data: JSON.stringify(data),
+                  uiType: "ui_memo_preview",
+                  uiData: data,
+                });
               }
             },
             onContent: (content) => {
@@ -358,8 +377,12 @@ const AIChat = () => {
 
       // Ensure we have a conversation
       let targetConversationId = currentConversation?.id;
+      let creationPromise: Promise<string> | null = null;
 
       if (!targetConversationId) {
+        // Prevent double creation due to race conditions/double clicks
+        if (isCreatingConversationRef.current) return;
+
         // No active conversation - create one with AMAZING agent (综合助手)
         // (会话不再绑定特定Agent，能力可以在会话中动态切换)
         const existingConversation = conversations.find((c) => !c.parrotId || c.parrotId === ParrotAgentType.AMAZING);
@@ -367,7 +390,14 @@ const AIChat = () => {
           targetConversationId = existingConversation.id;
           selectConversation(existingConversation.id);
         } else {
-          targetConversationId = createConversation(ParrotAgentType.AMAZING);
+          // Set lock before creating
+          isCreatingConversationRef.current = true;
+          const { id, completed } = createConversation(ParrotAgentType.AMAZING);
+          targetConversationId = id;
+          creationPromise = completed.finally(() => {
+            // Release lock when creation completes (success or failure)
+            isCreatingConversationRef.current = false;
+          });
         }
       }
 
@@ -376,7 +406,7 @@ const AIChat = () => {
         return;
       }
 
-      // Add user message
+      // Add user message (optimistic update using tempId or realId)
       addMessage(targetConversationId, {
         role: "user",
         content: userMessage,
@@ -385,8 +415,10 @@ const AIChat = () => {
       // Special handling for cutting line (context separator)
       if (userMessage === "---") {
         setInput("");
-        const targetConversationIdNum = parseInt(targetConversationId, 10);
-        await handleParrotChat(targetConversationId, targetParrotId, userMessage, targetConversationIdNum);
+        // Wait for real ID if we just created it
+        const finalId = creationPromise ? await creationPromise : targetConversationId;
+        const targetConversationIdNum = parseInt(finalId, 10);
+        await handleParrotChat(finalId, targetParrotId, userMessage, targetConversationIdNum);
         return;
       }
 
@@ -395,16 +427,31 @@ const AIChat = () => {
         role: "assistant" as const,
         content: "",
       };
+
+      // Note: addMessage returns messageID. We don't use it for streaming logic 
+      // but we need it to update the specific message later if needed.
       const assistantMessageId = addMessage(targetConversationId, newMessage);
       lastAssistantMessageIdRef.current = assistantMessageId;
 
       streamingContentRef.current = "";
       setInput("");
 
-      const targetConversationIdNum = parseInt(targetConversationId, 10);
+      // Wait for real ID if we just created the conversation
+      // This is crucial to avoid "Chat with ID 0" which creates a duplicate session on backend
+      let finalId = targetConversationId;
+      if (creationPromise) {
+        try {
+          finalId = await creationPromise;
+        } catch (e) {
+          console.error("[AI Chat] Creation failed, using temp ID for optimistic UI", e);
+          // Fallback to temp ID, request will likely fail on backend but UI remains stable
+        }
+      }
+
+      const targetConversationIdNum = parseInt(finalId, 10);
       const conversationIdNum = isNaN(targetConversationIdNum) ? 0 : targetConversationIdNum;
 
-      await handleParrotChat(targetConversationId, targetParrotId, userMessage, conversationIdNum);
+      await handleParrotChat(finalId, targetParrotId, userMessage, conversationIdNum);
     },
     [
       input,
@@ -524,6 +571,7 @@ const AIChat = () => {
       items={items}
       currentCapability={currentCapability}
       capabilityStatus={capabilityStatus}
+      uiTools={uiTools}
     />
   );
 };
