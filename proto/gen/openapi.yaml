@@ -1419,6 +1419,43 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/memos:searchWithHighlight:
+        get:
+            tags:
+                - MemoService
+            description: SearchWithHighlight searches memos and returns results with keyword highlighting.
+            operationId: MemoService_SearchWithHighlight
+            parameters:
+                - name: query
+                  in: query
+                  description: Required. The search query.
+                  schema:
+                    type: string
+                - name: limit
+                  in: query
+                  description: 'Optional. Maximum number of results to return. Default: 20, Max: 100.'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: contextChars
+                  in: query
+                  description: 'Optional. Number of characters to include around each match. Default: 50.'
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SearchWithHighlightResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/schedule-agent/chat:
         post:
             tags:
@@ -2893,6 +2930,43 @@ components:
                     description: The type of the serialized message.
             additionalProperties: true
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        Highlight:
+            type: object
+            properties:
+                start:
+                    type: integer
+                    description: Start position in the snippet (character index).
+                    format: int32
+                end:
+                    type: integer
+                    description: End position in the snippet (character index).
+                    format: int32
+                matchedText:
+                    type: string
+                    description: The matched text.
+            description: Highlight represents a highlighted match position.
+        HighlightedMemo:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: 'The resource name of the memo. Format: memos/{memo}'
+                snippet:
+                    type: string
+                    description: The snippet of the memo content with highlight context.
+                score:
+                    type: number
+                    description: The relevance score (0-1).
+                    format: float
+                highlights:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Highlight'
+                    description: The highlight positions within the snippet.
+                createdTs:
+                    type: string
+                    description: The creation timestamp in seconds.
+            description: HighlightedMemo represents a memo with highlighted search matches.
         IdentityProvider:
             required:
                 - type
@@ -3738,6 +3812,15 @@ components:
                     type: number
                     format: float
             description: SearchResult represents a single search result.
+        SearchWithHighlightResponse:
+            type: object
+            properties:
+                memos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/HighlightedMemo'
+                    description: The list of highlighted memos.
+            description: SearchWithHighlightResponse is the response for SearchWithHighlight.
         SemanticSearchRequest:
             required:
                 - query

@@ -103,6 +103,11 @@ service MemoService {
     option (google.api.http) = {delete: "/api/v1/{name=memos/*/reactions/*}"};
     option (google.api.method_signature) = "name";
   }
+  // SearchWithHighlight searches memos and returns results with keyword highlighting.
+  rpc SearchWithHighlight(SearchWithHighlightRequest) returns (SearchWithHighlightResponse) {
+    option (google.api.http) = {get: "/api/v1/memos:searchWithHighlight"};
+    option (google.api.method_signature) = "query";
+  }
 }
 
 enum Visibility {
@@ -508,4 +513,52 @@ message DeleteMemoReactionRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "memos.api.v1/Reaction"}
   ];
+}
+
+// SearchWithHighlightRequest is the request for SearchWithHighlight.
+message SearchWithHighlightRequest {
+  // Required. The search query.
+  string query = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional. Maximum number of results to return. Default: 20, Max: 100.
+  int32 limit = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Number of characters to include around each match. Default: 50.
+  int32 context_chars = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// SearchWithHighlightResponse is the response for SearchWithHighlight.
+message SearchWithHighlightResponse {
+  // The list of highlighted memos.
+  repeated HighlightedMemo memos = 1;
+}
+
+// HighlightedMemo represents a memo with highlighted search matches.
+message HighlightedMemo {
+  // The resource name of the memo. Format: memos/{memo}
+  string name = 1;
+
+  // The snippet of the memo content with highlight context.
+  string snippet = 2;
+
+  // The relevance score (0-1).
+  float score = 3;
+
+  // The highlight positions within the snippet.
+  repeated Highlight highlights = 4;
+
+  // The creation timestamp in seconds.
+  int64 created_ts = 5;
+}
+
+// Highlight represents a highlighted match position.
+message Highlight {
+  // Start position in the snippet (character index).
+  int32 start = 1;
+
+  // End position in the snippet (character index).
+  int32 end = 2;
+
+  // The matched text.
+  string matched_text = 3;
 }

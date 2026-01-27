@@ -549,3 +549,13 @@ func (s *ConnectServiceHandler) ClearConversationMessages(ctx context.Context, r
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// MemoService wrappers for Connect
+
+func (s *ConnectServiceHandler) SearchWithHighlight(ctx context.Context, req *connect.Request[v1pb.SearchWithHighlightRequest]) (*connect.Response[v1pb.SearchWithHighlightResponse], error) {
+	resp, err := s.APIV1Service.SearchWithHighlight(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}

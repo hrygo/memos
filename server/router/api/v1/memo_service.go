@@ -18,6 +18,7 @@ import (
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/server/runner/memopayload"
+	"github.com/usememos/memos/server/service/memo"
 	"github.com/usememos/memos/store"
 )
 
@@ -827,4 +828,98 @@ func (*APIV1Service) parseMemoOrderBy(orderBy string, memoFind *store.FindMemo) 
 	}
 
 	return nil
+}
+
+// SearchWithHighlight searches memos and returns results with keyword highlighting.
+// This is an AI-powered feature that requires PostgreSQL.
+func (s *APIV1Service) SearchWithHighlight(ctx context.Context, request *v1pb.SearchWithHighlightRequest) (*v1pb.SearchWithHighlightResponse, error) {
+	const (
+		maxQueryLength  = 500 // Maximum query length in runes
+		maxContextChars = 200 // Maximum context characters
+	)
+
+	// Validate request
+	if request.Query == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "query is required")
+	}
+
+	// Validate query length
+	queryRunes := []rune(request.Query)
+	if len(queryRunes) > maxQueryLength {
+		return nil, status.Errorf(codes.InvalidArgument, "query too long (max %d characters)", maxQueryLength)
+	}
+
+	// Check if AI service is available (PostgreSQL only)
+	if s.AIService == nil || s.AIService.AdaptiveRetriever == nil {
+		return nil, status.Errorf(codes.Unavailable, "search with highlight requires AI features (PostgreSQL only)")
+	}
+
+	// Get current user
+	user, err := s.fetchCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user")
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
+	// Set defaults and apply limits
+	limit := int(request.Limit)
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	contextChars := int(request.ContextChars)
+	if contextChars <= 0 {
+		contextChars = 50
+	}
+	if contextChars > maxContextChars {
+		contextChars = maxContextChars
+	}
+
+	// Use HighlightService for search
+	highlightService := memo.NewHighlightService(s.AIService.AdaptiveRetriever)
+	results, err := highlightService.SearchWithHighlight(ctx, &memo.SearchWithHighlightOptions{
+		Query:        request.Query,
+		UserID:       user.ID,
+		Limit:        limit,
+		ContextChars: contextChars,
+	})
+	if err != nil {
+		slog.ErrorContext(ctx, "search with highlight failed",
+			"error", err,
+			"query", request.Query,
+			"user_id", user.ID,
+		)
+		return nil, status.Errorf(codes.Internal, "search failed")
+	}
+
+	// Convert to proto response
+	response := &v1pb.SearchWithHighlightResponse{
+		Memos: make([]*v1pb.HighlightedMemo, 0, len(results)),
+	}
+
+	for _, result := range results {
+		highlights := make([]*v1pb.Highlight, 0, len(result.Highlights))
+		for _, h := range result.Highlights {
+			highlights = append(highlights, &v1pb.Highlight{
+				Start:       int32(h.Start),
+				End:         int32(h.End),
+				MatchedText: h.MatchedText,
+			})
+		}
+
+		response.Memos = append(response.Memos, &v1pb.HighlightedMemo{
+			Name:       fmt.Sprintf("%s%s", MemoNamePrefix, result.Name),
+			Snippet:    result.Snippet,
+			Score:      result.Score,
+			Highlights: highlights,
+			CreatedTs:  result.CreatedTs,
+		})
+	}
+
+	return response, nil
 }
