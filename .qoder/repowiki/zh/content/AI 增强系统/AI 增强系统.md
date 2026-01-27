@@ -19,6 +19,13 @@
 - [proto/api/v1/ai_service.proto](file://proto/api/v1/ai_service.proto)
 </cite>
 
+## 更新摘要
+**所做更改**
+- 移除了实验性的 AI 代理聊天功能和复杂的自然语言处理能力
+- 简化了对话历史跟踪机制，移除了最多 5 轮对话的历史限制
+- 移除了 Markdown 渲染支持和自动日程解析功能
+- 更新了多代理系统的架构说明，强调核心功能的简化和专注
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -32,7 +39,9 @@
 10. [附录](#附录)
 
 ## 简介
-本文件面向“AI 增强系统”的综合技术文档，围绕智能 RAG 管道与 Parrot 多代理 AI 系统进行深入解析。系统通过查询路由、缓存检查、自适应检索与结果融合，实现向量搜索、BM25 全文搜索与重排序器的协同工作；并通过多代理（Memo、Schedule、Amazing、Creative）实现不同场景下的智能交互与协作。
+本文件面向"AI 增强系统"的综合技术文档，围绕智能 RAG 管道与 Parrot 多代理 AI 系统进行深入解析。系统通过查询路由、缓存检查、自适应检索与结果融合，实现向量搜索、BM25 全文搜索与重排序器的协同工作；并通过多代理（Memo、Schedule、Amazing）实现不同场景下的智能交互与协作。
+
+**更新** 系统现已简化为专注于核心功能，移除了实验性的聊天功能、复杂的自然语言处理能力和历史对话跟踪机制。
 
 ## 项目结构
 系统采用分层与功能域划分：
@@ -72,16 +81,7 @@ Retriever --> Store
 Router --> Retriever
 ```
 
-图表来源
-- [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L25-L78)
-- [plugin/ai/llm.go](file://plugin/ai/llm.go#L20-L30)
-- [plugin/ai/embedding.go](file://plugin/ai/embedding.go#L11-L21)
-- [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L20-L27)
-- [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L18-L40)
-- [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L24-L30)
-- [store/db/postgres/memo.go](file://store/db/postgres/memo.go#L51-L196)
-
-章节来源
+**图表来源**
 - [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L25-L78)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L20-L30)
 - [plugin/ai/embedding.go](file://plugin/ai/embedding.go#L11-L21)
@@ -106,7 +106,7 @@ Router --> Retriever
   - AIService / ScheduleAgentService 协议与流式响应
   - ChatRequest/ChatResponse、AgentType、ScheduleQueryMode 等
 
-章节来源
+**章节来源**
 - [plugin/ai/config.go](file://plugin/ai/config.go#L9-L44)
 - [plugin/ai/embedding.go](file://plugin/ai/embedding.go#L11-L21)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L20-L30)
@@ -117,7 +117,9 @@ Router --> Retriever
 - [proto/api/v1/ai_service.proto](file://proto/api/v1/ai_service.proto#L13-L110)
 
 ## 架构总览
-系统通过“查询路由 → 自适应检索 → 结果融合/重排序 → LLM 综合回答”的流水线，结合多代理的工具调用与事件流，实现端到端的智能增强体验。
+系统通过"查询路由 → 自适应检索 → 结果融合/重排序 → LLM 综合回答"的流水线，结合多代理的工具调用与事件流，实现端到端的智能增强体验。
+
+**更新** 架构已简化，移除了复杂的对话历史管理和多轮对话处理机制，专注于单一查询的快速响应。
 
 ```mermaid
 sequenceDiagram
@@ -130,7 +132,7 @@ participant Retriever as "AdaptiveRetriever"
 participant Embed as "EmbeddingService"
 participant Rerank as "RerankerService"
 participant Store as "Store/DB"
-Client->>API : ChatRequest(message, history, agent_type)
+Client->>API : ChatRequest(message, agent_type)
 API->>Handler : Handle()
 Handler->>Agent : ExecuteWithCallback()
 Agent->>Router : Route(query, timezone)
@@ -149,7 +151,7 @@ Handler-->>API : ChatResponse(stream)
 API-->>Client : 流式响应
 ```
 
-图表来源
+**图表来源**
 - [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L40-L78)
 - [plugin/ai/agent/amazing_parrot.go](file://plugin/ai/agent/amazing_parrot.go#L106-L184)
 - [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L449-L465)
@@ -171,6 +173,8 @@ API-->>Client : 流式响应
   - RRF 融合公式与权重平衡
   - 重排序器按需启用，避免简单查询的额外开销
 
+**更新** 移除了复杂的对话历史跟踪和多轮对话处理，简化了检索流程。
+
 ```mermaid
 flowchart TD
 Start(["开始"]) --> Route["查询路由<br/>解析时间/关键词"]
@@ -190,13 +194,13 @@ NeedsRerank --> |否| Done["返回 Top K"]
 Rerank --> Done
 ```
 
-图表来源
+**图表来源**
 - [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L449-L552)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L68-L115)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L409-L491)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L686-L712)
 
-章节来源
+**章节来源**
 - [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L449-L552)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L68-L115)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L409-L491)
@@ -212,6 +216,8 @@ Rerank --> Done
 - 重排序服务（RerankerService）
   - HTTP 客户端、超时与连接池
   - 启用状态判断与降级逻辑
+
+**更新** 移除了复杂的多轮对话处理和历史管理功能。
 
 ```mermaid
 classDiagram
@@ -231,12 +237,12 @@ class RerankerService {
 }
 ```
 
-图表来源
+**图表来源**
 - [plugin/ai/embedding.go](file://plugin/ai/embedding.go#L11-L21)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L20-L30)
 - [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L20-L27)
 
-章节来源
+**章节来源**
 - [plugin/ai/embedding.go](file://plugin/ai/embedding.go#L11-L21)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L20-L30)
 - [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L20-L27)
@@ -255,12 +261,14 @@ class RerankerService {
   - 事件类型：thinking、tool_use、tool_result、answer、error
   - UI 工具事件：时间槽选择、冲突解决、快捷动作
 
+**更新** 移除了复杂的对话历史跟踪和多轮对话处理机制，简化了代理的交互模式。
+
 ```mermaid
 classDiagram
 class ParrotAgent {
 <<interface>>
 +Name() string
-+ExecuteWithCallback(ctx, userInput, history, callback) error
++ExecuteWithCallback(ctx, userInput, callback) error
 +SelfDescribe() ParrotSelfCognition
 }
 class MemoParrot {
@@ -270,7 +278,7 @@ class MemoParrot {
 }
 class ScheduleParrotV2 {
 +ExecuteWithCallback(...)
-+StreamChat(ctx, input, history)
++StreamChat(ctx, input)
 }
 class AmazingParrot {
 +ExecuteWithCallback(...)
@@ -283,13 +291,13 @@ ParrotAgent <|.. ScheduleParrotV2
 ParrotAgent <|.. AmazingParrot
 ```
 
-图表来源
+**图表来源**
 - [plugin/ai/agent/types.go](file://plugin/ai/agent/types.go#L10-L23)
 - [plugin/ai/agent/memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L26-L66)
 - [plugin/ai/agent/schedule_parrot_v2.go](file://plugin/ai/agent/schedule_parrot_v2.go#L9-L24)
 - [plugin/ai/agent/amazing_parrot.go](file://plugin/ai/agent/amazing_parrot.go#L19-L31)
 
-章节来源
+**章节来源**
 - [plugin/ai/agent/types.go](file://plugin/ai/agent/types.go#L10-L23)
 - [plugin/ai/agent/memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L26-L66)
 - [plugin/ai/agent/schedule_parrot_v2.go](file://plugin/ai/agent/schedule_parrot_v2.go#L9-L24)
@@ -304,6 +312,8 @@ ParrotAgent <|.. AmazingParrot
   - ScheduleQueryMode（AUTO/STANDARD/STRICT）
   - 事件类型与 UI 工具事件数据结构
 
+**更新** 移除了复杂的对话历史字段和多轮对话支持，简化了 API 接口。
+
 ```mermaid
 sequenceDiagram
 participant Client as "客户端"
@@ -311,7 +321,7 @@ participant API as "AIService"
 participant Handler as "ParrotHandler"
 participant Agent as "MemoParrot"
 participant LLM as "LLMService"
-Client->>API : Chat(message, history, agent_type=MEMO)
+Client->>API : Chat(message, agent_type=MEMO)
 API->>Handler : Handle()
 Handler->>Agent : ExecuteWithCallback()
 Agent->>LLM : Chat(messages)
@@ -321,12 +331,12 @@ Handler-->>API : ChatResponse(stream)
 API-->>Client : 流式响应
 ```
 
-图表来源
+**图表来源**
 - [proto/api/v1/ai_service.proto](file://proto/api/v1/ai_service.proto#L195-L204)
 - [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L40-L78)
 - [plugin/ai/agent/memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L74-L289)
 
-章节来源
+**章节来源**
 - [proto/api/v1/ai_service.proto](file://proto/api/v1/ai_service.proto#L13-L110)
 - [proto/api/v1/ai_service.proto](file://proto/api/v1/ai_service.proto#L195-L204)
 - [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L40-L78)
@@ -342,6 +352,8 @@ API-->>Client : 流式响应
   - 重排序服务（SiliconFlow）
   - 数据库（PostgreSQL/pgvector）
 
+**更新** 移除了复杂的对话历史依赖关系，简化了组件间的耦合。
+
 ```mermaid
 graph LR
 Agent["ParrotAgent"] --> LLM["LLMService"]
@@ -354,13 +366,13 @@ API["AIService"] --> Handler["ParrotHandler"]
 Handler --> Agent
 ```
 
-图表来源
+**图表来源**
 - [plugin/ai/agent/types.go](file://plugin/ai/agent/types.go#L10-L23)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L24-L30)
 - [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L18-L40)
 - [server/router/api/v1/ai/handler.go](file://server/router/api/v1/ai/handler.go#L25-L37)
 
-章节来源
+**章节来源**
 - [plugin/ai/agent/types.go](file://plugin/ai/agent/types.go#L10-L23)
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L24-L30)
 - [server/queryengine/query_router.go](file://server/queryengine/query_router.go#L18-L40)
@@ -380,7 +392,9 @@ Handler --> Agent
   - LLM 与重排序器均设置超时保护
   - Provider 层具备指数退避重试机制
 
-章节来源
+**更新** 移除了复杂的对话历史缓存机制，简化了内存管理策略。
+
+**章节来源**
 - [server/retrieval/adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L360-L406)
 - [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L37-L53)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L106-L128)
@@ -399,7 +413,9 @@ Handler --> Agent
   - ParrotError 错误包装与可观测性日志
   - 事件回调错误处理与中止
 
-章节来源
+**更新** 移除了对话历史相关的故障排查项，简化了故障诊断流程。
+
+**章节来源**
 - [plugin/ai/config.go](file://plugin/ai/config.go#L105-L128)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L198-L269)
 - [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L93-L126)
@@ -408,7 +424,9 @@ Handler --> Agent
 - [plugin/ai/agent/types.go](file://plugin/ai/agent/types.go#L222-L256)
 
 ## 结论
-该系统通过“查询路由 + 自适应检索 + 结果融合/重排序 + 多代理工具调用”的闭环，实现了高效、可扩展的 AI 增强体验。其设计强调并发、内存与成本控制，并通过事件流与 UI 工具事件提升交互体验。后续可在意图检测、并发检索优化与成本监控方面持续演进。
+该系统通过"查询路由 + 自适应检索 + 结果融合/重排序 + 多代理工具调用"的闭环，实现了高效、可扩展的 AI 增强体验。其设计强调并发、内存与成本控制，并通过事件流与 UI 工具事件提升交互体验。经过简化后，系统更加专注于核心功能，移除了复杂的对话历史管理和多轮对话处理机制，提升了整体性能和可靠性。
+
+**更新** 系统现已简化为专注于核心功能，移除了实验性的聊天功能和复杂的自然语言处理能力，使系统更加稳定和高效。
 
 ## 附录
 - 配置项与调优建议
@@ -420,7 +438,9 @@ Handler --> Agent
   - ChatRequest/ChatResponse 的事件类型与 UI 工具事件
   - 会话持久化与增量消息同步
 
-章节来源
+**更新** 移除了对话历史相关的配置项和调优建议，简化了配置管理。
+
+**章节来源**
 - [plugin/ai/config.go](file://plugin/ai/config.go#L18-L44)
 - [plugin/ai/llm.go](file://plugin/ai/llm.go#L36-L104)
 - [plugin/ai/reranker.go](file://plugin/ai/reranker.go#L37-L53)

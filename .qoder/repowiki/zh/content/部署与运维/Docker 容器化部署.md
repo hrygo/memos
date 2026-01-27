@@ -2,18 +2,29 @@
 
 <cite>
 **本文引用的文件**
+- [README.md](file://README.md)
+- [Docker 使用说明](file://docker/README.md)
 - [Dockerfile](file://docker/Dockerfile)
 - [开发环境 compose](file://docker/compose/dev.yml)
 - [生产环境 compose](file://docker/compose/prod.yml)
-- [Docker 使用说明](file://docker/README.md)
-- [入口脚本](file://scripts/entrypoint.sh)
 - [.env 示例](file://.env.example)
 - [.env.prod 示例](file://deploy/aliyun/.env.prod.example)
 - [部署脚本](file://deploy/aliyun/deploy.sh)
+- [入口脚本](file://scripts/entrypoint.sh)
 - [.dockerignore](file://.dockerignore)
 - [Makefile](file://Makefile)
 - [健康检查服务](file://server/router/api/v1/health_service.go)
+- [后端数据库指南](file://docs/dev-guides/BACKEND_DB.md)
+- [前端开发指南](file://docs/dev-guides/FRONTEND.md)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增 AI 功能环境变量配置的详细说明
+- 补充 Docker Compose 部署流程的完整步骤
+- 更新 PostgreSQL 配置要求，包括向量扩展和内存参数
+- 增强环境变量传递机制的说明
+- 完善生产环境部署的最佳实践
 
 ## 目录
 1. [简介](#简介)
@@ -28,7 +39,7 @@
 10. [附录](#附录)
 
 ## 简介
-本指南面向希望使用 Docker 进行 Memos 容器化部署的用户，涵盖镜像构建、多阶段与层缓存优化、Compose 配置（开发/生产）、PostgreSQL 容器参数（内存、连接数、向量扩展）、卷与数据持久化、健康检查与资源限制、网络与端口映射、以及环境变量传递等关键主题。文中所有技术细节均基于仓库中的实际配置文件与脚本进行整理与说明。
+本指南面向希望使用 Docker 进行 Memos 容器化部署的用户，涵盖镜像构建、多阶段与层缓存优化、Compose 配置（开发/生产）、PostgreSQL 容器参数（内存、连接数、向量扩展）、卷与数据持久化、健康检查与资源限制、网络与端口映射、以及环境变量传递等关键主题。特别针对 AI 功能的改进，提供了详细的环境变量配置、Docker Compose 部署流程和 PostgreSQL 配置要求。
 
 ## 项目结构
 与 Docker 容器化相关的核心文件组织如下：
@@ -79,12 +90,12 @@ PROD --> HS
 - [.dockerignore](file://.dockerignore#L1-L16)
 - [开发环境 compose](file://docker/compose/dev.yml#L1-L49)
 - [生产环境 compose](file://docker/compose/prod.yml#L1-L119)
-- [.env 示例](file://.env.example#L1-L58)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L103)
+- [.env 示例](file://.env.example#L1-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L174)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
 - [Makefile](file://Makefile#L132-L169)
 - [部署脚本](file://deploy/aliyun/deploy.sh#L1-L601)
-- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L25)
+- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L26)
 
 **章节来源**
 - [Docker 使用说明](file://docker/README.md#L1-L64)
@@ -92,18 +103,18 @@ PROD --> HS
 - [.dockerignore](file://.dockerignore#L1-L16)
 - [开发环境 compose](file://docker/compose/dev.yml#L1-L49)
 - [生产环境 compose](file://docker/compose/prod.yml#L1-L119)
-- [.env 示例](file://.env.example#L1-L58)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L103)
+- [.env 示例](file://.env.example#L1-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L174)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
 - [Makefile](file://Makefile#L132-L169)
 - [部署脚本](file://deploy/aliyun/deploy.sh#L1-L601)
-- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L25)
+- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L26)
 
 ## 核心组件
 - 多阶段构建镜像：后端构建阶段使用 golang:1.25-alpine，下载依赖并构建静态二进制；最终运行阶段使用 alpine:3.21，非 root 用户运行，暴露数据卷与端口。
 - Compose 编排：dev.yml 专注开发体验（端口映射、健康检查、资源限制），prod.yml 专注生产（镜像选择、网络隔离、卷持久化、健康检查、资源限制、DSN 环境变量）。
 - 入口脚本：支持 MEMOS_DSN_FILE 等变量以文件形式注入敏感值，避免明文暴露。
-- 环境变量：统一前缀 MEMOS_，支持通过 .env 或系统环境变量（结合 .env.prod 的示例）传入。
+- 环境变量：统一前缀 MEMOS_，支持通过 .env 或系统环境变量（结合 .env.prod 的示例）传入，特别包含完整的 AI 功能配置。
 - 健康检查：PostgreSQL 使用 pg_isready；应用服务通过 gRPC 健康检查接口验证数据库初始化与 schema 版本。
 
 **章节来源**
@@ -111,9 +122,9 @@ PROD --> HS
 - [开发环境 compose](file://docker/compose/dev.yml#L1-L49)
 - [生产环境 compose](file://docker/compose/prod.yml#L1-L119)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
-- [.env 示例](file://.env.example#L1-L58)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L103)
-- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L25)
+- [.env 示例](file://.env.example#L1-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L174)
+- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L26)
 
 ## 架构总览
 下图展示生产环境的容器化架构：Memos 应用容器依赖已健康运行的 PostgreSQL 容器，二者通过自定义桥接网络通信，数据通过命名卷持久化，应用通过健康检查保障可用性。
@@ -146,7 +157,7 @@ APP --> HEALTH
 
 **章节来源**
 - [生产环境 compose](file://docker/compose/prod.yml#L1-L119)
-- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L25)
+- [健康检查服务](file://server/router/api/v1/health_service.go#L1-L26)
 
 ## 组件详解
 
@@ -284,9 +295,52 @@ App-->>ComposeProd : 健康检查通过
 **章节来源**
 - [生产环境 compose](file://docker/compose/prod.yml#L90-L91)
 - [开发环境 compose](file://docker/compose/dev.yml#L18-L19)
-- [.env 示例](file://.env.example#L22-L51)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L22-L103)
+- [.env 示例](file://.env.example#L22-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L22-L174)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
+
+### AI 功能环境变量配置
+- AI 功能启用
+  - MEMOS_AI_ENABLED=true/false，控制是否启用 AI 功能
+- Provider 配置
+  - MEMOS_AI_EMBEDDING_PROVIDER：向量模型提供商（siliconflow/openai/ollama）
+  - MEMOS_AI_LLM_PROVIDER：对话模型提供商（deepseek/openai/ollama/siliconflow）
+- 模型配置
+  - MEMOS_AI_EMBEDDING_MODEL：向量模型名称（默认 BAAI/bge-m3）
+  - MEMOS_AI_RERANK_MODEL：重排模型名称（默认 BAAI/bge-reranker-v2-m3）
+  - MEMOS_AI_LLM_MODEL：对话模型名称（默认 deepseek-chat）
+- API Key 配置
+  - MEMOS_AI_SILICONFLOW_API_KEY：SiliconFlow API Key
+  - MEMOS_AI_DEEPSEEK_API_KEY：DeepSeek API Key
+  - MEMOS_AI_OPENAI_API_KEY：OpenAI API Key（可选）
+- Base URL 配置
+  - MEMOS_AI_SILICONFLOW_BASE_URL：SiliconFlow API 基础地址
+  - MEMOS_AI_DEEPSEEK_BASE_URL：DeepSeek API 基础地址
+  - MEMOS_AI_OPENAI_BASE_URL：OpenAI API 基础地址（可选）
+- Ollama 配置
+  - MEMOS_AI_OLLAMA_BASE_URL：Ollama 本地服务地址（默认 http://localhost:11434）
+
+**章节来源**
+- [.env 示例](file://.env.example#L14-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L34-L174)
+
+### Docker Compose 部署流程
+- 开发环境部署
+  1. 启动 PostgreSQL：`make docker-up`
+  2. 查看日志：`make docker-logs`
+  3. 停止服务：`make docker-down`
+  4. 重置数据：`make docker-reset`
+- 生产环境部署
+  1. 复制配置文件：`cp .env.prod.example .env.prod`
+  2. 编辑配置：设置数据库密码、API Key、实例 URL
+  3. 启动服务：`make docker-prod-up`
+  4. 查看状态：`make docker-prod-status`
+  5. 查看日志：`make docker-prod-logs`
+  6. 停止服务：`make docker-prod-down`
+
+**章节来源**
+- [Docker 使用说明](file://docker/README.md#L16-L64)
+- [Makefile](file://Makefile#L115-L142)
 
 ## 依赖关系分析
 - 构建依赖
@@ -312,8 +366,8 @@ EP["entrypoint.sh(_FILE)"] --> RUN
 - [.dockerignore](file://.dockerignore#L1-L16)
 - [生产环境 compose](file://docker/compose/prod.yml#L60-L110)
 - [开发环境 compose](file://docker/compose/dev.yml#L4-L44)
-- [.env 示例](file://.env.example#L1-L58)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L103)
+- [.env 示例](file://.env.example#L1-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L174)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
 
 **章节来源**
@@ -321,8 +375,8 @@ EP["entrypoint.sh(_FILE)"] --> RUN
 - [.dockerignore](file://.dockerignore#L1-L16)
 - [生产环境 compose](file://docker/compose/prod.yml#L1-L119)
 - [开发环境 compose](file://docker/compose/dev.yml#L1-L49)
-- [.env 示例](file://.env.example#L1-L58)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L103)
+- [.env 示例](file://.env.example#L1-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L1-L174)
 - [入口脚本](file://scripts/entrypoint.sh#L1-L32)
 
 ## 性能与优化
@@ -357,6 +411,10 @@ EP["entrypoint.sh(_FILE)"] --> RUN
 - 环境变量问题
   - 确认 MEMOS_DSN 是否正确，必要时使用 MEMOS_DSN_FILE 注入。
   - 检查 .env 与系统环境变量的优先级与拼写。
+- AI 功能问题
+  - 验证 API Key 是否正确配置。
+  - 检查 Provider 与模型的兼容性。
+  - 确认网络连接和代理设置。
 
 **章节来源**
 - [Docker 使用说明](file://docker/README.md#L16-L64)
@@ -364,7 +422,7 @@ EP["entrypoint.sh(_FILE)"] --> RUN
 - [健康检查服务](file://server/router/api/v1/health_service.go#L11-L24)
 
 ## 结论
-本指南基于仓库中的实际配置，系统性地梳理了 Memos 的 Docker 容器化部署要点：多阶段构建与层缓存、开发/生产 Compose 差异、PostgreSQL 内存与向量扩展配置、卷与持久化、健康检查与资源限制、网络与端口映射、以及环境变量传递策略。结合部署脚本与健康检查服务，可实现稳定、可观测且易于维护的容器化运行环境。
+本指南基于仓库中的实际配置，系统性地梳理了 Memos 的 Docker 容器化部署要点：多阶段构建与层缓存、开发/生产 Compose 差异、PostgreSQL 内存与向量扩展配置、卷与持久化、健康检查与资源限制、网络与端口映射、以及环境变量传递策略。特别针对 AI 功能的改进，提供了详细的环境变量配置、Docker Compose 部署流程和 PostgreSQL 配置要求。结合部署脚本与健康检查服务，可实现稳定、可观测且易于维护的容器化运行环境。
 
 ## 附录
 - 常用命令
@@ -372,8 +430,13 @@ EP["entrypoint.sh(_FILE)"] --> RUN
   - 生产：make docker-prod-up / docker-prod-logs / docker-prod-down
 - 环境变量参考
   - MEMOS_DRIVER、MEMOS_DSN、MEMOS_AI_* 等，详见 .env 示例与 .env.prod 示例。
+- AI 功能配置方案
+  - 方案 A：SiliconFlow + DeepSeek（推荐）
+  - 方案 B：纯 SiliconFlow
+  - 方案 C：OpenAI 全家桶
+  - 方案 D：本地 Ollama
 
 **章节来源**
 - [Makefile](file://Makefile#L132-L169)
-- [.env 示例](file://.env.example#L22-L51)
-- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L22-L103)
+- [.env 示例](file://.env.example#L22-L139)
+- [.env.prod 示例](file://deploy/aliyun/.env.prod.example#L144-L174)

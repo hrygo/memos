@@ -12,7 +12,20 @@
 - [llm.go](file://plugin/ai/llm.go)
 - [memo.go](file://store/db/postgres/memo.go)
 - [ai_service.go](file://server/router/api/v1/ai_service.go)
+- [parrot.ts](file://web/src/types/parrot.ts)
+- [useParrots.ts](file://web/src/hooks/useParrots.ts)
+- [theme.ts](file://web/src/utils/theme.ts)
+- [default.css](file://web/src/themes/default.css)
+- [default-dark.css](file://web/src/themes/default-dark.css)
+- [COLOR_GUIDE.md](file://web/src/themes/COLOR_GUIDE.md)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了代理系统主题统一化的相关内容
+- 移除了特定代理主题配置的描述
+- 采用统一设计系统令牌的说明
+- 新增了前端主题系统集成的说明
 
 ## 目录
 1. [简介](#简介)
@@ -29,12 +42,15 @@
 
 Memo Parrot 笔记查询代理是一个智能的笔记检索和分析系统，专门负责处理用户的笔记查询请求。该系统采用 ReAct（推理-行动）范式，结合语义搜索和关键词检索，为用户提供准确、高效的笔记查询服务。
 
+**更新** 代理系统现已实现主题统一化，移除了特定代理主题配置，采用统一设计系统令牌来确保视觉一致性和更好的用户体验。
+
 该代理系统的核心特点包括：
 - **智能查询路由**：根据查询内容自动选择最优的检索策略
 - **多模态检索**：结合语义向量检索和传统关键词检索
 - **结构化结果输出**：提供标准化的查询结果格式
 - **缓存优化**：内置 LRU 缓存机制提升响应速度
 - **流式响应**：支持实时的流式结果输出
+- **主题统一化**：采用统一设计系统令牌，确保视觉一致性
 
 ## 项目结构
 
@@ -60,20 +76,28 @@ subgraph "存储层"
 N[memo.go] --> O[PostgreSQL]
 O --> P[pgvector]
 end
+subgraph "前端主题系统"
+Q[parrot.ts] --> R[主题配置]
+R --> S[设计系统令牌]
+S --> T[统一风格]
+end
 A --> F
 F --> N
 F --> J
 F --> L
+Q --> A
 ```
 
 **图表来源**
 - [memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L1-L459)
 - [adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L1-L762)
 - [embedding.go](file://plugin/ai/embedding.go#L1-L103)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
 
 **章节来源**
 - [memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L1-L459)
 - [memo_search.go](file://plugin/ai/agent/tools/memo_search.go#L1-L283)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
 
 ## 核心组件
 
@@ -126,10 +150,30 @@ MemoSearchTool 是专门用于笔记搜索的工具，提供了完整的搜索�
 - 动态质量评估和结果扩展
 - 内存优化和性能调优
 
+### 主题统一化系统
+
+**更新** 代理系统现已实现主题统一化，采用统一设计系统令牌来确保视觉一致性。
+
+**主题系统特性**：
+- **统一设计令牌**：使用 CSS 自定义属性作为设计令牌
+- **主题继承机制**：基于统一的颜色系统和间距系统
+- **暗色模式支持**：完整的明暗主题切换支持
+- **响应式设计**：适配不同设备和屏幕尺寸
+
+**设计令牌示例**：
+- `--background`：页面背景色
+- `--foreground`：主要文本色
+- `--primary`：主色调
+- `--secondary`：辅助色调
+- `--card`：卡片背景色
+- `--popover`：弹出层背景色
+
 **章节来源**
 - [memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L26-L66)
 - [memo_search.go](file://plugin/ai/agent/tools/memo_search.go#L53-L83)
 - [adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L24-L66)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
+- [theme.ts](file://web/src/utils/theme.ts#L1-L252)
 
 ## 架构概览
 
@@ -289,9 +333,35 @@ MemoParrot 实现了 LRU 缓存机制，有效提升重复查询的响应速度�
 - **TTL 管理**：默认 5 分钟的缓存过期时间
 - **统计监控**：提供缓存命中率和统计信息
 
+### 主题统一化实现
+
+**更新** 代理系统现已实现全面的主题统一化，采用统一设计系统令牌。
+
+**主题系统架构**：
+- **设计令牌层**：CSS 自定义属性作为设计基础
+- **主题层**：基于设计令牌的主题变体
+- **组件层**：使用主题令牌的 UI 组件
+- **响应式层**：适配不同设备的响应式设计
+
+**设计令牌系统**：
+- **颜色系统**：基于 oklch 色彩空间的统一色彩系统
+- **间距系统**：基于 rem 的弹性间距系统
+- **阴影系统**：统一的阴影和投影系统
+- **字体系统**：支持多语言的字体栈系统
+
+**主题切换机制**：
+- **动态注入**：运行时动态注入主题 CSS
+- **属性绑定**：通过 data-theme 属性控制主题
+- **暗色模式**：完整的明暗主题切换支持
+- **持久化存储**：localStorage 持久化用户偏好
+
 **章节来源**
 - [memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L17-L24)
 - [types.go](file://plugin/ai/agent/types.go#L334-L342)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
+- [theme.ts](file://web/src/utils/theme.ts#L1-L252)
+- [default.css](file://web/src/themes/default.css#L1-L124)
+- [default-dark.css](file://web/src/themes/default-dark.css#L1-L124)
 
 ## 依赖关系分析
 
@@ -311,10 +381,15 @@ I --> J[EmbeddingService]
 I --> K[RerankerService]
 I --> L[PostgreSQL存储]
 end
+subgraph "前端主题系统"
+M[parrot.ts] --> N[主题配置]
+N --> O[设计令牌]
+O --> P[统一风格]
+end
 subgraph "配置管理"
-M[LLM配置] --> G
-N[嵌入模型配置] --> J
-O[重排序配置] --> K
+Q[LLM配置] --> G
+R[嵌入模型配置] --> J
+S[重排序配置] --> K
 end
 B --> E
 D --> E
@@ -324,16 +399,19 @@ D --> E
 - [embedding.go](file://plugin/ai/embedding.go#L23-L57)
 - [reranker.go](file://plugin/ai/reranker.go#L29-L52)
 - [ai_service.go](file://server/router/api/v1/ai_service.go#L21-L43)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
 
 **依赖层次**：
 1. **基础设施层**：数据库、向量服务、API 服务
 2. **服务层**：嵌入服务、重排序服务、LLM 服务
 3. **业务逻辑层**：检索器、搜索工具、代理控制器
 4. **应用层**：前端交互、事件处理、结果展示
+5. **主题系统层**：设计令牌、主题配置、统一风格
 
 **章节来源**
 - [ai_service.go](file://server/router/api/v1/ai_service.go#L21-L43)
 - [adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L24-L30)
+- [parrot.ts](file://web/src/types/parrot.ts#L294-L360)
 
 ## 性能考虑
 
@@ -368,6 +446,25 @@ Memo Parrot 查询代理在设计时充分考虑了性能优化，采用了多�
 - 支持跨会话的结果缓存
 - 缓存统计和监控
 
+### 主题系统优化
+
+**更新** 主题统一化系统采用多项优化策略：
+
+**1. 设计令牌优化**
+- CSS 自定义属性的高效渲染
+- 减少样式的重复定义
+- 支持运行时主题切换
+
+**2. 主题加载优化**
+- 动态 CSS 注入避免阻塞
+- 主题内容缓存减少重复加载
+- 早期主题应用防止闪烁
+
+**3. 响应式优化**
+- 移动优先的设计策略
+- 自适应布局系统
+- 性能友好的动画效果
+
 ### 性能调优建议
 
 **1. 参数调优**
@@ -384,6 +481,7 @@ Memo Parrot 查询代理在设计时充分考虑了性能优化，采用了多�
 - 查询响应时间分布
 - 缓存命中率统计
 - 检索质量评估指标
+- 主题切换性能监控
 
 ## 故障排除指南
 
@@ -409,6 +507,12 @@ Memo Parrot 查询代理在设计时充分考虑了性能优化，采用了多�
 - 监控长时间运行的会话
 - 调整结果集大小限制
 
+**5. 主题显示异常**
+- **更新** 检查设计令牌是否正确加载
+- 验证 CSS 自定义属性的兼容性
+- 确认主题切换逻辑的正确性
+- 检查暗色模式的支持情况
+
 ### 调试方法
 
 **1. 日志分析**
@@ -426,9 +530,16 @@ Memo Parrot 查询代理在设计时充分考虑了性能优化，采用了多�
 - 分析错误发生的具体位置
 - 建立错误报告和修复流程
 
+**4. 主题调试**
+- **更新** 检查主题 CSS 是否正确注入
+- 验证设计令牌的计算和应用
+- 确认主题切换的事件处理
+- 分析主题相关的性能影响
+
 **章节来源**
 - [memo_parrot.go](file://plugin/ai/agent/memo_parrot.go#L164-L172)
 - [adaptive_retrieval.go](file://server/retrieval/adaptive_retrieval.go#L78-L81)
+- [theme.ts](file://web/src/utils/theme.ts#L190-L208)
 
 ## 结论
 
@@ -439,17 +550,28 @@ Memo Parrot 笔记查询代理是一个设计精良的智能查询系统，具�
 - 多策略自适应检索提供最佳查询效果
 - 完善的缓存机制提升性能表现
 - 流式响应提供良好的用户体验
+- **更新** 主题统一化确保视觉一致性
 
 **架构优势**：
 - 清晰的分层设计便于维护和扩展
 - 模块化组件支持独立测试和优化
 - 配置化设计便于部署和定制
 - 异常处理机制保证系统稳定性
+- **更新** 统一设计系统支持更好的用户体验
 
 **性能优势**：
 - 并行执行多种检索策略
 - RRF 融合算法优化结果质量
 - 内存优化和资源管理
 - 缓存机制提升响应速度
+- **更新** 主题系统优化减少渲染开销
+
+**设计优势**：
+- **更新** 统一设计令牌系统确保视觉一致性
+- **更新** 响应式设计支持多设备访问
+- **更新** 暗色模式提供舒适的视觉体验
+- **更新** 动态主题切换增强用户个性化
 
 该系统为用户提供了高效、准确的笔记查询服务，是现代知识管理系统的重要组成部分。通过持续的优化和改进，Memo Parrot 将能够更好地满足用户的需求，在智能化查询领域发挥更大的作用。
+
+**更新** 主题统一化和设计系统令牌的应用，使得 Memo Parrot 不仅在功能上表现出色，在视觉体验上也达到了新的高度，为用户提供了更加一致和专业的使用感受。
