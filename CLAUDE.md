@@ -56,7 +56,9 @@
 | :------------- | :---------------------------- |
 | API Handlers   | `server/router/api/v1/`       |
 | AI Agents      | `plugin/ai/agent/`            |
+| AI Services    | `plugin/ai/{memory,router,vector,aitime,cache,metrics,session}/` |
 | Query Engine   | `server/queryengine/`         |
 | Frontend Pages | `web/src/pages/`              |
 | Layouts        | `web/src/layouts/`            |
 | DB Models      | `store/db/postgres/`          |
+| DB Migrations  | `store/migration/postgres/`   |

@@ -1,6 +1,6 @@
 # S0-interface-contract: 公共服务接口契约
 
-> **状态**: 🔲 待开发  
+> **状态**: ✅ 已完成  
 > **优先级**: P0 (核心)  
 > **投入**: 5 人天  
 > **负责团队**: 团队 A（定义）+ 团队 B/C（验证）  
@@ -509,36 +509,36 @@ func TestMemoryServiceContract(t *testing.T) {
 
 ### 7.1 代码文件
 
-- [ ] `plugin/ai/memory/interface.go` - 记忆服务接口
-- [ ] `plugin/ai/memory/mock.go` - 记忆服务 Mock
-- [ ] `plugin/ai/router/interface.go` - 路由服务接口
-- [ ] `plugin/ai/router/mock.go` - 路由服务 Mock
-- [ ] `plugin/ai/vector/interface.go` - 向量服务接口
-- [ ] `plugin/ai/vector/mock.go` - 向量服务 Mock
-- [ ] `plugin/ai/time/interface.go` - 时间服务接口
-- [ ] `plugin/ai/time/mock.go` - 时间服务 Mock
-- [ ] `plugin/ai/cache/interface.go` - 缓存服务接口
-- [ ] `plugin/ai/cache/mock.go` - 缓存服务 Mock
-- [ ] `plugin/ai/metrics/interface.go` - 指标服务接口
-- [ ] `plugin/ai/metrics/mock.go` - 指标服务 Mock
-- [ ] `plugin/ai/session/interface.go` - 会话服务接口
-- [ ] `plugin/ai/session/mock.go` - 会话服务 Mock
+- [x] `plugin/ai/memory/interface.go` - 记忆服务接口
+- [x] `plugin/ai/memory/mock.go` - 记忆服务 Mock
+- [x] `plugin/ai/router/interface.go` - 路由服务接口
+- [x] `plugin/ai/router/mock.go` - 路由服务 Mock
+- [x] `plugin/ai/vector/interface.go` - 向量服务接口
+- [x] `plugin/ai/vector/mock.go` - 向量服务 Mock
+- [x] `plugin/ai/aitime/interface.go` - 时间服务接口
+- [x] `plugin/ai/aitime/mock.go` - 时间服务 Mock
+- [x] `plugin/ai/cache/interface.go` - 缓存服务接口
+- [x] `plugin/ai/cache/mock.go` - 缓存服务 Mock
+- [x] `plugin/ai/metrics/interface.go` - 指标服务接口
+- [x] `plugin/ai/metrics/mock.go` - 指标服务 Mock
+- [x] `plugin/ai/session/interface.go` - 会话服务接口
+- [x] `plugin/ai/session/mock.go` - 会话服务 Mock
 
 ### 7.2 测试文件
 
-- [ ] `plugin/ai/memory/interface_test.go`
-- [ ] `plugin/ai/router/interface_test.go`
-- [ ] `plugin/ai/vector/interface_test.go`
-- [ ] `plugin/ai/time/interface_test.go`
-- [ ] `plugin/ai/cache/interface_test.go`
-- [ ] `plugin/ai/metrics/interface_test.go`
-- [ ] `plugin/ai/session/interface_test.go`
+- [x] `plugin/ai/memory/interface_test.go`
+- [x] `plugin/ai/router/interface_test.go`
+- [x] `plugin/ai/vector/interface_test.go`
+- [x] `plugin/ai/aitime/interface_test.go`
+- [x] `plugin/ai/cache/interface_test.go`
+- [x] `plugin/ai/metrics/interface_test.go`
+- [x] `plugin/ai/session/interface_test.go`
 
 ### 7.3 数据库迁移
 
-- [ ] `store/db/postgres/migration/xxx_add_episodic_memory.sql`
-- [ ] `store/db/postgres/migration/xxx_add_user_preferences.sql`
-- [ ] `store/db/postgres/migration/xxx_add_conversation_context.sql`
+- [x] `store/migration/postgres/V0.53.0__add_episodic_memory.sql`
+- [x] `store/migration/postgres/V0.53.1__add_user_preferences.sql`
+- [x] `store/migration/postgres/V0.53.2__add_conversation_context.sql`
 
 ---
 
@@ -575,8 +575,9 @@ func TestMemoryServiceContract(t *testing.T) {
 
 ### 10.2 检查点
 
-- [ ] Day 1: 接口定义评审通过
-- [ ] Day 3: Mock 实现完成
+- [x] Day 1: 接口定义评审通过
+- [x] Day 3: Mock 实现完成
+- [x] Day 4: Code Review + 修复完成
 - [ ] Day 5: 三方联调通过
 
 ---
@@ -593,3 +594,17 @@ func TestMemoryServiceContract(t *testing.T) {
 | 日期 | 版本 | 变更内容 | 作者 |
 |:---|:---|:---|:---|
 | 2026-01-27 | v1.0 | 初始版本 | - |
+| 2026-01-27 | v1.1 | 完成全部接口 + Mock + 测试 | - |
+| 2026-01-27 | v1.2 | Code Review 修复 8 项问题 | - |
+
+### C. Code Review 修复记录 (v1.2)
+
+| 优先级 | 问题 | 修复内容 |
+|:---|:---|:---|
+| High | VectorService filter 跨用户泄露 | 缺失 filter key 视为不匹配 |
+| High | SearchEpisodes 缺 user 维度 | 接口增加 userID 参数 |
+| High | 相似度可能 <0 | clamp 到 [0,1] |
+| Medium | 中文"十一点"随机错误 | map→slice 长度降序匹配 |
+| Medium | UpdatePreferences nil panic | 增加 nil 检查 |
+| Medium | HybridSearch matchType 死分支 | 重构为三态逻辑 |
+| Low | conversation_context 冗余索引 | 删除重复索引 |
