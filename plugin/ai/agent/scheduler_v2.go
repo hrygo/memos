@@ -256,6 +256,8 @@ func (a *SchedulerAgentV2) intentToHint(intent TaskIntent) string {
 
 // wrapUICallback wraps the original callback to inject UI events based on tool usage.
 // This enables generative UI by emitting structured UI events when tools are called.
+// Creates a detached context with timeout for async callback operations to prevent
+// issues when the original request context is cancelled before the callback fires.
 func (a *SchedulerAgentV2) wrapUICallback(ctx context.Context, originalCallback func(event string, data string)) func(event string, data string) {
 	var pendingSchedule *UIScheduleSuggestionData
 
@@ -265,8 +267,13 @@ func (a *SchedulerAgentV2) wrapUICallback(ctx context.Context, originalCallback 
 		}
 
 		// Handle schedule_query tool - emit UI schedule list
+		// Use a detached context with timeout since this runs in a callback
+		// that may execute after the original request context is cancelled.
 		if event == "tool_use" && strings.HasPrefix(data, "schedule_query:") {
-			a.handleScheduleQuery(ctx, data, originalCallback)
+			// Create a detached context with 30s timeout for the callback operation
+			callbackCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			a.handleScheduleQuery(callbackCtx, data, originalCallback)
 		}
 
 		// Handle schedule_add tool - emit schedule suggestion card
