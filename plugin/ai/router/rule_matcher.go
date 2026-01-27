@@ -6,6 +6,22 @@ import (
 	"strings"
 )
 
+// Pre-defined core keywords for each category (avoid map creation on every call).
+var coreKeywordsByCategory = map[string][]string{
+	"schedule": {"日程", "安排", "会议", "提醒", "预约", "开会"},
+	"memo":     {"笔记", "搜索", "查找", "记录", "memo"},
+	"amazing":  {"综合", "总结", "分析", "周报"},
+}
+
+// Pre-defined intent patterns (avoid slice creation on every call).
+var (
+	updatePatterns = []string{"修改", "更新", "取消", "改", "删除"}
+	queryPatterns  = []string{"查看", "有什么", "哪些", "看看", "什么安排", "有没有"}
+	batchPatterns  = []string{"批量", "多个", "一系列", "每天", "每周"}
+	searchPatterns = []string{"搜索", "查找", "找", "查", "有什么", "哪些"}
+	createPatterns = []string{"记录", "记一下", "写", "保存", "创建"}
+)
+
 // RuleMatcher implements Layer 1 rule-based intent matching.
 // Target: 0ms latency, handle 60%+ of requests.
 type RuleMatcher struct {
@@ -96,12 +112,7 @@ func (m *RuleMatcher) Match(input string) (Intent, float32, bool) {
 
 // hasCoreKeyword checks if input contains a core keyword for the given category.
 func (m *RuleMatcher) hasCoreKeyword(input, category string) bool {
-	coreKeywords := map[string][]string{
-		"schedule": {"日程", "安排", "会议", "提醒", "预约", "开会"},
-		"memo":     {"笔记", "搜索", "查找", "记录", "memo"},
-		"amazing":  {"综合", "总结", "分析", "周报"},
-	}
-	keywords, ok := coreKeywords[category]
+	keywords, ok := coreKeywordsByCategory[category]
 	if !ok {
 		return false
 	}
@@ -137,7 +148,6 @@ func (m *RuleMatcher) hasTimePattern(input string) bool {
 // determineScheduleIntent determines if it's create, query, or update.
 func (m *RuleMatcher) determineScheduleIntent(input string, _ int) Intent {
 	// Update patterns
-	updatePatterns := []string{"修改", "更新", "取消", "改", "删除"}
 	for _, p := range updatePatterns {
 		if strings.Contains(input, p) {
 			return IntentScheduleUpdate
@@ -145,7 +155,6 @@ func (m *RuleMatcher) determineScheduleIntent(input string, _ int) Intent {
 	}
 
 	// Query patterns
-	queryPatterns := []string{"查看", "有什么", "哪些", "看看", "什么安排", "有没有"}
 	for _, p := range queryPatterns {
 		if strings.Contains(input, p) {
 			return IntentScheduleQuery
@@ -153,7 +162,6 @@ func (m *RuleMatcher) determineScheduleIntent(input string, _ int) Intent {
 	}
 
 	// Batch schedule patterns
-	batchPatterns := []string{"批量", "多个", "一系列", "每天", "每周"}
 	for _, p := range batchPatterns {
 		if strings.Contains(input, p) {
 			return IntentBatchSchedule
@@ -167,7 +175,6 @@ func (m *RuleMatcher) determineScheduleIntent(input string, _ int) Intent {
 // determineMemoIntent determines if it's search or create.
 func (m *RuleMatcher) determineMemoIntent(input string) Intent {
 	// Search patterns
-	searchPatterns := []string{"搜索", "查找", "找", "查", "有什么", "哪些"}
 	for _, p := range searchPatterns {
 		if strings.Contains(input, p) {
 			return IntentMemoSearch
@@ -175,7 +182,6 @@ func (m *RuleMatcher) determineMemoIntent(input string) Intent {
 	}
 
 	// Create patterns
-	createPatterns := []string{"记录", "记一下", "写", "保存", "创建"}
 	for _, p := range createPatterns {
 		if strings.Contains(input, p) {
 			return IntentMemoCreate

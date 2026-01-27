@@ -38,11 +38,9 @@ type retrievalPlan struct {
 	scheduleStartTime   string
 	scheduleEndTime     string
 	needsScheduleAdd    bool
-	scheduleAddData     string
 	needsFreeTime       bool
 	freeTimeDate        string
 	needsScheduleUpdate bool
-	scheduleUpdateData  string
 	needsDirectAnswer   bool // If true, skip retrieval and answer directly
 }
 

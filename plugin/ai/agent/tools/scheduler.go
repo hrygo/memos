@@ -531,11 +531,8 @@ func (t *ScheduleAddTool) Run(ctx context.Context, inputJSON string) (string, er
 			"requested_start", startTime.Unix(),
 		)
 
-		// Calculate duration
-		durationSec := int64(3600)
-		if endTime != nil {
-			durationSec = *endTime - startTime.Unix()
-		}
+		// Calculate duration (endTime is always set at this point)
+		durationSec := *endTime - startTime.Unix()
 		duration := time.Duration(durationSec) * time.Second
 
 		// Use ConflictResolver to find best alternative

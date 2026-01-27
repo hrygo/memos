@@ -141,16 +141,6 @@ func (m *HistoryMatcher) extractBigrams(input string) map[string]bool {
 	return bigrams
 }
 
-// tokenize is kept for backward compatibility but now uses bigram-based approach.
-func (m *HistoryMatcher) tokenize(input string) []string {
-	bigrams := m.extractBigrams(input)
-	result := make([]string, 0, len(bigrams))
-	for bg := range bigrams {
-		result = append(result, bg)
-	}
-	return result
-}
-
 // agentTypeToIntent maps agent type from episode to current intent.
 func (m *HistoryMatcher) agentTypeToIntent(agentType, input string) Intent {
 	switch agentType {
