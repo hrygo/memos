@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.1] - 2026-01-28
+## [v0.60.2] - 2026-01-28
+
+### 🐛 Bug Fixes
+
+- **CI/CD**: Switch from Docker Hub to GitHub Container Registry (GHCR) for improved stability and security (#418, #419).
+- **TypeScript**: Resolved type validation errors in schedule components and tests (#424, #425).
+- **i18n**: Fixed nested translation keys structure for Quick Edit feature (#433, #434).
+
+## [v0.60.1] - 2026-01-28
 
 ### 🐛 Bug Fixes & polish
 
@@ -10,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - **Frontend**: Resolved circular dependency warnings in Rollup by fixing `MemoView` imports in pages.
 - **CI**: Enabled manual `workflow_dispatch` trigger for stable build workflows.
 
-## [v0.6.0] - 2026-01-28
+## [v0.60.0] - 2026-01-28
 
 ### 🌟 Rebranding & Major Refactor
 
