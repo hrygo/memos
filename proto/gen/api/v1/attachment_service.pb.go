@@ -535,8 +535,8 @@ const file_api_v1_attachment_service_proto_rawDesc = "" +
 	"\rGetAttachment\x12\".memos.api.v1.GetAttachmentRequest\x1a\x18.memos.api.v1.Attachment\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/v1/{name=attachments/*}\x12\xa9\x01\n" +
 	"\x10UpdateAttachment\x12%.memos.api.v1.UpdateAttachmentRequest\x1a\x18.memos.api.v1.Attachment\"T\xdaA\x16attachment,update_mask\x82\xd3\xe4\x93\x025:\n" +
 	"attachment2'/api/v1/{attachment.name=attachments/*}\x12~\n" +
-	"\x10DeleteAttachment\x12%.memos.api.v1.DeleteAttachmentRequest\x1a\x16.google.protobuf.Empty\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e*\x1c/api/v1/{name=attachments/*}B\xae\x01\n" +
-	"\x10com.memos.api.v1B\x16AttachmentServiceProtoP\x01Z0github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
+	"\x10DeleteAttachment\x12%.memos.api.v1.DeleteAttachmentRequest\x1a\x16.google.protobuf.Empty\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e*\x1c/api/v1/{name=attachments/*}B\xb1\x01\n" +
+	"\x10com.memos.api.v1B\x16AttachmentServiceProtoP\x01Z3github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
 	file_api_v1_attachment_service_proto_rawDescOnce sync.Once

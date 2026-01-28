@@ -1,4 +1,4 @@
-// Package timezone provides timezone utilities for the Memos application.
+// Package timezone provides timezone utilities for the DivineSense application.
 //
 // This package handles timezone conversions, parsing, and formatting
 // to ensure consistent time handling across the application.

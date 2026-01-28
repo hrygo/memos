@@ -10,10 +10,10 @@ OS=$(uname -s)
 # Determine output binary name
 case "$OS" in
   *CYGWIN*|*MINGW*|*MSYS*)
-    OUTPUT="./build/memos.exe"
+    OUTPUT="./build/divinesense.exe"
     ;;
   *)
-    OUTPUT="./build/memos"
+    OUTPUT="./build/divinesense"
     ;;
 esac
 
@@ -25,7 +25,7 @@ export GOCACHE="$(pwd)/build/.gocache"
 export GOMODCACHE="$(pwd)/build/.gomodcache"
 
 # Build the executable
-go build -o "$OUTPUT" ./cmd/memos
+go build -o "$OUTPUT" ./cmd/divinesense
 
 echo "Build successful!"
 echo "To run the application, execute the following command:"

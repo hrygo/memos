@@ -3794,8 +3794,8 @@ const file_api_v1_ai_service_proto_rawDesc = "" +
 	"\x14ScheduleAgentService\x12\x7f\n" +
 	"\x04Chat\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a'.memos.api.v1.ScheduleAgentChatResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/schedule-agent/chat\x12\x90\x01\n" +
 	"\n" +
-	"ChatStream\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a).memos.api.v1.ScheduleAgentStreamResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/api/v1/schedule-agent/chat/stream0\x01B\xa6\x01\n" +
-	"\x10com.memos.api.v1B\x0eAiServiceProtoP\x01Z0github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
+	"ChatStream\x12&.memos.api.v1.ScheduleAgentChatRequest\x1a).memos.api.v1.ScheduleAgentStreamResponse\"-\x82\xd3\xe4\x93\x02':\x01*\"\"/api/v1/schedule-agent/chat/stream0\x01B\xa9\x01\n" +
+	"\x10com.memos.api.v1B\x0eAiServiceProtoP\x01Z3github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
 	file_api_v1_ai_service_proto_rawDescOnce sync.Once

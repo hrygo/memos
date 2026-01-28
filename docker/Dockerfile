@@ -24,29 +24,29 @@ RUN --mount=type=cache,target=/go/pkg/mod \
       -trimpath \
       -ldflags="-s -w -extldflags '-static'" \
       -tags netgo,osusergo \
-      -o memos \
-      ./cmd/memos
+      -o divinesense \
+      ./cmd/divinesense
 
 # Use minimal Alpine with security updates
 FROM alpine:3.21 AS monolithic
-WORKDIR /usr/local/memos
+WORKDIR /usr/local/divinesense
 
 # Install runtime dependencies and create non-root user in single layer
 RUN apk add --no-cache tzdata ca-certificates && \
     addgroup -g 10001 -S nonroot && \
-    adduser -u 10001 -S -G nonroot -h /var/opt/memos nonroot && \
-    mkdir -p /var/opt/memos && \
-    chown -R nonroot:nonroot /var/opt/memos
+    adduser -u 10001 -S -G nonroot -h /var/opt/divinesense nonroot && \
+    mkdir -p /var/opt/divinesense && \
+    chown -R nonroot:nonroot /var/opt/divinesense
 
 # Copy binary and entrypoint
-COPY --from=backend /backend-build/memos /usr/local/memos/memos
-COPY --from=backend --chmod=755 /backend-build/scripts/entrypoint.sh /usr/local/memos/entrypoint.sh
+COPY --from=backend /backend-build/divinesense /usr/local/divinesense/divinesense
+COPY --from=backend --chmod=755 /backend-build/scripts/entrypoint.sh /usr/local/divinesense/entrypoint.sh
 
 # Switch to non-root user
 USER nonroot:nonroot
 
 # Data directory
-VOLUME /var/opt/memos
+VOLUME /var/opt/divinesense
 
 ENV TZ="UTC" \
     MEMOS_MODE="prod" \
@@ -54,4 +54,4 @@ ENV TZ="UTC" \
 
 EXPOSE 5230
 
-ENTRYPOINT ["/usr/local/memos/entrypoint.sh", "/usr/local/memos/memos"]
+ENTRYPOINT ["/usr/local/divinesense/entrypoint.sh", "/usr/local/divinesense/divinesense"]

@@ -18,10 +18,10 @@ NC='\033[0m' # No Color
 # 1. 检查服务状态
 # ============================================================
 echo "📋 检查服务状态..."
-if pgrep -f "memos" > /dev/null; then
-    echo -e "${GREEN}✅ Memos 服务正在运行${NC}"
+if pgrep -f "divinesense" > /dev/null; then
+    echo -e "${GREEN}✅ DivineSense 服务正在运行${NC}"
 else
-    echo -e "${RED}❌ Memos 服务未运行${NC}"
+    echo -e "${RED}❌ DivineSense 服务未运行${NC}"
     echo "请先启动服务: make start"
     exit 1
 fi
@@ -31,7 +31,7 @@ fi
 # ============================================================
 echo ""
 echo "📋 检查数据库连接..."
-DB_CONTAINER="memos-postgres"
+DB_CONTAINER="divinesense-postgres-dev"
 if docker ps | grep -q $DB_CONTAINER; then
     echo -e "${GREEN}✅ 数据库容器正在运行${NC}"
 
@@ -78,7 +78,7 @@ if grep -q "解析具体日期" server/queryengine/query_router.go 2>/dev/null; 
     echo -e "${GREEN}✅ 代码已包含日期解析功能${NC}"
 
     # 检查是否重新编译
-    BINARY_TIME=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" memos 2>/dev/null || stat -c "%y" memos 2>/dev/null | cut -d'.' -f1)
+    BINARY_TIME=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" divinesense 2>/dev/null || stat -c "%y" divinesense 2>/dev/null | cut -d'.' -f1)
     SOURCE_TIME=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" server/queryengine/query_router.go 2>/dev/null || stat -c "%y" server/queryengine/query_router.go 2>/dev/null | cut -d'.' -f1)
 
     echo "   源码修改时间: $SOURCE_TIME"
@@ -89,7 +89,7 @@ if grep -q "解析具体日期" server/queryengine/query_router.go 2>/dev/null; 
         echo ""
         echo "请执行："
         echo "  make stop"
-        echo "  go build ./cmd/memos/..."
+        echo "  go build ./cmd/divinesense/..."
         echo "  make start"
     else
         echo -e "${GREEN}✅ 二进制文件是最新的${NC}"
@@ -119,11 +119,11 @@ echo "可能的解决方案："
 echo ""
 echo "1. ${YELLOW}重新编译和部署${NC}（最常见）"
 echo "   make stop"
-echo "   go build ./cmd/memos/..."
+echo "   go build ./cmd/divinesense/..."
 echo "   make start"
 echo ""
 echo "2. ${YELLOW}验证数据库中确实有日程${NC}"
-echo "   docker exec -it memos-postgres psql -U memos -d memos"
+echo "   docker exec -it divinesense-postgres-dev psql -U divinesense -d divinesense"
 echo "   SELECT * FROM schedule WHERE start_ts >= ...;"
 echo ""
 echo "3. ${YELLOW}查看日志确认日期解析生效${NC}"

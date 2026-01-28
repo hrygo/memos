@@ -1,8 +1,0 @@
-{
-  "id": "1",
-  "name": "Initial Full Codebase Review",
-  "goal": "Run comprehensive code review on entire codebase using code-review skill",
-  "status": "in_progress",
-  "priority": "critical",
-  "phase": "CODE_QUALITY_LOOP"
-}

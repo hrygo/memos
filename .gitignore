@@ -37,3 +37,6 @@ dist
 
 # Claude settings
 .claude/
+
+# Loki logs
+.loki

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Memos 开发环境管理脚本
+# DivineSense 开发环境管理脚本
 # 用法: ./scripts/dev.sh [start|stop|restart|status|logs]
 
 set -e
@@ -24,7 +24,7 @@ LOG_DIR="$ROOT_DIR/.logs"
 mkdir -p "$LOG_DIR"
 
 # 服务配置
-POSTGRES_CONTAINER="memos-postgres-dev"
+POSTGRES_CONTAINER="divinesense-postgres-dev"
 BACKEND_PID_FILE="$PID_DIR/backend.pid"
 FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
 
@@ -194,7 +194,7 @@ start_backend() {
     load_env
 
     # 启动后端（后台运行）
-    nohup go run ./cmd/memos --mode dev --port $BACKEND_PORT \
+    nohup go run ./cmd/divinesense --mode dev --port $BACKEND_PORT \
         > "$BACKEND_LOG" 2>&1 &
 
     local pid=$!
@@ -284,11 +284,11 @@ verify_backend_process() {
     local cwd=$(lsof -p "$pid" 2>/dev/null | grep cwd | awk '{print $NF}' | tr -d ' ')
 
     # 安全验证：必须同时满足以下条件
-    # 1. 命令行包含 memos 特征（精确匹配）
+    # 1. 命令行包含 divinesense 特征（精确匹配）
     # 2. 进程的工作目录是当前项目目录
     if [ -n "$cmdline" ] && [ "$cwd" = "$ROOT_DIR" ]; then
         # 精确匹配：确保是我们启动的后端进程
-        if echo "$cmdline" | grep -qE "(go run.*cmd/memos|memos.*--mode dev|memos.*--port $BACKEND_PORT)"; then
+        if echo "$cmdline" | grep -qE "(go run.*cmd/divinesense|divinesense.*--mode dev|divinesense.*--port $BACKEND_PORT)"; then
             return 0
         fi
     fi
@@ -325,16 +325,16 @@ stop_backend() {
 
         if [ -n "$port_pids" ]; then
             for port_pid in $port_pids; do
-                # 验证进程是否是我们启动的 memos 后端
+                # 验证进程是否是我们启动的 divinesense 后端
                 if verify_backend_process "$port_pid"; then
-                    log_info "终止 memos 后端进程 (PID: $port_pid)..."
+                    log_info "终止 divinesense 后端进程 (PID: $port_pid)..."
                     kill "$port_pid" 2>/dev/null || true
                     sleep 1
                     # 如果还没终止，强制杀死
                     if ps -p "$port_pid" &>/dev/null; then
                         kill -9 "$port_pid" 2>/dev/null || true
                     fi
-                    log_success "已清理端口 $BACKEND_PORT 的 memos 进程"
+                    log_success "已清理端口 $BACKEND_PORT 的 divinesense 进程"
                 else
                     log_warn "端口 $BACKEND_PORT 被其他进程占用 (PID: $port_pid)，跳过终止"
                     log_warn "如需终止该进程，请手动执行: kill $port_pid"
@@ -428,7 +428,7 @@ stop_frontend() {
 
 show_status() {
     echo ""
-    echo "=== Memos 开发环境状态 ==="
+    echo "=== DivineSense 开发环境状态 ==="
     echo ""
 
     # PostgreSQL
@@ -535,7 +535,7 @@ show_logs() {
 
 cmd_start() {
     echo ""
-    log_info "启动 Memos 开发环境..."
+    log_info "启动 DivineSense 开发环境..."
     echo ""
 
     check_docker
@@ -567,7 +567,7 @@ cmd_start() {
 
 cmd_stop() {
     echo ""
-    log_info "停止 Memos 开发环境..."
+    log_info "停止 DivineSense 开发环境..."
     echo ""
 
     # 按逆序停止服务
@@ -658,7 +658,7 @@ case "${1:-}" in
         cmd_logs "${2:-}" "${3:-}"
         ;;
     *)
-        echo "Memos 开发环境管理脚本"
+        echo "DivineSense 开发环境管理脚本"
         echo ""
         echo "用法: $0 [command]"
         echo ""

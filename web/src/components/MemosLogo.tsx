@@ -20,8 +20,8 @@ function MemosLogo(props: Props) {
           <UserAvatar className="shrink-0" avatarUrl={avatarUrl} />
         ) : (
           <>
-            <img src="/logo.webp" alt={title} className="h-10 w-auto object-contain" />
-            <span className="text-xl font-bold text-foreground tracking-tight ml-2">{title}</span>
+            <img src="/full-logo-light.svg" alt={title} className="h-10 w-auto object-contain dark:hidden" />
+            <img src="/full-logo-dark.svg" alt={title} className="h-10 w-auto object-contain hidden dark:block" />
           </>
         )}
       </div>

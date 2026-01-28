@@ -77,11 +77,23 @@ func getEnvOrDefault(key, defaultValue string) string {
 // Supports both DIVINESENSE_* (new) and MEMOS_* (legacy) prefixes.
 func (p *Profile) FromEnv() {
 	// Helper to get env value with legacy fallback
+	// Skips empty values to allow defaults to take effect
 	getEnvWithFallback := func(newKey, legacyKey string) string {
 		if val := os.Getenv(newKey); val != "" {
 			return val
 		}
 		return os.Getenv(legacyKey)
+	}
+
+	// Helper to get env value with legacy fallback and default value
+	getEnvWithDefault := func(newKey, legacyKey, defaultValue string) string {
+		if val := os.Getenv(newKey); val != "" {
+			return val
+		}
+		if val := os.Getenv(legacyKey); val != "" {
+			return val
+		}
+		return defaultValue
 	}
 
 	// Helper to get bool env value with legacy fallback
@@ -90,18 +102,18 @@ func (p *Profile) FromEnv() {
 	}
 
 	p.AIEnabled = getBoolEnvWithFallback("DIVINESENSE_AI_ENABLED", "MEMOS_AI_ENABLED")
-	p.AIEmbeddingProvider = getEnvWithFallback("DIVINESENSE_AI_EMBEDDING_PROVIDER", getEnvOrDefault("MEMOS_AI_EMBEDDING_PROVIDER", "siliconflow"))
-	p.AILLMProvider = getEnvWithFallback("DIVINESENSE_AI_LLM_PROVIDER", getEnvOrDefault("MEMOS_AI_LLM_PROVIDER", "deepseek"))
+	p.AIEmbeddingProvider = getEnvWithDefault("DIVINESENSE_AI_EMBEDDING_PROVIDER", "MEMOS_AI_EMBEDDING_PROVIDER", "siliconflow")
+	p.AILLMProvider = getEnvWithDefault("DIVINESENSE_AI_LLM_PROVIDER", "MEMOS_AI_LLM_PROVIDER", "deepseek")
 	p.AISiliconFlowAPIKey = getEnvWithFallback("DIVINESENSE_AI_SILICONFLOW_API_KEY", os.Getenv("MEMOS_AI_SILICONFLOW_API_KEY"))
-	p.AISiliconFlowBaseURL = getEnvWithFallback("DIVINESENSE_AI_SILICONFLOW_BASE_URL", getEnvOrDefault("MEMOS_AI_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1"))
+	p.AISiliconFlowBaseURL = getEnvWithDefault("DIVINESENSE_AI_SILICONFLOW_BASE_URL", "MEMOS_AI_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
 	p.AIDeepSeekAPIKey = getEnvWithFallback("DIVINESENSE_AI_DEEPSEEK_API_KEY", os.Getenv("MEMOS_AI_DEEPSEEK_API_KEY"))
-	p.AIDeepSeekBaseURL = getEnvWithFallback("DIVINESENSE_AI_DEEPSEEK_BASE_URL", getEnvOrDefault("MEMOS_AI_DEEPSEEK_BASE_URL", "https://api.deepseek.com"))
+	p.AIDeepSeekBaseURL = getEnvWithDefault("DIVINESENSE_AI_DEEPSEEK_BASE_URL", "MEMOS_AI_DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 	p.AIOpenAIAPIKey = getEnvWithFallback("DIVINESENSE_AI_OPENAI_API_KEY", os.Getenv("MEMOS_AI_OPENAI_API_KEY"))
-	p.AIOpenAIBaseURL = getEnvWithFallback("DIVINESENSE_AI_OPENAI_BASE_URL", getEnvOrDefault("MEMOS_AI_OPENAI_BASE_URL", "https://api.openai.com/v1"))
-	p.AIOllamaBaseURL = getEnvWithFallback("DIVINESENSE_AI_OLLAMA_BASE_URL", getEnvOrDefault("MEMOS_AI_OLLAMA_BASE_URL", "http://localhost:11434"))
-	p.AIEmbeddingModel = getEnvWithFallback("DIVINESENSE_AI_EMBEDDING_MODEL", getEnvOrDefault("MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3"))
-	p.AIRerankModel = getEnvWithFallback("DIVINESENSE_AI_RERANK_MODEL", getEnvOrDefault("MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3"))
-	p.AILLMModel = getEnvWithFallback("DIVINESENSE_AI_LLM_MODEL", getEnvOrDefault("MEMOS_AI_LLM_MODEL", "deepseek-chat"))
+	p.AIOpenAIBaseURL = getEnvWithDefault("DIVINESENSE_AI_OPENAI_BASE_URL", "MEMOS_AI_OPENAI_BASE_URL", "https://api.openai.com/v1")
+	p.AIOllamaBaseURL = getEnvWithDefault("DIVINESENSE_AI_OLLAMA_BASE_URL", "MEMOS_AI_OLLAMA_BASE_URL", "http://localhost:11434")
+	p.AIEmbeddingModel = getEnvWithDefault("DIVINESENSE_AI_EMBEDDING_MODEL", "MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3")
+	p.AIRerankModel = getEnvWithDefault("DIVINESENSE_AI_RERANK_MODEL", "MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
+	p.AILLMModel = getEnvWithDefault("DIVINESENSE_AI_LLM_MODEL", "MEMOS_AI_LLM_MODEL", "deepseek-chat")
 
 	// Attachment processing configuration
 	p.OCREnabled = getBoolEnvWithFallback("DIVINESENSE_OCR_ENABLED", "MEMOS_OCR_ENABLED")

@@ -1,4 +1,4 @@
-// Package email provides SMTP email sending functionality for self-hosted Memos instances.
+// Package email provides SMTP email sending functionality for self-hosted DivineSense instances.
 //
 // This package is designed for self-hosted environments where instance administrators
 // configure their own SMTP servers. It follows industry-standard patterns used by
@@ -14,7 +14,7 @@
 //	    SMTPUsername: "your-email@gmail.com",
 //	    SMTPPassword: "your-app-password",
 //	    FromEmail:    "noreply@yourdomain.com",
-//	    FromName:     "Memos Notifications",
+//	    FromName:     "DivineSense Notifications",
 //	    UseTLS:       true,
 //	}
 //
@@ -53,7 +53,7 @@
 //
 //	message := &email.Message{
 //	    To:      []string{"user@example.com"},
-//	    Subject: "Welcome to Memos",
+//	    Subject: "Welcome to DivineSense",
 //	    Body:    "Thank you for joining!",
 //	    IsHTML:  false,
 //	}
@@ -73,7 +73,7 @@
 //	message := &email.Message{
 //	    To:      []string{"user@example.com"},
 //	    Subject: "Welcome!",
-//	    Body:    "<html><body><h1>Welcome to Memos!</h1></body></html>",
+//	    Body:    "<html><body><h1>Welcome to DivineSense!</h1></body></html>",
 //	    IsHTML:  true,
 //	}
 //

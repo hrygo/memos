@@ -174,13 +174,13 @@ To run with demo data:
 
 ```bash
 # Start in demo mode
-go run ./cmd/memos --mode demo --port 28081
+go run ./cmd/divinesense --mode demo --port 28081
 
 # Or use the binary
-./memos --mode demo
+./divinesense --mode demo
 
 # Demo database location
-./build/memos_demo.db
+./build/divinesense_demo.db
 ```
 
 Login with:
@@ -190,7 +190,7 @@ Login with:
 ## Updating Demo Data
 
 1. Edit `store/seed/sqlite/01__dump.sql`
-2. Delete `build/memos_demo.db` if it exists
+2. Delete `build/divinesense_demo.db` if it exists
 3. Restart server in demo mode
 4. New demo data will be loaded automatically
 

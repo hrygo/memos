@@ -22,8 +22,8 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "memos",
-		Short: `An open source, lightweight note-taking service. Easily capture and share your great thoughts.`,
+		Use:   "divinesense",
+		Short: `An AI-powered personal knowledge assistant. Capture, organize, and retrieve your thoughts with semantic search.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			instanceProfile := &profile.Profile{
 				Mode:        viper.GetString("mode"),
@@ -102,7 +102,7 @@ func init() {
 	rootCmd.PersistentFlags().String("data", "", "data directory")
 	rootCmd.PersistentFlags().String("driver", "postgres", "database driver (postgres, mysql, sqlite)")
 	rootCmd.PersistentFlags().String("dsn", "", "database source name(aka. DSN)")
-	rootCmd.PersistentFlags().String("instance-url", "", "the url of your memos instance")
+	rootCmd.PersistentFlags().String("instance-url", "", "the url of your divinesense instance")
 
 	if err := viper.BindPFlag("mode", rootCmd.PersistentFlags().Lookup("mode")); err != nil {
 		panic(err)
@@ -152,7 +152,7 @@ func init() {
 }
 
 func printGreetings(profile *profile.Profile) {
-	fmt.Printf("Memos %s started successfully!\n", profile.Version)
+	fmt.Printf("DivineSense %s started successfully!\n", profile.Version)
 
 	if profile.IsDev() {
 		fmt.Fprint(os.Stderr, "Development mode is enabled\n")
@@ -170,17 +170,17 @@ func printGreetings(profile *profile.Profile) {
 	if len(profile.UNIXSock) == 0 {
 		if len(profile.Addr) == 0 {
 			fmt.Printf("Server running on port %d\n", profile.Port)
-			fmt.Printf("Access your memos at: http://localhost:%d\n", profile.Port)
+			fmt.Printf("Access DivineSense at: http://localhost:%d\n", profile.Port)
 		} else {
 			fmt.Printf("Server running on %s:%d\n", profile.Addr, profile.Port)
-			fmt.Printf("Access your memos at: http://%s:%d\n", profile.Addr, profile.Port)
+			fmt.Printf("Access DivineSense at: http://%s:%d\n", profile.Addr, profile.Port)
 		}
 	} else {
 		fmt.Printf("Server running on unix socket: %s\n", profile.UNIXSock)
 	}
 
 	fmt.Println()
-	fmt.Printf("Documentation: %s\n", "https://usememos.com")
+	fmt.Printf("Documentation: %s\n", "https://github.com/hrygo/divinesense")
 	fmt.Printf("Source code: %s\n", "https://github.com/hrygo/divinesense")
 	fmt.Println("\nHappy note-taking!")
 }

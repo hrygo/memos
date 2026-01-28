@@ -1,4 +1,4 @@
-// Package auth provides authentication and authorization for the Memos server.
+// Package auth provides authentication and authorization for the DivineSense server.
 //
 // This package is used by:
 // - server/router/api/v1: gRPC and Connect API interceptors
