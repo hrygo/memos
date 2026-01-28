@@ -265,9 +265,16 @@ EOF
 # 生成随机密码
 generate_password() {
     if command -v openssl &>/dev/null; then
-        openssl rand -base16 16 | tr -d '/+='
+        # 尝试不同选项
+        if openssl rand -base16 16 &>/dev/null; then
+            openssl rand -base16 16 | tr -d '/+=' | head -c 20
+        elif openssl rand -hex 16 &>/dev/null; then
+            openssl rand -hex 16 | head -c 20
+        else
+            tr -dc A-Za-z0-9 </dev/urandom 2>/dev/null | head -c 20
+        fi
     else
-        tr -dc A-Za-z0-9 </dev/urandom | head -c 20
+        tr -dc A-Za-z0-9 </dev/urandom 2>/dev/null | head -c 20
     fi
 }
 
