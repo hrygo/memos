@@ -346,12 +346,163 @@ func (s *Store) getSchemaVersionOfMigrateScript(filePath string) (string, error)
 }
 
 // execute executes a SQL statement within a transaction context.
+// For PostgreSQL, it splits multi-statement SQL and executes each separately.
 // It returns an error if the execution fails.
-func (*Store) execute(ctx context.Context, tx *sql.Tx, stmt string) error {
+func (s *Store) execute(ctx context.Context, tx *sql.Tx, stmt string) error {
+	// PostgreSQL doesn't support multiple statements in a single ExecContext call.
+	// We need to split and execute each statement separately.
+	if s.profile.Driver == "postgres" {
+		return s.executeMultiStmt(ctx, tx, stmt)
+	}
+	// For other drivers (SQLite), try single execution first
 	if _, err := tx.ExecContext(ctx, stmt); err != nil {
 		return errors.Wrap(err, "failed to execute statement")
 	}
 	return nil
+}
+
+// executeMultiStmt splits SQL into individual statements and executes them.
+// It handles PostgreSQL's requirement for separate execution of each statement.
+func (s *Store) executeMultiStmt(ctx context.Context, tx *sql.Tx, sql string) error {
+	statements := s.splitSQL(sql)
+	for i, stmt := range statements {
+		if stmt == "" {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
+			return errors.Wrapf(err, "failed to execute statement %d: %s", i+1, stmt)
+		}
+	}
+	return nil
+}
+
+// splitSQL splits a multi-statement SQL string into individual statements.
+// It handles:
+// - Dollar-quoted strings ($$...$$) for PostgreSQL function bodies
+// - Single-quoted strings ('...')
+// - SQL comments (-- ... and /* ... */)
+// - Preserves function definitions with $$ delimiters
+func (s *Store) splitSQL(sql string) []string {
+	var statements []string
+	var currentStmt strings.Builder
+	lines := strings.Split(sql, "\n")
+
+	inDollarQuote := false
+	dollarQuoteTag := ""
+	inSingleQuote := false
+	inMultiLineComment := false
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Skip pure comment lines
+		if strings.HasPrefix(trimmed, "--") && !inDollarQuote && !inSingleQuote && !inMultiLineComment {
+			continue
+		}
+
+		// Skip empty lines outside of dollar quotes
+		if trimmed == "" && !inDollarQuote {
+			if currentStmt.Len() > 0 {
+				currentStmt.WriteString("\n")
+			}
+			continue
+		}
+
+		// Process each character to track contexts
+		i := 0
+		for i < len(line) {
+			ch := line[i]
+
+			// Check for dollar quote start/end
+			if !inSingleQuote && !inMultiLineComment {
+				if ch == '$' {
+					// Try to match dollar quote tag
+					tagEnd := i + 1
+					for tagEnd < len(line) && line[tagEnd] != '$' {
+						tagEnd++
+					}
+					if tagEnd < len(line) && line[tagEnd] == '$' {
+						tag := line[i : tagEnd+1]
+						if inDollarQuote && tag == dollarQuoteTag {
+							// Closing dollar quote
+							inDollarQuote = false
+							dollarQuoteTag = ""
+							currentStmt.WriteString(tag)
+							i = tagEnd + 1
+							continue
+						} else if !inDollarQuote {
+							// Opening dollar quote
+							inDollarQuote = true
+							dollarQuoteTag = tag
+							currentStmt.WriteString(tag)
+							i = tagEnd + 1
+							continue
+						}
+					}
+				}
+			}
+
+			// Check for single quote
+			if ch == '\'' && !inDollarQuote && !inMultiLineComment {
+				inSingleQuote = !inSingleQuote
+				currentStmt.WriteByte(ch)
+				i++
+				continue
+			}
+
+			// Check for multi-line comment start
+			if !inSingleQuote && !inDollarQuote && i+1 < len(line) && line[i:i+2] == "/*" {
+				inMultiLineComment = true
+				i += 2
+				continue
+			}
+
+			// Check for multi-line comment end
+			if inMultiLineComment && i+1 < len(line) && line[i:i+2] == "*/" {
+				inMultiLineComment = false
+				i += 2
+				continue
+			}
+
+			// Skip inline single-line comments
+			if !inSingleQuote && !inDollarQuote && !inMultiLineComment && ch == '-' && i+1 < len(line) && line[i+1] == '-' {
+				break // Skip rest of line
+			}
+
+			// Check for semicolon (statement separator)
+			if ch == ';' && !inSingleQuote && !inDollarQuote && !inMultiLineComment {
+				currentStmt.WriteByte(ch)
+				stmt := strings.TrimSpace(currentStmt.String())
+				if stmt != "" {
+					statements = append(statements, stmt)
+				}
+				currentStmt.Reset()
+				i++
+				// Skip remaining whitespace on this line
+				for i < len(line) && (line[i] == ' ' || line[i] == '\t') {
+					i++
+				}
+				continue
+			}
+
+			currentStmt.WriteByte(ch)
+			i++
+		}
+
+		if currentStmt.Len() > 0 {
+			currentStmt.WriteString("\n")
+		}
+	}
+
+	// Add remaining statement (might not end with semicolon)
+	if currentStmt.Len() > 0 {
+		stmt := strings.TrimSpace(currentStmt.String())
+		if stmt != "" {
+			statements = append(statements, stmt)
+		}
+	}
+
+	return statements
 }
 
 // updateCurrentSchemaVersion updates the current schema version in the instance basic setting.

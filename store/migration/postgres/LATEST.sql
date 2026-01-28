@@ -197,29 +197,12 @@ CREATE INDEX idx_schedule_start_ts ON schedule(start_ts);
 CREATE INDEX idx_schedule_uid ON schedule(uid);
 
 -- Atomic conflict detection constraint (V0.52)
+-- Note: The EXCLUDE constraint requires IMMUTABLE functions and is added via incremental migration
 CREATE EXTENSION IF NOT EXISTS btree_gist;
-
-ALTER TABLE schedule
-ADD CONSTRAINT IF NOT EXISTS no_overlapping_schedules
-EXCLUDE USING gist (
-    creator_id WITH =,
-    tsrange(start_ts, COALESCE(end_ts, start_ts + 3600), '[)') WITH &&
-)
-WHERE (row_status = 'NORMAL');
 
 CREATE INDEX IF NOT EXISTS idx_schedule_creator_time
 ON schedule(creator_id, start_ts)
 WHERE row_status = 'NORMAL';
-
-CREATE INDEX IF NOT EXISTS idx_schedule_creator_time_range
-ON schedule USING gist (
-    creator_id,
-    tsrange(start_ts, COALESCE(end_ts, start_ts + 3600), '[)')
-)
-WHERE row_status = 'NORMAL';
-
-COMMENT ON CONSTRAINT no_overlapping_schedules ON schedule IS
-'Prevents overlapping schedules for the same user. Only applies to NORMAL status schedules.';
 
 CREATE OR REPLACE FUNCTION update_schedule_updated_ts()
 RETURNS TRIGGER AS $$
