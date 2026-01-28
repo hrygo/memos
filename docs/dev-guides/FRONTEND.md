@@ -9,12 +9,26 @@
 - **Markdown**: React Markdown with KaTeX, Mermaid, GFM support
 - **Calendar**: FullCalendar for schedule visualization
 
+---
+
 ## Workflow
-- **Commands** (run in `web/` directory):
-  - `pnpm dev`: Start dev server (port 25173)
-  - `pnpm build`: Build for production
-  - `pnpm lint`: Run TypeScript and Biome checks
-  - `pnpm lint:fix`: Auto-fix linting issues
+
+### Commands (run in `web/` directory)
+
+```bash
+pnpm dev            # Start dev server (port 25173)
+pnpm build          # Build for production
+pnpm lint           # Run TypeScript and Biome checks
+pnpm lint:fix       # Auto-fix linting issues
+```
+
+### From Project Root
+
+```bash
+make web            # Start frontend dev server
+make build-web      # Build frontend for production
+make check-i18n     # Verify i18n keys completeness
+```
 
 ---
 
@@ -25,10 +39,10 @@
 **Root Cause**: Tailwind CSS 4 redefines these classes to use `--spacing-*` variables (~16px) instead of traditional container widths (384-512px). This causes Dialogs, Sheets, and modals to collapse into unusable "slivers".
 
 | Semantic Class | Tailwind 3 | Tailwind 4 |
-| :--- | :--- | :--- |
-| `max-w-sm` | 384px | ~16px (broken) |
-| `max-w-md` | 448px | ~16px (broken) |
-| `max-w-lg` | 512px | ~16px (broken) |
+|:---------------|:-----------|:-----------|
+| `max-w-sm`      | 384px      | ~16px (broken) |
+| `max-w-md`      | 448px      | ~16px (broken) |
+| `max-w-lg`      | 512px      | ~16px (broken) |
 
 **Wrong** (collapses to ~16px):
 ```tsx
@@ -43,12 +57,12 @@
 ```
 
 **Reference Table**:
-| Width | rem Value | Use Case |
-| :--- | :--- | :--- |
-| 384px | `max-w-[24rem]` | Small dialogs, sidebars |
-| 448px | `max-w-[28rem]` | Standard dialogs |
-| 512px | `max-w-[32rem]` | Large dialogs, forms |
-| 672px | `max-w-[42rem]` | Wide content |
+| Width   | rem Value      | Use Case                          |
+|:--------|:--------------|:----------------------------------|
+| 384px   | `max-w-[24rem]` | Small dialogs, sidebars         |
+| 448px   | `max-w-[28rem]` | Standard dialogs                 |
+| 512px   | `max-w-[32rem]` | Large dialogs, forms             |
+| 672px   | `max-w-[42rem]` | Wide content                     |
 
 ### Avoid `max-w-*` on Grid containers
 
@@ -67,12 +81,14 @@
 ```
 
 | Use `max-w-*` for | Don't use `max-w-*` for |
-| :--- | :--- |
+|:-------------------|:-------------------------|
 | Dialog/Modal/Popover | Grid containers |
-| Tooltip/Alert text | Flex items that need to fill |
-| Sidebar/Drawer | Cards in responsive layouts |
+| Tooltip/Alert text   | Flex items that need to fill |
+| Sidebar/Drawer       | Cards in responsive layouts |
 
-**Rule**: Grid uses `gap`, not `max-w-*`. If `max-width / column-count < 200px`, don't use `max-w-*`.
+**Rule**: Grid uses `gap`, not `max-w-*`. If `max-width / column_count < 200px`, don't use `max-w-*`.
+
+---
 
 ## Layout Architecture
 
@@ -92,14 +108,17 @@ RootLayout (global Nav + auth)
 ```
 
 ### Layout Files
-- `web/src/layouts/RootLayout.tsx` - Global navigation and auth
-- `web/src/layouts/MainLayout.tsx` - Collapsible sidebar for memos
-- `web/src/layouts/AIChatLayout.tsx` - Fixed sidebar for AI chat
-- `web/src/layouts/ScheduleLayout.tsx` - Fixed sidebar for schedules
+
+| File | Purpose | Sidebar Type | Responsive |
+|:-----|:--------|:-------------|:-----------|
+| `RootLayout.tsx` | Global navigation and auth | None | N/A |
+| `MainLayout.tsx` | Content-heavy pages | Collapsible `MemoExplorer` | md: fixed |
+| `AIChatLayout.tsx` | AI chat interface | Fixed `AIChatSidebar` | Always fixed |
+| `ScheduleLayout.tsx` | Schedule/calendar | Fixed `ScheduleCalendar` | Always fixed |
 
 ### Feature Layout Template
 
-For new feature pages requiring a dedicated sidebar, follow this pattern:
+For new feature pages requiring a dedicated sidebar:
 
 ```tsx
 import { Outlet } from "react-router-dom";
@@ -115,18 +134,17 @@ const FeatureLayout = () => {
       {/* Mobile Header */}
       <div className="lg:hidden flex-none flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-background">
         <NavigationDrawer />
-        {/* Mobile-specific controls */}
       </div>
 
       {/* Desktop Sidebar */}
       {lg && (
-        <div className="fixed top-0 left-16 shrink-0 h-svh border-r border-border bg-background w-{WIDTH} overflow-{auto|hidden}">
+        <div className="fixed top-0 left-16 shrink-0 h-svh border-r border-border bg-background w-72 overflow-auto">
           <FeatureSidebar />
         </div>
       )}
 
       {/* Main Content */}
-      <div className={cn("flex-1 min-h-0 overflow-x-hidden", lg ? "pl-{WIDTH}" : "")}>
+      <div className={cn("flex-1 min-h-0 overflow-x-hidden", lg ? "pl-72" : "")}>
         <Outlet />
       </div>
     </section>
@@ -135,40 +153,156 @@ const FeatureLayout = () => {
 ```
 
 **Sidebar Width Options**:
-| Class  | Pixels | Use Case                                        |
-| ------ | ------ | ----------------------------------------------- |
-| `w-56` | 224px  | Collapsible sidebar (MainLayout md)             |
-| `w-64` | 256px  | Standard sidebar                                |
-| `w-72` | 288px  | Default feature sidebar (AIChat, MainLayout lg) |
-| `w-80` | 320px  | Wide sidebar (Schedule)                         |
+| Class  | Pixels | Use Case                              |
+|:-------|:-------|:---------------------------------------|
+| `w-56`  | 224px  | Collapsible sidebar (MainLayout md)    |
+| `w-64`  | 256px  | Standard sidebar                       |
+| `w-72`  | 288px  | Default feature sidebar (AIChat, etc)  |
+| `w-80`  | 320px  | Wide sidebar (Schedule)                |
 
 **Responsive Breakpoints**:
-| Breakpoint | Width  | Behavior              |
-| ---------- | ------ | --------------------- |
-| `sm`       | 640px  | Nav bar appears       |
-| `md`       | 768px  | Sidebar becomes fixed |
-| `lg`       | 1024px | Full sidebar width    |
+| Breakpoint | Width  | Behavior                    |
+|:-----------|:-------|:----------------------------|
+| `sm`       | 640px  | Nav bar appears             |
+| `md`       | 768px  | Sidebar becomes fixed       |
+| `lg`       | 1024px | Full sidebar width          |
 
-**Layout Selection Guide**:
+---
 
-| Use Case                            | Layout Type      | Sidebar Type               |
-| ----------------------------------- | ---------------- | -------------------------- |
-| Content-heavy pages (Home, Explore) | `MainLayout`     | Collapsible `MemoExplorer` |
-| Feature-specific (Chat, Schedule)   | Dedicated Layout | Fixed feature sidebar      |
-| Full-screen modals                  | No layout        | None                       |
-| Simple pages                        | `MainLayout`     | Reuse existing             |
+## Page Components
 
-**Adding a New Feature Layout**:
+### Available Pages
 
-1. Create `web/src/layouts/FeatureLayout.tsx` using template above
-2. Create sidebar component if needed: `web/src/components/FeatureSidebar.tsx`
+| Path | Component | Layout | Purpose |
+|:-----|:----------|:-------|:--------|
+| `/` | `Home.tsx` | MainLayout | Main timeline with memo composer |
+| `/explore` | `Explore.tsx` | MainLayout | Search and explore content |
+| `/archived` | `Archived.tsx` | MainLayout | Archived memos |
+| `/chat` | `AIChat.tsx` | AIChatLayout | AI chat interface |
+| `/schedule` | `Schedule.tsx` | ScheduleLayout | Calendar view |
+| `/review` | `Review.tsx` | MainLayout | Daily review |
+| `/setting` | `Setting.tsx` | MainLayout | User settings |
+| `/u/:username` | `UserProfile.tsx` | MainLayout | Public user profile |
+| `/auth/callback` | `AuthCallback.tsx` | None | OAuth callback handler |
+
+### Adding a New Page
+
+1. Create component in `web/src/pages/YourPage.tsx`
+2. Add i18n keys to `web/src/locales/en.json` and `zh-Hans.json`
 3. Add route in `web/src/router/index.tsx`:
    ```tsx
    {
-     path: "/feature",
-     element: <FeatureLayout />,
-     children: [
-       { index: true, element: <FeaturePage /> }
-     ]
+     path: "/your-page",
+     element: <YourPage />,
    }
    ```
+4. Run `make check-i18n` to verify translations
+
+---
+
+## Internationalization (i18n)
+
+### File Structure
+
+```
+web/src/locales/
+    ├── en.json       # English translations
+    ├── zh-Hans.json  # Simplified Chinese
+    └── zh-Hant.json  # Traditional Chinese
+```
+
+### Adding New Translations
+
+1. Add key to `en.json`:
+   ```json
+   {
+     "your": {
+       "key": "Your text"
+     }
+   }
+   ```
+
+2. Add key to `zh-Hans.json`:
+   ```json
+   {
+     "your": {
+       "key": "您的文本"
+     }
+   }
+   ```
+
+3. Use in component:
+   ```tsx
+   import { t } from "i18next";
+
+   const text = t("your.key");
+   ```
+
+4. Verify: `make check-i18n`
+
+**CRITICAL**: Never hardcode text in components. Always use `t("key")`.
+
+---
+
+## Component Patterns
+
+### MemoCard
+
+Memo cards are used throughout the app for displaying memo content:
+
+```tsx
+import MemoCard from "@/components/MemoCard";
+
+<MemoCard
+  memo={memo}
+  onView={() => navigate(`/m/${memo.id}`)}
+  onEdit={() => openEditDialog(memo)}
+/>
+```
+
+### Dialog/Modal Pattern
+
+Always use explicit rem values for width:
+
+```tsx
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+<DialogContent className="max-w-[28rem]">
+  <DialogHeader>
+    <DialogTitle>{t("title")}</DialogTitle>
+  </DialogHeader>
+  {/* Content */}
+</DialogContent>
+```
+
+---
+
+## State Management
+
+### Data Fetching (TanStack Query)
+
+```tsx
+import { useQuery } from "@tanstack/react-query";
+
+const { data, isLoading, error } = useQuery({
+  queryKey: ["memos"],
+  queryFn: () => api.memo.list(),
+});
+```
+
+### Mutations
+
+```tsx
+import { useMutation } from "@tanstack/react-query";
+
+const mutation = useMutation({
+  mutationFn: (memo: MemoCreate) => api.memo.create(memo),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["memos"] });
+  },
+});
+```
