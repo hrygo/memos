@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 )
 
 // MarshalReminders converts protobuf reminders to JSON string.

@@ -2,7 +2,7 @@
 package rag
 
 import (
-	"github.com/usememos/memos/plugin/ai/router"
+	"github.com/hrygo/divinesense/plugin/ai/router"
 )
 
 // SearchStrategy represents the retrieval strategy to use.

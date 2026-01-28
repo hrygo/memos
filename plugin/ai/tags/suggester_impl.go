@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/cache"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/cache"
+	"github.com/hrygo/divinesense/store"
 )
 
 // suggesterImpl implements TagSuggester with three-layer progressive strategy.

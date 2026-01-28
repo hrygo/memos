@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/usememos/memos/plugin/ai/review"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/plugin/ai/review"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 )
 
 // GetDueReviews returns memos that are due for review.

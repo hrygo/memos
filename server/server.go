@@ -14,16 +14,16 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/plugin/ai"
-	storepb "github.com/usememos/memos/proto/gen/store"
-	apiv1 "github.com/usememos/memos/server/router/api/v1"
-	"github.com/usememos/memos/server/router/fileserver"
-	"github.com/usememos/memos/server/router/frontend"
-	"github.com/usememos/memos/server/router/rss"
-	"github.com/usememos/memos/server/runner/embedding"
-	"github.com/usememos/memos/server/runner/ocr"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/plugin/ai"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
+	apiv1 "github.com/hrygo/divinesense/server/router/api/v1"
+	"github.com/hrygo/divinesense/server/router/fileserver"
+	"github.com/hrygo/divinesense/server/router/frontend"
+	"github.com/hrygo/divinesense/server/router/rss"
+	"github.com/hrygo/divinesense/server/runner/embedding"
+	"github.com/hrygo/divinesense/server/runner/ocr"
+	"github.com/hrygo/divinesense/store"
 )
 
 type Server struct {

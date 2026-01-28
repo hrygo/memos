@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/usememos/memos/server/service/schedule"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/server/service/schedule"
+	"github.com/hrygo/divinesense/store"
 )
 
 // MockScheduleService is a mock implementation of schedule.Service for testing.

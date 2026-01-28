@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/proto/gen/api/v1/apiv1connect"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/proto/gen/api/v1/apiv1connect"
 )
 
 // ConnectServiceHandler wraps APIV1Service to implement Connect handler interfaces.

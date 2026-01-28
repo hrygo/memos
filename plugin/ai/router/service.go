@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // Service implements the three-layer RouterService.

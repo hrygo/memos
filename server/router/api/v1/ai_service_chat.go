@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	aichat "github.com/usememos/memos/server/router/api/v1/ai"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	aichat "github.com/hrygo/divinesense/server/router/api/v1/ai"
 )
 
 // getChatEventBus returns the chat event bus, initializing it on first use.

@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/internal/version"
-	"github.com/usememos/memos/server"
-	"github.com/usememos/memos/store"
-	"github.com/usememos/memos/store/db"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/internal/version"
+	"github.com/hrygo/divinesense/server"
+	"github.com/hrygo/divinesense/store"
+	"github.com/hrygo/divinesense/store/db"
 )
 
 var (
@@ -172,7 +172,7 @@ func printGreetings(profile *profile.Profile) {
 
 	fmt.Println()
 	fmt.Printf("Documentation: %s\n", "https://usememos.com")
-	fmt.Printf("Source code: %s\n", "https://github.com/usememos/memos")
+	fmt.Printf("Source code: %s\n", "https://github.com/hrygo/divinesense")
 	fmt.Println("\nHappy note-taking!")
 }
 

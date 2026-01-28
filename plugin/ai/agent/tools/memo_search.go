@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/usememos/memos/plugin/ai/timeout"
-	"github.com/usememos/memos/server/retrieval"
+	"github.com/hrygo/divinesense/plugin/ai/timeout"
+	"github.com/hrygo/divinesense/server/retrieval"
 )
 
 const (

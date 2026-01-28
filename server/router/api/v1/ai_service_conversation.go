@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/store"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/store"
 )
 
 // emptyMetadata is the default empty JSON object for message metadata.

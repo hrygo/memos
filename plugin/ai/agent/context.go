@@ -12,8 +12,8 @@ import (
 
 	"log/slog"
 
-	"github.com/usememos/memos/plugin/ai/schedule"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai/schedule"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ConversationContext maintains state across conversation turns.

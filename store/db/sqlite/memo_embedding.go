@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	storepb "github.com/usememos/memos/proto/gen/store"
-	"github.com/usememos/memos/store"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ============================================================================

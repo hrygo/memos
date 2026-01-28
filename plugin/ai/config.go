@@ -3,7 +3,7 @@ package ai
 import (
 	"errors"
 
-	"github.com/usememos/memos/internal/profile"
+	"github.com/hrygo/divinesense/internal/profile"
 )
 
 // Config represents AI configuration.

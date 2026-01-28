@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/server/queryengine"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/server/queryengine"
+	"github.com/hrygo/divinesense/store"
 )
 
 // RRF constants

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/server/service/schedule"
-	postgresstore "github.com/usememos/memos/store/db/postgres"
+	"github.com/hrygo/divinesense/server/service/schedule"
+	postgresstore "github.com/hrygo/divinesense/store/db/postgres"
 )
 
 // ErrorClass represents the category of error for retry decisions.

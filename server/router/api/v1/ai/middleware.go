@@ -8,10 +8,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/server/internal/errors"
-	"github.com/usememos/memos/server/middleware"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/server/auth"
+	"github.com/hrygo/divinesense/server/internal/errors"
+	"github.com/hrygo/divinesense/server/middleware"
 )
 
 // ChatRequest represents a chat request.

@@ -1666,7 +1666,7 @@ const file_api_v1_schedule_service_proto_rawDesc = "" +
 	"\x10PrecheckSchedule\x12%.memos.api.v1.PrecheckScheduleRequest\x1a&.memos.api.v1.PrecheckScheduleResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/schedules:precheck\x12\x90\x01\n" +
 	"\x12BatchParseSchedule\x12'.memos.api.v1.BatchParseScheduleRequest\x1a(.memos.api.v1.BatchParseScheduleResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/api/v1/schedules:batchParse\x12\x97\x01\n" +
 	"\x14BatchCreateSchedules\x12).memos.api.v1.BatchCreateSchedulesRequest\x1a*.memos.api.v1.BatchCreateSchedulesResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/v1/schedules:batchCreateB\xac\x01\n" +
-	"\x10com.memos.api.v1B\x14ScheduleServiceProtoP\x01Z0github.com/usememos/memos/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
+	"\x10com.memos.api.v1B\x14ScheduleServiceProtoP\x01Z0github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
 	file_api_v1_schedule_service_proto_rawDescOnce sync.Once

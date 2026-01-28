@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // TestConflictResolver_Resolve_NoConflict tests resolution when there's no conflict.

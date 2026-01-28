@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Analyzer analyzes schedule patterns and provides time suggestions.

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Message represents a conversation message for context building.

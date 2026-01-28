@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/usememos/memos/plugin/ai/router"
+	"github.com/hrygo/divinesense/plugin/ai/router"
 )
 
 func TestRetrievalDecision(t *testing.T) {

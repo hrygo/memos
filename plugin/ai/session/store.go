@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/cache"
+	"github.com/hrygo/divinesense/plugin/ai/cache"
 )
 
 const (

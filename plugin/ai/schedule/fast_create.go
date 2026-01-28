@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
-	"github.com/usememos/memos/plugin/ai/habit"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/habit"
 )
 
 // ErrTimeServiceNotConfigured is returned when time service is not available.

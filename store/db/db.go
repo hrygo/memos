@@ -3,10 +3,10 @@ package db
 import (
 	"github.com/pkg/errors"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/store"
-	"github.com/usememos/memos/store/db/postgres"
-	"github.com/usememos/memos/store/db/sqlite"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/store"
+	"github.com/hrygo/divinesense/store/db/postgres"
+	"github.com/hrygo/divinesense/store/db/sqlite"
 )
 
 // ============================================================================

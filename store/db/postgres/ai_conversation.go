@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 func (d *DB) CreateAIConversation(ctx context.Context, create *store.AIConversation) (*store.AIConversation, error) {

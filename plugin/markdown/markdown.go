@@ -11,10 +11,10 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 
-	mast "github.com/usememos/memos/plugin/markdown/ast"
-	"github.com/usememos/memos/plugin/markdown/extensions"
-	"github.com/usememos/memos/plugin/markdown/renderer"
-	storepb "github.com/usememos/memos/proto/gen/store"
+	mast "github.com/hrygo/divinesense/plugin/markdown/ast"
+	"github.com/hrygo/divinesense/plugin/markdown/extensions"
+	"github.com/hrygo/divinesense/plugin/markdown/renderer"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 // ExtractedData contains all metadata extracted from markdown in a single pass.

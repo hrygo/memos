@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/usememos/memos/internal/base"
+	"github.com/hrygo/divinesense/internal/base"
 
-	storepb "github.com/usememos/memos/proto/gen/store"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 // Visibility is the type of a visibility.

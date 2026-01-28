@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	localtools "github.com/usememos/memos/plugin/ai/agent/tools"
-	"github.com/usememos/memos/server/service/schedule"
+	"github.com/hrygo/divinesense/plugin/ai"
+	localtools "github.com/hrygo/divinesense/plugin/ai/agent/tools"
+	"github.com/hrygo/divinesense/server/service/schedule"
 )
 
 // SchedulerAgentV2 is the new framework-less schedule agent.

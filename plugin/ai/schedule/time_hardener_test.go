@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
 )
 
 // mockTimeService implements aitime.TimeService for testing.

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // HistoryMatcher implements Layer 2 history-based intent matching.

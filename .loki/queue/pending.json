@@ -1,0 +1,12 @@
+{
+  "queue": [
+    {
+      "id": "1",
+      "name": "Initial Full Codebase Review",
+      "goal": "Run comprehensive code review on entire codebase",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "CODE_QUALITY_LOOP"
+    }
+  ]
+}

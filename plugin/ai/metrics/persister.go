@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Persister handles periodic persistence of aggregated metrics to the database.

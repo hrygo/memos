@@ -10,11 +10,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/agent/tools"
-	"github.com/usememos/memos/plugin/ai/timeout"
-	"github.com/usememos/memos/server/retrieval"
-	"github.com/usememos/memos/server/service/schedule"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/agent/tools"
+	"github.com/hrygo/divinesense/plugin/ai/timeout"
+	"github.com/hrygo/divinesense/server/retrieval"
+	"github.com/hrygo/divinesense/server/service/schedule"
 )
 
 // AmazingParrot is the comprehensive assistant parrot (🦜 惊奇).

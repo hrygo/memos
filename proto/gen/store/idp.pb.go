@@ -403,7 +403,7 @@ const file_store_idp_proto_rawDesc = "" +
 	"\ruser_info_url\x18\x05 \x01(\tR\vuserInfoUrl\x12\x16\n" +
 	"\x06scopes\x18\x06 \x03(\tR\x06scopes\x12>\n" +
 	"\rfield_mapping\x18\a \x01(\v2\x19.memos.store.FieldMappingR\ffieldMappingB\x93\x01\n" +
-	"\x0fcom.memos.storeB\bIdpProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
+	"\x0fcom.memos.storeB\bIdpProtoP\x01Z)github.com/hrygo/divinesense/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
 	file_store_idp_proto_rawDescOnce sync.Once

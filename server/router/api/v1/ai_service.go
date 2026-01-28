@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"sync"
 
-	pluginai "github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/memory"
-	"github.com/usememos/memos/plugin/ai/router"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/server/middleware"
-	"github.com/usememos/memos/server/retrieval"
-	aichat "github.com/usememos/memos/server/router/api/v1/ai"
-	"github.com/usememos/memos/store"
+	pluginai "github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/router"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/server/auth"
+	"github.com/hrygo/divinesense/server/middleware"
+	"github.com/hrygo/divinesense/server/retrieval"
+	aichat "github.com/hrygo/divinesense/server/router/api/v1/ai"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Global AI rate limiter

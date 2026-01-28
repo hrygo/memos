@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/usememos/memos/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai"
 	"log/slog"
 )
 

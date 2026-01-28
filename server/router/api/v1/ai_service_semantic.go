@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/plugin/ai/tags"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai/tags"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/store"
 )
 
 // SemanticSearch performs semantic search on memos.

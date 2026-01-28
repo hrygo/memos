@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Service implements MemoryService interface with two-layer memory architecture.

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/cache"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai/cache"
+	"github.com/hrygo/divinesense/store"
 )
 
 // StatisticsLayer provides tag suggestions based on user statistics.

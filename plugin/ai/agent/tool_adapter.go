@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai"
 )
 
 // Regular expression to match text-based tool calls like [Tool: function_name(args)]

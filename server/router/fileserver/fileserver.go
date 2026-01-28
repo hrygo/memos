@@ -18,11 +18,11 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/internal/util"
-	storepb "github.com/usememos/memos/proto/gen/store"
-	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/internal/util"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
+	"github.com/hrygo/divinesense/server/auth"
+	"github.com/hrygo/divinesense/store"
 )
 
 const (

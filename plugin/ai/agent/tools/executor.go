@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/metrics"
+	"github.com/hrygo/divinesense/plugin/ai/metrics"
 )
 
 // Tool defines the interface for executable tools.

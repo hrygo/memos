@@ -18,11 +18,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/internal/util"
-	aischedule "github.com/usememos/memos/plugin/ai/schedule"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/store"
-	postgresstore "github.com/usememos/memos/store/db/postgres"
+	"github.com/hrygo/divinesense/internal/util"
+	aischedule "github.com/hrygo/divinesense/plugin/ai/schedule"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/store"
+	postgresstore "github.com/hrygo/divinesense/store/db/postgres"
 )
 
 const (

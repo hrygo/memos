@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	storepb "github.com/usememos/memos/proto/gen/store"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 type ActivityType string

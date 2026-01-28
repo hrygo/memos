@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // AI conversation features are NOT supported on SQLite.
@@ -13,7 +13,7 @@ import (
 // the advanced AI features including conversation persistence, vector search,
 // and reranking. Use PostgreSQL for production AI features.
 //
-// Ref: https://github.com/usememos/memos/docs/dev-guides/BACKEND_DB.md
+// Ref: https://github.com/hrygo/divinesense/docs/dev-guides/BACKEND_DB.md
 
 var (
 	// ErrSQLiteAINotSupported is returned when AI features are requested on SQLite.

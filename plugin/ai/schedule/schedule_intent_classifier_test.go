@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/usememos/memos/plugin/ai/router"
+	"github.com/hrygo/divinesense/plugin/ai/router"
 )
 
 // mockRouterService implements router.RouterService for testing.

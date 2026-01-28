@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/lithammer/shortuuid/v4"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // emptyMetadata is the default empty JSON object for message metadata.

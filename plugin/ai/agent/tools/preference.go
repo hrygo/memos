@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/usememos/memos/server/service/schedule"
+	"github.com/hrygo/divinesense/server/service/schedule"
 )
 
 // UserPreferenceTool analyzes user's schedule history to learn preferences.

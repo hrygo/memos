@@ -9,8 +9,8 @@ import (
 
 	"log/slog"
 
-	"github.com/usememos/memos/plugin/ai"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/plugin/ai"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 )
 
 const (

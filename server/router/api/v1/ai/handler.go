@@ -9,12 +9,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/plugin/ai"
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
-	"github.com/usememos/memos/plugin/ai/router"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/server/internal/errors"
-	"github.com/usememos/memos/server/internal/observability"
+	"github.com/hrygo/divinesense/plugin/ai"
+	agentpkg "github.com/hrygo/divinesense/plugin/ai/agent"
+	"github.com/hrygo/divinesense/plugin/ai/router"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/server/internal/errors"
+	"github.com/hrygo/divinesense/server/internal/observability"
 )
 
 // ChatStream represents the streaming response interface for AI chat.

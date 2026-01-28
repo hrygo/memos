@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/lithammer/shortuuid/v4"
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/store"
 	"log/slog"
 )
 

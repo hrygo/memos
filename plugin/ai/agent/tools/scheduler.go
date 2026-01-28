@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/usememos/memos/server/service/schedule"
+	"github.com/hrygo/divinesense/server/service/schedule"
 )
 
 const (

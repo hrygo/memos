@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/duplicate"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/duplicate"
+	"github.com/hrygo/divinesense/store"
 )
 
 // GraphBuilder builds knowledge graphs from memos.

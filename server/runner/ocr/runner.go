@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/plugin/ocr"
-	"github.com/usememos/memos/plugin/textextract"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/plugin/ocr"
+	"github.com/hrygo/divinesense/plugin/textextract"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Runner processes attachments for OCR and text extraction.

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/habit"
+	"github.com/hrygo/divinesense/plugin/ai/habit"
 )
 
 // TodoInfo contains todo information for reminder creation.

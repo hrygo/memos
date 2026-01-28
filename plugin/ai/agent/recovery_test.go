@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
 )
 
 func TestErrorRecovery_ExecuteWithRecovery(t *testing.T) {

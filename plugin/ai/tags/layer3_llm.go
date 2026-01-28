@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai"
 )
 
 // LLMLayer provides tag suggestions using LLM.

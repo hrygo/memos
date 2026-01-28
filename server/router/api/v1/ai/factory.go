@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/usememos/memos/plugin/ai"
-	agentpkg "github.com/usememos/memos/plugin/ai/agent"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/server/retrieval"
-	"github.com/usememos/memos/server/service/schedule"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	agentpkg "github.com/hrygo/divinesense/plugin/ai/agent"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/server/retrieval"
+	"github.com/hrygo/divinesense/server/service/schedule"
+	"github.com/hrygo/divinesense/store"
 )
 
 // AgentType represents the type of agent to create.

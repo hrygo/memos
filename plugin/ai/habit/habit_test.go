@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // mockMemoryService implements memory.MemoryService for testing.

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ErrLongTermNotConfigured is returned when long-term memory operations are attempted

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/usememos/memos/plugin/scheduler"
+	"github.com/hrygo/divinesense/plugin/scheduler"
 )
 
 // Example demonstrates basic scheduler usage.

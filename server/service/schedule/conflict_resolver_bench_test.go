@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // BenchmarkConflictResolver_Resolve_NoConflict benchmarks conflict resolution with no conflicts.

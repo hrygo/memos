@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/habit"
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/habit"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // PredictionType defines the type of prediction.

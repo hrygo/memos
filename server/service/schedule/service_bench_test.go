@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // BenchmarkCheckConflicts_SingleSchedule benchmarks conflict detection with a single schedule.

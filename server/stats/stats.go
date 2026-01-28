@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Stats represents usage statistics.

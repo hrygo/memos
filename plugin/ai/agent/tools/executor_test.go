@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/metrics"
+	"github.com/hrygo/divinesense/plugin/ai/metrics"
 )
 
 // Test errors for retry logic

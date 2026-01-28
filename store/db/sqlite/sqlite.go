@@ -9,8 +9,8 @@ import (
 	// Import the SQLite driver.
 	_ "modernc.org/sqlite"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ============================================================================

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/usememos/memos/server/retrieval"
+	"github.com/hrygo/divinesense/server/retrieval"
 )
 
 // Highlight represents a highlighted match in the content.

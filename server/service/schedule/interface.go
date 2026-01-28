@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // Service defines the core business logic interface for schedule management.

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ErrMetricsNotConfigured is returned when metrics persistence is not configured.

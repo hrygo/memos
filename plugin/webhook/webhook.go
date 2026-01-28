@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 )
 
 var (

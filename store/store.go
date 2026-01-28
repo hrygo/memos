@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/store/cache"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/store/cache"
 )
 
 // Store provides database access to all raw objects.

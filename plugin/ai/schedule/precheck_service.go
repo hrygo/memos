@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // PrecheckError codes for schedule validation errors.

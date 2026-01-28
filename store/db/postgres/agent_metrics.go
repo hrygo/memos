@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 func (d *DB) UpsertAgentMetrics(ctx context.Context, upsert *store.UpsertAgentMetrics) (*store.AgentMetrics, error) {

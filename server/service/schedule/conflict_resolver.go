@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ConflictResolver provides intelligent conflict resolution for schedules.

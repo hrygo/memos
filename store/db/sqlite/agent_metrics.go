@@ -3,7 +3,7 @@ package sqlite
 import (
 	"context"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 func (d *DB) UpsertAgentMetrics(_ context.Context, _ *store.UpsertAgentMetrics) (*store.AgentMetrics, error) {

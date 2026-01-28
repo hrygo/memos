@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/server/service/schedule"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/server/service/schedule"
+	"github.com/hrygo/divinesense/store"
 )
 
 // MockLLM implements ai.LLMService for testing.

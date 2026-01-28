@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
-	"github.com/usememos/memos/plugin/idp"
-	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/hrygo/divinesense/plugin/idp"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 // IdentityProvider represents an OAuth2 Identity Provider.

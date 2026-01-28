@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/store"
 )
 
 type Runner struct {

@@ -6,12 +6,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/ai/agent"
-	"github.com/usememos/memos/server/service/schedule"
-	"github.com/usememos/memos/store"
-	"github.com/usememos/memos/store/db"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/ai/agent"
+	"github.com/hrygo/divinesense/server/service/schedule"
+	"github.com/hrygo/divinesense/store"
+	"github.com/hrygo/divinesense/store/db"
 )
 
 func main() {

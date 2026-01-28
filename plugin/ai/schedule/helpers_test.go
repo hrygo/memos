@@ -3,7 +3,7 @@ package schedule
 import (
 	"testing"
 
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

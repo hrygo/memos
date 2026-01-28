@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
 )
 
 // BatchCreateRequest represents a batch schedule creation request.

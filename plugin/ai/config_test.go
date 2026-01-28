@@ -3,7 +3,7 @@ package ai
 import (
 	"testing"
 
-	"github.com/usememos/memos/internal/profile"
+	"github.com/hrygo/divinesense/internal/profile"
 )
 
 // TestNewConfigFromProfile_SiliconFlow tests SiliconFlow configuration.

@@ -1086,7 +1086,7 @@ const file_store_user_setting_proto_rawDesc = "" +
 	"\vease_factor\x18\x05 \x01(\x01R\n" +
 	"easeFactor\x12#\n" +
 	"\rinterval_days\x18\x06 \x01(\x05R\fintervalDaysB\x9b\x01\n" +
-	"\x0fcom.memos.storeB\x10UserSettingProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
+	"\x0fcom.memos.storeB\x10UserSettingProtoP\x01Z)github.com/hrygo/divinesense/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
 	file_store_user_setting_proto_rawDescOnce sync.Once

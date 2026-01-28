@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ============================================================================

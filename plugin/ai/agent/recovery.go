@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
 )
 
 // Pre-compiled regex patterns for better performance.

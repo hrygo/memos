@@ -12,13 +12,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/sync/semaphore"
 
-	"github.com/usememos/memos/internal/profile"
-	"github.com/usememos/memos/plugin/ai"
-	"github.com/usememos/memos/plugin/markdown"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/server/retrieval"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/profile"
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/hrygo/divinesense/plugin/markdown"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/server/auth"
+	"github.com/hrygo/divinesense/server/retrieval"
+	"github.com/hrygo/divinesense/store"
 )
 
 type APIV1Service struct {

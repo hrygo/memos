@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	storepb "github.com/usememos/memos/proto/gen/store"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 func TestParseUserAgent(t *testing.T) {

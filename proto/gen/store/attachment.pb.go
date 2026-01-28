@@ -223,7 +223,7 @@ const file_store_attachment_proto_rawDesc = "" +
 	"\x05LOCAL\x10\x01\x12\x06\n" +
 	"\x02S3\x10\x02\x12\f\n" +
 	"\bEXTERNAL\x10\x03B\x9a\x01\n" +
-	"\x0fcom.memos.storeB\x0fAttachmentProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
+	"\x0fcom.memos.storeB\x0fAttachmentProtoP\x01Z)github.com/hrygo/divinesense/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
 	file_store_attachment_proto_rawDescOnce sync.Once

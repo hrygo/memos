@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/aitime"
-	"github.com/usememos/memos/plugin/ai/habit"
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/aitime"
+	"github.com/hrygo/divinesense/plugin/ai/habit"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // mockMemoryService for testing habit applier.

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	storepb "github.com/usememos/memos/proto/gen/store"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 type UserSetting struct {

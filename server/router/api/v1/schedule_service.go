@@ -13,12 +13,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/usememos/memos/internal/util"
-	"github.com/usememos/memos/plugin/ai"
-	aischedule "github.com/usememos/memos/plugin/ai/schedule"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
-	"github.com/usememos/memos/server/auth"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/internal/util"
+	"github.com/hrygo/divinesense/plugin/ai"
+	aischedule "github.com/hrygo/divinesense/plugin/ai/schedule"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/server/auth"
+	"github.com/hrygo/divinesense/store"
 )
 
 // ScheduleService provides schedule management APIs.

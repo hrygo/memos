@@ -14,8 +14,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/usememos/memos/internal/version"
-	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/hrygo/divinesense/internal/version"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
 )
 
 // Migration System Overview:
@@ -397,7 +397,7 @@ func (s *Store) checkMinimumUpgradeVersion(ctx context.Context) error {
 				"Target version: %s\n"+
 				"Minimum required: v0.22.0 (May 2024)\n\n"+
 				"Upgrade path:\n"+
-				"1. First upgrade to v0.25.3: https://github.com/usememos/memos/releases/tag/v0.25.3\n"+
+				"1. First upgrade to v0.25.3: https://github.com/hrygo/divinesense/releases/tag/v0.25.3\n"+
 				"2. Start the server and verify it works\n"+
 				"3. Then upgrade to the latest version\n\n"+
 				"This is required because schema version tracking was moved from migration_history\n"+

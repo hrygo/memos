@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/usememos/memos/plugin/ai/graph"
-	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	"github.com/hrygo/divinesense/plugin/ai/graph"
+	v1pb "github.com/hrygo/divinesense/proto/gen/api/v1"
 )
 
 // GetKnowledgeGraph returns the knowledge graph for the current user.

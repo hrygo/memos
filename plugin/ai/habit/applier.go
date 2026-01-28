@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usememos/memos/plugin/ai/memory"
+	"github.com/hrygo/divinesense/plugin/ai/memory"
 )
 
 // ScheduleInput represents input for schedule creation.

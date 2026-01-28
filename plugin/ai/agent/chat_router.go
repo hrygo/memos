@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/sashabaranov/go-openai"
-	"github.com/usememos/memos/plugin/ai/router"
+	"github.com/hrygo/divinesense/plugin/ai/router"
 )
 
 // ChatRouteType represents the type of chat routing.

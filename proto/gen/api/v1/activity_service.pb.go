@@ -549,7 +549,7 @@ const file_api_v1_activity_service_proto_rawDesc = "" +
 	"\x0fActivityService\x12w\n" +
 	"\x0eListActivities\x12#.memos.api.v1.ListActivitiesRequest\x1a$.memos.api.v1.ListActivitiesResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/v1/activities\x12s\n" +
 	"\vGetActivity\x12 .memos.api.v1.GetActivityRequest\x1a\x16.memos.api.v1.Activity\"*\xdaA\x04name\x82\xd3\xe4\x93\x02\x1d\x12\x1b/api/v1/{name=activities/*}B\xac\x01\n" +
-	"\x10com.memos.api.v1B\x14ActivityServiceProtoP\x01Z0github.com/usememos/memos/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
+	"\x10com.memos.api.v1B\x14ActivityServiceProtoP\x01Z0github.com/hrygo/divinesense/proto/gen/api/v1;apiv1\xa2\x02\x03MAX\xaa\x02\fMemos.Api.V1\xca\x02\fMemos\\Api\\V1\xe2\x02\x18Memos\\Api\\V1\\GPBMetadata\xea\x02\x0eMemos::Api::V1b\x06proto3"
 
 var (
 	file_api_v1_activity_service_proto_rawDescOnce sync.Once

@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/usememos/memos/plugin/ai"
-	storepb "github.com/usememos/memos/proto/gen/store"
-	"github.com/usememos/memos/server/queryengine"
-	"github.com/usememos/memos/store"
+	"github.com/hrygo/divinesense/plugin/ai"
+	storepb "github.com/hrygo/divinesense/proto/gen/store"
+	"github.com/hrygo/divinesense/server/queryengine"
+	"github.com/hrygo/divinesense/store"
 )
 
 // MockEmbeddingService is a mock for EmbeddingService

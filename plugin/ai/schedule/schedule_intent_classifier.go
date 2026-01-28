@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/usememos/memos/plugin/ai/router"
+	"github.com/hrygo/divinesense/plugin/ai/router"
 )
 
 // ScheduleIntent represents the type of schedule task intent.

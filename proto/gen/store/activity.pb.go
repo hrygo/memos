@@ -127,7 +127,7 @@ const file_store_activity_proto_rawDesc = "" +
 	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\"]\n" +
 	"\x0fActivityPayload\x12J\n" +
 	"\fmemo_comment\x18\x01 \x01(\v2'.memos.store.ActivityMemoCommentPayloadR\vmemoCommentB\x98\x01\n" +
-	"\x0fcom.memos.storeB\rActivityProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
+	"\x0fcom.memos.storeB\rActivityProtoP\x01Z)github.com/hrygo/divinesense/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
 
 var (
 	file_store_activity_proto_rawDescOnce sync.Once
