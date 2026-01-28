@@ -292,15 +292,22 @@ func ParseHOCR(hocr string) (*Result, error) {
 	for _, line := range lines {
 		// Skip HTML tags and get text content
 		if strings.Contains(line, "ocr_line") || strings.Contains(line, "ocrx_word") {
-			// Extract text between > and <
-			start := strings.LastIndex(line, ">")
-			end := strings.LastIndex(line, "<")
-			if start != -1 && end != -1 && start < end {
-				text := strings.TrimSpace(line[start+1 : end])
-				if text != "" {
-					textBuilder.WriteString(text)
-					textBuilder.WriteString(" ")
-				}
+			// Find opening tag first, then closing tag
+			start := strings.Index(line, ">")
+			if start == -1 {
+				continue
+			}
+			// Look for closing tag after the opening
+			end := strings.Index(line[start+1:], "<")
+			if end == -1 {
+				continue
+			}
+			// end is relative to start+1, so add start+1 to get absolute position
+			end = start + 1 + end
+			text := strings.TrimSpace(line[start+1 : end])
+			if text != "" {
+				textBuilder.WriteString(text)
+				textBuilder.WriteString(" ")
 			}
 		}
 	}

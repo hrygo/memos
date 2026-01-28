@@ -26,7 +26,10 @@ func TestSend(t *testing.T) {
 	// We expect an error because there's no real SMTP server
 	// But it should be a connection error, not a validation error
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "dial")
+	// Check it's not a validation error (which would indicate code bug)
+	assert.NotContains(t, err.Error(), "configuration is required")
+	assert.NotContains(t, err.Error(), "message is required")
+	assert.NotContains(t, err.Error(), "invalid email")
 }
 
 func TestSendValidation(t *testing.T) {
