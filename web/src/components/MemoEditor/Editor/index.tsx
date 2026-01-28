@@ -169,7 +169,7 @@ const Editor = forwardRef(function Editor(props: EditorProps, ref: React.Forward
       updateEditorHeight();
 
       // Auto-scroll to keep cursor visible when typing
-      // See: https://github.com/hrygo/divinesense/issues/5469
+      // See: https://github.com/usememos/memos/issues/5469
       scrollToCaret();
     }
   }, [handleContentChangeCallback, updateEditorHeight, scrollToCaret]);
