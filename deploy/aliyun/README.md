@@ -4,6 +4,43 @@
 
 ---
 
+## 一键安装 (推荐)
+
+**阿里云/腾讯云 2C2G 服务器快速部署：**
+
+```bash
+# 方法 1: 直接执行 (推荐)
+curl -fsSL https://raw.githubusercontent.com/hrygo/divinesense/main/deploy/aliyun/install.sh | bash
+
+# 方法 2: 下载后执行
+wget https://raw.githubusercontent.com/hrygo/divinesense/main/deploy/aliyun/install.sh
+chmod +x install.sh && ./install.sh
+```
+
+**一键安装会自动完成：**
+- ✅ 安装 Docker + Docker Compose
+- ✅ 配置国内镜像加速
+- ✅ 下载 DivineSense 预构建镜像
+- ✅ 生成安全密码
+- ✅ 初始化 PostgreSQL + pgvector
+- ✅ 启动完整服务
+- ✅ 配置防火墙规则
+- ✅ 设置定时备份
+
+**安装后配置 AI API Keys：**
+```bash
+vi /opt/divinesense/.env.prod
+
+# 编辑以下两项：
+DIVINESENSE_AI_SILICONFLOW_API_KEY=sk-xxx
+DIVINESENSE_AI_DEEPSEEK_API_KEY=sk-xxx
+
+# 重启服务
+cd /opt/divinesense && ./deploy.sh restart
+```
+
+---
+
 ## 架构概述
 
 ```
@@ -14,14 +51,14 @@
 │  │           Docker Network                 │  │
 │  │                                          │  │
 │  │  ┌──────────────┐  ┌─────────────────┐  │  │
-│  │  │  PostgreSQL  │  │     DivineSense      │  │  │
-│  │  │  pg16+vector │  │  1核 / 1G       │  │  │
+│  │  │  PostgreSQL  │  │   DivineSense   │  │  │
+│  │  │  pg16+vector │  │   1核 / 1G      │  │  │
 │  │  │  1核 / 512M  │──│  :5230 ────────►│───┼──► 公网
 │  │  │  :5432       │  │                 │  │  │
 │  │  └──────────────┘  └─────────────────┘  │  │
 │  └──────────────────────────────────────────┘  │
 │                                                 │
-│  数据卷: postgres-data, memos-data              │
+│  数据卷: postgres_data, divinesense_data        │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -60,10 +97,10 @@ vi .env.prod  # 修改密码和 API Keys
 **必填配置** (详见 `.env.prod.example` 内说明):
 
 ```bash
-POSTGRES_PASSWORD=your_secure_password        # 数据库密码
-MEMOS_INSTANCE_URL=http://your-server-ip:5230 # 公网地址
-MEMOS_AI_SILICONFLOW_API_KEY=sk-xxx           # 向量/重排
-MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx              # 对话 LLM
+POSTGRES_PASSWORD=your_secure_password              # 数据库密码
+DIVINESENSE_INSTANCE_URL=http://your-server-ip:5230 # 公网地址
+DIVINESENSE_AI_SILICONFLOW_API_KEY=sk-xxx           # 向量/重排
+DIVINESENSE_AI_DEEPSEEK_API_KEY=sk-xxx              # 对话 LLM
 ```
 
 > **配置方案**: 文件内提供 4 种配置方案 (SiliconFlow+DeepSeek / 纯 SiliconFlow / OpenAI / Ollama 本地)
@@ -147,7 +184,7 @@ docker info | grep -A 10 "Registry Mirrors"
 
 ## 从旧方案迁移
 
-如果你的服务器正在运行旧版本部署方案（PostgreSQL Docker + Memos host 二进制），迁移步骤如下：
+如果你的服务器正在运行旧版本部署方案（PostgreSQL Docker + DivineSense host 二进制），迁移步骤如下：
 
 ### 迁移前检查
 
