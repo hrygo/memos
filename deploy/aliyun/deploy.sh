@@ -263,7 +263,7 @@ deploy() {
     mkdir -p "${BACKUP_DIR}"
 
     # 检查是否已部署
-    if docker ps -a --format '{{.Names}}' | grep -q "^memos-postgres$"; then
+    if docker ps -a --format '{{.Names}}' | grep -q "^divinesense-postgres$"; then
         log_warn "检测到已存在的服务，请使用 'upgrade' 进行升级"
         log_info "如需重新部署，请先运行: $0 stop"
         exit 1
@@ -282,7 +282,7 @@ deploy() {
     local max_wait=60
     local waited=0
     while [ $waited -lt $max_wait ]; do
-        if docker exec memos sh -c "cat < /dev/null > /dev/tcp/127.0.0.1/5230" 2>/dev/null; then
+        if docker exec divinesense sh -c "cat < /dev/null > /dev/tcp/127.0.0.1/5230" 2>/dev/null; then
             break
         fi
         sleep 2
@@ -417,7 +417,7 @@ status() {
     echo "代码版本: $(get_code_version)"
     echo ""
     echo "=== 资源使用 ==="
-    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" memos-postgres memos 2>/dev/null || echo "服务未运行"
+    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" divinesense-postgres divinesense 2>/dev/null || echo "服务未运行"
     echo ""
 }
 

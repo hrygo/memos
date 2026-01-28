@@ -183,7 +183,7 @@ vi .env.prod
 ./deploy.sh status
 
 # 2. 验证数据库连接
-docker exec memos psql -U memos -d memos -c "SELECT 1;"
+docker exec divinesense psql -U divinesense -d divinesense -c "SELECT 1;"
 
 # 3. 检查数据完整性
 docker exec divinesense psql -U divinesense -d divinesense -c "SELECT COUNT(*) FROM memo;"
@@ -300,10 +300,10 @@ docker stats        # 查看资源使用
 
 ```bash
 # 检查 pgvector 扩展
-docker exec memos-postgres psql -U memos -d memos -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
+docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
 
 # 查看数据库版本
-docker exec memos-postgres psql -U memos -d memos -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
+docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
 ```
 
 ### 回滚

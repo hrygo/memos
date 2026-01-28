@@ -1,13 +1,13 @@
-# Memos Development Environment
+# DivineSense Development Environment
 # Optimized for 2C2G (2 vCPU, 2GB RAM) production server
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: memos-postgres-dev
+    container_name: divinesense-postgres-dev
     environment:
-      POSTGRES_DB: memos
-      POSTGRES_USER: memos
-      POSTGRES_PASSWORD: memos
+      POSTGRES_DB: divinesense
+      POSTGRES_USER: divinesense
+      POSTGRES_PASSWORD: divinesense
       POSTGRES_HOST_AUTH_METHOD: trust
       # Memory settings for 2GB RAM (PostgreSQL uses ~512MB)
       POSTGRES_SHARED_BUFFERS: 128MB
@@ -20,7 +20,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U memos"]
+      test: ["CMD-SHELL", "pg_isready -U divinesense"]
       interval: 10s
       timeout: 5s
       retries: 3

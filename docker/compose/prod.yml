@@ -1,8 +1,8 @@
 # =============================================================================
-# Memos 生产环境 (2C2G 服务器)
+# DivineSense 生产环境 (2C2G 服务器)
 # =============================================================================
 #
-# 包含: PostgreSQL + Memos
+# 包含: PostgreSQL + DivineSense
 #
 # 使用方式:
 #   cp .env.example .env.prod
@@ -13,11 +13,11 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: memos-postgres
+    container_name: divinesense-postgres
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-memos}
-      POSTGRES_USER: ${POSTGRES_USER:-memos}
+      POSTGRES_DB: ${POSTGRES_DB:-divinesense}
+      POSTGRES_USER: ${POSTGRES_USER:-divinesense}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       # 内存优化 (2G 服务器，PostgreSQL 使用 ~512M)
       POSTGRES_SHARED_BUFFERS: 128MB
@@ -32,7 +32,7 @@ services:
     ports:
       - "${POSTGRES_PORT_MAPPING:-}"  # 可选: 127.0.0.1:25432:5432
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-divinesense}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -55,42 +55,42 @@ services:
         "-c", "shared_preload_libraries=vector"
       ]
     networks:
-      - memos_network
+      - divinesense_network
 
-  memos:
-    image: memos:latest
-    container_name: memos
+  divinesense:
+    image: divinesense:latest
+    container_name: divinesense
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       # 运行模式
-      - MEMOS_MODE=prod
-      - MEMOS_PORT=5230
-      - MEMOS_ADDR=0.0.0.0
+      - DIVINESENSE_MODE=prod
+      - DIVINESENSE_PORT=5230
+      - DIVINESENSE_ADDR=0.0.0.0
 
       # 数据库配置
-      - MEMOS_DRIVER=postgres
-      - MEMOS_DSN=postgres://${POSTGRES_USER:-memos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-memos}?sslmode=disable
+      - DIVINESENSE_DRIVER=postgres
+      - DIVINESENSE_DSN=postgres://${POSTGRES_USER:-divinesense}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-divinesense}?sslmode=disable
 
       # 实例 URL
-      - MEMOS_INSTANCE_URL=${MEMOS_INSTANCE_URL}
+      - DIVINESENSE_INSTANCE_URL=${DIVINESENSE_INSTANCE_URL}
 
       # AI 功能
-      - MEMOS_AI_ENABLED=${MEMOS_AI_ENABLED:-true}
-      - MEMOS_AI_EMBEDDING_PROVIDER=${MEMOS_AI_EMBEDDING_PROVIDER:-siliconflow}
-      - MEMOS_AI_EMBEDDING_MODEL=${MEMOS_AI_EMBEDDING_MODEL:-BAAI/bge-m3}
-      - MEMOS_AI_SILICONFLOW_API_KEY=${MEMOS_AI_SILICONFLOW_API_KEY}
-      - MEMOS_AI_OPENAI_API_KEY=${MEMOS_AI_OPENAI_API_KEY}
-      - MEMOS_AI_LLM_PROVIDER=${MEMOS_AI_LLM_PROVIDER:-deepseek}
-      - MEMOS_AI_LLM_MODEL=${MEMOS_AI_LLM_MODEL:-deepseek-chat}
-      - MEMOS_AI_DEEPSEEK_API_KEY=${MEMOS_AI_DEEPSEEK_API_KEY}
-      - MEMOS_AI_RERANK_MODEL=${MEMOS_AI_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+      - DIVINESENSE_AI_ENABLED=${DIVINESENSE_AI_ENABLED:-true}
+      - DIVINESENSE_AI_EMBEDDING_PROVIDER=${DIVINESENSE_AI_EMBEDDING_PROVIDER:-siliconflow}
+      - DIVINESENSE_AI_EMBEDDING_MODEL=${DIVINESENSE_AI_EMBEDDING_MODEL:-BAAI/bge-m3}
+      - DIVINESENSE_AI_SILICONFLOW_API_KEY=${DIVINESENSE_AI_SILICONFLOW_API_KEY}
+      - DIVINESENSE_AI_OPENAI_API_KEY=${DIVINESENSE_AI_OPENAI_API_KEY}
+      - DIVINESENSE_AI_LLM_PROVIDER=${DIVINESENSE_AI_LLM_PROVIDER:-deepseek}
+      - DIVINESENSE_AI_LLM_MODEL=${DIVINESENSE_AI_LLM_MODEL:-deepseek-chat}
+      - DIVINESENSE_AI_DEEPSEEK_API_KEY=${DIVINESENSE_AI_DEEPSEEK_API_KEY}
+      - DIVINESENSE_AI_RERANK_MODEL=${DIVINESENSE_AI_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
     ports:
-      - "${MEMOS_PORT:-5230}:5230"
+      - "${DIVINESENSE_PORT:-5230}:5230"
     volumes:
-      - memos_data:/var/opt/memos
+      - divinesense_data:/var/opt/divinesense
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'cat < /dev/null > /dev/tcp/127.0.0.1/5230 || exit 1'"]
       interval: 30s
@@ -107,12 +107,12 @@ services:
           cpus: '0.1'
           memory: 128M
     networks:
-      - memos_network
+      - divinesense_network
 
 networks:
-  memos_network:
+  divinesense_network:
     driver: bridge
 
 volumes:
   postgres_data:
-  memos_data:
+  divinesense_data:
