@@ -2,11 +2,10 @@
 # DivineSense 生产环境 (2C2G 服务器)
 # =============================================================================
 #
-# 包含: PostgreSQL + DivineSense
+# 资源分配: PostgreSQL 0.75核/400M, DivineSense 0.75核/800M, 系统 512M
 #
 # 使用方式:
-#   cp .env.example .env.prod
-#   docker-compose -f prod.yml --env-file .env.prod up -d
+#   docker compose -f prod.yml --env-file .env.prod up -d
 #
 # =============================================================================
 
@@ -19,65 +18,57 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-divinesense}
       POSTGRES_USER: ${POSTGRES_USER:-divinesense}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # 内存优化 (2G 服务器，PostgreSQL 使用 ~512M)
-      POSTGRES_SHARED_BUFFERS: 128MB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 384MB
-      POSTGRES_MAINTENANCE_WORK_MEM: 32MB
-      POSTGRES_WORK_MEM: 4MB
-      POSTGRES_MAX_CONNECTIONS: 50
+      # 内存优化 (2G 服务器，PostgreSQL 使用 ~400M)
+      POSTGRES_SHARED_BUFFERS: 96MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 256MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 16MB
+      POSTGRES_WORK_MEM: 2MB
+      POSTGRES_MAX_CONNECTIONS: 30
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # 数据库初始化脚本 (仅首次创建时执行)
       - ../../store/migration/postgres:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${POSTGRES_PORT_MAPPING:-}"  # 可选: 127.0.0.1:25432:5432
+      - "${POSTGRES_PORT_MAPPING:-}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-divinesense}"]
       interval: 30s
       timeout: 10s
       retries: 3
-    # 资源限制 (2C2G)
+    # 资源限制 (2C2G 优化)
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 512M
+          cpus: '0.75'
+          memory: 400M
         reservations:
-          cpus: '0.25'
-          memory: 128M
+          cpus: '0.2'
+          memory: 100M
     command:
       [
-        "-c", "shared_buffers=128MB",
-        "-c", "effective_cache_size=384MB",
-        "-c", "maintenance_work_mem=32MB",
-        "-c", "work_mem=4MB",
-        "-c", "max_connections=50",
+        "-c", "shared_buffers=96MB",
+        "-c", "effective_cache_size=256MB",
+        "-c", "maintenance_work_mem=16MB",
+        "-c", "work_mem=2MB",
+        "-c", "max_connections=30",
         "-c", "shared_preload_libraries=vector"
       ]
     networks:
       - divinesense_network
 
   divinesense:
-    image: divinesense:latest
+    image: ${USER_IMAGE:-divinesense:latest}
     container_name: divinesense
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      # 运行模式
       - DIVINESENSE_MODE=prod
       - DIVINESENSE_PORT=5230
       - DIVINESENSE_ADDR=0.0.0.0
-
-      # 数据库配置
       - DIVINESENSE_DRIVER=postgres
       - DIVINESENSE_DSN=postgres://${POSTGRES_USER:-divinesense}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-divinesense}?sslmode=disable
-
-      # 实例 URL
       - DIVINESENSE_INSTANCE_URL=${DIVINESENSE_INSTANCE_URL}
-
-      # AI 功能
       - DIVINESENSE_AI_ENABLED=${DIVINESENSE_AI_ENABLED:-true}
       - DIVINESENSE_AI_EMBEDDING_PROVIDER=${DIVINESENSE_AI_EMBEDDING_PROVIDER:-siliconflow}
       - DIVINESENSE_AI_EMBEDDING_MODEL=${DIVINESENSE_AI_EMBEDDING_MODEL:-BAAI/bge-m3}
@@ -97,15 +88,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # 资源限制 (2C2G)
+    # 资源限制 (2C2G 优化)
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
+          cpus: '0.75'
+          memory: 800M
         reservations:
-          cpus: '0.1'
-          memory: 128M
+          cpus: '0.15'
+          memory: 200M
     networks:
       - divinesense_network
 
