@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.6.1] - 2026-01-28
+
+### 🐛 Bug Fixes & polish
+
+- **Assets**: Fixed outdated PWA icons (Android Chrome) to match new DivineSense branding.
+- **Frontend**: Resolved circular dependency warnings in Rollup by fixing `MemoView` imports in pages.
+- **CI**: Enabled manual `workflow_dispatch` trigger for stable build workflows.
+
 ## [v0.6.0] - 2026-01-28
 
 ### 🌟 Rebranding & Major Refactor
