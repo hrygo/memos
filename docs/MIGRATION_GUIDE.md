@@ -4,9 +4,29 @@
 
 ---
 
-## 概述
+## 新用户快速开始
 
-本指南帮助你将现有的 Memos 部署平滑迁移到 DivineSense。
+**如果你是首次使用 DivineSense**，不需要迁移！直接：
+
+```bash
+# 1. 配置环境变量
+cp .env.example .env
+
+# 2. 启动服务（会自动创建 divinesense 数据库）
+make start
+```
+
+数据库将自动初始化，默认配置：
+- 数据库: `divinesense`
+- 用户: `divinesense`
+- 密码: `divinesense`
+- 端口: `25432`
+
+---
+
+## 从 Memos 迁移
+
+**适用场景**: 现有 Memos 用户，希望迁移到 DivineSense
 
 **兼容性策略**: DivineSense 保持对 `MEMOS_*` 环境变量的向后兼容，支持渐进式迁移。
 
@@ -45,7 +65,26 @@ env | grep MEMOS_ > memos_env_backup.txt
 
 ## 迁移方案
 
-### 方案 A: 渐进式迁移（推荐）
+### 方案 A: 自动化迁移脚本（推荐）
+
+**适用场景**: 从 memos 数据库迁移到 divinesense 数据库
+
+```bash
+# 运行迁移脚本
+./scripts/migrate_to_divinesense.sh \
+  --old-db memos \
+  --new-db divinesense \
+  --user memos \
+  --port 5432
+
+# 脚本会自动：
+# 1. 备份 memos 数据库
+# 2. 创建 divinesense 数据库
+# 3. 迁移所有数据
+# 4. 验证迁移结果
+```
+
+### 方案 B: 渐进式迁移
 
 **适用场景**: 生产环境，最小化停机时间
 
