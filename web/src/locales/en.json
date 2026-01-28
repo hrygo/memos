@@ -346,6 +346,7 @@
   },
   "common": {
     "add": "Add",
+    "apply": "Apply",
     "admin": "Admin",
     "ai-assistant": "Copilot",
     "all": "All",
@@ -394,6 +395,7 @@
     "related-memos": "Related Memos",
     "relations": "Relations",
     "restore": "Restore",
+    "retry": "Retry",
     "role": "Role",
     "save": "Save",
     "saving": "Saving...",
@@ -701,6 +703,13 @@
         "schedule-created-fallback": "Schedule created",
         "select-suggestion": "Please select a suggestion below",
         "suggestion-message": "Selected date: {{date}}\nCreate: {{title}} {{startTime}}-{{endTime}}"
+      },
+      "quick-edit": {
+        "cancel-schedule": "Cancel schedule",
+        "delay-30m": "Delay 30m",
+        "move-tomorrow": "Move to tomorrow",
+        "placeholder": "e.g., Delay 30 mins, Rename to...",
+        "title": "Quick Edit"
       }
     },
     "list": {
@@ -712,6 +721,8 @@
     "schedule-created": "Schedule created successfully",
     "schedule-deleted": "Schedule deleted",
     "schedule-updated": "Schedule updated successfully",
+    "update-success": "Schedule updated successfully",
+    "update-failed": "Failed to update schedule",
     "search-placeholder": "Search schedules...",
     "search-results": "results",
     "search-schedule": "Search schedules",

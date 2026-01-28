@@ -34,8 +34,8 @@ export interface UIScheduleSuggestionData {
   end_ts: number;
   location?: string;
   description?: string;
-  all_day: boolean;
-  confidence: number;
+  all_day?: boolean;
+  confidence?: number;
   reason?: string;
   session_id?: string;
 }

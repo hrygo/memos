@@ -1,4 +1,9 @@
-import type { UIScheduleListData } from "@/hooks/useScheduleAgent";
+import type {
+  UIScheduleListData,
+  UIScheduleSuggestionData,
+  UITimeSlotData,
+  UIMemoPreviewData
+} from "@/hooks/useScheduleAgent";
 
 /**
  * Validates if a value is a non-null object (and not an array)
@@ -37,19 +42,7 @@ export interface ValidationResult<T> {
   errors: string[];
 }
 
-/**
- * Validator for UIScheduleSuggestionData
- */
-export interface UIScheduleSuggestionData {
-  title: string;
-  start_ts: number;
-  end_ts: number;
-  location?: string;
-  description?: string;
-  all_day?: boolean;
-  confidence?: number;
-  reason?: string;
-}
+
 
 export function validateScheduleSuggestion(data: unknown): ValidationResult<UIScheduleSuggestionData> {
   const errors: string[] = [];
@@ -89,21 +82,12 @@ export function validateScheduleSuggestion(data: unknown): ValidationResult<UISc
 
   return {
     valid: true,
-    data: data as UIScheduleSuggestionData,
+    data: data as unknown as UIScheduleSuggestionData,
     errors: [],
   };
 }
 
-/**
- * Validator for UITimeSlotData
- */
-export interface UITimeSlotData {
-  label: string;
-  start_ts: number;
-  end_ts: number;
-  duration: number;
-  reason?: string;
-}
+
 
 export function validateTimeSlot(data: unknown): ValidationResult<UITimeSlotData> {
   const errors: string[] = [];
@@ -134,22 +118,12 @@ export function validateTimeSlot(data: unknown): ValidationResult<UITimeSlotData
 
   return {
     valid: true,
-    data: data as UITimeSlotData,
+    data: data as unknown as UITimeSlotData,
     errors: [],
   };
 }
 
-/**
- * Validator for UIMemoPreviewData
- */
-export interface UIMemoPreviewData {
-  uid?: string;
-  title: string;
-  content: string;
-  tags?: string[];
-  confidence?: number;
-  reason?: string;
-}
+
 
 export function validateMemoPreview(data: unknown): ValidationResult<UIMemoPreviewData> {
   const errors: string[] = [];
@@ -183,7 +157,7 @@ export function validateMemoPreview(data: unknown): ValidationResult<UIMemoPrevi
 
   return {
     valid: true,
-    data: data as UIMemoPreviewData,
+    data: data as unknown as UIMemoPreviewData,
     errors: [],
   };
 }
@@ -203,7 +177,7 @@ export function validateAndLog<T>(
     return null;
   }
 
-  return result.data;
+  return result.data ?? null;
 }
 
 /**
@@ -262,7 +236,7 @@ export function validateScheduleList(data: unknown): ValidationResult<UISchedule
 
   return {
     valid: true,
-    data: data as UIScheduleListData,
+    data: data as unknown as UIScheduleListData,
     errors: [],
   };
 }

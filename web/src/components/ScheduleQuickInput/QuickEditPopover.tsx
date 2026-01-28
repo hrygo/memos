@@ -2,11 +2,12 @@ import dayjs from "dayjs";
 import { ArrowRight, Clock, Edit3, Loader2, Sparkles, Trash } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useScheduleAgentStreamingChat, useUpdateSchedule } from "@/hooks/useScheduleQueries";
+import { useScheduleAgentStreamingChat } from "@/hooks/useScheduleQueries";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTranslate } from "@/utils/i18n";
+import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 
 interface QuickEditPopoverProps {
     schedule: Schedule;
@@ -18,10 +19,9 @@ export function QuickEditPopover({ schedule, children, onOpenChange }: QuickEdit
     const t = useTranslate();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const updateSchedule = useUpdateSchedule();
+
     const streamingChat = useScheduleAgentStreamingChat();
-    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
@@ -57,15 +57,15 @@ export function QuickEditPopover({ schedule, children, onOpenChange }: QuickEdit
         switch (action) {
             case "delay_30m":
                 prompt = "Delay this schedule by 30 minutes";
-                setInput(t("schedule.quick-edit.delay-30m") || "Delay 30m");
+                setInput(t("schedule.quick.quick-edit.delay-30m") || "Delay 30m");
                 break;
             case "move_tomorrow":
                 prompt = "Move this schedule to tomorrow same time";
-                setInput(t("schedule.quick-edit.move-tomorrow") || "Move to tomorrow");
+                setInput(t("schedule.quick.quick-edit.move-tomorrow") || "Move to tomorrow");
                 break;
             case "cancel":
                 prompt = "Cancel this schedule";
-                setInput(t("schedule.quick-edit.cancel-schedule") || "Cancel schedule");
+                setInput(t("schedule.quick.quick-edit.cancel-schedule") || "Cancel schedule");
                 break;
             default:
                 return;
@@ -117,7 +117,7 @@ export function QuickEditPopover({ schedule, children, onOpenChange }: QuickEdit
                 <div className="p-3 border-b bg-muted/20">
                     <h4 className="font-medium text-sm flex items-center gap-2">
                         <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
-                        {t("schedule.quick-edit.title") || "Quick Edit"}
+                        {t("schedule.quick.quick-edit.title") || "Quick Edit"}
                     </h4>
                 </div>
 
@@ -125,7 +125,7 @@ export function QuickEditPopover({ schedule, children, onOpenChange }: QuickEdit
                     <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder={t("schedule.quick-edit.placeholder") || "e.g., Delay 30 mins, Rename to..."}
+                        placeholder={t("schedule.quick.quick-edit.placeholder") || "e.g., Delay 30 mins, Rename to..."}
                         className="resize-none min-h-[60px] text-sm"
                         onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {

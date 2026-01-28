@@ -346,6 +346,7 @@
   },
   "common": {
     "add": "增加",
+    "apply": "应用",
     "admin": "管理",
     "ai-assistant": "智能助理",
     "all": "全部",
@@ -394,6 +395,7 @@
     "related-memos": "相关笔记",
     "relations": "关系图",
     "restore": "恢复",
+    "retry": "重试",
     "role": "身份",
     "save": "保存",
     "saving": "保存中...",
@@ -701,6 +703,13 @@
         "schedule-created-fallback": "日程已创建",
         "select-suggestion": "请选择下方建议",
         "suggestion-message": "选中日期: {{date}}\n创建: {{title}} {{startTime}}-{{endTime}}"
+      },
+      "quick-edit": {
+        "cancel-schedule": "取消日程",
+        "delay-30m": "推迟 30 分钟",
+        "move-tomorrow": "移动到明天",
+        "placeholder": "例如：推迟 30 分钟，重命名为...",
+        "title": "快速编辑"
       }
     },
     "list": {
@@ -712,6 +721,8 @@
     "schedule-created": "日程创建成功",
     "schedule-deleted": "日程已删除",
     "schedule-updated": "日程更新成功",
+    "update-success": "日程更新成功",
+    "update-failed": "日程更新失败",
     "search-placeholder": "搜索日程...",
     "search-results": "个结果",
     "search-schedule": "搜索日程",

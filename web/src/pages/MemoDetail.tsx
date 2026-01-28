@@ -6,7 +6,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { MemoDetailSidebar, MemoDetailSidebarDrawer } from "@/components/MemoDetailSidebar";
 import MemoEditor from "@/components/MemoEditor";
 import MemoRelatedList from "@/components/MemoRelatedList";
-import MemoView from "@/components/MemoView";
+import MemoView from "@/components/MemoView/MemoView";
 import MobileHeader from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { memoNamePrefix } from "@/helpers/resource-names";

@@ -10,19 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useScheduleAgentStreamingChat } from "@/hooks/useScheduleQueries";
 import type {
-  getUIToolType,
   ParsedEvent,
   UIConflictResolutionData,
   UIMemoPreviewData,
   UIProgressTrackerData,
   UIQuickActionsData,
-  UIScheduleSuggestionData,
   UITimeSlotPickerData,
 } from "@/hooks/useScheduleAgent";
 import { cn } from "@/lib/utils";
 import type { Schedule } from "@/types/proto/api/v1/schedule_service_pb";
 import { type Translations, useTranslate } from "@/utils/i18n";
-import { AISuggestionCards, type ScheduleSuggestion } from "./AISuggestionCards";
+import { AISuggestionCards, parseSuggestions, type ScheduleSuggestion } from "./AISuggestionCards";
 import { QuickTemplateDropdown } from "./QuickTemplates";
 import type { ScheduleTemplate } from "./types";
 
@@ -131,6 +129,7 @@ export function ScheduleQuickInput({
           const validated = validateAndLog(event.uiData, validateScheduleSuggestion, "ui_schedule_suggestion");
           if (!validated) continue; // Skip invalid data
           toolType = "schedule_suggestion";
+          // @ts-ignore - Validated type
           toolData = validated;
           break;
         }
@@ -252,10 +251,8 @@ export function ScheduleQuickInput({
         setAiMessage(aiResponse);
         const todayStr = t("schedule.quick-input.today") as string;
         const tomorrowStr = t("schedule.quick-input.tomorrow") as string;
-        import("./AISuggestionCards").then(({ parseSuggestions: parse }) => {
-          const suggestions = parse(aiResponse, todayStr, tomorrowStr);
-          setAiSuggestions(suggestions);
-        });
+        const suggestions = parseSuggestions(aiResponse, todayStr, tomorrowStr);
+        setAiSuggestions(suggestions);
       }
     } catch (error) {
       console.error("[ScheduleQuickInput] AI error:", error);

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import type { UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotData, UITimeSlotPickerData, UIMemoPreviewData, UIQuickActionsData, UIQuickActionData, UIProgressTrackerData, UIScheduleListData } from "@/hooks/useScheduleAgent";
+import type { UIConflictResolutionData, UIScheduleSuggestionData, UITimeSlotData, UITimeSlotPickerData, UIMemoPreviewData, UIQuickActionsData, UIQuickActionData, UIProgressTrackerData } from "@/hooks/useScheduleAgent";
 import { cn } from "@/lib/utils";
-import { validateAndLog, validateScheduleSuggestion, validateTimeSlot, validateMemoPreview, validateScheduleList } from "./uiTypeValidators";
+import { validateAndLog, validateScheduleSuggestion, validateMemoPreview, validateScheduleList } from "./uiTypeValidators";
 import { ConflictResolution } from "./ConflictResolution";
 import { MemoPreview } from "./MemoPreview";
 import { MemoSearchResultCard } from "./MemoSearchResultCard";
@@ -86,9 +86,7 @@ function GenerativeUIComponent({ tool, onAction, onDismiss }: GenerativeUICompon
     onAction({ type: "confirm", toolId: tool.id, data });
   };
 
-  const handleReject = () => {
-    onAction({ type: "reject", toolId: tool.id });
-  };
+
 
   const handleSlotSelect = (slot: UITimeSlotData) => {
     onAction({ type: "select_slot", toolId: tool.id, data: slot });
