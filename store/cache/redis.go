@@ -46,7 +46,7 @@ func DefaultRedisConfig() *RedisCacheConfig {
 		Addr:         "localhost:6379",
 		Password:     "",
 		DB:           0,
-		KeyPrefix:    "memos:",
+		KeyPrefix:    "divinesense:",
 		DefaultTTL:   30 * time.Minute,
 		PoolSize:     10,
 		MinIdleConns: 2,
@@ -55,20 +55,28 @@ func DefaultRedisConfig() *RedisCacheConfig {
 
 // RedisConfigFromEnv creates Redis config from environment variables.
 // Environment variables:
-//   - MEMOS_CACHE_REDIS_ADDR: Redis address (default: localhost:6379)
-//   - MEMOS_CACHE_REDIS_PASSWORD: Redis password (default: "")
-//   - MEMOS_CACHE_REDIS_DB: Redis DB number (default: 0)
-//   - MEMOS_CACHE_REDIS_PREFIX: Key prefix (default: "memos:")
+//   - DIVINESENSE_CACHE_REDIS_ADDR: Redis address (default: localhost:6379)
+//   - DIVINESENSE_CACHE_REDIS_PASSWORD: Redis password (default: "")
+//   - DIVINESENSE_CACHE_REDIS_DB: Redis DB number (default: 0)
+//   - DIVINESENSE_CACHE_REDIS_PREFIX: Key prefix (default: "divinesense:")
+//   - Legacy: MEMOS_CACHE_REDIS_* variables are still supported
 func RedisConfigFromEnv() *RedisCacheConfig {
 	config := DefaultRedisConfig()
 
-	if addr := os.Getenv("MEMOS_CACHE_REDIS_ADDR"); addr != "" {
+	// Try new prefix first, fall back to legacy
+	if addr := os.Getenv("DIVINESENSE_CACHE_REDIS_ADDR"); addr != "" {
+		config.Addr = addr
+	} else if addr := os.Getenv("MEMOS_CACHE_REDIS_ADDR"); addr != "" {
 		config.Addr = addr
 	}
-	if password := os.Getenv("MEMOS_CACHE_REDIS_PASSWORD"); password != "" {
+	if password := os.Getenv("DIVINESENSE_CACHE_REDIS_PASSWORD"); password != "" {
+		config.Password = password
+	} else if password := os.Getenv("MEMOS_CACHE_REDIS_PASSWORD"); password != "" {
 		config.Password = password
 	}
-	if prefix := os.Getenv("MEMOS_CACHE_REDIS_PREFIX"); prefix != "" {
+	if prefix := os.Getenv("DIVINESENSE_CACHE_REDIS_PREFIX"); prefix != "" {
+		config.KeyPrefix = prefix
+	} else if prefix := os.Getenv("MEMOS_CACHE_REDIS_PREFIX"); prefix != "" {
 		config.KeyPrefix = prefix
 	}
 
@@ -76,9 +84,9 @@ func RedisConfigFromEnv() *RedisCacheConfig {
 }
 
 // IsRedisEnabled checks if Redis caching should be enabled based on environment.
-// Returns true if MEMOS_CACHE_REDIS_ADDR is set.
+// Returns true if DIVINESENSE_CACHE_REDIS_ADDR or MEMOS_CACHE_REDIS_ADDR is set.
 func IsRedisEnabled() bool {
-	return os.Getenv("MEMOS_CACHE_REDIS_ADDR") != ""
+	return os.Getenv("DIVINESENSE_CACHE_REDIS_ADDR") != "" || os.Getenv("MEMOS_CACHE_REDIS_ADDR") != ""
 }
 
 // RedisCacheStats represents Redis cache statistics.

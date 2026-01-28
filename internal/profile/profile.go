@@ -23,17 +23,17 @@ type Profile struct {
 	UNIXSock string
 	// Data is the data directory
 	Data string
-	// DSN points to where memos stores its own data
+	// DSN points to where divinesense stores its own data
 	DSN string
 	// Driver is the database driver (sqlite or postgres)
 	Driver string
 	// Version is the current version of server
 	Version string
-	// InstanceURL is the url of your memos instance.
+	// InstanceURL is the url of your divinesense instance.
 	InstanceURL string
 
 	// AI Configuration
-	AIEnabled            bool   // MEMOS_AI_ENABLED
+	AIEnabled            bool   // DIVINESENSE_AI_ENABLED (legacy: MEMOS_AI_ENABLED)
 	AIEmbeddingProvider  string // MEMOS_AI_EMBEDDING_PROVIDER (default: siliconflow)
 	AILLMProvider        string // MEMOS_AI_LLM_PROVIDER (default: deepseek)
 	AISiliconFlowAPIKey  string // MEMOS_AI_SILICONFLOW_API_KEY
@@ -74,28 +74,42 @@ func getEnvOrDefault(key, defaultValue string) string {
 }
 
 // FromEnv loads configuration from environment variables.
+// Supports both DIVINESENSE_* (new) and MEMOS_* (legacy) prefixes.
 func (p *Profile) FromEnv() {
-	p.AIEnabled = os.Getenv("MEMOS_AI_ENABLED") == "true"
-	p.AIEmbeddingProvider = getEnvOrDefault("MEMOS_AI_EMBEDDING_PROVIDER", "siliconflow")
-	p.AILLMProvider = getEnvOrDefault("MEMOS_AI_LLM_PROVIDER", "deepseek")
-	p.AISiliconFlowAPIKey = os.Getenv("MEMOS_AI_SILICONFLOW_API_KEY")
-	p.AISiliconFlowBaseURL = getEnvOrDefault("MEMOS_AI_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
-	p.AIDeepSeekAPIKey = os.Getenv("MEMOS_AI_DEEPSEEK_API_KEY")
-	p.AIDeepSeekBaseURL = getEnvOrDefault("MEMOS_AI_DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-	p.AIOpenAIAPIKey = os.Getenv("MEMOS_AI_OPENAI_API_KEY")
-	p.AIOpenAIBaseURL = getEnvOrDefault("MEMOS_AI_OPENAI_BASE_URL", "https://api.openai.com/v1")
-	p.AIOllamaBaseURL = getEnvOrDefault("MEMOS_AI_OLLAMA_BASE_URL", "http://localhost:11434")
-	p.AIEmbeddingModel = getEnvOrDefault("MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3")
-	p.AIRerankModel = getEnvOrDefault("MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
-	p.AILLMModel = getEnvOrDefault("MEMOS_AI_LLM_MODEL", "deepseek-chat")
+	// Helper to get env value with legacy fallback
+	getEnvWithFallback := func(newKey, legacyKey string) string {
+		if val := os.Getenv(newKey); val != "" {
+			return val
+		}
+		return os.Getenv(legacyKey)
+	}
+
+	// Helper to get bool env value with legacy fallback
+	getBoolEnvWithFallback := func(newKey, legacyKey string) bool {
+		return getEnvWithFallback(newKey, legacyKey) == "true"
+	}
+
+	p.AIEnabled = getBoolEnvWithFallback("DIVINESENSE_AI_ENABLED", "MEMOS_AI_ENABLED")
+	p.AIEmbeddingProvider = getEnvWithFallback("DIVINESENSE_AI_EMBEDDING_PROVIDER", getEnvOrDefault("MEMOS_AI_EMBEDDING_PROVIDER", "siliconflow"))
+	p.AILLMProvider = getEnvWithFallback("DIVINESENSE_AI_LLM_PROVIDER", getEnvOrDefault("MEMOS_AI_LLM_PROVIDER", "deepseek"))
+	p.AISiliconFlowAPIKey = getEnvWithFallback("DIVINESENSE_AI_SILICONFLOW_API_KEY", os.Getenv("MEMOS_AI_SILICONFLOW_API_KEY"))
+	p.AISiliconFlowBaseURL = getEnvWithFallback("DIVINESENSE_AI_SILICONFLOW_BASE_URL", getEnvOrDefault("MEMOS_AI_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1"))
+	p.AIDeepSeekAPIKey = getEnvWithFallback("DIVINESENSE_AI_DEEPSEEK_API_KEY", os.Getenv("MEMOS_AI_DEEPSEEK_API_KEY"))
+	p.AIDeepSeekBaseURL = getEnvWithFallback("DIVINESENSE_AI_DEEPSEEK_BASE_URL", getEnvOrDefault("MEMOS_AI_DEEPSEEK_BASE_URL", "https://api.deepseek.com"))
+	p.AIOpenAIAPIKey = getEnvWithFallback("DIVINESENSE_AI_OPENAI_API_KEY", os.Getenv("MEMOS_AI_OPENAI_API_KEY"))
+	p.AIOpenAIBaseURL = getEnvWithFallback("DIVINESENSE_AI_OPENAI_BASE_URL", getEnvOrDefault("MEMOS_AI_OPENAI_BASE_URL", "https://api.openai.com/v1"))
+	p.AIOllamaBaseURL = getEnvWithFallback("DIVINESENSE_AI_OLLAMA_BASE_URL", getEnvOrDefault("MEMOS_AI_OLLAMA_BASE_URL", "http://localhost:11434"))
+	p.AIEmbeddingModel = getEnvWithFallback("DIVINESENSE_AI_EMBEDDING_MODEL", getEnvOrDefault("MEMOS_AI_EMBEDDING_MODEL", "BAAI/bge-m3"))
+	p.AIRerankModel = getEnvWithFallback("DIVINESENSE_AI_RERANK_MODEL", getEnvOrDefault("MEMOS_AI_RERANK_MODEL", "BAAI/bge-reranker-v2-m3"))
+	p.AILLMModel = getEnvWithFallback("DIVINESENSE_AI_LLM_MODEL", getEnvOrDefault("MEMOS_AI_LLM_MODEL", "deepseek-chat"))
 
 	// Attachment processing configuration
-	p.OCREnabled = os.Getenv("MEMOS_OCR_ENABLED") == "true"
-	p.TextExtractEnabled = os.Getenv("MEMOS_TEXTEXTRACT_ENABLED") == "true"
-	p.TesseractPath = getEnvOrDefault("MEMOS_OCR_TESSERACT_PATH", "tesseract")
-	p.TessdataPath = os.Getenv("MEMOS_OCR_TESSDATA_PATH")
-	p.OCRLanguages = getEnvOrDefault("MEMOS_OCR_LANGUAGES", "chi_sim+eng")
-	p.TikaServerURL = getEnvOrDefault("MEMOS_TEXTEXTRACT_TIKA_URL", "http://localhost:9998")
+	p.OCREnabled = getBoolEnvWithFallback("DIVINESENSE_OCR_ENABLED", "MEMOS_OCR_ENABLED")
+	p.TextExtractEnabled = getBoolEnvWithFallback("DIVINESENSE_TEXTEXTRACT_ENABLED", "MEMOS_TEXTEXTRACT_ENABLED")
+	p.TesseractPath = getEnvWithFallback("DIVINESENSE_OCR_TESSERACT_PATH", getEnvOrDefault("MEMOS_OCR_TESSERACT_PATH", "tesseract"))
+	p.TessdataPath = getEnvWithFallback("DIVINESENSE_OCR_TESSDATA_PATH", os.Getenv("MEMOS_OCR_TESSDATA_PATH"))
+	p.OCRLanguages = getEnvWithFallback("DIVINESENSE_OCR_LANGUAGES", getEnvOrDefault("MEMOS_OCR_LANGUAGES", "chi_sim+eng"))
+	p.TikaServerURL = getEnvWithFallback("DIVINESENSE_TEXTEXTRACT_TIKA_URL", getEnvOrDefault("MEMOS_TEXTEXTRACT_TIKA_URL", "http://localhost:9998"))
 }
 
 func checkDataDir(dataDir string) (string, error) {
@@ -124,7 +138,7 @@ func (p *Profile) Validate() error {
 
 	if p.Mode == "prod" && p.Data == "" {
 		if runtime.GOOS == "windows" {
-			p.Data = filepath.Join(os.Getenv("ProgramData"), "memos")
+			p.Data = filepath.Join(os.Getenv("ProgramData"), "divinesense")
 			if _, err := os.Stat(p.Data); os.IsNotExist(err) {
 				if err := os.MkdirAll(p.Data, 0770); err != nil {
 					slog.Error("failed to create data directory", slog.String("data", p.Data), slog.String("error", err.Error()))
@@ -132,7 +146,7 @@ func (p *Profile) Validate() error {
 				}
 			}
 		} else {
-			p.Data = "/var/opt/memos"
+			p.Data = "/var/opt/divinesense"
 		}
 	}
 
@@ -144,7 +158,7 @@ func (p *Profile) Validate() error {
 
 	p.Data = dataDir
 	if p.Driver == "sqlite" && p.DSN == "" {
-		dbFile := fmt.Sprintf("memos_%s.db", p.Mode)
+		dbFile := fmt.Sprintf("divinesense_%s.db", p.Mode)
 		p.DSN = filepath.Join(dataDir, dbFile)
 	}
 

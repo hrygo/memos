@@ -1,4 +1,4 @@
-# Memos Makefile
+# DivineSense Makefile
 
 # 加载 .env 文件 (如果存在)
 ifneq (,$(wildcard ./.env))
@@ -18,8 +18,8 @@ endif
 .DEFAULT_GOAL := help
 
 # 数据库配置 (PostgreSQL)
-MEMOS_DRIVER ?= postgres
-MEMOS_DSN ?= postgres://memos:memos@localhost:25432/memos?sslmode=disable
+DIVINESENSE_DRIVER ?= postgres
+DIVINESENSE_DSN ?= postgres://divinesense:divinesense@localhost:25432/divinesense?sslmode=disable
 
 # AI 配置
 AI_EMBEDDING_PROVIDER ?= siliconflow
@@ -36,19 +36,19 @@ AI_OPENAI_BASE_URL ?= https://api.siliconflow.cn/v1
 ##@ 开发
 
 run: ## 启动后端 (PostgreSQL + AI)
-	@echo "Starting Memos with AI support..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) \
-		MEMOS_DSN=$(MEMOS_DSN) \
-		MEMOS_AI_ENABLED=true \
-		MEMOS_AI_EMBEDDING_PROVIDER=$(AI_EMBEDDING_PROVIDER) \
-		MEMOS_AI_LLM_PROVIDER=$(AI_LLM_PROVIDER) \
-		MEMOS_AI_SILICONFLOW_API_KEY=$(SILICONFLOW_API_KEY) \
-		MEMOS_AI_DEEPSEEK_API_KEY=$(DEEPSEEK_API_KEY) \
-		MEMOS_AI_OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		MEMOS_AI_OPENAI_BASE_URL=$(AI_OPENAI_BASE_URL) \
-		MEMOS_AI_EMBEDDING_MODEL=$(AI_EMBEDDING_MODEL) \
-		MEMOS_AI_RERANK_MODEL=$(AI_RERANK_MODEL) \
-		MEMOS_AI_LLM_MODEL=$(AI_LLM_MODEL) \
+	@echo "Starting DivineSense with AI support..."
+	@DIVINESENSE_DRIVER=$(DIVINESENSE_DRIVER) \
+		DIVINESENSE_DSN=$(DIVINESENSE_DSN) \
+		DIVINESENSE_AI_ENABLED=true \
+		DIVINESENSE_AI_EMBEDDING_PROVIDER=$(AI_EMBEDDING_PROVIDER) \
+		DIVINESENSE_AI_LLM_PROVIDER=$(AI_LLM_PROVIDER) \
+		DIVINESENSE_AI_SILICONFLOW_API_KEY=$(SILICONFLOW_API_KEY) \
+		DIVINESENSE_AI_DEEPSEEK_API_KEY=$(DEEPSEEK_API_KEY) \
+		DIVINESENSE_AI_OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		DIVINESENSE_AI_OPENAI_BASE_URL=$(AI_OPENAI_BASE_URL) \
+		DIVINESENSE_AI_EMBEDDING_MODEL=$(AI_EMBEDDING_MODEL) \
+		DIVINESENSE_AI_RERANK_MODEL=$(AI_RERANK_MODEL) \
+		DIVINESENSE_AI_LLM_MODEL=$(AI_LLM_MODEL) \
 		go run ./cmd/memos --mode dev --port 28081
 
 dev: run ## Alias for run
@@ -126,7 +126,7 @@ docker-logs: ## 查看 PostgreSQL 日志
 docker-reset: ## 重置 PostgreSQL 数据 (危险!)
 	@echo "Resetting PostgreSQL data..."
 	@docker compose -f docker/compose/dev.yml down -v
-	@docker volume rm memos_postgres_data 2>/dev/null || true
+	@docker volume rm divinesense_postgres_data 2>/dev/null || true
 	@make docker-up
 
 # 生产环境部署
@@ -148,15 +148,15 @@ docker-prod-logs: ## 查看生产环境日志
 ##@ 数据库
 
 db-connect: ## 连接 PostgreSQL shell
-	@docker exec -it memos-postgres-dev psql -U memos -d memos
+	@docker exec -it divinesense-postgres-dev psql -U divinesense -d divinesense
 
 db-reset: ## 重置数据库 schema
 	@echo "Resetting database schema..."
-	@docker exec memos-postgres-dev psql -U memos -d memos -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-	@go run ./cmd/memos --mode dev --driver postgres --dsn "postgres://memos:memos@localhost:25432/memos?sslmode=disable" --migrate
+	@docker exec divinesense-postgres-dev psql -U divinesense -d divinesense -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@go run ./cmd/memos --mode dev --driver postgres --dsn "postgres://divinesense:divinesense@localhost:25432/divinesense?sslmode=disable" --migrate
 
 db-vector: ## 验证 pgvector 扩展
-	@docker exec memos-postgres-dev psql -U memos -d memos -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+	@docker exec divinesense-postgres-dev psql -U divinesense -d divinesense -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
 
 # ===================================================================
 # 测试
@@ -166,19 +166,19 @@ db-vector: ## 验证 pgvector 扩展
 
 test: ## 运行所有测试
 	@echo "Running tests..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./... -v -timeout 30s
+	@DIVINESENSE_DRIVER=$(DIVINESENSE_DRIVER) DIVINESENSE_DSN=$(DIVINESENSE_DSN) go test ./... -v -timeout 30s
 
 test-ai: ## 运行 AI 测试
 	@echo "Running AI tests..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./plugin/ai/... -v
+	@DIVINESENSE_DRIVER=$(DIVINESENSE_DRIVER) DIVINESENSE_DSN=$(DIVINESENSE_DSN) go test ./plugin/ai/... -v
 
 test-embedding: ## 运行 Embedding 测试
 	@echo "Running Embedding tests..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./plugin/ai/... -run Embedding -v
+	@DIVINESENSE_DRIVER=$(DIVINESENSE_DRIVER) DIVINESENSE_DSN=$(DIVINESENSE_DSN) go test ./plugin/ai/... -run Embedding -v
 
 test-runner: ## 运行 Runner 测试
 	@echo "Running Runner tests..."
-	@MEMOS_DRIVER=$(MEMOS_DRIVER) MEMOS_DSN=$(MEMOS_DSN) go test ./server/runner/embedding/... -v
+	@DIVINESENSE_DRIVER=$(DIVINESENSE_DRIVER) DIVINESENSE_DSN=$(DIVINESENSE_DSN) go test ./server/runner/embedding/... -v
 
 # ===================================================================
 # 构建
@@ -311,7 +311,7 @@ prod-backup: ## 备份生产数据库
 # ===================================================================
 
 help: ## 显示此帮助信息
-	@printf "\033[1m\033[36m\nMemos Development Commands\033[0m\n\n"
+	@printf "\033[1m\033[36m\nDivineSense Development Commands\033[0m\n\n"
 	@printf "\033[1m一键操作:\033[0m\n"
 	@printf "  start                一键启动所有服务 (自动编译最新版本)\n"
 	@printf "  stop                 一键停止所有服务\n"
