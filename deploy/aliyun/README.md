@@ -1,37 +1,32 @@
 # DivineSense 单机部署指南 (2C2G)
 
-适用于单台 2核2G 服务器的 DivineSense 生产环境部署方案。
+适用于阿里云/腾讯云 2核2G 服务器的生产环境部署方案。
 
 ---
 
-## 一键安装 (推荐)
-
-**阿里云/腾讯云 2C2G 服务器快速部署：**
+## 一键安装
 
 ```bash
-# 方法 1: 直接执行 (推荐)
 curl -fsSL https://raw.githubusercontent.com/hrygo/divinesense/main/deploy/aliyun/install.sh | bash
-
-# 方法 2: 下载后执行
-wget https://raw.githubusercontent.com/hrygo/divinesense/main/deploy/aliyun/install.sh
-chmod +x install.sh && ./install.sh
 ```
 
-**一键安装会自动完成：**
+**自动完成：**
 - ✅ 安装 Docker + Docker Compose
 - ✅ 配置国内镜像加速
-- ✅ 下载 DivineSense 预构建镜像
+- ✅ 下载 DivineSense 镜像
 - ✅ 生成安全密码
 - ✅ 初始化 PostgreSQL + pgvector
-- ✅ 启动完整服务
-- ✅ 配置防火墙规则
-- ✅ 设置定时备份
+- ✅ 启动服务
+- ✅ 配置防火墙
+- ✅ 设置每日自动备份
 
-**安装后配置 AI API Keys：**
+**安装完成后：**
+
+1. 配置 AI API Keys：
 ```bash
 vi /opt/divinesense/.env.prod
 
-# 编辑以下两项：
+# 修改以下两项：
 DIVINESENSE_AI_SILICONFLOW_API_KEY=sk-xxx
 DIVINESENSE_AI_DEEPSEEK_API_KEY=sk-xxx
 
@@ -39,9 +34,11 @@ DIVINESENSE_AI_DEEPSEEK_API_KEY=sk-xxx
 cd /opt/divinesense && ./deploy.sh restart
 ```
 
+2. 访问服务：`http://your-server-ip:5230`
+
 ---
 
-## 架构概述
+## 架构
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -62,312 +59,91 @@ cd /opt/divinesense && ./deploy.sh restart
 └─────────────────────────────────────────────────┘
 ```
 
-**资源分配 (2C2G)**
+**资源分配**
 
-| 服务 | CPU | 内存 | 说明 |
-|------|-----|------|------|
-| PostgreSQL | 1核 | 512M | 数据库 |
-| DivineSense | 1核 | 1G | 应用服务 |
-| 系统预留 | - | 512M | OS + Docker |
+| 服务 | CPU | 内存 |
+|------|-----|------|
+| PostgreSQL | 1核 | 512M |
+| DivineSense | 1核 | 1G |
+| 系统预留 | - | 512M |
 
 ---
 
-## 快速开始
+## AI 配置
 
-### 1. 上传部署文件
+DivineSense 需要 2 个 API Key（国内推荐）：
 
-```bash
-# 上传到服务器
-scp -r deploy/aliyun user@your-server:/root/divinesense-deploy
-scp -r docker/compose user@your-server:/root/divinesense-deploy/docker/
-scp -r store/migration user@your-server:/root/divinesense-deploy/store/
+| API Key | 用途 | 获取地址 |
+|---------|------|----------|
+| SiliconFlow | 向量/重排/意图分类 | https://cloud.siliconflow.cn |
+| DeepSeek | 对话 LLM | https://platform.deepseek.com |
 
-# SSH 登录
-ssh user@your-server
-cd /root/divinesense-deploy
-```
+**其他方案：**
+- 纯 SiliconFlow（单一供应商）
+- OpenAI（海外用户）
+- Ollama（本地离线）
 
-### 2. 配置环境变量
+详见 `.env.prod` 文件内注释。
 
-```bash
-cp .env.prod.example .env.prod
-vi .env.prod  # 修改密码和 API Keys
-```
+---
 
-**必填配置** (详见 `.env.prod.example` 内说明):
+## 运维命令
 
 ```bash
-POSTGRES_PASSWORD=your_secure_password              # 数据库密码
-DIVINESENSE_INSTANCE_URL=http://your-server-ip:5230 # 公网地址
-DIVINESENSE_AI_SILICONFLOW_API_KEY=sk-xxx           # 向量/重排
-DIVINESENSE_AI_DEEPSEEK_API_KEY=sk-xxx              # 对话 LLM
-```
+cd /opt/divinesense
 
-> **配置方案**: 文件内提供 4 种配置方案 (SiliconFlow+DeepSeek / 纯 SiliconFlow / OpenAI / Ollama 本地)
-
-### 3. 部署
-
-```bash
-# 方式 1: 使用预构建镜像 (推荐，无需 Go/Node.js)
-./deploy.sh pull       # 拉取镜像
-./deploy.sh deploy     # 部署
-
-# 方式 2: 本地构建 (需 Go 1.25+ / pnpm)
-./deploy.sh build      # 构建镜像
-./deploy.sh deploy     # 部署
-```
-
-### 4. 验证
-
-```bash
-./deploy.sh status     # 查看服务状态
+./deploy.sh status     # 查看状态
 ./deploy.sh logs       # 查看日志
+./deploy.sh restart    # 重启服务
+./deploy.sh stop       # 停止服务
+./deploy.sh backup     # 手动备份
+./deploy.sh upgrade    # 升级版本
 ```
-
-浏览器访问: `http://your-server-ip:5230`
 
 ---
 
-## 国内用户部署 (阿里云/腾讯云)
+## 备份
 
-### Docker Hub 访问问题
+**自动备份：** 每天凌晨 2 点（安装时已配置）
 
-国内服务器访问 Docker Hub 可能较慢或失败，推荐使用以下方案：
-
-**方案一: 使用预构建镜像 (推荐)**
-
+**手动备份：**
 ```bash
-# 编辑 .env.prod
-vi .env.prod
-
-# 添加以下行 (使用官方预构建镜像)
-USER_IMAGE=ghcr.io/hrygo/divinesense:latest
-
-# 部署 (无需 Go/Node.js 环境)
-./deploy.sh deploy
+cd /opt/divinesense && ./deploy.sh backup
 ```
 
-**方案二: 配置 Docker 镜像加速**
-
+**恢复备份：**
 ```bash
-# 配置国内镜像源
-./deploy.sh setup
-
-# 重启 Docker
-sudo systemctl restart docker
-
-# 验证配置
-docker info | grep -A 10 "Registry Mirrors"
+cd /opt/divinesense && ./deploy.sh restore backups/divinesense-backup-xxx.gz
 ```
 
-**方案三: 本地构建**
+---
 
-如果需要在服务器上构建，确保已安装：
-- Go 1.25+
-- Node.js 18+ / pnpm
-
-```bash
-# 构建并部署
-./deploy.sh build && ./deploy.sh deploy
-```
-
-### 常见问题
+## 常见问题
 
 | 问题 | 解决方案 |
 |------|----------|
-| `pgvector/pgvector:pg16` 拉取失败 | 运行 `./deploy.sh setup` 配置镜像加速 |
-| `go mod download` 超时 | Dockerfile 已配置 GOPROXY=goproxy.cn |
-| `pnpm install` 超时 | 已配置 .npmrc 使用 npmmirror.com |
-| 构建缺少依赖 | 使用预构建镜像替代 |
-
----
-
-## 从旧方案迁移
-
-如果你的服务器正在运行旧版本部署方案（PostgreSQL Docker + DivineSense host 二进制），迁移步骤如下：
-
-### 迁移前检查
-
-```bash
-# 1. 检查当前数据库版本
-docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
-
-# 2. 备份现有数据库
-docker exec divinesense-postgres pg_dump -U divinesense divinesense | gzip > divinesense-backup-pre-migration.sql.gz
-```
-
-### 迁移步骤
-
-```bash
-# 1. 停止旧的 Memos 进程
-sudo systemctl stop memos  # 或其他方式停止
-
-# 2. 更新部署文件
-cp docker/compose/prod.yml /root/divinesense-deploy/
-cp -r store/migration/postgres /root/divinesense-deploy/
-
-# 3. 更新 .env.prod，添加新配置
-vi .env.prod
-
-# 4. 使用新版部署脚本
-./deploy.sh upgrade
-```
-
-### 迁移后验证
-
-```bash
-# 1. 检查服务状态
-./deploy.sh status
-
-# 2. 验证数据库连接
-docker exec divinesense psql -U divinesense -d divinesense -c "SELECT 1;"
-
-# 3. 检查数据完整性
-docker exec divinesense psql -U divinesense -d divinesense -c "SELECT COUNT(*) FROM memo;"
-```
-
-### 外部数据库连接
-
-如果需要使用 pgAdmin / DataGrip 等工具连接数据库：
-
-```bash
-# 编辑 .env.prod，取消注释以下行
-POSTGRES_PORT_MAPPING=127.0.0.1:25432:5432
-
-# 重启服务
-./deploy.sh restart
-
-# 连接信息
-# Host: 127.0.0.1
-# Port: 25432
-# Database: divinesense
-# User: divinesense
-```
-
----
-
-## 运维操作
-
-### 常用命令
-
-```bash
-./deploy.sh deploy    # 首次部署
-./deploy.sh upgrade   # 升级版本
-./deploy.sh restart   # 重启服务
-./deploy.sh stop      # 停止服务
-./deploy.sh status    # 查看状态
-./deploy.sh logs      # 查看日志
-./deploy.sh version   # 查看版本
-```
-
-### 备份恢复
-
-```bash
-./deploy.sh backup                     # 手动备份
-./deploy.sh restore backups/xxx.gz     # 恢复备份
-./deploy.sh cleanup                    # 清理 7 天前备份
-```
-
----
-
-## 版本管理
-
-### 目录结构
-
-```
-store/migration/postgres/
-├── VERSION           # 当前代码版本 (0.52.0)
-├── LATEST.sql        # 全量 Schema (首次部署使用)
-└── V*.sql            # 增量迁移脚本 (升级使用)
-```
-
-### 首次部署
-
-PostgreSQL 容器首次启动时自动执行 `LATEST.sql`，初始化数据库并写入版本号 `0.52.0`。
-
-### 版本升级
-
-1. **创建迁移脚本** - 放在 `store/migration/postgres/V{version}__{feature}.sql`
-2. **更新 VERSION** - `echo "0.52.0" > store/migration/postgres/VERSION`
-3. **执行升级** - `./deploy.sh upgrade`
-
-升级流程：
-1. 自动备份数据库
-2. 执行增量迁移脚本 (按版本号排序)
-3. 重新构建镜像
-4. 重启服务
-
----
-
-## 文件说明
-
-```
-deploy/aliyun/
-├── .env.prod.example          # 环境变量模板 (含 4 种配置方案)
-├── deploy.sh                  # 部署脚本
-└── README.md                  # 本文档
-```
-
-```
-docker/compose/
-├── dev.yml                    # 开发环境
-├── prod.yml                   # 生产环境 (PG + Memos)
-└── quick.yml                  # SQLite 快速启动
-```
-
-```
-store/migration/postgres/
-├── VERSION                   # 当前版本
-├── LATEST.sql                # 全量初始化
-└── V*.sql                    # 增量迁移
-```
-
----
-
-## 故障排查
-
-### 服务无法启动
-
-```bash
-./deploy.sh logs    # 查看日志
-docker stats        # 查看资源使用
-```
-
-### 数据库问题
-
-```bash
-# 检查 pgvector 扩展
-docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
-
-# 查看数据库版本
-docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
-```
-
-### 回滚
-
-```bash
-./deploy.sh restore backups/divinesense-backup-xxx.gz
-./deploy.sh restart
-```
-
----
-
-## 定时备份
-
-使用 cron 定时备份：
-
-```bash
-crontab -e
-
-# 每天凌晨 2 点备份
-0 2 * * * cd /root/divinesense-deploy && ./deploy.sh backup && ./deploy.sh cleanup
-```
+| 镜像拉取慢 | 一键安装脚本已自动配置国内镜像源 |
+| 服务无法启动 | `./deploy.sh logs` 查看日志 |
+| 忘记数据库密码 | `cat /opt/divinesense/.db_password` |
+| 防火墙问题 | 确保开放 5230 端口 |
 
 ---
 
 ## 安全建议
 
-1. **网络安全** - 只开放 22, 80, 443 端口
-2. **数据安全** - 定期备份，使用强密码
-3. **访问控制** - 配置防火墙规则
-4. **更新** - 定期更新镜像和依赖
+1. **修改密码** - 安装后修改数据库密码
+2. **备份** - 已配置每日自动备份，建议定期下载到本地
+3. **防火墙** - 只开放必要端口 (22, 80, 443, 5230)
+4. **HTTPS** - 生产环境建议配置反向代理 + SSL
+
+---
+
+## 文件位置
+
+```
+/opt/divinesense/
+├── .env.prod          # 环境配置
+├── .db_password       # 数据库密码
+├── deploy.sh          # 运维脚本
+└── backups/           # 备份目录
+```
