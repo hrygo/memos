@@ -53,7 +53,7 @@ func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store
 		return nil, errors.Wrap(err, "failed to get instance basic setting")
 	}
 
-	secret := "usememos"
+	secret := "divinesense"
 	if profile.Mode == "prod" {
 		secret = instanceBasicSetting.SecretKey
 	}
@@ -135,7 +135,7 @@ func (s *Server) Shutdown(ctx context.Context) {
 		slog.Error("failed to close database", slog.String("error", err.Error()))
 	}
 
-	slog.Info("memos stopped properly")
+	slog.Info("divinesense stopped properly")
 }
 
 func (s *Server) StartBackgroundRunners(ctx context.Context) {

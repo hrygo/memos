@@ -6,7 +6,7 @@
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8.svg)](https://go.dev/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
 
-> 基于 [usememos/memos](https://github.com/usememos/memos) 二次开发，全面升级为 AI Agent 驱动的智能中枢。
+> 基于 [hrygo/divinesense](https://github.com/hrygo/divinesense) 原生开发，以 AI Agent 为核心的智能中枢。
 
 ---
 

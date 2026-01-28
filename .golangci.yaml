@@ -98,4 +98,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/usememos/memos
+        - github.com/hrygo/divinesense

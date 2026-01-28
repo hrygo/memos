@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Memos 单机部署脚本 (2C2G 环境)
+# DivineSense 单机部署脚本 (2C2G 环境)
 # =============================================================================
 #
 # 使用方式:
@@ -40,7 +40,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${PROJECT_ROOT}/docker/compose/prod.yml"
 ENV_FILE="${SCRIPT_DIR}/.env.prod"
-IMAGE_NAME="memos"
+IMAGE_NAME="divinesense"
 IMAGE_TAG="${IMAGE_NAME}:latest"
 BACKUP_DIR="${SCRIPT_DIR}/backups"
 MIGRATIONS_DIR="${PROJECT_ROOT}/store/migration/postgres"
@@ -143,16 +143,16 @@ get_compose_cmd() {
 load_env() {
     # 读取数据库配置 (安全的变量解析，避免 eval 注入)
     # 使用 tr 和 xargs 清理控制字符和前后空格
-    POSTGRES_DB=$(grep "^POSTGRES_DB=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs || echo "memos")
-    POSTGRES_USER=$(grep "^POSTGRES_USER=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs || echo "memos")
+    POSTGRES_DB=$(grep "^POSTGRES_DB=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs || echo "divinesense")
+    POSTGRES_USER=$(grep "^POSTGRES_USER=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs || echo "divinesense")
     POSTGRES_PASSWORD=$(grep "^POSTGRES_PASSWORD=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs)
     # 读取自定义镜像配置
     USER_IMAGE=$(grep "^USER_IMAGE=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs)
     POSTGRES_IMAGE=$(grep "^POSTGRES_IMAGE=" "${ENV_FILE}" 2>/dev/null | cut -d'=' -f2- | tr -d '\n\r' | xargs || echo "pgvector/pgvector:pg16")
 
     # 默认值
-    POSTGRES_DB=${POSTGRES_DB:-memos}
-    POSTGRES_USER=${POSTGRES_USER:-memos}
+    POSTGRES_DB=${POSTGRES_DB:-divinesense}
+    POSTGRES_USER=${POSTGRES_USER:-divinesense}
     POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
     USER_IMAGE=${USER_IMAGE:-}
     POSTGRES_IMAGE=${POSTGRES_IMAGE:-pgvector/pgvector:pg16}
@@ -187,7 +187,7 @@ build_image() {
     if ! command -v go &>/dev/null; then
         log_error "Go 未安装，无法构建镜像"
         log_info "替代方案: 使用预构建镜像"
-        log_info "  在 .env.prod 中设置: USER_IMAGE=ghcr.io/usememos/memos:latest"
+        log_info "  在 .env.prod 中设置: USER_IMAGE=ghcr.io/hrygo/divinesense:latest"
         exit 1
     fi
 
@@ -219,7 +219,7 @@ build_image() {
 # 拉取预构建镜像
 pull_image() {
     load_env
-    local target_image="${USER_IMAGE:-ghcr.io/usememos/memos:latest}"
+    local target_image="${USER_IMAGE:-ghcr.io/hrygo/divinesense:latest}"
 
     log_info "拉取预构建镜像: ${target_image}"
 
@@ -237,7 +237,7 @@ pull_image() {
 # 部署服务
 deploy() {
     log_info "=========================================="
-    log_info "Memos 单机部署 (2C2G)"
+    log_info "DivineSense 单机部署 (2C2G)"
     log_info "=========================================="
 
     check_env
@@ -270,15 +270,15 @@ deploy() {
     fi
 
     # 启动服务
-    log_info "启动服务 (PostgreSQL + Memos)..."
+    log_info "启动服务 (PostgreSQL + DivineSense)..."
     $compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
 
     # 等待服务启动
     log_info "等待服务启动..."
     sleep 10
 
-    # 等待 Memos 就绪
-    log_info "等待 Memos 启动..."
+    # 等待 DivineSense 就绪
+    log_info "等待 DivineSense 启动..."
     local max_wait=60
     local waited=0
     while [ $waited -lt $max_wait ]; do
@@ -311,7 +311,7 @@ deploy() {
 # 升级服务
 upgrade() {
     log_info "=========================================="
-    log_info "Memos 升级"
+    log_info "DivineSense 升级"
     log_info "=========================================="
 
     check_env
@@ -424,7 +424,7 @@ status() {
 # 备份数据库
 backup() {
     local compose=$(get_compose_cmd)
-    local backup_file="${BACKUP_DIR}/memos-backup-$(date +%Y%m%d-%H%M%S).sql.gz"
+    local backup_file="${BACKUP_DIR}/divinesense-backup-$(date +%Y%m%d-%H%M%S).sql.gz"
 
     mkdir -p "${BACKUP_DIR}"
 
@@ -452,7 +452,7 @@ backup() {
 # 自动备份 (用于升级前)
 backup_auto() {
     local compose=$(get_compose_cmd)
-    local backup_file="${BACKUP_DIR}/memos-backup-pre-upgrade-$(date +%Y%m%d-%H%M%S).sql.gz"
+    local backup_file="${BACKUP_DIR}/divinesense-backup-pre-upgrade-$(date +%Y%m%d-%H%M%S).sql.gz"
 
     mkdir -p "${BACKUP_DIR}"
 
@@ -512,7 +512,7 @@ version() {
 # 清理旧备份
 cleanup() {
     log_info "清理 7 天前的备份..."
-    find "${BACKUP_DIR}" -name "memos-backup-*.sql.gz" -mtime +7 -delete
+    find "${BACKUP_DIR}" -name "divinesense-backup-*.sql.gz" -mtime +7 -delete
     log_success "清理完成"
 }
 
@@ -582,7 +582,7 @@ main() {
             echo "  3. $0 deploy      # 首次部署"
             echo ""
             echo "使用预构建镜像 (无需 Go/Node.js):"
-            echo "  1. 在 .env.prod 设置: USER_IMAGE=ghcr.io/usememos/memos:latest"
+            echo "  1. 在 .env.prod 设置: USER_IMAGE=ghcr.io/hrygo/divinesense:latest"
             echo "  2. $0 deploy"
             echo ""
             echo "示例:"

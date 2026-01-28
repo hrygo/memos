@@ -28,7 +28,7 @@ export const useMemoInit = (
       try {
         if (memoName) {
           // Force refetch from server to prevent stale data issues
-          // See: https://github.com/usememos/memos/issues/5470
+          // See: https://github.com/hrygo/divinesense/issues/5470
           await queryClient.invalidateQueries({ queryKey: memoKeys.detail(memoName) });
 
           // Load existing memo

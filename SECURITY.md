@@ -2,12 +2,12 @@
 
 ## Project Status
 
-Memos is currently in beta (v0.x). While we take security seriously, we are not yet ready for formal CVE assignments or coordinated disclosure programs.
+DivineSense is currently in beta (v0.x). While we take security seriously, we are not yet ready for formal CVE assignments or coordinated disclosure programs.
 
 ## Reporting Security Issues
 
 ### For All Security Concerns:
-Please report via **email only**: usememos@gmail.com
+Please report via **email only**: security@divinesense.com
 
 **DO NOT open public GitHub issues for security vulnerabilities.**
 
@@ -37,10 +37,10 @@ We plan to implement formal vulnerability disclosure and CVE handling after reac
 
 ## Self-Hosting Security
 
-Since Memos is self-hosted software:
+Since DivineSense is self-hosted software:
 - Keep your instance updated to the latest release
 - Don't expose your instance directly to the internet without authentication
 - Use reverse proxies (nginx, Caddy) with rate limiting
 - Review the deployment documentation for security best practices
 
-Thank you for helping improve Memos!
+Thank you for helping improve DivineSense!

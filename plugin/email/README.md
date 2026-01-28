@@ -1,6 +1,6 @@
 # Email Plugin
 
-SMTP email sending functionality for self-hosted Memos instances.
+SMTP email sending functionality for self-hosted DivineSense instances.
 
 ## Overview
 
@@ -23,7 +23,7 @@ This plugin provides a simple, reliable email sending interface following indust
 ### 1. Configure SMTP Settings
 
 ```go
-import "github.com/usememos/memos/plugin/email"
+import "github.com/hrygo/divinesense/plugin/email"
 
 config := &email.Config{
     SMTPHost:     "smtp.gmail.com",
@@ -31,7 +31,7 @@ config := &email.Config{
     SMTPUsername: "your-email@gmail.com",
     SMTPPassword: "your-app-password",
     FromEmail:    "noreply@yourdomain.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -41,7 +41,7 @@ config := &email.Config{
 ```go
 message := &email.Message{
     To:      []string{"user@example.com"},
-    Subject: "Welcome to Memos!",
+    Subject: "Welcome to DivineSense!",
     Body:    "Thanks for signing up.",
     IsHTML:  false,
 }
@@ -69,7 +69,7 @@ config := &email.Config{
     SMTPUsername: "your-email@gmail.com",
     SMTPPassword: "your-16-char-app-password",
     FromEmail:    "your-email@gmail.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -82,7 +82,7 @@ config := &email.Config{
     SMTPUsername: "your-email@gmail.com",
     SMTPPassword: "your-16-char-app-password",
     FromEmail:    "your-email@gmail.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseSSL:       true,
 }
 ```
@@ -96,7 +96,7 @@ config := &email.Config{
     SMTPUsername: "apikey",
     SMTPPassword: "your-sendgrid-api-key",
     FromEmail:    "noreply@yourdomain.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -110,7 +110,7 @@ config := &email.Config{
     SMTPUsername: "your-smtp-username",
     SMTPPassword: "your-smtp-password",
     FromEmail:    "verified@yourdomain.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -126,7 +126,7 @@ config := &email.Config{
     SMTPUsername: "postmaster@yourdomain.com",
     SMTPPassword: "your-mailgun-smtp-password",
     FromEmail:    "noreply@yourdomain.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -140,7 +140,7 @@ config := &email.Config{
     SMTPUsername: "username",
     SMTPPassword: "password",
     FromEmail:    "noreply@yourdomain.com",
-    FromName:     "Memos",
+    FromName:     "DivineSense",
     UseTLS:       true,
 }
 ```
@@ -150,7 +150,7 @@ config := &email.Config{
 ```go
 message := &email.Message{
     To:      []string{"user@example.com"},
-    Subject: "Welcome to Memos!",
+    Subject: "Welcome to DivineSense!",
     Body: `
 <!DOCTYPE html>
 <html>
@@ -158,7 +158,7 @@ message := &email.Message{
     <meta charset="UTF-8">
 </head>
 <body style="font-family: Arial, sans-serif;">
-    <h1 style="color: #333;">Welcome to Memos!</h1>
+    <h1 style="color: #333;">Welcome to DivineSense!</h1>
     <p>We're excited to have you on board.</p>
     <a href="https://yourdomain.com" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Get Started</a>
 </body>
@@ -209,7 +209,7 @@ package main
 
 import (
     "log"
-    "github.com/usememos/memos/plugin/email"
+    "github.com/hrygo/divinesense/plugin/email"
 )
 
 func main() {
@@ -226,7 +226,7 @@ func main() {
     message := &email.Message{
         To:      []string{"recipient@example.com"},
         Subject: "Test Email",
-        Body:    "This is a test email from Memos email plugin.",
+        Body:    "This is a test email from DivineSense email plugin.",
     }
 
     if err := email.Send(config, message); err != nil {
@@ -477,11 +477,11 @@ plugin/email/
 
 ## License
 
-Part of the Memos project. See main repository for license details.
+Part of the DivineSense project. See main repository for license details.
 
 ## Contributing
 
-This plugin follows the Memos contribution guidelines. Please ensure:
+This plugin follows the DivineSense contribution guidelines. Please ensure:
 
 1. All code is tested (TDD approach)
 2. Tests pass: `go test ./plugin/email/... -v`
@@ -492,8 +492,8 @@ This plugin follows the Memos contribution guidelines. Please ensure:
 
 For issues and questions:
 
-- Memos GitHub Issues: https://github.com/usememos/memos/issues
-- Memos Documentation: https://usememos.com/docs
+- DivineSense GitHub Issues: https://github.com/hrygo/divinesense/issues
+- DivineSense Documentation: https://usedivinesense.com/docs
 
 ## Roadmap
 

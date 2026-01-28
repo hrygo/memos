@@ -1,6 +1,6 @@
-# Memos 单机部署指南 (2C2G)
+# DivineSense 单机部署指南 (2C2G)
 
-适用于单台 2核2G 服务器的 Memos 生产环境部署方案。
+适用于单台 2核2G 服务器的 DivineSense 生产环境部署方案。
 
 ---
 
@@ -14,7 +14,7 @@
 │  │           Docker Network                 │  │
 │  │                                          │  │
 │  │  ┌──────────────┐  ┌─────────────────┐  │  │
-│  │  │  PostgreSQL  │  │     Memos      │  │  │
+│  │  │  PostgreSQL  │  │     DivineSense      │  │  │
 │  │  │  pg16+vector │  │  1核 / 1G       │  │  │
 │  │  │  1核 / 512M  │──│  :5230 ────────►│───┼──► 公网
 │  │  │  :5432       │  │                 │  │  │
@@ -30,7 +30,7 @@
 | 服务 | CPU | 内存 | 说明 |
 |------|-----|------|------|
 | PostgreSQL | 1核 | 512M | 数据库 |
-| Memos | 1核 | 1G | 应用服务 |
+| DivineSense | 1核 | 1G | 应用服务 |
 | 系统预留 | - | 512M | OS + Docker |
 
 ---
@@ -41,13 +41,13 @@
 
 ```bash
 # 上传到服务器
-scp -r deploy/aliyun user@your-server:/root/memos-deploy
-scp -r docker/compose user@your-server:/root/memos-deploy/docker/
-scp -r store/migration user@your-server:/root/memos-deploy/store/
+scp -r deploy/aliyun user@your-server:/root/divinesense-deploy
+scp -r docker/compose user@your-server:/root/divinesense-deploy/docker/
+scp -r store/migration user@your-server:/root/divinesense-deploy/store/
 
 # SSH 登录
 ssh user@your-server
-cd /root/memos-deploy
+cd /root/divinesense-deploy
 ```
 
 ### 2. 配置环境变量
@@ -104,7 +104,7 @@ MEMOS_AI_DEEPSEEK_API_KEY=sk-xxx              # 对话 LLM
 vi .env.prod
 
 # 添加以下行 (使用官方预构建镜像)
-USER_IMAGE=ghcr.io/usememos/memos:latest
+USER_IMAGE=ghcr.io/hrygo/divinesense:latest
 
 # 部署 (无需 Go/Node.js 环境)
 ./deploy.sh deploy
@@ -153,10 +153,10 @@ docker info | grep -A 10 "Registry Mirrors"
 
 ```bash
 # 1. 检查当前数据库版本
-docker exec memos-postgres psql -U memos -d memos -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
+docker exec divinesense-postgres psql -U divinesense -d divinesense -c "SELECT value FROM system_setting WHERE name = 'schema_version';"
 
 # 2. 备份现有数据库
-docker exec memos-postgres pg_dump -U memos memos | gzip > memos-backup-pre-migration.sql.gz
+docker exec divinesense-postgres pg_dump -U divinesense divinesense | gzip > divinesense-backup-pre-migration.sql.gz
 ```
 
 ### 迁移步骤
@@ -166,8 +166,8 @@ docker exec memos-postgres pg_dump -U memos memos | gzip > memos-backup-pre-migr
 sudo systemctl stop memos  # 或其他方式停止
 
 # 2. 更新部署文件
-cp docker/compose/prod.yml /root/memos-deploy/
-cp -r store/migration/postgres /root/memos-deploy/
+cp docker/compose/prod.yml /root/divinesense-deploy/
+cp -r store/migration/postgres /root/divinesense-deploy/
 
 # 3. 更新 .env.prod，添加新配置
 vi .env.prod
@@ -186,7 +186,7 @@ vi .env.prod
 docker exec memos psql -U memos -d memos -c "SELECT 1;"
 
 # 3. 检查数据完整性
-docker exec memos psql -U memos -d memos -c "SELECT COUNT(*) FROM memo;"
+docker exec divinesense psql -U divinesense -d divinesense -c "SELECT COUNT(*) FROM memo;"
 ```
 
 ### 外部数据库连接
@@ -203,8 +203,8 @@ POSTGRES_PORT_MAPPING=127.0.0.1:25432:5432
 # 连接信息
 # Host: 127.0.0.1
 # Port: 25432
-# Database: memos
-# User: memos
+# Database: divinesense
+# User: divinesense
 ```
 
 ---
@@ -309,7 +309,7 @@ docker exec memos-postgres psql -U memos -d memos -c "SELECT value FROM system_s
 ### 回滚
 
 ```bash
-./deploy.sh restore backups/memos-backup-xxx.gz
+./deploy.sh restore backups/divinesense-backup-xxx.gz
 ./deploy.sh restart
 ```
 
@@ -323,7 +323,7 @@ docker exec memos-postgres psql -U memos -d memos -c "SELECT value FROM system_s
 crontab -e
 
 # 每天凌晨 2 点备份
-0 2 * * * cd /root/memos-deploy && ./deploy.sh backup && ./deploy.sh cleanup
+0 2 * * * cd /root/divinesense-deploy && ./deploy.sh backup && ./deploy.sh cleanup
 ```
 
 ---

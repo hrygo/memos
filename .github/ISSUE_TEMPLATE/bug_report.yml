@@ -15,7 +15,7 @@ body:
       options:
         - label: I have searched the existing issues and this bug has not been reported yet
           required: true
-        - label: I have tested this issue on the [demo site](https://demo.usememos.com) or the latest version
+        - label: I have tested this issue on the latest version
           required: true
 
   - type: dropdown
@@ -26,7 +26,6 @@ body:
       options:
         - Latest stable version (self-hosted)
         - Latest development version (self-hosted)
-        - Demo site (demo.usememos.com)
         - Older version (please specify below)
       default: 0
     validations:
@@ -35,9 +34,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: Memos Version
-      description: Provide the exact version (e.g., `v0.25.2`). Find this in Settings → About or via `--version` flag
-      placeholder: v0.25.2
+      label: DivineSense Version
+      description: Provide the exact version (e.g., `v0.1.0`). Find this in Settings → About or via `--version` flag
+      placeholder: v0.1.0
     validations:
       required: true
 

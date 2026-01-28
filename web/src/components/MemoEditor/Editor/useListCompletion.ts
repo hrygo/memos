@@ -26,7 +26,7 @@ export function useListCompletion({ editorRef, editorActions, isInIME }: UseList
 
   // Track when composition ends to handle Safari race condition
   // Safari fires keydown(Enter) immediately after compositionend, while Chrome doesn't
-  // See: https://github.com/usememos/memos/issues/5469
+  // See: https://github.com/hrygo/divinesense/issues/5469
   const lastCompositionEndRef = useRef(0);
 
   useEffect(() => {
