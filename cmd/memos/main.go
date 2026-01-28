@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -130,16 +131,24 @@ func init() {
 
 	viper.SetEnvPrefix("memos")
 	viper.AutomaticEnv()
+	// Support both DIVINESENSE_* and MEMOS_* prefixes for backward compatibility
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+
 	// Bind environment variables for configuration
-	if err := viper.BindEnv("driver", "MEMOS_DRIVER"); err != nil {
-		panic(err)
+	// Try DIVINESENSE_* first, fall back to MEMOS_*
+	bindEnvWithFallback := func(configKey, newEnv, legacyEnv string) {
+		if err := viper.BindEnv(configKey, newEnv); err != nil {
+			panic(err)
+		}
+		// Also bind legacy prefix for compatibility
+		if err := viper.BindEnv(configKey, legacyEnv); err != nil {
+			panic(err)
+		}
 	}
-	if err := viper.BindEnv("dsn", "MEMOS_DSN"); err != nil {
-		panic(err)
-	}
-	if err := viper.BindEnv("instance-url", "MEMOS_INSTANCE_URL"); err != nil {
-		panic(err)
-	}
+
+	bindEnvWithFallback("driver", "DIVINESENSE_DRIVER", "MEMOS_DRIVER")
+	bindEnvWithFallback("dsn", "DIVINESENSE_DSN", "MEMOS_DSN")
+	bindEnvWithFallback("instance-url", "DIVINESENSE_INSTANCE_URL", "MEMOS_INSTANCE_URL")
 }
 
 func printGreetings(profile *profile.Profile) {

@@ -18,8 +18,9 @@ endif
 .DEFAULT_GOAL := help
 
 # 数据库配置 (PostgreSQL)
+# 默认使用 memos 数据库以保持向后兼容
 DIVINESENSE_DRIVER ?= postgres
-DIVINESENSE_DSN ?= postgres://divinesense:divinesense@localhost:25432/divinesense?sslmode=disable
+DIVINESENSE_DSN ?= postgres://memos:memos@localhost:25432/memos?sslmode=disable
 
 # AI 配置
 AI_EMBEDDING_PROVIDER ?= siliconflow
