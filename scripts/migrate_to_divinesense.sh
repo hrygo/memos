@@ -1,6 +1,17 @@
 #!/bin/bash
 # DivineSense 数据库迁移脚本
 # 从 memos 数据库迁移到 divinesense 数据库
+#
+# 用途:
+#   - 从旧的 memos 数据库迁移到新的 divinesense 数据库
+#
+# 注意:
+#   - 此脚本仅用于从 memos 迁移现有数据
+#   - 新用户请直接使用 docker-compose 启动，会自动创建 divinesense 数据库
+#
+# 新用户快速开始:
+#   1. cp .env.example .env
+#   2. make start  # 自动创建 divinesense 数据库并初始化
 
 set -e
 
