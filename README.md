@@ -1,20 +1,20 @@
-# Memos
+# DivineSense (神识)
 
-**隐私优先的 AI 笔记助手** — 轻量级笔记 + 智能日程 + 多智能体 AI，数据完全由你掌控。
+**以 AI Agent 为核心驱动的个人数字化"第二大脑"** — 通过任务自动化执行与高价值信息过滤，将技术杠杆转化为个人效能飞跃与生活时间自由的核心中枢。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8.svg)](https://go.dev/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
 
-> 基于 [usememos/memos](https://github.com/usememos/memos) 二次开发，增强 AI 能力。
+> 基于 [usememos/memos](https://github.com/usememos/memos) 二次开发，全面升级为 AI Agent 驱动的智能中枢。
 
 ---
 
-## 为什么选择 Memos？
+## 为什么选择 DivineSense？
 
-| 🔒 **隐私优先** | 📝 **轻量笔记** | 🤖 **AI 增强** | 📅 **智能日程** |
+| ⚡ **效能飞跃** | 🧠 **第二大脑** | 🤖 **Agent 驱动** | 🔒 **隐私优先** |
 |:---:|:---:|:---:|:---:|
-| 自托管，无遥测<br/>数据完全私有 | 打开即写<br/>Markdown 支持 | 语义搜索<br/>智能问答 | 自然语言输入<br/>冲突检测 |
+| 自动化执行<br/>释放时间 | 知识沉淀<br/>智能关联 | 多智能体协作<br/>意图路由 | 自托管<br/>数据完全私有 |
 
 ---
 
@@ -23,14 +23,14 @@
 **Docker 一键启动**（基础笔记功能，内置 SQLite）：
 
 ```bash
-docker run -d --name memos -p 5230:5230 -v ~/.memos:/var/opt/memos hrygo/memos:stable
+docker run -d --name divinesense -p 5230:5230 -v ~/.divinesense:/var/opt/divinesense hrygo/divinesense:stable
 ```
 
 **启用 AI 功能**（需要 PostgreSQL + API Key）：
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/hrygo/memos.git && cd memos
+git clone https://github.com/hrygo/divinesense.git && cd divinesense
 
 # 2. 配置环境变量
 cp .env.example .env
@@ -61,13 +61,13 @@ make restart  # 重启服务
 
 ## 核心功能
 
-### 📝 笔记管理
+### 🧠 笔记管理
 
 - **快速记录** — 打开即写，支持 Markdown
 - **标签分类** — `#标签` 自动归类
 - **时间线** — 按时间流浏览笔记
 - **附件上传** — 图片、文件嵌入
-- **搜索过滤** — 关键词、标签、时间范围
+- **语义搜索** — AI 理解意图，精准检索
 
 ### 📅 日程管理
 
@@ -83,9 +83,9 @@ make restart  # 重启服务
 
 | 智能体 | 专长 | 示例 |
 |:---:|:---|:---|
-| 🦜 **灰灰** | 笔记搜索 | "我之前写过关于 React 的笔记吗？" |
+| 🦜 **灰灰** | 知识检索 | "我之前写过关于 React 的笔记吗？" |
 | 📅 **金刚** | 日程管理 | "帮我安排明天下午的会议" |
-| ⭐ **惊奇** | 综合助手 | "总结一下本周的工作和日程" |
+| ⭐ **惊奇** | 综合助理 | "总结一下本周的工作和日程" |
 
 **智能路由**：输入后自动识别意图，无需手动选择。
 

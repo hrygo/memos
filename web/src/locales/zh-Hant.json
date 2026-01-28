@@ -1,4 +1,9 @@
 {
+  "app": {
+    "name": "神識",
+    "name-alt": "DivineSense",
+    "description": "以 AI Agent 為核心驅動的個人數位化第二大腦"
+  },
   "about": {
     "blogs": "部落格",
     "description": "以隱私為核心的輕量化筆記服務，輕鬆記錄並分享您的好點子。",

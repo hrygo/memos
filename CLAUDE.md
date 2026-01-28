@@ -2,6 +2,12 @@
 
 > **Primary source of truth**. For detailed guides, see **Documentation Index** below.
 
+## 产品定位
+
+**DivineSense (神识)**：以 AI Agent 为核心驱动的个人数字化"第二大脑"，通过任务自动化执行与高价值信息过滤，将技术杠杆转化为个人效能飞跃与生活时间自由的核心中枢。
+
+---
+
 ## ⚡ Essentials
 
 **Start**: `make start` → localhost:25173 (Frontend) / 28081 (Backend)

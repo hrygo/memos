@@ -1,4 +1,4 @@
-module github.com/usememos/memos
+module github.com/hrygo/divinesense
 
 go 1.25
 

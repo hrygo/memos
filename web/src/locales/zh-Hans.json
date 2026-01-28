@@ -1,4 +1,9 @@
 {
+  "app": {
+    "name": "神识",
+    "name-alt": "DivineSense",
+    "description": "以 AI Agent 为核心驱动的个人数字化第二大脑"
+  },
   "ai": {
     "aichat": {
       "amazing-insight": {

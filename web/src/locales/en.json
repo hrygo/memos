@@ -1,4 +1,9 @@
 {
+  "app": {
+    "name": "DivineSense",
+    "name-alt": "神识",
+    "description": "AI-driven personal digital second brain"
+  },
   "ai": {
     "aichat": {
       "amazing-insight": {
