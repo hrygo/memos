@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.6.0] - 2026-01-28
+
+### 🌟 Rebranding & Major Refactor
+
+- **Brand Identity**: Officially rebranded to **DivineSense (神识)**.
+- **Visual Identity**: New logo design with "Neural Spark" concept, supporting both Light and Dark modes.
+- **Codebase Structure**: Major refactoring of command entry points (`cmd/divinesense`) and module paths.
+- **Architecture**: Cleaned up protobuf generation and dependency management.
+
+### 🛠️ Improvements
+
+- **Git Workflow**: Optimized `.gitignore` and removed local tracking files (`.loki`).
+- **Build System**: Updated build scripts and Docker configuration for the new project structure.
+
 ## [v0.54.0] - 2026-01-27
 
 ### 🚀 Features & UX Improvements
