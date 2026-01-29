@@ -63,7 +63,7 @@ func (d *DB) ListAgentMetrics(ctx context.Context, find *store.FindAgentMetrics)
 	if find.EndTime != nil {
 		where = append(where, fmt.Sprintf("hour_bucket <= $%d", argIndex))
 		args = append(args, *find.EndTime)
-		argIndex++
+
 	}
 
 	query := fmt.Sprintf(`
@@ -172,7 +172,7 @@ func (d *DB) ListToolMetrics(ctx context.Context, find *store.FindToolMetrics) (
 	if find.EndTime != nil {
 		where = append(where, fmt.Sprintf("hour_bucket <= $%d", argIndex))
 		args = append(args, *find.EndTime)
-		argIndex++
+
 	}
 
 	query := fmt.Sprintf(`

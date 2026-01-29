@@ -869,7 +869,8 @@ func (s *APIV1Service) DeleteUserWebhook(ctx context.Context, request *v1pb.Dele
 // generateUserWebhookID generates a unique ID for user webhooks.
 func generateUserWebhookID() string {
 	b := make([]byte, 8)
-	rand.Read(b)
+	// nolint:errcheck
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
 

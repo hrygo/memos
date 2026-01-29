@@ -1,4 +1,3 @@
-import type { LatLng } from "leaflet";
 import type { Location, Memo, Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import type { EditorRefActions } from "../Editor";
 import type { Command } from "../Editor/commands";
@@ -56,7 +55,7 @@ export interface LocationDialogProps {
   onOpenChange: (open: boolean) => void;
   state: LocationState;
   locationInitialized: boolean;
-  onPositionChange: (position: LatLng) => void;
+  onPositionChange: (position: { lat: number; lng: number }) => void;
   onUpdateCoordinate: (type: "lat" | "lng", value: string) => void;
   onPlaceholderChange: (placeholder: string) => void;
   onCancel: () => void;

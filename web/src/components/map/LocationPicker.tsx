@@ -6,14 +6,19 @@ import { MapContainer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { cn } from "@/lib/utils";
 import { defaultMarkerIcon, ThemedTileLayer } from "./map-utils";
 
+interface LatLngLiteral {
+  lat: number;
+  lng: number;
+}
+
 interface MarkerProps {
-  position: LatLng | undefined;
-  onChange: (position: LatLng) => void;
+  position: LatLngLiteral | undefined;
+  onChange: (position: LatLngLiteral) => void;
   readonly?: boolean;
 }
 
 const LocationMarker = (props: MarkerProps) => {
-  const [position, setPosition] = useState(props.position);
+  const [position, setPosition] = useState<LatLngLiteral | undefined>(props.position);
   const initializedRef = useRef(false);
 
   const map = useMapEvents({
@@ -27,7 +32,7 @@ const LocationMarker = (props: MarkerProps) => {
       // Call the parent onChange function.
       props.onChange(e.latlng);
     },
-    locationfound() {},
+    locationfound() { },
   });
 
   useEffect(() => {
@@ -81,7 +86,7 @@ const GlassButton = ({ icon, onClick, ariaLabel, title }: GlassButtonProps) => {
 
 // Container for all map control buttons
 interface ControlButtonsProps {
-  position: LatLng | undefined;
+  position: LatLngLiteral | undefined;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onOpenGoogleMaps: () => void;
@@ -129,7 +134,7 @@ class MapControlsContainer extends L.Control {
 }
 
 interface MapControlsProps {
-  position: LatLng | undefined;
+  position: LatLngLiteral | undefined;
 }
 
 const MapControls = ({ position }: MapControlsProps) => {
@@ -216,8 +221,8 @@ const MapCleanup = () => {
 
 interface MapProps {
   readonly?: boolean;
-  latlng?: LatLng;
-  onChange?: (position: LatLng) => void;
+  latlng?: LatLngLiteral;
+  onChange?: (position: LatLngLiteral) => void;
 }
 
 const DEFAULT_CENTER_LAT_LNG = new LatLng(48.8584, 2.2945);
@@ -235,7 +240,7 @@ const LeafletMap = (props: MapProps) => {
       attributionControl={false}
     >
       <ThemedTileLayer />
-      <LocationMarker position={position} readonly={props.readonly} onChange={props.onChange ? props.onChange : () => {}} />
+      <LocationMarker position={position} readonly={props.readonly} onChange={props.onChange ? props.onChange : () => { }} />
       <MapControls position={props.latlng} />
       <MapCleanup />
     </MapContainer>

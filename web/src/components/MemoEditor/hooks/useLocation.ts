@@ -1,14 +1,18 @@
 import { create } from "@bufbuild/protobuf";
-import { LatLng } from "leaflet";
 import { useState } from "react";
 import { Location, LocationSchema } from "@/types/proto/api/v1/memo_service_pb";
 import { LocationState } from "../types/insert-menu";
+
+interface LatLng {
+  lat: number;
+  lng: number;
+}
 
 export const useLocation = (initialLocation?: Location) => {
   const [locationInitialized, setLocationInitialized] = useState(false);
   const [state, setState] = useState<LocationState>({
     placeholder: initialLocation?.placeholder || "",
-    position: initialLocation ? new LatLng(initialLocation.latitude, initialLocation.longitude) : undefined,
+    position: initialLocation ? { lat: initialLocation.latitude, lng: initialLocation.longitude } : undefined,
     latInput: initialLocation ? String(initialLocation.latitude) : "",
     lngInput: initialLocation ? String(initialLocation.longitude) : "",
   });
@@ -32,7 +36,7 @@ export const useLocation = (initialLocation?: Location) => {
     const num = parseFloat(value);
     const isValid = type === "lat" ? !isNaN(num) && num >= -90 && num <= 90 : !isNaN(num) && num >= -180 && num <= 180;
     if (isValid && state.position) {
-      updatePosition(type === "lat" ? new LatLng(num, state.position.lng) : new LatLng(state.position.lat, num));
+      updatePosition(type === "lat" ? { lat: num, lng: state.position.lng } : { lat: state.position.lat, lng: num });
     }
   };
 

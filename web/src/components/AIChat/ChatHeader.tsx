@@ -68,7 +68,7 @@ export function ChatHeader({
       {/* Left Section */}
       <div className="flex items-center gap-2.5">
         <div className="w-9 h-9 flex items-center justify-center">
-          <img src="/logo.webp" alt={assistantName} className="h-9 w-auto object-contain" />
+          <img src="/assistant-avatar.webp" alt={assistantName} className="h-9 w-auto object-contain" />
         </div>
         <div className="flex flex-col">
           <h1 className="font-semibold text-foreground text-sm leading-tight">{assistantName}</h1>

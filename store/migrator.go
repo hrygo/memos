@@ -159,7 +159,9 @@ func (s *Store) applyMigrations(ctx context.Context, currentSchemaVersion, targe
 	if err != nil {
 		return errors.Wrap(err, "failed to start transaction")
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// Use safe version for comparison (handles empty version case)
 	schemaVersionForComparison := getSchemaVersionOrDefault(currentSchemaVersion)
@@ -235,7 +237,9 @@ func (s *Store) preMigrate(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to start transaction")
 		}
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 		slog.Info("initializing new database with latest schema", slog.String("file", filePath))
 		if err := s.execute(ctx, tx, string(bytes)); err != nil {
 			return errors.Errorf("failed to execute SQL file %s, err %s", filePath, err)
@@ -293,7 +297,9 @@ func (s *Store) seed(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to start transaction")
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 	// Loop over all seed files and execute them in order.
 	for _, filename := range filenames {
 		bytes, err := seedFS.ReadFile(filename)

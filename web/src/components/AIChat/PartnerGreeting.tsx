@@ -211,7 +211,7 @@ export const PartnerGreeting = memo(function PartnerGreeting({
       {/* 主图标 */}
       <div className="mb-6">
         <div className="w-16 h-16 flex items-center justify-center">
-          <img src="/logo.webp" alt="AI Agent" className="h-16 w-auto object-contain" />
+          <img src="/assistant-avatar.webp" alt="AI Agent" className="h-16 w-auto object-contain" />
         </div>
       </div>
 

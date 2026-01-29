@@ -235,6 +235,12 @@ func (s *AIService) AddContextSeparator(ctx context.Context, req *v1pb.AddContex
 		ID:        req.ConversationId,
 		UpdatedTs: &now,
 	})
+	if err != nil {
+		slog.Default().Warn("Failed to update conversation timestamp after adding separator",
+			"conversation_id", req.ConversationId,
+			"error", err,
+		)
+	}
 
 	return &emptypb.Empty{}, nil
 }
@@ -357,7 +363,7 @@ func (s *AIService) ListMessages(ctx context.Context, req *v1pb.ListMessagesRequ
 		for i := len(visibleMessages) - 1; i >= 0; i-- {
 			if visibleMessages[i].Type == store.AIMessageTypeMessage {
 				msgCount++
-				if msgCount > MaxMessageLimit {
+				if msgCount > int(limit) {
 					startIndex = i + 1
 					break
 				}
@@ -388,7 +394,7 @@ func (s *AIService) ListMessages(ctx context.Context, req *v1pb.ListMessagesRequ
 	// Collect messages from startIndex, max MaxMessageLimit MSG (SEP included)
 	var result []*store.AIMessage
 	msgCount := 0
-	for i := startIndex; i < len(visibleMessages) && msgCount < MaxMessageLimit; i++ {
+	for i := startIndex; i < len(visibleMessages) && msgCount < int(limit); i++ {
 		msg := visibleMessages[i]
 		result = append(result, msg)
 		if msg.Type == store.AIMessageTypeMessage {

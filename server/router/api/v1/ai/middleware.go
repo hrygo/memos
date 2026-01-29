@@ -88,9 +88,7 @@ func (h *authHandler) Handle(ctx context.Context, req *ChatRequest, stream ChatS
 }
 
 // RateLimitMiddleware applies rate limiting.
-type RateLimitMiddleware struct {
-	limiter *middleware.RateLimiter
-}
+// Note: The struct is not preserved as it is only used to create the handler closure.
 
 // NewRateLimitMiddleware creates a new rate limit middleware.
 func NewRateLimitMiddleware(limiter *middleware.RateLimiter) Middleware {
@@ -212,4 +210,3 @@ func BuildChatMessages(message string, history []string, systemPrompt string) []
 
 	return messages
 }
-

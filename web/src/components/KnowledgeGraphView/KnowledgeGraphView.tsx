@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ForceGraph2D, { ForceGraphMethods, LinkObject, NodeObject } from "react-force-graph-2d";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, lazy } from "react";
+import type { ForceGraphMethods, LinkObject, NodeObject } from "react-force-graph-2d";
 import { useTranslation } from "react-i18next";
 import { Loader2, ZoomIn, ZoomOut, Maximize2, Filter, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import useNavigateTo from "@/hooks/useNavigateTo";
 import { useKnowledgeGraph } from "@/hooks/useAIQueries";
 import { CLUSTER_COLORS, EDGE_TYPE_COLORS, convertProtoToGraphData } from "./types";
+
+const ForceGraph2D = lazy(() => import("react-force-graph-2d"));
 
 interface Props {
   className?: string;
@@ -323,25 +325,31 @@ const KnowledgeGraphView = ({ className }: Props) => {
       {/* Graph container */}
       <div ref={containerRef} className="flex-1 relative">
         {filteredGraphData.nodes.length > 0 ? (
-          <ForceGraph2D
-            ref={graphRef}
-            width={graphSize.width}
-            height={graphSize.height}
-            graphData={filteredGraphData}
-            nodeId="id"
-            nodeLabel={(node) => `${node.label}\n${node.tags.map((tag: string) => `#${tag}`).join(" ")}`}
-            nodeColor={getNodeColor}
-            nodeRelSize={1}
-            nodeVal={getNodeSize}
-            linkColor={getLinkColor}
-            linkWidth={getLinkWidth}
-            linkDirectionalParticles={1}
-            linkDirectionalParticleWidth={(link) => link.weight * 2}
-            onNodeClick={onNodeClick}
-            cooldownTicks={100}
-            enableZoomInteraction
-            enablePanInteraction
-          />
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          }>
+            <ForceGraph2D
+              ref={graphRef}
+              width={graphSize.width}
+              height={graphSize.height}
+              graphData={filteredGraphData}
+              nodeId="id"
+              nodeLabel={(node) => `${node.label}\n${node.tags.map((tag: string) => `#${tag}`).join(" ")}`}
+              nodeColor={getNodeColor}
+              nodeRelSize={1}
+              nodeVal={getNodeSize}
+              linkColor={getLinkColor}
+              linkWidth={getLinkWidth}
+              linkDirectionalParticles={1}
+              linkDirectionalParticleWidth={(link) => link.weight * 2}
+              onNodeClick={onNodeClick}
+              cooldownTicks={100}
+              enableZoomInteraction
+              enablePanInteraction
+            />
+          </Suspense>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-muted-foreground">{t("ai.knowledge-graph.no-data")}</p>

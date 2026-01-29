@@ -50,12 +50,12 @@ const (
 
 // RouteDecision 路由决策
 type RouteDecision struct {
-	Strategy           string             // 路由策略名称
-	Confidence         float32            // 置信度 (0.0-1.0)
-	TimeRange          *TimeRange
-	SemanticQuery      string             // 清理后的语义查询
-	NeedsReranker      bool               // 是否需要重排序
-	ScheduleQueryMode  ScheduleQueryMode  // 日程查询模式（P1 新增）
+	Strategy          string  // 路由策略名称
+	Confidence        float32 // 置信度 (0.0-1.0)
+	TimeRange         *TimeRange
+	SemanticQuery     string            // 清理后的语义查询
+	NeedsReranker     bool              // 是否需要重排序
+	ScheduleQueryMode ScheduleQueryMode // 日程查询模式（P1 新增）
 }
 
 // TimeRange 时间范围
@@ -951,11 +951,7 @@ func (tr *TimeRange) ValidateTimeRange() bool {
 
 	// 防止时间范围过大
 	maxDuration := time.Duration(config.TimeRange.MaxRangeDays) * 24 * time.Hour
-	if tr.Duration() > maxDuration {
-		return false
-	}
-
-	return true
+	return tr.Duration() <= maxDuration
 }
 
 // Contains 检查给定时间是否在范围内

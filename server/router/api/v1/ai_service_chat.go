@@ -114,7 +114,7 @@ func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer
 
 	// Handle separator (---) - emit event and return without agent processing
 	if req.Message == "---" && chatReq.ConversationID != 0 {
-		eventBus.Publish(ctx, &aichat.ChatEvent{
+		_, _ = eventBus.Publish(ctx, &aichat.ChatEvent{
 			Type:               aichat.EventSeparator,
 			UserID:             user.ID,
 			AgentType:          chatReq.AgentType,
@@ -127,7 +127,8 @@ func (s *AIService) Chat(req *v1pb.ChatRequest, stream v1pb.AIService_ChatServer
 	}
 
 	// Emit user message event
-	eventBus.Publish(ctx, &aichat.ChatEvent{
+	// Emit user message event
+	_, _ = eventBus.Publish(ctx, &aichat.ChatEvent{
 		Type:               aichat.EventUserMessage,
 		UserID:             user.ID,
 		AgentType:          chatReq.AgentType,
@@ -268,7 +269,7 @@ func (s *eventCollectingStream) Send(resp *v1pb.ChatResponse) error {
 		s.mu.Unlock()
 
 		if response != "" {
-			s.eventBus.Publish(s.Context(), &aichat.ChatEvent{
+			_, _ = s.eventBus.Publish(s.Context(), &aichat.ChatEvent{
 				Type:               aichat.EventAssistantResponse,
 				UserID:             s.userID,
 				AgentType:          s.agentType,

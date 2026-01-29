@@ -177,7 +177,7 @@ export const PARROT_AGENTS: Record<ParrotAgentType, ParrotAgent> = {
   [ParrotAgentType.AMAZING]: {
     id: ParrotAgentType.AMAZING,
     name: "amazing",
-    icon: "/images/parrots/icons/amazing_icon.webp",
+    icon: "/assistant-avatar.webp",
     displayName: "Amazing",
     description: "Comprehensive assistant combining memo and schedule features",
     color: "purple",
@@ -356,5 +356,5 @@ export const PARROT_THEMES = {
 export const PARROT_ICONS: Record<string, string> = {
   MEMO: "/images/parrots/icons/memo_icon.webp",
   SCHEDULE: "/images/parrots/icons/schedule_icon.webp",
-  AMAZING: "/images/parrots/icons/amazing_icon.webp",
+  AMAZING: "/assistant-avatar.webp",
 };

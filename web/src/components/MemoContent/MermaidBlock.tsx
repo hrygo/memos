@@ -1,4 +1,3 @@
-import mermaid from "mermaid";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -55,6 +54,7 @@ export const MermaidBlock = ({ children, className }: MermaidBlockProps) => {
 
     const renderDiagram = async () => {
       try {
+        const mermaid = (await import("mermaid")).default;
         const id = `mermaid-${Math.random().toString(36).substring(7)}`;
         const mermaidTheme = getMermaidTheme(currentTheme);
 

@@ -40,7 +40,9 @@ func TestSessionRecovery(t *testing.T) {
 				{Role: "assistant", Content: "Hi there"},
 			},
 		}
-		mock.SaveContext(ctx, "existing-session", existingCtx)
+		if err := mock.SaveContext(ctx, "existing-session", existingCtx); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		// Recover it
 		session, err := recovery.RecoverSession(ctx, "existing-session", 1)
@@ -63,7 +65,9 @@ func TestSessionRecovery(t *testing.T) {
 			AgentType: "memo",
 			Messages:  []Message{},
 		}
-		mock.SaveContext(ctx, "append-test", session)
+		if err := mock.SaveContext(ctx, "append-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		// Append message
 		msg := &Message{Role: "user", Content: "New message"}
@@ -93,7 +97,9 @@ func TestSessionRecovery(t *testing.T) {
 			AgentType: "memo",
 			Messages:  messages,
 		}
-		mock.SaveContext(ctx, "sliding-window-test", session)
+		if err := mock.SaveContext(ctx, "sliding-window-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		// Append one more
 		msg := &Message{Role: "user", Content: "Overflow message"}
@@ -119,7 +125,9 @@ func TestSessionRecovery(t *testing.T) {
 			AgentType: "memo",
 			Messages:  []Message{},
 		}
-		mock.SaveContext(ctx, "turn-test", session)
+		if err := mock.SaveContext(ctx, "turn-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		err := recovery.AppendTurn(ctx, "turn-test", "User question", "Assistant answer", "schedule")
 		if err != nil {
@@ -142,7 +150,9 @@ func TestSessionRecovery(t *testing.T) {
 			Messages:  []Message{},
 			Metadata:  map[string]any{},
 		}
-		mock.SaveContext(ctx, "metadata-test", session)
+		if err := mock.SaveContext(ctx, "metadata-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		err := recovery.UpdateMetadata(ctx, "metadata-test", "topic", "important")
 		if err != nil {
@@ -166,7 +176,9 @@ func TestSessionRecovery(t *testing.T) {
 				{Role: "assistant", Content: "4"},
 			},
 		}
-		mock.SaveContext(ctx, "recent-test", session)
+		if err := mock.SaveContext(ctx, "recent-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		messages, err := recovery.GetRecentMessages(ctx, "recent-test", 2)
 		if err != nil {
@@ -191,7 +203,9 @@ func TestSessionRecovery(t *testing.T) {
 			},
 			Metadata: map[string]any{"keep": "this"},
 		}
-		mock.SaveContext(ctx, "clear-test", session)
+		if err := mock.SaveContext(ctx, "clear-test", session); err != nil {
+			t.Fatalf("SaveContext failed: %v", err)
+		}
 
 		err := recovery.ClearMessages(ctx, "clear-test")
 		if err != nil {

@@ -47,13 +47,14 @@ func NewTimezoneValidator(tz string) *TimezoneValidator {
 //   - ValidationResult: Contains the validated time and any warnings
 //
 // DST Edge Cases Handled:
-//   1. Spring Forward (Invalid Time): When clocks "spring forward", times in the gap don't exist.
-//      Example: In America/New_York on 2024-03-10, time jumps from 1:59:59 AM to 3:00:00 AM.
-//               Times like 2:30 AM don't exist - they're adjusted forward to 3:00 AM.
 //
-//   2. Fall Back (Ambiguous Time): When clocks "fall back", the same hour occurs twice.
-//      Example: In America/New_York on 2024-11-03, 1:30 AM occurs twice (before and after the switch).
-//               The first occurrence (Eastern Daylight Time) is used by default.
+//  1. Spring Forward (Invalid Time): When clocks "spring forward", times in the gap don't exist.
+//     Example: In America/New_York on 2024-03-10, time jumps from 1:59:59 AM to 3:00:00 AM.
+//     Times like 2:30 AM don't exist - they're adjusted forward to 3:00 AM.
+//
+//  2. Fall Back (Ambiguous Time): When clocks "fall back", the same hour occurs twice.
+//     Example: In America/New_York on 2024-11-03, 1:30 AM occurs twice (before and after the switch).
+//     The first occurrence (Eastern Daylight Time) is used by default.
 func (v *TimezoneValidator) ValidateLocalTime(year int, month time.Month, day, hour, min int) *ValidationResult {
 	var warnings []string
 
@@ -188,7 +189,7 @@ func (v *TimezoneValidator) GetDSTTransitionInfo(startTs, endTs int64) []*DSTTra
 		// If offset changed, we found a transition
 		if offset != offsetTomorrow {
 			// Determine transition type
-			transitionType := DSTTransitionTypeUnknown
+			var transitionType DSTTransitionType
 			if offsetTomorrow > offset {
 				transitionType = DSTTransitionFallBack // Clocks go back, hour repeats
 			} else {
@@ -216,19 +217,19 @@ func (v *TimezoneValidator) GetDSTTransitionInfo(startTs, endTs int64) []*DSTTra
 type DSTTransitionType int
 
 const (
-	DSTTransitionTypeUnknown DSTTransitionType = iota
-	DSTTransitionSpringForward                 // Clocks move forward (gap in time)
-	DSTTransitionFallBack                      // Clocks move back (repeated hour)
+	DSTTransitionTypeUnknown   DSTTransitionType = iota
+	DSTTransitionSpringForward                   // Clocks move forward (gap in time)
+	DSTTransitionFallBack                        // Clocks move back (repeated hour)
 )
 
 // DSTTransition represents a DST transition event.
 type DSTTransition struct {
-	Time        time.Time       // When the transition occurs
+	Time        time.Time         // When the transition occurs
 	Type        DSTTransitionType // Spring forward or fall back
-	FromOffset  int             // Offset before transition (seconds)
-	ToOffset    int             // Offset after transition (seconds)
-	ZoneName    string          // Zone name before transition
-	ZoneNameNew string          // Zone name after transition
+	FromOffset  int               // Offset before transition (seconds)
+	ToOffset    int               // Offset after transition (seconds)
+	ZoneName    string            // Zone name before transition
+	ZoneNameNew string            // Zone name after transition
 }
 
 // String returns a human-readable description of the transition.

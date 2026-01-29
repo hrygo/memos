@@ -1,8 +1,6 @@
-import { LatLng } from "leaflet";
-
 export interface LocationState {
   placeholder: string;
-  position?: LatLng;
+  position?: { lat: number; lng: number };
   latInput: string;
   lngInput: string;
 }

@@ -10,8 +10,8 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/lithammer/shortuuid/v4"
 	"github.com/hrygo/divinesense/store"
+	"github.com/lithammer/shortuuid/v4"
 )
 
 // emptyMetadata is the default empty JSON object for message metadata.
@@ -359,10 +359,16 @@ func (s *ConversationService) findOrCreateFixedConversation(ctx context.Context,
 	})
 	if err == nil && len(conversations) > 0 {
 		// Update timestamp
-		s.store.UpdateAIConversation(ctx, &store.UpdateAIConversation{
+		_, err = s.store.UpdateAIConversation(ctx, &store.UpdateAIConversation{
 			ID:        fixedID,
 			UpdatedTs: &event.Timestamp,
 		})
+		if err != nil {
+			slog.Default().Warn("Failed to update fixed conversation timestamp",
+				"conversation_id", fixedID,
+				"error", err,
+			)
+		}
 		return fixedID, nil
 	}
 

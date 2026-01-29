@@ -1,12 +1,12 @@
 import copy from "copy-to-clipboard";
 import { ExternalLinkIcon, LayoutListIcon, type LucideIcon, MapIcon } from "lucide-react";
+import { Suspense, lazy } from "react";
 import { toast } from "react-hot-toast";
 import { useParams, useSearchParams } from "react-router-dom";
 import { MemoRenderContext } from "@/components/MasonryView";
 import MemoView from "@/components/MemoView/MemoView";
 import PagedMemoList from "@/components/PagedMemoList";
 import UserAvatar from "@/components/UserAvatar";
-import UserMemoMap from "@/components/UserMemoMap";
 import { Button } from "@/components/ui/button";
 import { useMemoFilters, useMemoSorting } from "@/hooks";
 import { useUser } from "@/hooks/useUserQueries";
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
 import { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
+
+const UserMemoMap = lazy(() => import("@/components/UserMemoMap"));
 
 type TabView = "memos" | "map";
 
@@ -139,7 +141,9 @@ const UserProfile = () => {
                 />
               ) : (
                 <div className="">
-                  <UserMemoMap creator={user.name} className="h-[60dvh] sm:h-[500px] rounded-xl" />
+                  <Suspense fallback={<div className="w-full h-96 flex items-center justify-center">Loading Map...</div>}>
+                    <UserMemoMap creator={user.name} className="h-[60dvh] sm:h-[500px] rounded-xl" />
+                  </Suspense>
                 </div>
               )}
             </div>

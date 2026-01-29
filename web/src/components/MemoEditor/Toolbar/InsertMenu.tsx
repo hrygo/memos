@@ -1,7 +1,6 @@
-import { LatLng } from "leaflet";
 import { uniqBy } from "lodash-es";
 import { FileIcon, LinkIcon, LoaderIcon, MapPinIcon, Maximize2Icon, MoreHorizontalIcon, PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState, lazy } from "react";
 import { useDebounce } from "react-use";
 import { useReverseGeocoding } from "@/components/map";
 import { Button } from "@/components/ui/button";
@@ -17,11 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { MemoRelation } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import { LinkMemoDialog, LocationDialog } from "../components";
+import { LinkMemoDialog } from "../components";
 import { useFileUpload, useLinkMemo, useLocation } from "../hooks";
 import { useEditorContext } from "../state";
 import type { InsertMenuProps } from "../types";
 import type { LocalFile } from "../types/attachment";
+
+const LocationDialog = lazy(() => import("../components/LocationDialog").then((module) => ({ default: module.LocationDialog })));
 
 const InsertMenu = (props: InsertMenuProps) => {
   const t = useTranslate();
@@ -52,7 +53,7 @@ const InsertMenu = (props: InsertMenuProps) => {
 
   const location = useLocation(props.location);
 
-  const [debouncedPosition, setDebouncedPosition] = useState<LatLng | undefined>(undefined);
+  const [debouncedPosition, setDebouncedPosition] = useState<{ lat: number; lng: number } | undefined>(undefined);
 
   useDebounce(
     () => {
@@ -78,7 +79,7 @@ const InsertMenu = (props: InsertMenuProps) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            location.handlePositionChange(new LatLng(position.coords.latitude, position.coords.longitude));
+            location.handlePositionChange({ lat: position.coords.latitude, lng: position.coords.longitude });
           },
           (error) => {
             console.error("Geolocation error:", error);
@@ -101,7 +102,7 @@ const InsertMenu = (props: InsertMenuProps) => {
     setLocationDialogOpen(false);
   };
 
-  const handlePositionChange = (position: LatLng) => {
+  const handlePositionChange = (position: { lat: number; lng: number }) => {
     location.handlePositionChange(position);
   };
 
@@ -170,17 +171,21 @@ const InsertMenu = (props: InsertMenuProps) => {
         onSelectMemo={linkMemo.addMemoRelation}
       />
 
-      <LocationDialog
-        open={locationDialogOpen}
-        onOpenChange={setLocationDialogOpen}
-        state={location.state}
-        locationInitialized={location.locationInitialized}
-        onPositionChange={handlePositionChange}
-        onUpdateCoordinate={location.updateCoordinate}
-        onPlaceholderChange={location.setPlaceholder}
-        onCancel={handleLocationCancel}
-        onConfirm={handleLocationConfirm}
-      />
+      {locationDialogOpen && (
+        <Suspense fallback={null}>
+          <LocationDialog
+            open={locationDialogOpen}
+            onOpenChange={setLocationDialogOpen}
+            state={location.state}
+            locationInitialized={location.locationInitialized}
+            onPositionChange={handlePositionChange}
+            onUpdateCoordinate={location.updateCoordinate}
+            onPlaceholderChange={location.setPlaceholder}
+            onCancel={handleLocationCancel}
+            onConfirm={handleLocationConfirm}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

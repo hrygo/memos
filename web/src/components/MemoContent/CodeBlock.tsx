@@ -1,12 +1,12 @@
 import copy from "copy-to-clipboard";
-import hljs from "highlight.js";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { getThemeWithFallback, resolveTheme } from "@/utils/theme";
-import { MermaidBlock } from "./MermaidBlock";
 import { extractCodeContent, extractLanguage } from "./utils";
+
+const MermaidBlock = lazy(() => import("./MermaidBlock").then((module) => ({ default: module.MermaidBlock })));
 
 interface CodeBlockProps {
   children?: React.ReactNode;
@@ -16,6 +16,7 @@ interface CodeBlockProps {
 export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => {
   const { userGeneralSetting } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [highlightedCode, setHighlightedCode] = useState<string>("");
 
   const codeElement = children as React.ReactElement;
   const codeClassName = codeElement?.props?.className || "";
@@ -26,9 +27,11 @@ export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => 
   if (language === "mermaid") {
     return (
       <pre className="relative">
-        <MermaidBlock className={cn(className)} {...props}>
-          {children}
-        </MermaidBlock>
+        <Suspense fallback={<div className="text-sm text-muted-foreground p-2">Loading Diagram...</div>}>
+          <MermaidBlock className={cn(className)} {...props}>
+            {children}
+          </MermaidBlock>
+        </Suspense>
       </pre>
     );
   }
@@ -65,24 +68,38 @@ export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => 
   }, [resolvedTheme, isDarkTheme]);
 
   // Highlight code using highlight.js
-  // Security: highlight.js automatically escapes HTML entities, preventing XSS.
-  // The fallback uses textContent -> innerHTML pattern for safe HTML escaping.
-  const highlightedCode = useMemo(() => {
-    try {
-      const lang = hljs.getLanguage(language);
-      if (lang) {
-        return hljs.highlight(codeContent, {
-          language: language,
-        }).value;
-      }
-    } catch {
-      // Skip error and use default highlighted code.
-    }
+  useEffect(() => {
+    let active = true;
 
-    // Escape any HTML entities when rendering original content.
-    return Object.assign(document.createElement("span"), {
-      textContent: codeContent,
-    }).innerHTML;
+    const highlight = async () => {
+      const defaultEscaped = Object.assign(document.createElement("span"), {
+        textContent: codeContent,
+      }).innerHTML;
+
+      try {
+        const hljs = (await import("highlight.js")).default;
+        const lang = hljs.getLanguage(language);
+        if (lang && active) {
+          const result = hljs.highlight(codeContent, { language: language }).value;
+          if (active) {
+            setHighlightedCode(result);
+            return;
+          }
+        }
+      } catch (err) {
+        // Fallback to default
+      }
+
+      if (active) {
+        setHighlightedCode(defaultEscaped);
+      }
+    };
+
+    highlight();
+
+    return () => {
+      active = false;
+    };
   }, [language, codeContent]);
 
   const handleCopy = async () => {

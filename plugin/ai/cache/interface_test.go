@@ -108,10 +108,18 @@ func TestCacheServiceContract(t *testing.T) {
 
 	t.Run("Invalidate_WildcardPattern", func(t *testing.T) {
 		// Set multiple keys with same prefix
-		svc.Set(ctx, "user:123:profile", []byte("profile"), time.Hour)
-		svc.Set(ctx, "user:123:settings", []byte("settings"), time.Hour)
-		svc.Set(ctx, "user:123:cache", []byte("cache"), time.Hour)
-		svc.Set(ctx, "user:456:profile", []byte("other"), time.Hour)
+		if err := svc.Set(ctx, "user:123:profile", []byte("profile"), time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		if err := svc.Set(ctx, "user:123:settings", []byte("settings"), time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		if err := svc.Set(ctx, "user:123:cache", []byte("cache"), time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		if err := svc.Set(ctx, "user:456:profile", []byte("other"), time.Hour); err != nil {
+			t.Fatal(err)
+		}
 
 		// Invalidate all user:123:* keys
 		err := svc.Invalidate(ctx, "user:123:*")
@@ -167,7 +175,7 @@ func TestCacheServiceContract(t *testing.T) {
 		// Writer goroutine
 		go func() {
 			for i := 0; i < 100; i++ {
-				svc.Set(ctx, "concurrent-key", []byte("value"), time.Hour)
+				_ = svc.Set(ctx, "concurrent-key", []byte("value"), time.Hour)
 			}
 			done <- true
 		}()

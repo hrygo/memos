@@ -2,10 +2,12 @@ import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { isEqual } from "lodash-es";
 import { CheckCircleIcon, Code2Icon, HashIcon, LinkIcon } from "lucide-react";
+import { Suspense, lazy } from "react";
 import { cn } from "@/lib/utils";
 import { Memo, Memo_PropertySchema, MemoRelation_Type } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import MemoRelationForceGraph from "../MemoRelationForceGraph";
+
+const MemoRelationForceGraph = lazy(() => import("../MemoRelationForceGraph"));
 
 interface Props {
   memo: Memo;
@@ -26,7 +28,9 @@ const MemoDetailSidebar = ({ memo, className, parentPage }: Props) => {
       <div className="flex flex-col justify-start items-start w-full px-1 gap-2 h-auto shrink-0 flex-nowrap hide-scrollbar">
         {shouldShowRelationGraph && (
           <div className="relative w-full h-36 border border-border rounded-lg bg-muted">
-            <MemoRelationForceGraph className="w-full h-full" memo={memo} parentPage={parentPage} />
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-xs opacity-60">Loading...</div>}>
+              <MemoRelationForceGraph className="w-full h-full" memo={memo} parentPage={parentPage} />
+            </Suspense>
             <div className="absolute top-1 left-2 text-xs opacity-60 font-mono gap-1 flex flex-row items-center">
               <span>{t("common.relations")}</span>
               <span className="text-xs opacity-60">(Beta)</span>

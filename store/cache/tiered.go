@@ -9,9 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/hrygo/divinesense/plugin/ai"
 	"log/slog"
+
+	"github.com/hrygo/divinesense/plugin/ai"
+	"github.com/pkg/errors"
 )
 
 // TieredCache implements a three-tier caching strategy:
@@ -28,8 +29,6 @@ import (
 type TieredCache struct {
 	l1        *Cache
 	l2        RedisCacheInterface
-	l3        L3Fetcher
-	mu        sync.RWMutex
 	l1Enabled bool
 	l2Enabled bool
 }
@@ -53,7 +52,7 @@ func DefaultTieredConfig() *TieredCacheConfig {
 		L1MaxItems: 1000,
 		L1TTL:      30 * time.Minute,
 		L2TTL:      30 * time.Minute,
-		EnableL1:   true,  // Memory cache ON by default
+		EnableL1:   true,             // Memory cache ON by default
 		EnableL2:   IsRedisEnabled(), // Auto-enable Redis if configured
 	}
 }
@@ -397,13 +396,13 @@ func GenerateQueryKey(userID int, query string, limit int, strategy string) stri
 
 // CacheStats represents combined cache statistics.
 type CacheStats struct {
-	L1Size      int64              `json:"l1_size"`
-	L2Size      int64              `json:"l2_size"`
-	L1HitRate   float64            `json:"l1_hit_rate"`
-	L2HitRate   float64            `json:"l2_hit_rate"`
-	SemanticHit int64              `json:"semantic_hits"`
-	TotalHits   int64              `json:"total_hits"`
-	TotalMisses int64              `json:"total_misses"`
+	L1Size      int64                  `json:"l1_size"`
+	L2Size      int64                  `json:"l2_size"`
+	L1HitRate   float64                `json:"l1_hit_rate"`
+	L2HitRate   float64                `json:"l2_hit_rate"`
+	SemanticHit int64                  `json:"semantic_hits"`
+	TotalHits   int64                  `json:"total_hits"`
+	TotalMisses int64                  `json:"total_misses"`
 	Metadata    map[string]interface{} `json:"metadata"`
 }
 
